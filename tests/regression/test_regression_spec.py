@@ -1,0 +1,16 @@
+import pytest
+
+
+@pytest.mark.skip(reason="Spec-only skeleton; no runtime integration in this phase")
+def test_r001_simple_function_output_regression_guard():
+    """R-001: Normalized output for baseline simple function remains stable."""
+
+
+@pytest.mark.skip(reason="Spec-only skeleton; no runtime integration in this phase")
+def test_r002_jump_table_output_regression_guard():
+    """R-002: Switch/jump-table structural output remains stable."""
+
+
+@pytest.mark.skip(reason="Spec-only skeleton; no runtime integration in this phase")
+def test_r003_latency_budget_regression_guard():
+    """R-003: Decompile latency stays within configured regression budget."""
