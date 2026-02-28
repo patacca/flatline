@@ -114,3 +114,21 @@ Generic decompiler glue:
 Notes:
 - `ghidralib` should keep the generic glue, but introduce new neutral adapters (file loader, neutral symbol/comment model).
 - Direct dependency on radare2 runtime objects is incompatible with pip-installable standalone MVP and must be removed.
+
+## 7. Upstream API Divergences
+
+Relevant files/functions:
+- `src/anal_ghidra.cpp:31` `SleighArchitecture::getLanguageDescriptions()`
+- `src/R2Architecture.cpp:52` `R2Architecture::getLanguageDescriptions()`
+- `subprojects/packagefiles/ghidra-native/patches/0002-make-sleigharch-public.patch:17`
+- `src/core_ghidra.cpp:744` `SleighArchitecture::shutdown()`
+- `src/core_ghidra.cpp:745` `SleighArchitecture::specpaths = FileManage()`
+
+Notes:
+- Upstream pinned Ghidra exports `SleighArchitecture::getDescriptions(void)`; `getLanguageDescriptions()` is a patched symbol in the r2ghidra vendored ghidra-native patchset.
+- r2ghidra also relies on direct mutable global language-state reset (`shutdown()` and `specpaths` reassignment) during `sleighhome` reconfiguration.
+
+Classification:
+- `Reusable as-is`: none.
+- `Reimplement in ghidralib`: language enumeration calls should target upstream `getDescriptions(void)` and keep any cache-reset behavior explicit in library lifecycle.
+- `Not needed for MVP`: patch-level compatibility aliases such as `getLanguageDescriptions()`.
