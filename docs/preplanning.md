@@ -1,45 +1,47 @@
 # Preplanning Doc for `ghidralib` Standalone Python Decompiler
 
 ## Summary
-Create this document as an execution guide for the discovery phase before implementation.
-Scope is a Linux x86_64 MVP that decompiles a single function through Python, using a C-facing shim consumed via `cffi`/`ctypes`, and using plain local clones of upstream repos for analysis (`ghidra`, `r2ghidra`).
+This document defines the discovery-phase plan for a standalone Python library that wraps the Ghidra decompiler.
+The MVP targets Linux x86_64, decompiles one function, uses a C ABI consumed by Python (`cffi`/`ctypes`), and is installable via `pip` without requiring a separate Ghidra checkout at runtime.
+
+## 0. Hard Constraints (Must Hold)
+
+### Upstream pin (mandatory)
+- MVP discovery is pinned to:
+  - Ghidra tag: `Ghidra_12.0.3_build`
+  - Ghidra commit: `09f14c92d3da6e5d5f6b7dea115409719db3cce1`
+  - Tag commit date: `2026-02-10`
+- All analysis notes and experiments must explicitly reference this pin.
+- Any later upgrade requires a dedicated revalidation pass (API inventory diff + experiment rerun).
+
+### Distribution model (mandatory)
+- `ghidralib` MVP must be independently installable from `pip`.
+- Runtime must not require a full external Ghidra repository.
+- MVP ships a curated x86_64 language-spec bundle required for decompilation.
+
+### ABI freeze policy (mandatory)
+- During discovery, freeze only ABI principles, not final function signatures.
+- Final `ghl_*` function signatures can be frozen only after end-to-end success in E3 and E5.
 
 ## 1. Goal and Non-Goals
 
 ### Goal
-Identify the minimal callable decompiler API surface from Ghidra's C++ decompiler and define a Python-first wrapper architecture with no radare2 dependency.
+Identify the minimal callable decompiler API surface from Ghidra C++ and define a Python-first standalone architecture with no radare2 dependency.
 
 ### Non-Goals
-- Full feature parity with `r2ghidra`.
-- Multi-platform support in MVP.
-- Batch/whole-program decompilation in MVP.
+- Full feature parity with `r2ghidra`
+- Multi-platform support in MVP
+- Whole-program/batch decompilation in MVP
 
-## 2. Workspace Bootstrap
+## 2. Analysis Track A: Ghidra Decompiler API Extraction
 
-Run these commands in the repository root:
-
-```bash
-git init
-mkdir -p third_party docs notes
-git clone https://github.com/NationalSecurityAgency/ghidra third_party/ghidra
-git clone https://github.com/radareorg/r2ghidra third_party/r2ghidra
-mkdir -p notes/api notes/r2ghidra notes/experiments
-```
-
-Expected result:
-- `third_party/ghidra` exists and is clonable/reproducible.
-- `third_party/r2ghidra` exists and is clonable/reproducible.
-- Documentation workspace exists under `docs/` and `notes/`.
-
-## 3. Analysis Track A: Ghidra Decompiler API Extraction
-
-Primary target directory:
+Primary target:
 - `third_party/ghidra/Ghidra/Features/Decompiler/src/decompile/cpp`
 
-Output file:
+Output:
 - `notes/api/decompiler_inventory.md`
 
-Inventory every symbol required for standalone decompilation with one table row per symbol and these columns:
+Inventory columns (one row per symbol):
 - Symbol name
 - File path
 - Kind (`class`, `function`, `enum`, `typedef`)
@@ -49,60 +51,83 @@ Inventory every symbol required for standalone decompilation with one table row 
 - Error propagation mechanism
 - Thread-safety notes
 - MVP relevance (`required`, `optional`, `ignore`)
+- Pin reference (must include `Ghidra_12.0.3_build`)
 
 Mandatory first-pass files:
-- `ifacedecomp.hh` / `ifacedecomp.cc`
-- `architecture.hh` / `architecture.cc`
-- `funcdata.hh` / `funcdata.cc`
-- `coreaction.hh` / `coreaction.cc`
-- `type.hh` / `type.cc`
-- `loadimage.hh` / `loadimage.cc`
-- `context.hh` / `context.cc`
-- `comment.hh` / `comment.cc`
-- `prettyprint.hh` / `prettyprint.cc`
-- Any additional file exposing decompilation entrypoints
+- `ifacedecomp.hh/.cc`
+- `architecture.hh/.cc`
+- `funcdata.hh/.cc`
+- `coreaction.hh/.cc`
+- `type.hh/.cc`
+- `loadimage.hh/.cc`
+- `context.hh/.cc`
+- `comment.hh/.cc`
+- `prettyprint.hh/.cc`
 
-## 4. Analysis Track B: `r2ghidra` Integration Mapping
+## 3. Analysis Track B: `r2ghidra` Integration Mapping
 
-Inspect `third_party/r2ghidra` and produce:
+Target:
+- `third_party/r2ghidra`
+
+Output:
 - `notes/r2ghidra/integration_map.md`
 
-Capture:
-- Where `r2ghidra` instantiates decompiler state
-- How it provides binary bytes/memory model
-- How it builds architecture/context metadata
-- How it invokes decompilation
-- How it collects text output and errors
-- Which parts are radare2 adapters vs generic decompiler glue
+Map and classify:
+- Decompiler state initialization
+- Binary bytes/memory model
+- Architecture/context setup
+- Decompilation call path
+- Text output and error collection
+- Radare2 adapters vs generic glue
 
-For each major integration block, classify as:
+Required classification per block:
 - `Reusable as-is`
 - `Reimplement in ghidralib`
 - `Not needed for MVP`
 
-## 5. Analysis Track C: Minimal Standalone Contract
+## 4. Analysis Track C: Language / Compiler Spec Sourcing (Required)
 
-Define the minimal data contract required to decompile one function.
-Output file:
-- `notes/api/mvp_contract.md`
+Output:
+- `notes/api/mvp_contract.md` (authoritative contract)
 
-Contract checklist:
-- Language/processor spec identifier
-- Endianness and pointer size
-- Address space + function entry address
-- Backing bytes provider (`LoadImage` abstraction)
-- Symbol/function boundaries (if required)
-- Optional calling-convention hints
-- Output options (syntax/style)
+Must define:
+- Where `language_id` and `compiler_spec` values come from
+- How valid `(language_id, compiler_spec)` pairs are enumerated
+- Required on-disk runtime layout for language specs
+- Minimal subset of language resources needed for x86_64
 
-Include a textual sequence diagram from Python call to decompiled C string.
+Minimum resource analysis scope:
+- `third_party/ghidra/Ghidra/Processors/.../data/languages/`
+- `.ldefs`, `.pspec`, `.cspec`, `.slaspec` and compiled outputs needed at runtime
 
-## 6. Proposed Public Interfaces (Planning Only)
+### Runtime data-directory contract
+The plan must define:
+- Bundled default layout inside package/wheel (primary path)
+- Optional override path for development/debug
+- How the location is passed to the C layer (context params, not global hidden state)
 
-No implementation in this phase; define and freeze interface drafts.
+Default decision for MVP:
+- Ship curated x86_64 language bundle in `ghidralib` package.
+- Do not require full Ghidra checkout at runtime.
 
-### Python API draft
+## 5. Analysis Track D: Function Boundary and CFG Assumptions
 
+MVP behavior must be explicit:
+- Default mode: best-effort decompilation from entrypoint.
+- Optional hints supported in API contract:
+  - function size/end address (if available)
+  - symbol/function-boundary metadata (if available)
+
+Best-effort failure modes must be documented and surfaced as structured errors/warnings:
+- inability to recover full control-flow/function extent
+- unresolved indirect branches/jump tables
+- timeout/analysis budget exceeded
+
+Add dedicated validation for hard CFG cases (jump tables/switches).
+
+## 6. Interface Direction (Planning Stage)
+
+### Python API direction (not final)
 ```python
 result = decompile_function(
     binary_path: str,
@@ -110,90 +135,96 @@ result = decompile_function(
     language_id: str,
     compiler_spec: str | None = None,
     options: DecompileOptions | None = None,
+    runtime_data_dir: str | None = None,
+    function_size: int | None = None,
 ) -> DecompileResult
 ```
 
-`DecompileResult` fields:
+`DecompileResult` minimum:
 - `c_code: str`
 - `warnings: list[str]`
 - `error: str | None`
-- `metadata: dict[str, Any]` (normalized function address, language info)
+- `metadata: dict[str, Any]`
 
-### C shim ABI draft
+### C ABI principles (freeze now)
+- Pure C boundary (`extern "C"`), no C++ exceptions crossing ABI
+- Explicit ownership (`*_free`, `*_destroy`)
+- Structured status codes + retrievable error text
+- Caller-controlled context/options (no hidden globals)
 
-- `ghl_context_create(...) -> ghl_context*`
-- `ghl_context_destroy(ghl_context*)`
-- `ghl_decompile_function(ghl_context*, uint64_t addr, ghl_result*) -> int`
-- `ghl_result_free(ghl_result*)`
-- `ghl_last_error(ghl_context*) -> const char*`
-
-Error convention:
-- Return `0` on success.
-- Return non-zero on failure.
-- Retrieve details via `ghl_last_error`.
+### C ABI signatures (do **not** freeze yet)
+- Keep exact `ghl_context_create`/`ghl_decompile_function` parameters flexible until E3 and E5 complete.
+- Prefer a params-struct-based create API to avoid repeated breaking changes.
 
 ## 7. Risks and Validation Gates
 
-Track these risks explicitly:
-- API instability across upstream Ghidra revisions
-- Hidden assumptions in loader/context setup
-- C++ exception boundaries crossing C ABI
-- Memory ownership and lifetime leaks
-- Thread safety of shared decompiler state
+Track risks:
+- Upstream API drift beyond pinned Ghidra revision
+- Hidden initialization assumptions in loader/context
+- C++ exception leakage across C ABI
+- Memory ownership/lifetime leaks
+- Thread-safety of shared state
+- Incomplete packaged language bundle
 
-Exit criteria for preplanning:
-- API inventory completed
-- `r2ghidra` call flow mapped end-to-end
-- MVP contract written and reviewed
-- C shim ABI draft frozen for MVP
-- Unknown blockers reduced to explicit experiments
+Preplanning exit gates:
+- API inventory complete at pinned revision
+- `r2ghidra` mapping complete
+- Language/compiler spec sourcing and runtime bundle layout defined
+- MVP function-boundary policy documented with error model
+- E3 and E5 successful on pinned revision
+- C ABI signatures frozen only after above gates
+- Unknown blockers reduced to explicit, tracked experiments
 
 ## 8. Experiment Plan (No Product Code Yet)
 
-Create one note per experiment in `notes/experiments/`:
+Create/maintain experiment notes under `notes/experiments/`.
+
 - `E1_compile_driver.md`
+  - Build and link minimal standalone driver against selected decompiler components.
 - `E2_init_minimal.md`
+  - Initialize decompiler with minimal synthetic input.
 - `E3_decompile_known_func.md`
+  - Decompile one known function successfully.
 - `E4_invalid_address.md`
+  - Validate structured error path for invalid address.
+- `E5_jump_table_switch.md` (new, mandatory)
+  - Decompile function containing jump table/switch and record whether extra metadata (size/symbol boundaries) is required.
 
 Each experiment note must contain:
 - Exact command
 - Expected outcome
 - Observed outcome
 - Blocker status
+- Ghidra pin reference
 
-## 9. Test Scenarios to Include in Planning
+## 9. Test Scenarios to Predefine for MVP
 
-Predefine acceptance tests for later implementation:
 - Successful single-function decompilation on Linux x86_64 ELF
 - Invalid function address returns structured error
-- Unsupported language spec returns structured error
-- Repeated decompiles in one process do not leak obvious memory
-- Two sequential contexts remain isolated
+- Unsupported language/compiler spec returns structured error
+- Enumeration API returns valid bundled `language_id`/`compiler_spec` pairs
+- Repeated decompiles in one process do not show obvious leaks
+- Sequential contexts remain isolated
+- Jump-table/switch case behavior is documented and deterministic
 
 ## 10. Milestones
 
-- `M0`: repo/bootstrap and discovery docs scaffolded
-- `M1`: Ghidra API inventory complete
+- `M0`: repo/bootstrap and docs scaffolded
+- `M1`: pinned API inventory complete (`Ghidra_12.0.3_build`)
 - `M2`: `r2ghidra` mapping complete
-- `M3`: MVP contract + C ABI draft complete
-- `M4`: implementation-ready technical spec (`docs/implementation-plan.md`)
+- `M3`: language-spec sourcing + bundle layout + enumeration plan complete
+- `M4`: experiments E1-E5 completed with results on pinned revision
+- `M5`: C ABI signatures frozen (post-E3/E5), implementation-ready spec finalized in `docs/implementation-plan.md`
 
 ## Important Public API / Interface Additions
-- New Python package contract centered on `decompile_function(...)`
-- New C shim ABI (`ghl_*`) as the only FFI boundary
-- Standardized `DecompileResult` and structured error model
-
-## Test Cases and Scenarios
-- Single-function success path
-- Invalid address failure path
-- Unsupported architecture/language failure path
-- Reuse context for multiple calls
-- Context teardown/resource cleanup
+- Python contract centered on `decompile_function(...)`
+- Runtime language/compiler-spec enumeration capability
+- C shim ABI (`ghl_*`) as only FFI boundary
+- Structured decompilation result and error model
 
 ## Assumptions and Defaults
-- External repos are plain clones under `third_party/`.
+- External repos are plain clones under `third_party/` for discovery.
 - MVP target is Linux x86_64 only.
-- MVP scope is one-function decompilation (not batch).
-- Initial Python bridge uses `cffi`/`ctypes` over a C ABI shim.
-- Upstream code is analyzed in-place; no modifications to vendored repos during preplanning.
+- MVP scope is single-function decompilation.
+- Python bridge uses `cffi`/`ctypes` over C ABI.
+- Runtime package bundles required x86_64 language specs (no full Ghidra dependency at runtime).
