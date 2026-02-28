@@ -1,30 +1,45 @@
 # Overview
-- Spec-first repository for a planned Python wrapper around the Ghidra decompiler.
-- Current state is planning/testing artifacts only; no production library implementation yet outside vendored upstream code.
+- Spec-first Python wrapper around the Ghidra decompiler (no production code yet).
+- Phase P0 (Spec Lock) is **complete**; ready to enter P1 (Contract Test Harness).
 
-# Current baseline and policy
-- Pinned upstream baseline: `Ghidra_12.0.3_build` at commit `09f14c92d3da6e5d5f6b7dea115409719db3cce1` (2026-02-10).
-- MVP policy in docs: Linux first, `Python 3.13+`, latest-upstream-only support model.
-- Public contract intent: stable Python API over potentially unstable upstream internals.
+# Baseline and policy
+- Upstream pin: `Ghidra_12.0.3_build` @ `09f14c92d3` (2026-02-10).
+- MVP: Linux x86_64, Python 3.13+, latest-upstream-only.
+- Stable public Python API over unstable upstream internals.
 
-# Source of truth files
-- Spec: `docs/specs.md`
-- Delivery phases/gates/risks: `docs/roadmap.md`
-- Discovery constraints and early stage experiment plan (already passed that stage): `docs/preplanning.md`
-- Original writing brief/requirements: `docs/planning.md`
+# ADR status
+- **ADR-001 (Public Scope Model): DECIDED — Option A** (Memory + Architecture + Function-Level).
+  - Users provide `memory_image` + `base_address`, not file paths.
+  - Convenience layer (binary file → memory → decompile) deferred to post-MVP.
+  - Full rationale in `docs/specs.md` §5.5.
+- ADR-002 through ADR-008: unresolved (see `docs/roadmap.md` for schedule).
+
+# Source of truth
+- `docs/specs.md` — SDD: API contract, data models, error taxonomy, cross-cutting requirements.
+- `docs/roadmap.md` — 7 phases (P0–P6), 5 milestones (M1–M5), risk register, ADR backlog.
+- `docs/planning.md` — original brief/requirements.
+- `docs/preplanning.md` — discovery constraints and experiment plan (completed).
+- `docs/refine_plan.md` — plan refinement checklist and cross-file consistency guide.
 
 # Repo structure (non-vendored)
-- `docs/`: architecture/spec/roadmap docs.
-- `notes/api/`: decompiler callable-surface inventory.
-- `notes/r2ghidra/`: integration mapping notes (reference only).
-- `tests/`: definitions-only test plan and pytest skeletons.
+- `docs/` — specs, roadmap, planning artifacts.
+- `notes/api/decompiler_inventory.md` — 18 required callable symbols with inputs/outputs, init order, thread-safety.
+- `notes/r2ghidra/integration_map.md` — 5-section integration analysis; classifies each block as reusable / reimplement / skip. Keep as a reference implementation only.
+- `tests/` — test catalog, fixture strategy, and pytest skeletons.
 
-# Tests status
-- `tests/README.md` defines this tree as spec artifacts only.
-- Pytest files are skeletons and currently marked skipped; no live native integration yet.
-- Canonical test definitions/oracle strategy: `tests/specs/test_catalog.md` and `tests/specs/fixtures.md`.
+# Tests
+- All tests are definitions-only; no live integration yet.
+- `tests/specs/test_catalog.md` — 21 test definitions across 5 categories (unit, contract, integration, regression, negative).
+- `tests/specs/fixtures.md` — fixture strategy with determinism rules and oracle approach.
+- 5 pytest skeleton files under `tests/{unit,contract,integration,regression,negative}/`.
 
-# Vendored upstream trees
-- `third_party/ghidra`: large upstream Ghidra source snapshot.
-- `third_party/r2ghidra`: reference integration code and patches.
-- Treat `third_party/*` as external upstream/reference unless explicitly asked to modify.
+# Vendored upstream
+- `third_party/ghidra` — upstream Ghidra source snapshot.
+- `third_party/r2ghidra` — reference integration code and patches.
+- Treat as read-only unless explicitly asked to modify.
+
+# Key data models (from specs.md)
+- `DecompileRequest` — `memory_image`, `base_address`, `language_id`, `compiler_id`, `entry_points`.
+- `DecompileResult` — decompiled C output, metadata, function info.
+- `LanguageCompilerPair` — architecture/compiler selection.
+- `GhidralibError` — 5 categories: `invalid_argument`, `unsupported_target`, `invalid_address`, `decompile_failed`, `internal_error`.
