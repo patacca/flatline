@@ -4,14 +4,15 @@
 
 | Fixture ID | Type | Purpose | Notes |
 | --- | --- | --- | --- |
-| `fx_add_elf64` | ELF x86_64 | Baseline known-function happy path | Mirrors E3-style simple arithmetic function scenario |
-| `fx_switch_elf64` | ELF x86_64 | Jump-table/switch CFG coverage | Mirrors E5-style switch recovery scenario |
-| `fx_invalid_addr_case` | Logical case over `fx_add_elf64` | Invalid address negative behavior | Uses unmapped address input, not a separate binary |
+| `fx_add_elf64` | Memory image (x86_64) | Baseline known-function happy path | Raw memory extracted from simple arithmetic function ELF; `_elf64` suffix refers to source architecture |
+| `fx_switch_elf64` | Memory image (x86_64) | Jump-table/switch CFG coverage | Raw memory extracted from switch-case ELF; `_elf64` suffix refers to source architecture |
+| `fx_invalid_addr_case` | Logical case over `fx_add_elf64` | Invalid address negative behavior | Uses unmapped address input against `fx_add_elf64` memory image |
 | `fx_runtime_data_min` | Runtime data directory | Pair enumeration and startup validation | Contains curated language/compiler assets required for MVP |
-| `fx_corrupt_bin` | Corrupt/truncated binary | Binary load failure negative behavior | Truncated header; not a valid loadable target |
+| `fx_invalid_memory` | Empty/zero-length memory image | Invalid memory image input | Tests structured error path for degenerate memory input |
 
-Note: Fixture format (ELF binaries vs raw memory images) depends on ADR-001 scope resolution.
-Current IDs assume binary-file fixtures; names and content may be adjusted once the input model is decided.
+Fixture format resolved by ADR-001 (Option A: memory + architecture + function-level).
+Fixtures are raw memory images with accompanying metadata (base address, architecture).
+Source binaries (ELF) are used during fixture generation but are not runtime test inputs.
 
 ## 2. Expected-Output Strategy
 

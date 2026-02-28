@@ -44,7 +44,7 @@ Personas:
 - CI operator requiring deterministic decompilation checks across releases.
 
 Primary use cases:
-- Decompile one function by target specification + entry address (exact input model depends on ADR-001: memory image, binary path, or both).
+- Decompile one function by memory image + architecture + entry address (ADR-001 resolved: Option A).
 - Enumerate valid `(language_id, compiler_spec)` pairs shipped in runtime data.
 - Fail predictably on invalid addresses/unsupported language selection.
 - Run repeated decompiles in one process with isolated request state.
@@ -59,8 +59,8 @@ Secondary (Next):
 
 | Concept | Contract |
 | --- | --- |
-| `DecompilerSession` | Long-lived object owning one native context and immutable startup config. |
-| `DecompileRequest` | Input payload for one function decompilation: binary target, function address, language, optional compiler and analysis options. |
+| `DecompilerSession` | Long-lived object owning one native `Architecture` instance and immutable startup config. Session lifecycle maps to Architecture construction through destruction. |
+| `DecompileRequest` | Input payload for one function decompilation: memory image, base address, function entry address, language, optional compiler and analysis options. |
 | `DecompileResult` | Output payload containing rendered C text, warnings, structured error (if any), and metadata. |
 | `LanguageCompilerPair` | One valid `language_id` + `compiler_spec` entry known to current runtime data directory. |
 | `GhidralibError` | Stable Python exception hierarchy mapped from status/error categories. |
@@ -79,16 +79,20 @@ Derived from:
 ### 3.3 Data Model
 
 `DecompileRequest` fields:
-- `function_address` (required)
+- `memory_image` (required): byte content of the target memory region
+- `base_address` (required): virtual address of the start of `memory_image`
+- `function_address` (required): entry point virtual address within the memory image
 - `language_id` (required)
 - `compiler_spec` (optional, explicit validation required)
 - `runtime_data_dir` (optional override)
 - `function_size_hint` (optional advisory)
 - `analysis_budget` (optional deterministic budget object)
 
-Note: Target input fields (how binary data/memory is supplied) depend on ADR-001 scope
-resolution. Option A requires memory-image input; Option B requires `binary_path`;
-Option C supports both. Fields above are stable regardless of scope decision.
+Input model resolved by ADR-001 (Option A: memory + architecture + function-level).
+The caller provides a memory image covering the relevant address space. The library
+does not perform binary format parsing; callers who work with binary files must
+extract memory content before calling the API. Multi-region input and section metadata
+are planned extensions (see §8.3).
 
 `DecompileResult` fields:
 - `c_code: str | None`
@@ -179,7 +183,7 @@ Known limits at baseline:
 | Decompiler-facing capability | Public API behavior | User-visible contract |
 | --- | --- | --- |
 | Global startup and spec discovery | Session startup and runtime-data validation | Deterministic startup errors with actionable messages |
-| Language/compiler descriptions | `list_language_compilers()` | Enumerated pairs are valid and loadable; native compiler-id fallback must be overridden to enforce hard-error semantics (§3.4) |
+| Language/compiler descriptions | `list_language_compilers()` | Enumerated pairs are valid and loadable; bridge must validate compiler IDs against enumerated set before native call, since `LanguageDescription::getCompiler()` silently falls back to first/default compiler for unknown IDs (§3.4) |
 | Function lookup/materialization | `decompile_function(request)` address targeting | Missing/invalid function target returns structured error category |
 | Action execution pipeline | Internal execution of request | Successful path yields `c_code` and optional warnings |
 | Warning propagation | `DecompileResult.warnings` | Warning codes are stable identifiers |
@@ -324,30 +328,36 @@ Risks:
    architecture information. This reduces the practical UX burden of Option A relative
    to the general case.
 
-### 5.5 Current Analysis and Open Decision (ADR-001)
+### 5.5 ADR-001 Decision: Option A for MVP
 
-ADR-001 remains open. Current analysis leanings:
+**Decided: Option A (Memory + Architecture + Function-Level) for MVP.**
+Planned evolution toward Option C (convenience binary-loading layer) in Next scope.
 
-- Option A is the strongest candidate for the core/foundational API: it directly matches
-  the decompiler's `LoadImage` abstraction, avoids the binary-parsing scope increase,
-  and provides the best determinism/composability/packaging properties.
-- Option C is the most appealing end-state: Option A as core contract with an optional
-  convenience layer for common binary formats. This preserves Option A's advantages
-  while addressing the UX gap for file-based workflows.
-- Option B as the sole API is the weakest choice given the format-parser hidden constraint.
-  The cost of implementing and maintaining format parsing is disproportionate to the UX
-  benefit, especially given the target personas' existing tooling.
+Rationale:
+- Direct alignment with the decompiler's `LoadImage` abstraction. Upstream source confirms
+  that in-memory chunk-based LoadImage implementations are a proven pattern within the
+  codebase (`LoadImageXml` in `loadimage_xml.hh` stores `map<Address, vector<uint1>>`
+  and serves reads from memory).
+- Avoids the binary format-parsing scope increase entirely. The decompiler contains no
+  built-in format parsers; any binary-loading path requires sourcing or building
+  ELF/PE/Mach-O parsing outside the decompiler — a disproportionate scope, security,
+  and maintenance cost for MVP.
+- Strongest determinism: fewer processing steps between input and decompilation output.
+- Target personas (reverse engineers, security engineers, CI operators) typically have
+  loaded memory maps available from existing tooling.
+- Simplest packaging and cross-platform story: no format-parser dependencies to ship.
 
-Decision still needed:
-- Whether MVP ships Option A only (simplest, fastest to stable contract), or Option C
-  from the start (more design work upfront, better long-term UX).
-- If Option C: whether the convenience layer is in-scope for MVP or deferred to Next.
+Consequences:
+- MVP users provide memory images and base addresses, not file paths.
+- `DecompileRequest` includes `memory_image` and `base_address` as required fields (§3.3).
+- Option C convenience layer (binary file → memory extraction → decompile) is explicit
+  Next-scope (§8.3).
+- Fixture strategy uses raw memory images extracted from reference binaries.
 
 ### 5.6 Decision Points Requiring User Choice
 
-1. **(ADR-001, open)** MVP scope model. Preferred direction: Option A as core API,
-   with Option C evolution planned. Alternatives: Option C from day one with convenience
-   layer deferred to post-MVP; or Option C from day one with convenience layer in MVP.
+1. **(ADR-001, decided)** MVP scope model: Option A (memory + arch + function-level).
+   Option C convenience layer planned for Next scope. See §5.5.
 2. Define strictness of decompilation failure semantics:
    - Recommended: invalid address always hard error.
    - Alternative: allow warning-only degraded output class.
@@ -393,7 +403,7 @@ Performance budgets (planning targets):
 - Regression threshold policy: fail CI on sustained >15% regression for pinned matrix.
 
 Security boundaries:
-- Untrusted binaries are treated as untrusted input.
+- Untrusted memory images are treated as untrusted input.
 - No implicit execution of external tools in request path.
 - Resource budgets (time/memory) are part of operational contract.
 
@@ -430,9 +440,12 @@ Extensibility:
 
 ### 8.3 Next-Scope Candidates
 
+- Binary convenience layer: Option C file-loading convenience API over the core
+  memory-image contract, handling ELF/PE/Mach-O parsing and memory extraction.
+- Multi-region memory input and section metadata (readonly ranges, symbols) extensions
+  to `DecompileRequest`.
 - Batch decompilation APIs.
 - Cross-platform artifact parity (macOS/Windows).
-- Hybrid low-level input mode for advanced workflows.
 
 ## 9. Open Questions
 

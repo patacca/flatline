@@ -1,41 +1,54 @@
-You are reviewing and refining an EXISTING plan (previous iteration). Treat the current repo state as the plan’s latest output.
+You are refining an EXISTING plan (previous iteration). Treat the repo’s current state as the latest output of that plan.
 
-Inputs (only): `planning.md`, `specs.md`, `roadmap.md`, and `tests/**`.
+## Inputs (read first)
+- `planning.md`, `specs.md`, `roadmap.md`, `tests/**`
 
-Core rule: The previously elaborated plan + its deliverables are the baseline. Your job is to (a) verify those deliverables exist and match intent, and (b) regenerate the SAME deliverables as an updated, consistent vNext (not a new plan), applying minimal necessary changes.
+## Extra reference (read ONLY if needed)
+- `third_party/ghidra/Ghidra/Features/Decompiler/src/decompile/cpp/**`
+  - Use only to confirm/resolve uncertainties or conflicts about *decompiler requirements* already claimed/assumed in the plan/specs/tests.
+  - Cite exact file paths + identifiers (e.g., function/class) when used.
 
-Do:
+## Core rule
+The prior deliverables + intent are the baseline. Do NOT invent a new plan. Regenerate the SAME deliverables as a consistent vNext with the smallest necessary changes.
 
-1) Baseline extraction (`planning.md`)
-- Extract the plan’s stated deliverables/artifacts and success criteria (explicitly listed).
-- Use these as the ONLY required outputs to reproduce.
+## Tasks
+1) **Baseline extraction**
+   - From `planning.md`: list explicitly stated deliverables/artifacts + success/acceptance criteria.
+   - These define the ONLY required outputs.
 
-2) Deliverables audit (repo vs baseline)
-- For each deliverable from (1): Present / Missing / Partial / Unclear with file+section refs.
-- For Missing/Partial: specify minimal fixes/additions to bring it to spec.
+2) **Deliverables audit (repo vs baseline)**
+   - For each baseline deliverable: Present / Missing / Partial / Unclear.
+   - Include file + heading/section refs; for gaps, state minimal fix.
 
-3) Cross-file consistency check
-- Identify contradictions/drift across `planning.md` ↔ `specs.md` ↔ `roadmap.md` ↔ `tests/**`.
-- Classify: Hard conflict / Soft inconsistency / Omission.
-- For each: cite evidence (file+section) and propose ONE best minimal fix.
+3) **Cross-file consistency**
+   - Find contradictions/drift across `planning.md` ↔ `specs.md` ↔ `roadmap.md` ↔ `tests/**`.
+   - Classify: Hard conflict / Soft inconsistency / Omission.
+   - For each: evidence (file+section) + ONE best minimal fix.
 
-4) Architecture/strategy validation (within existing plan)
-- List key prior decisions (boundaries, data flow, APIs, storage, invariants, testing strategy, security/perf assumptions) as evidenced in files.
-- Check alignment with requirements + tests; flag grey areas/unstated assumptions that block implementation or testing.
-- Recommend minimal clarifications/adjustments (preserve prior intent).
+4) **Architecture/strategy validation (within prior intent)**
+   - Extract key prior decisions (boundaries, data flow, APIs, storage, invariants, testing strategy, security/perf assumptions) with evidence.
+   - Flag grey areas/unstated assumptions that block implementation/testing.
+   - Recommend minimal clarifications/adjustments (preserve intent).
 
-5) Produce vNext deliverables (same set as baseline)
-- Output patch-style edits mapped to specific files/sections to update the EXISTING deliverables set.
-- Ensure acceptance criteria are testable and roadmap sequencing remains coherent.
+5) **ADR-001 decision (must do)**
+   - Locate ADR-001; extract context/options/constraints already present.
+   - Decide ADR-001 (choose an option), add rationale, consequences, and follow-ups.
+   - Ensure consistency with `planning.md`/`specs.md`/`roadmap.md`/`tests/**`.
+   - If ADR-001 hinges on decompiler requirements and the repo docs are ambiguous/conflicting, verify ONLY the specific points in the Ghidra source folder above and cite paths/identifiers.
 
-6) Questions (only when blocking)
-- Ask targeted questions ONLY when required to avoid guessing.
-- Group by topic; explain why each is blocking. Do not invent requirements.
+6) **Produce vNext deliverables (same set)**
+   - Provide patch-style edits mapped to specific files/sections to update the EXISTING deliverables set.
+   - Ensure acceptance criteria remain testable and roadmap sequencing stays coherent.
 
-Output (strict):
-- Summary (<=8 bullets)
-- Deliverables Gap Audit (table)
-- Inconsistencies & Grey Areas (ranked)
-- Architecture/Strategy Review
-- Proposed Updates (patch-style by file/section)
-- Blocking Questions
+7) **Questions (only when blocking)**
+   - If something is ambiguous/insufficient to proceed safely, ask targeted blocking questions.
+   - Group by topic; say why each blocks. Otherwise proceed without questions.
+
+## Output (strict order)
+- **Summary** (≤8 bullets)
+- **Deliverables Gap Audit** (table)
+- **Inconsistencies & Grey Areas** (ranked, with evidence + minimal fix)
+- **Architecture/Strategy Review** (evidence-based)
+- **ADR-001 Decision** (decision + rationale + consequences + follow-ups; cite sources if checked)
+- **Proposed Updates** (patch-style by file/section; minimal changes)
+- **Blocking Questions** (only if truly blocking)

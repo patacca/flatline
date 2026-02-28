@@ -22,5 +22,5 @@ def test_n004_broken_runtime_data_dir_fails_startup():
 
 
 @pytest.mark.skip(reason="Spec-only skeleton; no runtime integration in this phase")
-def test_n005_binary_load_failure_is_structured_error():
-    """N-005: Corrupt or unreadable binary target returns structured invalid_argument failure."""
+def test_n005_invalid_memory_image_is_structured_error():
+    """N-005: Empty or zero-length memory image returns structured invalid_argument failure."""

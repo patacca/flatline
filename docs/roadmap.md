@@ -84,13 +84,13 @@ and release activities require distinct checkpoints.
 | License/redistribution non-compliance | Low | High | Compliance checklist, notice bundling, source-attribution audit | Release candidate review |
 | CI/toolchain variance causes flaky results | Medium | Medium | Stable build/test matrix and deterministic fixture harness | Flake rate trend in CI |
 | Windows portability blockers discovered late | Medium | High | Separate Windows ADR and early feasibility spike before commitment | Start of P6 |
-| Security/resource exhaustion on malformed binaries | Medium | High | Bounded analysis budgets and defensive error taxonomy | Fuzz/negative test failures |
+| Security/resource exhaustion on malformed memory images | Medium | High | Bounded analysis budgets and defensive error taxonomy | Fuzz/negative test failures |
 
 ## 4. ADR Backlog
 
 | ADR title | Question answered | Needed by |
 | --- | --- | --- |
-| ADR-001 Public Scope Model | What is the MVP input model: memory+arch (A), full-binary (B), or hybrid (C)? Current analysis leans A-core with C evolution. See `specs.md` §5.5. | End of P0 (open) |
+| ADR-001 Public Scope Model | What is the MVP input model: memory+arch (A), full-binary (B), or hybrid (C)? **Decided: Option A for MVP.** See `specs.md` §5.5. | End of P0 (decided) |
 | ADR-002 Bridge Surface Stability | What exact boundary is considered stable API vs internal? | End of P1 |
 | ADR-003 Determinism Oracle Level | How strict should C output comparison be (canonical text vs semantic tokens)? | End of P1 |
 | ADR-004 Runtime Asset Policy | Which language/compiler assets are mandatory for MVP package? | End of P2 |

@@ -14,3 +14,8 @@ def test_u002_unknown_compiler_rejected_without_fallback():
 @pytest.mark.skip(reason="Spec-only skeleton; no runtime integration in this phase")
 def test_u003_result_metadata_required_keys():
     """U-003: Result metadata always includes required top-level keys."""
+
+
+@pytest.mark.skip(reason="Spec-only skeleton; no runtime integration in this phase")
+def test_u004_function_size_hint_passthrough():
+    """U-004: function_size_hint is accepted and passed through; omission does not error."""

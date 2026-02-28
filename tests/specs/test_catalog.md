@@ -10,6 +10,7 @@ assertions, oracle strategy, and determinism constraints.
 | U-001 | Validate request schema rejects missing required fields | None | Build request objects with omitted required fields | Structured `invalid_argument` classification | Schema/error-category oracle | Error category stable; message text may vary |
 | U-002 | Validate unknown compiler id handling | None | Provide compiler id not in enumerated set | Hard error, not fallback | Category + code oracle | Never silently substitute default compiler |
 | U-003 | Validate metadata envelope shape | None | Build synthetic result object from adapter stub | Required metadata keys present | Key-presence oracle | Required keys invariant across releases |
+| U-004 | Validate function_size_hint passthrough | None | Build request with and without function_size_hint | Hint value is available to bridge layer; omission does not error | Presence/absence oracle | Advisory field; never causes hard error when omitted |
 
 ## 2. Contract Tests
 
@@ -44,7 +45,7 @@ assertions, oracle strategy, and determinism constraints.
 | N-002 | Unsupported language id failure | `fx_add_elf64` | Request unknown language id | Structured `unsupported_target` error | Category/status oracle | No fallback language substitution |
 | N-003 | Unsupported compiler for valid language | `fx_add_elf64` | Request invalid compiler for known language | Structured `unsupported_target` error | Category/status oracle | No implicit compiler fallback |
 | N-004 | Corrupt/missing runtime data directory | runtime data fixture | Start session with broken data dir | Deterministic startup failure | Startup error oracle | Error category stable across runs |
-| N-005 | Binary load failure on invalid/corrupt input | `fx_corrupt_bin` or nonexistent path | Request decompile with unreadable/corrupt binary target | Structured `invalid_argument` error | Category/status oracle | Error category stable; message text may reference path |
+| N-005 | Invalid memory image input | `fx_invalid_memory` (empty/zero-length memory image) | Request decompile with empty or zero-length memory image | Structured `invalid_argument` error | Category/status oracle | Error category stable; message text may vary |
 
 ## 6. Mapping to Source Documents
 
