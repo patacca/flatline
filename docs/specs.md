@@ -7,14 +7,9 @@ Pinned upstream baseline:
 - Commit: `09f14c92d3da6e5d5f6b7dea115409719db3cce1`
 - Commit date: `2026-02-10`
 
-Primary source notes used for this spec:
+Primary sources used for this spec:
 - `notes/api/decompiler_inventory.md` (decompiler-facing callable contract)
-- `notes/api/mvp_contract.md` (MVP runtime/data contract; reconciled below)
-- `notes/experiments/E1_compile_driver.md`
-- `notes/experiments/E2_init_minimal.md`
-- `notes/experiments/E3_decompile_known_func.md`
-- `notes/experiments/E4_invalid_address.md`
-- `notes/experiments/E5_jump_table_switch.md`
+- Consolidated MVP contract and experiment findings captured directly in this spec and `tests/specs/test_catalog.md`
 
 Hard constraints:
 - In-process Python to native bridge is mandatory.
@@ -67,7 +62,7 @@ Secondary (Next):
 | `GhidralibError` | Stable Python exception hierarchy mapped from status/error categories. |
 
 Derived from:
-- `notes/api/mvp_contract.md` (required inputs, outputs, pair enumeration).
+- Consolidated MVP contract requirements in this specification.
 
 ### 3.2 Operations
 
@@ -109,8 +104,8 @@ Derived from:
 - `retryable` (bool)
 
 Derived from:
-- `notes/api/mvp_contract.md` sections 6-8.
-- `notes/experiments/E4_invalid_address.md` (invalid-address hard failure semantics).
+- Consolidated MVP data and error contract in this specification.
+- Consolidated invalid-address hard-failure requirement carried into negative tests.
 
 ### 3.4 Error Model
 
@@ -121,8 +116,7 @@ Rules:
 - Warning-only outcomes must still return successful operation status when C output is valid.
 
 Derived from:
-- `notes/api/mvp_contract.md` section 2 (fallback rejection) and section 8.
-- `notes/experiments/E4_invalid_address.md` blocker.
+- Consolidated fallback-rejection and error semantics in this specification.
 
 ### 3.5 Stability Guarantees and SemVer
 
@@ -200,7 +194,7 @@ Rationale:
 - Keeps room for advanced low-level mode without destabilizing primary API.
 
 Derived from:
-- `notes/experiments/E2_init_minimal.md`, `E3_decompile_known_func.md`, `E5_jump_table_switch.md`.
+- Consolidated experiment findings in this specification and test catalog.
 
 ### 5.3 Decision Points Requiring User Choice
 
@@ -267,7 +261,7 @@ Extensibility:
 - Additive extension points via optional request fields and metadata keys.
 - Future backends or advanced modes must preserve baseline contract semantics.
 
-## 8. MVP vs Next and Reconciliation with `mvp_contract.md`
+## 8. MVP vs Next and Reconciliation Notes
 
 ### 8.1 MVP Commitments (Kept)
 
@@ -278,7 +272,7 @@ Extensibility:
 
 ### 8.2 Items Marked Obsolete and Replaced
 
-| Item in `notes/api/mvp_contract.md` | Status | Replacement in this spec |
+| Former MVP contract draft item | Status | Replacement in this spec |
 | --- | --- | --- |
 | Binding mechanism named as `ctypes`/`cffi` in normative scope | Obsolete as normative requirement | Replaced with bridge-agnostic in-process contract; binding choice deferred to ADR. |
 | Implicitly narrow curated compiler list as fixed forever | Obsolete as permanent restriction | Replaced with MVP curated baseline plus additive expansion policy under SemVer minor releases. |

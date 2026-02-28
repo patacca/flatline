@@ -26,6 +26,7 @@ assertions, oracle strategy, and determinism constraints.
 | I-001 | Known function decompilation success | `fx_add_elf64` | Decompile known entrypoint | Non-empty C output and success status | Normalized C text + status oracle | Ignore whitespace/comments; preserve semantic tokens |
 | I-002 | Language/compiler enumeration validity | Runtime data fixture | Enumerate pairs and validate each pair assets exist | No invalid/missing-backed pairs returned | Asset-existence oracle | Returned pairs stable per fixture revision |
 | I-003 | Sequential context isolation | `fx_add_elf64` | Run multiple sessions in sequence | No cross-session leakage in warnings/metadata | Session-isolation oracle | Stable results independent of previous session |
+| I-004 | Startup and minimal load smoke path | `fx_runtime_data_min` | Start session, validate runtime data discovery, and execute minimal initialization/load flow | Startup succeeds with deterministic metadata and no leaked prior state | Startup-state oracle | Repeated startup/load remains deterministic under pinned upstream |
 
 ## 4. Regression Tests
 
@@ -44,10 +45,9 @@ assertions, oracle strategy, and determinism constraints.
 | N-003 | Unsupported compiler for valid language | `fx_add_elf64` | Request invalid compiler for known language | Structured `unsupported_target` or dedicated compiler error | Category/status oracle | No implicit compiler fallback |
 | N-004 | Corrupt/missing runtime data directory | runtime data fixture | Start session with broken data dir | Deterministic startup failure | Startup error oracle | Error category stable across runs |
 
-## 6. Mapping to Source Notes
+## 6. Mapping to Source Documents
 
 - Decompiler lifecycle and required callable behavior: `notes/api/decompiler_inventory.md`.
-- Language/compiler enumeration and runtime data policy: `notes/api/mvp_contract.md`.
-- Positive known-function expectation: `notes/experiments/E3_decompile_known_func.md`.
-- Invalid-address strict failure requirement: `notes/experiments/E4_invalid_address.md`.
-- Jump-table coverage: `notes/experiments/E5_jump_table_switch.md`.
+- Public contract, runtime-data policy, and error semantics: `docs/specs.md`.
+- Milestones and release gates for deterministic behavior: `docs/roadmap.md`.
+- Startup/minimal-load, known-function, invalid-address, and jump-table expectations are consolidated into this catalog from baseline experiment findings.

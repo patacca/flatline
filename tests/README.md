@@ -17,8 +17,7 @@ No file in this directory performs real native integration calls yet.
 ## Source Attribution
 
 Test requirements derive from:
+- `docs/specs.md`
+- `docs/roadmap.md`
 - `notes/api/decompiler_inventory.md`
-- `notes/api/mvp_contract.md`
-- `notes/experiments/E3_decompile_known_func.md`
-- `notes/experiments/E4_invalid_address.md`
-- `notes/experiments/E5_jump_table_switch.md`
+- Consolidated baseline experiment findings captured in the spec and test catalog
