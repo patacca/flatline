@@ -19,3 +19,8 @@ def test_n003_unsupported_compiler_id_is_rejected():
 @pytest.mark.skip(reason="Spec-only skeleton; no runtime integration in this phase")
 def test_n004_broken_runtime_data_dir_fails_startup():
     """N-004: Corrupt or missing runtime data directory fails deterministically."""
+
+
+@pytest.mark.skip(reason="Spec-only skeleton; no runtime integration in this phase")
+def test_n005_binary_load_failure_is_structured_error():
+    """N-005: Corrupt or unreadable binary target returns structured invalid_argument failure."""

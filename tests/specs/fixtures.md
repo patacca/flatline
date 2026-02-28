@@ -8,6 +8,10 @@
 | `fx_switch_elf64` | ELF x86_64 | Jump-table/switch CFG coverage | Mirrors E5-style switch recovery scenario |
 | `fx_invalid_addr_case` | Logical case over `fx_add_elf64` | Invalid address negative behavior | Uses unmapped address input, not a separate binary |
 | `fx_runtime_data_min` | Runtime data directory | Pair enumeration and startup validation | Contains curated language/compiler assets required for MVP |
+| `fx_corrupt_bin` | Corrupt/truncated binary | Binary load failure negative behavior | Truncated header; not a valid loadable target |
+
+Note: Fixture format (ELF binaries vs raw memory images) depends on ADR-001 scope resolution.
+Current IDs assume binary-file fixtures; names and content may be adjusted once the input model is decided.
 
 ## 2. Expected-Output Strategy
 

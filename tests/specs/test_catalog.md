@@ -42,8 +42,9 @@ assertions, oracle strategy, and determinism constraints.
 | --- | --- | --- | --- | --- | --- | --- |
 | N-001 | Invalid address hard failure | `fx_add_elf64` | Request decompile at unmapped/invalid address | Structured `invalid_address` error | Category/status oracle | Must not downgrade to warning-only success |
 | N-002 | Unsupported language id failure | `fx_add_elf64` | Request unknown language id | Structured `unsupported_target` error | Category/status oracle | No fallback language substitution |
-| N-003 | Unsupported compiler for valid language | `fx_add_elf64` | Request invalid compiler for known language | Structured `unsupported_target` or dedicated compiler error | Category/status oracle | No implicit compiler fallback |
+| N-003 | Unsupported compiler for valid language | `fx_add_elf64` | Request invalid compiler for known language | Structured `unsupported_target` error | Category/status oracle | No implicit compiler fallback |
 | N-004 | Corrupt/missing runtime data directory | runtime data fixture | Start session with broken data dir | Deterministic startup failure | Startup error oracle | Error category stable across runs |
+| N-005 | Binary load failure on invalid/corrupt input | `fx_corrupt_bin` or nonexistent path | Request decompile with unreadable/corrupt binary target | Structured `invalid_argument` error | Category/status oracle | Error category stable; message text may reference path |
 
 ## 6. Mapping to Source Documents
 
@@ -51,3 +52,4 @@ assertions, oracle strategy, and determinism constraints.
 - Public contract, runtime-data policy, and error semantics: `docs/specs.md`.
 - Milestones and release gates for deterministic behavior: `docs/roadmap.md`.
 - Startup/minimal-load, known-function, invalid-address, and jump-table expectations are consolidated into this catalog from baseline experiment findings.
+- Error category definitions and stability rules: `docs/specs.md` §3.4.

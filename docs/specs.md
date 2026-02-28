@@ -11,6 +11,10 @@ Primary sources used for this spec:
 - `notes/api/decompiler_inventory.md` (decompiler-facing callable contract)
 - Consolidated MVP contract and experiment findings captured directly in this spec and `tests/specs/test_catalog.md`
 
+Retired sources (content merged into this spec and test catalog):
+- `notes/api/mvp_contract.md` (former MVP contract draft; obsolete items listed in §8.2)
+- `notes/experiments/` (experiment findings captured as test definitions in `tests/specs/test_catalog.md`)
+
 Hard constraints:
 - In-process Python to native bridge is mandatory.
 - Installable from `pip` without requiring users to provide/build Ghidra.
@@ -40,7 +44,7 @@ Personas:
 - CI operator requiring deterministic decompilation checks across releases.
 
 Primary use cases:
-- Decompile one function by binary path + entry address.
+- Decompile one function by target specification + entry address (exact input model depends on ADR-001: memory image, binary path, or both).
 - Enumerate valid `(language_id, compiler_spec)` pairs shipped in runtime data.
 - Fail predictably on invalid addresses/unsupported language selection.
 - Run repeated decompiles in one process with isolated request state.
@@ -75,13 +79,16 @@ Derived from:
 ### 3.3 Data Model
 
 `DecompileRequest` fields:
-- `binary_path` (required)
 - `function_address` (required)
 - `language_id` (required)
 - `compiler_spec` (optional, explicit validation required)
 - `runtime_data_dir` (optional override)
 - `function_size_hint` (optional advisory)
 - `analysis_budget` (optional deterministic budget object)
+
+Note: Target input fields (how binary data/memory is supplied) depend on ADR-001 scope
+resolution. Option A requires memory-image input; Option B requires `binary_path`;
+Option C supports both. Fields above are stable regardless of scope decision.
 
 `DecompileResult` fields:
 - `c_code: str | None`
@@ -102,6 +109,12 @@ Derived from:
 - `category` (`invalid_argument`, `unsupported_target`, `invalid_address`, `decompile_failed`, `internal_error`)
 - `message`
 - `retryable` (bool)
+
+`VersionInfo` fields:
+- `ghidralib_version: str`
+- `upstream_tag: str`
+- `upstream_commit: str`
+- `runtime_data_revision: str`
 
 Derived from:
 - Consolidated MVP data and error contract in this specification.
@@ -166,7 +179,7 @@ Known limits at baseline:
 | Decompiler-facing capability | Public API behavior | User-visible contract |
 | --- | --- | --- |
 | Global startup and spec discovery | Session startup and runtime-data validation | Deterministic startup errors with actionable messages |
-| Language/compiler descriptions | `list_language_compilers()` | Enumerated pairs are valid and loadable |
+| Language/compiler descriptions | `list_language_compilers()` | Enumerated pairs are valid and loadable; native compiler-id fallback must be overridden to enforce hard-error semantics (§3.4) |
 | Function lookup/materialization | `decompile_function(request)` address targeting | Missing/invalid function target returns structured error category |
 | Action execution pipeline | Internal execution of request | Successful path yields `c_code` and optional warnings |
 | Warning propagation | `DecompileResult.warnings` | Warning codes are stable identifiers |
@@ -174,40 +187,176 @@ Known limits at baseline:
 
 ## 5. Architecture Decision Space (No Implementation Details)
 
-### 5.1 Option Set
+### 5.1 Structural Constraint: LoadImage Abstraction
 
-| Option | Description | Determinism | Performance | UX | Fixture burden | Packaging/Cross-platform risk |
-| --- | --- | --- | --- | --- | --- | --- |
-| A. Bytes + arch + function-level inputs | Caller provides low-level memory/function boundary context | High if caller supplies strong boundaries; variable otherwise | Good per-call overhead | Expert-heavy API | High (many synthetic edge fixtures) | Moderate (less loader dependence, more custom glue risk) |
-| B. Full binary/program loader path | Caller provides binary path + function address; library handles loading | High for standard binaries | Good warm-path; heavier cold start | Simple for most users | Moderate | Lower semantic risk; higher runtime artifact size |
-| C. Hybrid (B default + A advanced mode) | Default full-binary path with optional advanced low-level mode | High (default path); configurable advanced mode | Best long-term tradeoff | Best | Highest initial planning complexity | Highest design complexity but best extensibility |
+The decompiler's memory access is fully abstracted through a `LoadImage` interface
+(see `decompiler_inventory.md`). The decompiler does not include binary format parsers
+(ELF/PE/Mach-O); in Ghidra proper, format parsing is handled by the Java framework
+and exposed to the decompiler through `LoadImage`.
 
-### 5.2 Recommendation
+This means any binary-file-loading path requires sourcing or building format parsers
+outside the decompiler codebase. This is the single largest scope differentiator
+between options below.
 
-Recommended direction:
-- MVP: Option B.
-- Next: evolve to Option C once contract tests are stable and cross-platform packaging is proven.
+### 5.2 Option Set
 
-Rationale:
-- Matches existing validated experiment flow for known-function and jump-table decompilation.
-- Minimizes user-facing ambiguity around memory model and function reconstruction.
-- Keeps room for advanced low-level mode without destabilizing primary API.
+| Option | Description | Input model |
+| --- | --- | --- |
+| A. Memory + arch + function-level | Caller provides mapped memory region(s), architecture, and function entry point | Memory image or access callback, address, language/arch spec |
+| B. Full binary loader path | Caller provides binary file path and function address; library handles format parsing and loading | File path, address, language/arch spec |
+| C. Hybrid (A core + B convenience) | Memory-level API as foundational contract with optional binary-loading convenience layer | Either input model |
 
-Derived from:
-- Consolidated experiment findings in this specification and test catalog.
+#### Option A: Memory + Architecture + Function-Level
 
-### 5.3 Decision Points Requiring User Choice
+The caller provides a memory image (or memory-access abstraction) covering the relevant
+address space, selects the architecture/language, and specifies the function entry point.
 
-1. Keep MVP strictly Option B, or reserve public placeholders for future Hybrid mode now.
+Advantages:
+- Directly aligns with the decompiler's native `LoadImage` abstraction — minimal glue.
+- Smallest mandatory scope; no binary format parsing required in the library.
+- Best composability: callers who already have memory maps (from other tools, emulators,
+  debuggers, or custom loaders) use them directly without redundant re-loading.
+- Strongest determinism: fewer internal processing steps between input and decompilation.
+- Simplest packaging: no format-parser dependencies to ship or maintain.
+- Simplest cross-platform story: no platform-specific loader concerns.
+
+Disadvantages:
+- Higher caller burden: user must supply mapped memory, not just a file path.
+- No automatic section metadata (readonly regions) unless caller provides it.
+- No automatic symbol discovery from binary headers.
+- Function size hints may be needed for best results.
+
+Risks:
+- Decompiler quality may degrade if the caller-provided memory image is incomplete.
+  The decompiler may request reads at arbitrary addresses during analysis
+  (string references, pointer targets, vtable lookups), not just the target function bytes.
+- Users unfamiliar with memory layout concepts face a steeper learning curve.
+
+#### Option B: Full Binary Loader Path
+
+The library accepts a binary file path, internally parses the format, maps the binary
+into memory, and handles the decompilation transparently.
+
+Advantages:
+- Simplest user-facing API for the common case (decompile function from a file).
+- Can leverage format metadata (sections, symbols, relocations) for better quality.
+- Lower barrier for casual users.
+
+Disadvantages:
+- **Hidden constraint**: the decompiler does not include binary format parsers.
+  Implementing or integrating ELF/PE/Mach-O parsing is a significant scope increase
+  and ongoing maintenance burden independent of decompiler evolution.
+- Format parser code is security-sensitive (processes untrusted input) and a well-known
+  source of bugs; this adds attack surface disproportionate to the library's core purpose.
+- Larger packaging footprint and more platform-specific concerns.
+- Performance: cold-start cost includes format parsing and full memory mapping.
+- Reduced composability: callers who already have loaded binaries must re-load from disk.
+- Higher fixture complexity: tests need real binary files rather than minimal byte sequences.
+
+Risks:
+- Supporting multiple formats (ELF, PE, Mach-O) multiplies surface area; each format
+  is itself a complex specification with version-specific edge cases.
+- Format parser maintenance becomes a long-term obligation independent of decompiler updates.
+- Licensing constraints may apply to third-party parser libraries.
+
+#### Option C: Hybrid (A Core + B Convenience)
+
+Default API uses memory-level input (Option A). An optional convenience layer handles
+binary loading for common formats, delegating to the core memory-level API internally.
+
+Advantages:
+- Preserves Option A's simplicity and composability as the foundational contract.
+- Addresses Option B's UX advantage without coupling the core API to format parsing.
+- Convenience layer can be shipped as an optional dependency or separate module.
+- Clean separation: core API stability is independent of format-parser evolution.
+- Allows incremental format support without destabilizing the primary contract.
+
+Disadvantages:
+- Higher initial design complexity (two input paths, shared internals).
+- Convenience layer still carries the format-parsing scope of Option B, but isolated.
+- Risk of feature creep if users expect the convenience layer to be full-featured.
+
+Risks:
+- The convenience layer may become a de facto requirement if Option A proves too
+  burdensome, undermining the clean separation.
+- Two input paths may create user confusion about which is canonical.
+
+### 5.3 Comparative Analysis
+
+| Criterion | A (Memory+arch) | B (Full binary) | C (Hybrid) |
+| --- | --- | --- | --- |
+| Determinism | Highest | Moderate | Highest (core) |
+| Per-call performance | Best | Good warm / slow cold | Best (core) |
+| UX (file-based workflow) | Expert-oriented | Simplest | Good (both paths) |
+| UX (tool/pipeline integration) | Best | Weakest (re-load from disk) | Best |
+| Packaging complexity | Lowest | Highest | Moderate (optional parser) |
+| Cross-platform risk | Lowest | Highest | Low core / moderate convenience |
+| Fixture/test burden | Low (byte sequences) | High (real binaries) | Low core / moderate convenience |
+| Security surface area | Smallest | Largest | Small core / moderate convenience |
+| Upstream alignment | Direct (matches LoadImage) | Indirect (needs parsing layer) | Direct (core) |
+| Format parser obligation | None | Major ongoing | Optional, isolated |
+
+### 5.4 Blocking Points and Hidden Constraints
+
+1. **No built-in format parsers** (§5.1): The upstream decompiler provides only
+   the abstract `LoadImage` interface and a raw-memory implementation. Any binary-file
+   loading path (Option B, or C's convenience layer) requires sourcing format parsers
+   from outside the decompiler. This is the single largest architectural differentiator.
+
+2. **Memory completeness for decompiler quality**: The decompiler may read arbitrary
+   addresses during analysis, not just the target function bytes. Option A callers must
+   provide a sufficiently complete memory image for good results. The library should
+   document minimum coverage expectations and degrade gracefully on unavailable regions.
+
+3. **Section metadata impact**: Readonly section information enables decompiler
+   optimizations. Option A loses this unless the API provides a way to supply section
+   metadata alongside the memory image. This is a design detail for the Option A surface.
+
+4. **Symbol availability**: Format-aware loading (Option B / C convenience) can extract
+   symbols for better decompilation. Option A callers must supply symbol information
+   separately or accept reduced output quality for symbol-dependent analysis.
+
+5. **Architecture detection**: Option B can auto-detect architecture from binary headers.
+   Option A requires explicit caller specification. Not a blocker but affects UX.
+
+6. **Target persona alignment**: The primary personas (reverse engineers, security engineers,
+   CI operators) typically work with tools that already provide loaded memory and
+   architecture information. This reduces the practical UX burden of Option A relative
+   to the general case.
+
+### 5.5 Current Analysis and Open Decision (ADR-001)
+
+ADR-001 remains open. Current analysis leanings:
+
+- Option A is the strongest candidate for the core/foundational API: it directly matches
+  the decompiler's `LoadImage` abstraction, avoids the binary-parsing scope increase,
+  and provides the best determinism/composability/packaging properties.
+- Option C is the most appealing end-state: Option A as core contract with an optional
+  convenience layer for common binary formats. This preserves Option A's advantages
+  while addressing the UX gap for file-based workflows.
+- Option B as the sole API is the weakest choice given the format-parser hidden constraint.
+  The cost of implementing and maintaining format parsing is disproportionate to the UX
+  benefit, especially given the target personas' existing tooling.
+
+Decision still needed:
+- Whether MVP ships Option A only (simplest, fastest to stable contract), or Option C
+  from the start (more design work upfront, better long-term UX).
+- If Option C: whether the convenience layer is in-scope for MVP or deferred to Next.
+
+### 5.6 Decision Points Requiring User Choice
+
+1. **(ADR-001, open)** MVP scope model. Preferred direction: Option A as core API,
+   with Option C evolution planned. Alternatives: Option C from day one with convenience
+   layer deferred to post-MVP; or Option C from day one with convenience layer in MVP.
 2. Define strictness of decompilation failure semantics:
-- Recommended: invalid address always hard error.
-- Alternative: allow warning-only degraded output class.
+   - Recommended: invalid address always hard error.
+   - Alternative: allow warning-only degraded output class.
 3. Define determinism profile level:
-- Recommended: normalize metadata and warning codes only.
-- Alternative: enforce stronger canonical C formatting guarantees.
+   - Recommended: normalize metadata and warning codes only.
+   - Alternative: enforce stronger canonical C formatting guarantees.
 4. Choose default analysis budget behavior:
-- Recommended: bounded defaults with explicit override.
-- Alternative: unbounded analysis unless caller sets a budget.
+   - Recommended: bounded defaults with explicit override.
+   - Alternative: unbounded analysis unless caller sets a budget.
 
 ## 6. Stable Python API over Unstable Upstream Strategy
 
@@ -261,39 +410,6 @@ Extensibility:
 - Additive extension points via optional request fields and metadata keys.
 - Future backends or advanced modes must preserve baseline contract semantics.
 
-## 7.1 Bridge ABI Baseline (M5 Consolidation, Informative)
-
-The Python API remains the normative public contract. For implementation planning continuity,
-the frozen MVP bridge ABI baseline is captured here as an informative constraint:
-
-- Opaque context handle model (`ghl_context`) and explicit create/destroy lifecycle.
-- Decompile request/result boundary with explicit result-free operation.
-- Language/compiler pair enumeration and dedicated free operation.
-- Context-scoped last-error string pointer with next-call invalidation semantics.
-
-Frozen bridge status categories mapped to stable Python error taxonomy:
-- `OK`
-- `INVALID_ARGUMENT`
-- `INIT_FAILED`
-- `UNSUPPORTED_LANGUAGE`
-- `UNSUPPORTED_COMPILER`
-- `BINARY_LOAD_FAILED`
-- `FUNCTION_NOT_FOUND`
-- `INVALID_ADDRESS`
-- `DECOMPILE_FAILED`
-- `INTERNAL_ERROR`
-
-Frozen ownership/lifetime rules:
-- Context allocation is owned by caller after successful create; caller must destroy it.
-- Decompile output allocations are owned by caller and must be explicitly freed.
-- Enumerated language/compiler arrays and strings are owned by caller and must be explicitly freed.
-- Last-error pointer lifetime is limited to the next bridge API call on the same context.
-
-Operational constraints kept from M5:
-- No C++ exceptions cross the C ABI boundary.
-- Invalid/unmapped function address is a hard error path, not warning-only success.
-- Runtime data directory behavior is explicit: bundled default when unset, explicit override when provided.
-
 ## 8. MVP vs Next and Reconciliation Notes
 
 ### 8.1 MVP Commitments (Kept)
@@ -324,6 +440,7 @@ Operational constraints kept from M5:
 - Is canonicalized C output required as a hard contract, or only semantic/token-level stability?
 - Should analysis-budget defaults vary by platform or remain globally fixed?
 - How strict should package-size limits be for bundled runtime assets?
+- Should session-level failure categories (startup, initialization) be defined explicitly in the `GhidralibError` hierarchy, or is the current `ErrorItem` taxonomy sufficient?
 
 ## 10. Assumptions
 

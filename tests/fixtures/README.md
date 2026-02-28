@@ -6,6 +6,7 @@ Planned fixture IDs:
 - `fx_add_elf64`
 - `fx_switch_elf64`
 - `fx_runtime_data_min`
+- `fx_corrupt_bin`
 
 Manifest requirements when binaries are added:
 - fixture id
