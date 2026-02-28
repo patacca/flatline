@@ -47,6 +47,7 @@ Product policy:
 - Exit checks:
 - known-function and jump-table fixtures produce deterministic pass under oracle rules
 - invalid-address, unsupported-language/compiler produce structured failures
+- bridge ownership and lifetime contract verified by contract/integration definitions
 
 ### M3: Packaging and compliance complete
 - Inputs:

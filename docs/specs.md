@@ -261,6 +261,39 @@ Extensibility:
 - Additive extension points via optional request fields and metadata keys.
 - Future backends or advanced modes must preserve baseline contract semantics.
 
+## 7.1 Bridge ABI Baseline (M5 Consolidation, Informative)
+
+The Python API remains the normative public contract. For implementation planning continuity,
+the frozen MVP bridge ABI baseline is captured here as an informative constraint:
+
+- Opaque context handle model (`ghl_context`) and explicit create/destroy lifecycle.
+- Decompile request/result boundary with explicit result-free operation.
+- Language/compiler pair enumeration and dedicated free operation.
+- Context-scoped last-error string pointer with next-call invalidation semantics.
+
+Frozen bridge status categories mapped to stable Python error taxonomy:
+- `OK`
+- `INVALID_ARGUMENT`
+- `INIT_FAILED`
+- `UNSUPPORTED_LANGUAGE`
+- `UNSUPPORTED_COMPILER`
+- `BINARY_LOAD_FAILED`
+- `FUNCTION_NOT_FOUND`
+- `INVALID_ADDRESS`
+- `DECOMPILE_FAILED`
+- `INTERNAL_ERROR`
+
+Frozen ownership/lifetime rules:
+- Context allocation is owned by caller after successful create; caller must destroy it.
+- Decompile output allocations are owned by caller and must be explicitly freed.
+- Enumerated language/compiler arrays and strings are owned by caller and must be explicitly freed.
+- Last-error pointer lifetime is limited to the next bridge API call on the same context.
+
+Operational constraints kept from M5:
+- No C++ exceptions cross the C ABI boundary.
+- Invalid/unmapped function address is a hard error path, not warning-only success.
+- Runtime data directory behavior is explicit: bundled default when unset, explicit override when provided.
+
 ## 8. MVP vs Next and Reconciliation Notes
 
 ### 8.1 MVP Commitments (Kept)
