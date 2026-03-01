@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import pytest
 
-from flatline import DecompileRequest, DecompileResult, FunctionInfo, LanguageCompilerPair
+from flatline import (
+    DecompileRequest,
+    DecompileResult,
+    FunctionInfo,
+    InternalError,
+    LanguageCompilerPair,
+)
 from flatline import _bridge as bridge_module
 
 
@@ -122,6 +129,41 @@ class _NativeSessionInvalidSuccessShapeDouble:
         return None
 
 
+class _NativeSessionEmptyEnumerationDouble:
+    """Native-session double with empty enumeration output.
+
+    Used to verify runtime-data-backed fallback enumeration in bridge adapters.
+    """
+
+    def __init__(self) -> None:
+        self.decompile_calls = 0
+
+    def list_language_compilers(self) -> list[tuple[str, str]]:
+        return []
+
+    def decompile_function(self, request_payload: dict[str, Any]) -> dict[str, Any]:
+        self.decompile_calls += 1
+        return {
+            "c_code": None,
+            "function_info": None,
+            "warnings": [],
+            "error": {
+                "category": "internal_error",
+                "message": "native bridge skeleton: decompile pipeline not implemented",
+                "retryable": False,
+            },
+            "metadata": {
+                "decompiler_version": "0.1.0-dev",
+                "language_id": request_payload["language_id"],
+                "compiler_spec": request_payload["compiler_spec"] or "",
+                "diagnostics": {},
+            },
+        }
+
+    def close(self) -> None:
+        return None
+
+
 class _NativeModuleDouble:
     """Module-level test double exposing create_session."""
 
@@ -134,8 +176,34 @@ class _NativeModuleDouble:
         return self.native_session
 
 
+def _make_runtime_data_fixture(tmp_path: Path) -> Path:
+    """Create a synthetic runtime-data directory with one valid pair.
+
+    Includes one compiler entry whose backing spec file exists and one whose
+    spec file is missing, allowing existence filtering assertions.
+    """
+    runtime_dir = tmp_path / "runtime_data"
+    language_dir = runtime_dir / "languages"
+    language_dir.mkdir(parents=True)
+
+    (language_dir / "x86-gcc.cspec").write_text("<compiler_spec/>", encoding="ascii")
+    (language_dir / "x86.ldefs").write_text(
+        (
+            "<language_definitions>\n"
+            "  <language id=\"x86:LE:64:default\">\n"
+            "    <compiler name=\"gcc\" spec=\"x86-gcc.cspec\"/>\n"
+            "    <compiler name=\"broken\" spec=\"missing.cspec\"/>\n"
+            "  </language>\n"
+            "</language_definitions>\n"
+        ),
+        encoding="ascii",
+    )
+    return runtime_dir
+
+
 def test_u010_bridge_session_fallback_when_native_module_missing(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     """U-010: Missing native extension falls back to deterministic Python bridge."""
 
@@ -144,11 +212,16 @@ def test_u010_bridge_session_fallback_when_native_module_missing(
 
     monkeypatch.setattr(bridge_module.importlib, "import_module", _raise_import_error)
 
-    bridge_session = bridge_module.create_bridge_session(runtime_data_dir="/tmp/runtime")
+    runtime_dir = tmp_path / "runtime"
+    runtime_dir.mkdir()
+    bridge_session = bridge_module.create_bridge_session(runtime_data_dir=str(runtime_dir))
     assert isinstance(bridge_session, bridge_module._FallbackBridgeSession)
 
 
-def test_u011_bridge_session_adapts_native_payloads(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_u011_bridge_session_adapts_native_payloads(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
     """U-011: Native tuple/dict payloads are adapted to public model types."""
     native_session = _NativeSessionSuccessDouble()
     native_module = _NativeModuleDouble(native_session=native_session)
@@ -159,8 +232,10 @@ def test_u011_bridge_session_adapts_native_payloads(monkeypatch: pytest.MonkeyPa
         lambda _: native_module,
     )
 
-    bridge_session = bridge_module.create_bridge_session(runtime_data_dir="/tmp/runtime")
-    assert native_module.runtime_data_dir == "/tmp/runtime"
+    runtime_dir = tmp_path / "runtime"
+    runtime_dir.mkdir()
+    bridge_session = bridge_module.create_bridge_session(runtime_data_dir=str(runtime_dir))
+    assert native_module.runtime_data_dir == str(runtime_dir)
 
     pairs = bridge_session.list_language_compilers()
     assert pairs == [LanguageCompilerPair(language_id="x86:LE:64:default", compiler_spec="gcc")]
@@ -278,3 +353,69 @@ def test_u012_bridge_session_normalizes_native_exceptions(monkeypatch: pytest.Mo
     assert result.function_info is None
     assert result.c_code is None
     assert result.metadata["language_id"] == request.language_id
+
+
+def test_u013_bridge_enumerates_runtime_data_when_native_module_missing(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """U-013: Fallback bridge enumerates runtime-data language/compiler pairs."""
+
+    def _raise_import_error(_: str) -> Any:
+        raise ImportError("module not found")
+
+    monkeypatch.setattr(bridge_module.importlib, "import_module", _raise_import_error)
+
+    runtime_dir = _make_runtime_data_fixture(tmp_path)
+    bridge_session = bridge_module.create_bridge_session(runtime_data_dir=str(runtime_dir))
+
+    pairs = bridge_session.list_language_compilers()
+
+    assert pairs == [LanguageCompilerPair(language_id="x86:LE:64:default", compiler_spec="gcc")]
+
+
+def test_u013_bridge_uses_runtime_data_when_native_enumeration_is_empty(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """U-013: Native adapter falls back to runtime-data enumeration when needed."""
+    runtime_dir = _make_runtime_data_fixture(tmp_path)
+    native_session = _NativeSessionEmptyEnumerationDouble()
+    native_module = _NativeModuleDouble(native_session=native_session)
+    monkeypatch.setattr(bridge_module.importlib, "import_module", lambda _: native_module)
+
+    bridge_session = bridge_module.create_bridge_session(runtime_data_dir=str(runtime_dir))
+
+    pairs = bridge_session.list_language_compilers()
+    assert pairs == [LanguageCompilerPair(language_id="x86:LE:64:default", compiler_spec="gcc")]
+
+    request = DecompileRequest(
+        memory_image=b"\x90\xc3",
+        base_address=0x1000,
+        function_address=0x1000,
+        language_id="x86:LE:64:default",
+        compiler_spec="gcc",
+    )
+    result = bridge_session.decompile_function(request)
+
+    assert result.error is not None
+    assert result.error.category == "internal_error"
+    assert native_session.decompile_calls == 1
+
+
+def test_u014_bridge_rejects_missing_runtime_data_dir(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """U-014: Session startup fails deterministically for missing runtime_data_dir."""
+
+    def _raise_import_error(_: str) -> Any:
+        raise ImportError("module not found")
+
+    monkeypatch.setattr(bridge_module.importlib, "import_module", _raise_import_error)
+
+    missing_dir = tmp_path / "does-not-exist"
+    with pytest.raises(InternalError) as exc_info:
+        bridge_module.create_bridge_session(runtime_data_dir=str(missing_dir))
+
+    assert "runtime_data_dir does not exist" in exc_info.value.message

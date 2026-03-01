@@ -284,7 +284,7 @@ Known limits at baseline:
 | Decompiler-facing capability | Public API behavior | User-visible contract |
 | --- | --- | --- |
 | Global startup and spec discovery | Session startup and runtime-data validation | Deterministic startup errors with actionable messages |
-| Language/compiler descriptions | `list_language_compilers()` | Enumerated pairs are valid and loadable; bridge must validate compiler IDs against enumerated set before native call, since `LanguageDescription::getCompiler()` silently falls back to first/default compiler for unknown IDs (§3.4) |
+| Language/compiler descriptions | `list_language_compilers()` | Enumerated pairs are valid and loadable; bridge must validate compiler IDs against enumerated set before native call, since `LanguageDescription::getCompiler()` silently falls back to first/default compiler for unknown IDs (§3.4). If native enumeration is unavailable, bridge derives pairs from runtime-data `.ldefs` entries and filters compiler entries that do not have backing spec files. |
 | Function lookup/materialization | `decompile_function(request)` address targeting | Missing/invalid function target returns structured error category |
 | Action execution pipeline | Internal execution of request | Successful path yields `c_code` and optional warnings |
 | Post-decompile structured data (Funcdata, FuncProto, Scope, Types) | `DecompileResult.function_info` | Structured function metadata, prototype, variables, call sites, jump tables, diagnostics extracted field-by-field at bridge boundary (not via XML serialization) |

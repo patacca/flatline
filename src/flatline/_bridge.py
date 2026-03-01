@@ -29,6 +29,7 @@ from flatline._models import (
     VariableInfo,
     WarningItem,
 )
+from flatline._runtime_data import enumerate_runtime_data_language_compilers
 from flatline._version import __version__
 
 if TYPE_CHECKING:
@@ -57,8 +58,14 @@ class _FallbackBridgeSession:
     internal_error responses for unimplemented native operations.
     """
 
-    def __init__(self, runtime_data_dir: str | None = None) -> None:
+    def __init__(
+        self,
+        runtime_data_dir: str | None = None,
+        *,
+        runtime_data_pairs: Sequence[LanguageCompilerPair] = (),
+    ) -> None:
         self._runtime_data_dir = runtime_data_dir
+        self._runtime_data_pairs = tuple(runtime_data_pairs)
         self._closed = False
 
     def close(self) -> None:
@@ -67,7 +74,7 @@ class _FallbackBridgeSession:
     def list_language_compilers(self) -> list[LanguageCompilerPair]:
         if self._closed:
             return []
-        return []
+        return list(self._runtime_data_pairs)
 
     def decompile_function(self, request: DecompileRequest) -> DecompileResult:
         if self._closed:
@@ -83,8 +90,14 @@ class _NativeBridgeSession:
     boundary so the public API remains contract-shaped.
     """
 
-    def __init__(self, native_session: Any) -> None:
+    def __init__(
+        self,
+        native_session: Any,
+        *,
+        runtime_data_pairs: Sequence[LanguageCompilerPair] = (),
+    ) -> None:
         self._native_session = native_session
+        self._runtime_data_pairs = tuple(runtime_data_pairs)
 
     def close(self) -> None:
         self._native_session.close()
@@ -92,7 +105,10 @@ class _NativeBridgeSession:
     def list_language_compilers(self) -> list[LanguageCompilerPair]:
         try:
             raw_pairs = self._native_session.list_language_compilers()
-            return [_coerce_language_compiler_pair(item) for item in raw_pairs]
+            native_pairs = [_coerce_language_compiler_pair(item) for item in raw_pairs]
+            if native_pairs:
+                return native_pairs
+            return list(self._runtime_data_pairs)
         except Exception as exc:  # pragma: no cover - exercised with bridge doubles
             raise InternalError(f"native list_language_compilers failed: {exc}") from exc
 
@@ -559,12 +575,19 @@ def create_bridge_session(runtime_data_dir: str | None = None) -> BridgeSession:
     Tries to use a compiled native bridge when available. Falls back to a
     deterministic pure-Python skeleton implementation otherwise.
     """
+    runtime_data_pairs = enumerate_runtime_data_language_compilers(runtime_data_dir)
     try:
         native_bridge = importlib.import_module("flatline._flatline_native")
     except ImportError:
-        return _FallbackBridgeSession(runtime_data_dir=runtime_data_dir)
+        return _FallbackBridgeSession(
+            runtime_data_dir=runtime_data_dir,
+            runtime_data_pairs=runtime_data_pairs,
+        )
     try:
         native_session = native_bridge.create_session(runtime_data_dir)
     except Exception as exc:
         raise InternalError(f"native bridge session startup failed: {exc}") from exc
-    return _NativeBridgeSession(native_session)
+    return _NativeBridgeSession(
+        native_session,
+        runtime_data_pairs=runtime_data_pairs,
+    )

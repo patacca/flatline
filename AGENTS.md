@@ -8,8 +8,9 @@
 - Public API: `DecompilerSession` lifecycle + one-shot operation wrappers (`_session.py`); data models and error hierarchy in `_models.py` / `_errors.py`.
 - Bridge: nanobind C++ extension (`_flatline_native.cpp`) built via optional Meson `native_bridge` feature (`auto` default); Python fallback in `_bridge.py`. Bridge normalizes native tuple/dict payloads to public dataclasses and maps exceptions to structured `internal_error` results.
 - Bridge now pre-validates requested `language_id` / `compiler_spec` against enumerated pairs before native decompile calls and returns structured `unsupported_target` on mismatch (no silent fallback); malformed native "success" payloads are normalized to structured `internal_error`.
+- Bridge startup now validates `runtime_data_dir` path existence and supports runtime-data-backed pair enumeration fallback (`.ldefs` parsing with backing spec-file filtering) when native pair listing is missing/empty.
 - Build toolchain dependencies stay in `build-system.requires` (no user-facing `native` extra); native-dependent pytest items use `@pytest.mark.requires_native` and auto-skip with an actionable reason when `flatline._flatline_native` is unavailable.
-- Next: real Ghidra lifecycle (`startDecompilerLibrary`, architecture init, `LoadImage`) and bridge-backed live enumeration/decompile behavior.
+- Next: replace skeleton native startup/decompile path with real Ghidra lifecycle (`startDecompilerLibrary`, architecture init, `LoadImage`) while preserving current bridge-level validation/enumeration guarantees.
 
 # Non-goals
 - Not a general Ghidra automation framework; only exposes the decompiler surface.
@@ -61,6 +62,7 @@
 - `src/flatline/` — installable Python package (src layout).
 - `src/flatline/_session.py` — `DecompilerSession` lifecycle + one-shot operation wrappers.
 - `src/flatline/_bridge.py` — internal bridge session protocol + fallback bridge implementation.
+- `src/flatline/_runtime_data.py` — runtime-data discovery/validation helpers for language/compiler pair enumeration.
 - `src/flatline/_flatline_native.cpp` — nanobind extension skeleton source (wired via optional Meson `native_bridge` feature).
 - `docs/` — specs, roadmap, planning artifacts.
 - `notes/api/decompiler_inventory.md` — 18 required callable symbols with inputs/outputs, init order, thread-safety.
@@ -87,9 +89,9 @@
 - **Run single test:** `tox -e py313,py314 -- tests/unit/test_models.py::test_name -v`
 
 # Tests
-- 20 tests passing (14 unit, 6 contract); 16 native-dependent spec placeholders currently skip at runtime while integration assertions are still skeleton-only.
+- 23 tests passing (17 unit, 6 contract); 16 native-dependent spec placeholders currently skip at runtime while integration assertions are still skeleton-only.
 - `tests/conftest.py` — shared configuration; auto-applies category markers from directory names.
-- `tests/specs/test_catalog.md` — 34 test definitions across 5 categories + contract-clause-to-test traceability matrix.
+- `tests/specs/test_catalog.md` — 36 test definitions across 5 categories + contract-clause-to-test traceability matrix.
 - `tests/specs/fixtures.md` — 10 fixture definitions, oracle strategy, determinism rules.
 - 5 pytest skeleton files under `tests/{unit,contract,integration,regression,negative}/`.
 

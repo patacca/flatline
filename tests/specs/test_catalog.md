@@ -19,6 +19,8 @@ assertions, oracle strategy, and determinism constraints.
 | U-010 | Validate missing native-module fallback | None | Simulate native extension import failure when creating bridge session | Deterministic fallback bridge is selected | Runtime-selection oracle | Missing native extension does not crash import path |
 | U-011 | Validate native bridge payload adaptation | None | Feed tuple/dict-shaped native payloads through bridge adapter | Public API receives `LanguageCompilerPair` and `DecompileResult` objects with expected values | Boundary-shape oracle | Bridge enforces stable Python value types at the boundary |
 | U-012 | Validate native exception normalization | None | Simulate native exception during decompile | Returns structured `internal_error` result (no leaked native exception) | Error-envelope oracle | Native bridge failures are deterministic and contract-shaped |
+| U-013 | Validate runtime-data-backed language/compiler enumeration fallback | Synthetic runtime-data fixture (`.ldefs` + `.cspec`) | Enumerate pairs through bridge when native enumeration is unavailable/empty | Returns only valid `(language_id, compiler_spec)` pairs with existing backing spec files; native decompile validation uses the fallback pair set | Runtime-data enumeration oracle | Pair selection is deterministic and excludes entries with missing backing assets |
+| U-014 | Validate startup rejection for missing runtime_data_dir | None | Start bridge session with a non-existent `runtime_data_dir` | Deterministic startup failure with structured `internal_error` exception | Startup-path oracle | Missing runtime-data path never degrades to an empty/implicit default |
 
 ## 2. Contract Tests
 
@@ -66,7 +68,7 @@ assertions, oracle strategy, and determinism constraints.
 
 | Spec clause (specs.md) | Contract requirement | Test IDs |
 | --- | --- | --- |
-| §3.2 `list_language_compilers()` | Enumerate valid pairs from runtime data | I-002 |
+| §3.2 `list_language_compilers()` | Enumerate valid pairs from runtime data | I-002, U-013 |
 | §3.2 `decompile_function(request)` | Decompile one function; no native exceptions leak | I-001, I-005, I-006, U-009, U-012 |
 | §3.1 `DecompilerSession` lifecycle | Long-lived session owns lifecycle of one bridge/native context | U-007, U-008, C-005 |
 | §3.2 top-level operation wrappers | Public operation callables are exposed from package root | C-006 |
@@ -100,7 +102,7 @@ assertions, oracle strategy, and determinism constraints.
 | Regression: simple function | Normalized output stable | R-001 |
 | Regression: jump-table | Switch structure + jump table data stable | R-002 |
 | Regression: multi-ISA | Per-ISA baselines stable | R-004 |
-| Runtime data dir broken | Deterministic startup failure | N-004 |
+| Runtime data dir broken | Deterministic startup failure | N-004, U-014 |
 
 ## 7. Mapping to Source Documents
 

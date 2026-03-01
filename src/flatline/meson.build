@@ -3,6 +3,7 @@ py.install_sources(
   '_bridge.py',
   '_errors.py',
   '_models.py',
+  '_runtime_data.py',
   '_session.py',
   '_version.py',
   subdir: 'flatline',
