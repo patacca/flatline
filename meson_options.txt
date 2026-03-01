@@ -1,0 +1,6 @@
+option(
+  'native_bridge',
+  type: 'feature',
+  value: 'auto',
+  description: 'Build the nanobind native bridge extension when dependency is available',
+)

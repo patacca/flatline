@@ -16,6 +16,9 @@ assertions, oracle strategy, and determinism constraints.
 | U-007 | Validate session lifecycle semantics | None | Open/close a DecompilerSession via context manager and explicit close | Session closes deterministically and close() is idempotent | Lifecycle-state oracle | Closed state transitions are deterministic |
 | U-008 | Validate closed-session rejection behavior | None | Close session, then call list/decompile methods | Calls fail with `invalid_argument` | Error-category oracle | Closed session never performs bridge operations |
 | U-009 | Validate session-to-bridge delegation | None | Use a bridge test double and call list/decompile through session | Session forwards calls and request payload unchanged | Delegation oracle | Bridge call shape is stable |
+| U-010 | Validate missing native-module fallback | None | Simulate native extension import failure when creating bridge session | Deterministic fallback bridge is selected | Runtime-selection oracle | Missing native extension does not crash import path |
+| U-011 | Validate native bridge payload adaptation | None | Feed tuple/dict-shaped native payloads through bridge adapter | Public API receives `LanguageCompilerPair` and `DecompileResult` objects with expected values | Boundary-shape oracle | Bridge enforces stable Python value types at the boundary |
+| U-012 | Validate native exception normalization | None | Simulate native exception during decompile | Returns structured `internal_error` result (no leaked native exception) | Error-envelope oracle | Native bridge failures are deterministic and contract-shaped |
 
 ## 2. Contract Tests
 
@@ -64,7 +67,7 @@ assertions, oracle strategy, and determinism constraints.
 | Spec clause (specs.md) | Contract requirement | Test IDs |
 | --- | --- | --- |
 | §3.2 `list_language_compilers()` | Enumerate valid pairs from runtime data | I-002 |
-| §3.2 `decompile_function(request)` | Decompile one function; no native exceptions leak | I-001, I-005, I-006, U-009 |
+| §3.2 `decompile_function(request)` | Decompile one function; no native exceptions leak | I-001, I-005, I-006, U-009, U-012 |
 | §3.1 `DecompilerSession` lifecycle | Long-lived session owns lifecycle of one bridge/native context | U-007, U-008, C-005 |
 | §3.2 top-level operation wrappers | Public operation callables are exposed from package root | C-006 |
 | §3.2 `get_version_info()` | Report flatline + upstream pin metadata | C-003 |
@@ -92,6 +95,7 @@ assertions, oracle strategy, and determinism constraints.
 | §3.5 Additive fields only in minor | Schema stability | C-001, C-004 |
 | §7 Session isolation | No cross-session leakage | I-003 |
 | §7 Startup determinism | Repeatable startup under pinned upstream | I-004 |
+| §6 Bridge contract layer | Bridge boundary translates native payloads into stable Python contract objects | U-010, U-011 |
 | §7 Performance budget | p95 latency within threshold | R-003 |
 | Regression: simple function | Normalized output stable | R-001 |
 | Regression: jump-table | Switch structure + jump table data stable | R-002 |

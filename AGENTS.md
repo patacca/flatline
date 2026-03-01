@@ -5,10 +5,12 @@
 # Overview
 - Pip-installable Python wrapper around the Ghidra C++ decompiler, bundling runtime assets. Multi-ISA.
 - Phase P0 (Spec Lock) is **complete**.
-- Phase P1 (Contract Test Harness) is **complete** — 31 test definitions, 10 fixtures, contract traceability matrix, ADRs resolved.
+- Phase P1 (Contract Test Harness) is **complete** — 34 test definitions, 10 fixtures, contract traceability matrix, ADRs resolved.
 - **Phase P2 (Linux MVP delivery) — in progress.** P2-Step-1 complete: Python data models, error hierarchy.
 - P2-Step-2 skeleton landed: public `DecompilerSession` lifecycle API, internal bridge-session abstraction, and nanobind C++ skeleton source (`_flatline_native.cpp`) including a LoadImage-like memory reader helper.
-- Next: wire native build integration + real Ghidra lifecycle (`startDecompilerLibrary`, architecture init, real `LoadImage`, bridge-backed list/decompile paths).
+- Bridge adapter now normalizes native tuple/dict payloads into public dataclasses and maps native decompile exceptions to structured `internal_error` results.
+- Meson native build wiring landed behind feature option `native_bridge` (`auto` default); `_flatline_native` builds when `nanobind` dependency is available.
+- Next: implement real Ghidra lifecycle (`startDecompilerLibrary`, architecture init, real `LoadImage`) and bridge-backed live enumeration/decompile behavior.
 
 # Non-goals
 - Not a general Ghidra automation framework; only exposes the decompiler surface.
@@ -54,10 +56,11 @@
 # Repo structure (non-vendored)
 - `pyproject.toml` — project metadata, tool settings (pytest, ruff). Build backend: `meson-python`.
 - `meson.build` (root) + `src/flatline/meson.build` — meson build definitions.
+- `meson_options.txt` — meson feature flags (`native_bridge` for optional nanobind extension build).
 - `src/flatline/` — installable Python package (src layout).
 - `src/flatline/_session.py` — `DecompilerSession` lifecycle + one-shot operation wrappers.
 - `src/flatline/_bridge.py` — internal bridge session protocol + fallback bridge implementation.
-- `src/flatline/_flatline_native.cpp` — nanobind extension skeleton source (not yet wired into build).
+- `src/flatline/_flatline_native.cpp` — nanobind extension skeleton source (wired via optional Meson `native_bridge` feature).
 - `docs/` — specs, roadmap, planning artifacts.
 - `notes/api/decompiler_inventory.md` — 18 required callable symbols with inputs/outputs, init order, thread-safety.
 - `notes/r2ghidra/integration_map.md` — 5-section integration analysis; classifies each block as reusable / reimplement / skip. Keep as a reference implementation only.
@@ -78,9 +81,9 @@
 - **Run single test:** `tox -e py313,py314 -- tests/unit/test_models.py::test_name -v`
 
 # Tests
-- 15 tests passing (9 unit, 6 contract); 16 still skip-decorated (need native bridge runtime wiring).
+- 18 tests passing (12 unit, 6 contract); 16 still skip-decorated (need native bridge runtime wiring).
 - `tests/conftest.py` — shared configuration; auto-applies category markers from directory names.
-- `tests/specs/test_catalog.md` — 31 test definitions across 5 categories + contract-clause-to-test traceability matrix.
+- `tests/specs/test_catalog.md` — 34 test definitions across 5 categories + contract-clause-to-test traceability matrix.
 - `tests/specs/fixtures.md` — 10 fixture definitions, oracle strategy, determinism rules.
 - 5 pytest skeleton files under `tests/{unit,contract,integration,regression,negative}/`.
 

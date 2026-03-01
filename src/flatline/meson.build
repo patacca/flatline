@@ -8,6 +8,16 @@ py.install_sources(
   subdir: 'flatline',
 )
 
-# P2-Step-2 native bridge source is tracked in-repo but not built yet.
-# The extension build wiring will be enabled once nanobind toolchain
-# integration is finalized in this repository.
+native_bridge_opt = get_option('native_bridge')
+nanobind_dep = dependency('nanobind', required: native_bridge_opt)
+
+if nanobind_dep.found()
+  py.extension_module(
+    '_flatline_native',
+    '_flatline_native.cpp',
+    dependencies: [nanobind_dep],
+    cpp_args: ['-std=c++17'],
+    install: true,
+    subdir: 'flatline',
+  )
+endif
