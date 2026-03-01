@@ -13,6 +13,7 @@ license = "Apache-2.0"
 dev = [
     "pytest >= 8.0",
     "ruff >= 0.9",
+    "tox >= 4.0",
 ]
 
 # -- pytest ----------------------------------------------------------------
@@ -48,3 +49,24 @@ select = [
 
 [tool.ruff.lint.isort]
 known-first-party = ["ghidralib"]
+
+# -- tox -------------------------------------------------------------------
+[tool.tox]
+requires = ["tox >= 4.0"]
+env_list = ["py313", "py314", "lint"]
+
+[tool.tox.env_run_base]
+deps = [".[dev]"]
+commands = [
+    ["pytest", { replace = "posargs", default = ["-ra"], extend = true }],
+]
+
+[tool.tox.env.lint]
+deps = [".[dev]"]
+commands = [["ruff", "check", "src/", "tests/"]]
+
+[tool.tox.env.py313]
+base_python = ["python3.13"]
+
+[tool.tox.env.py314]
+base_python = ["python3.14"]
