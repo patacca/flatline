@@ -18,6 +18,6 @@ def test_r003_latency_budget_regression_guard():
 
 @pytest.mark.skip(reason="Spec-only skeleton; no runtime integration in this phase")
 def test_r004_multi_isa_regression_baselines():
-    """R-004: Per-ISA regression baselines (ARM64, RISC-V 64, MIPS32) remain stable.
+    """R-004: Per-ISA regression baselines (x86_32, ARM64, RISC-V 64, MIPS32) remain stable.
     Output matches normalized ISA-specific baseline. Parameterized over
-    fx_add_arm64, fx_add_riscv64, fx_add_mips32 fixtures."""
+    fx_add_elf32, fx_add_arm64, fx_add_riscv64, fx_add_mips32 fixtures."""

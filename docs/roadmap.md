@@ -103,14 +103,14 @@ and release activities require distinct checkpoints.
 | ADR title | Question answered | Needed by |
 | --- | --- | --- |
 | ADR-001 Public Scope Model | What is the MVP input model: memory+arch (A), full-binary (B), or hybrid (C)? **Decided: Option A for MVP.** See `specs.md` §5.5. | End of P0 (decided) |
-| ADR-002 Bridge Surface Stability | What exact boundary is considered stable API vs internal? | End of P1 |
-| ADR-003 Determinism Oracle Level | How strict should C output comparison be (canonical text vs semantic tokens)? | End of P1 |
+| ADR-002 Bridge Surface Stability | What exact boundary is considered stable API vs internal? | Start of P2 (deferred from P1: requires implementation context to enumerate bridge boundary; public Python API contract in `specs.md` §3 is sufficient for P1 test definitions) |
+| ADR-003 Determinism Oracle Level | How strict should C output comparison be (canonical text vs semantic tokens)? **Decided: normalized token/structure comparison, not canonical text.** See `tests/specs/fixtures.md` §2. | End of P1 (decided) |
 | ADR-004 Runtime Asset Policy | Which language/compiler assets per ISA are mandatory for MVP package? Must address: priority ISA full bundles, non-priority ISA inclusion/exclusion criteria, and package size budget. | End of P2 |
 | ADR-005 Analysis Budget Defaults | What are default time/resource limits per request? | End of P2 |
 | ADR-006 Logging and Redaction | Which diagnostic fields are emitted and redacted by default? | End of P2 |
 | ADR-007 License Compliance Process | What release-time checks are mandatory for redistribution? | End of P3 |
 | ADR-008 Cross-Platform Order | macOS-first or Windows-first after Linux host MVP? | Start of P6 |
-| ADR-009 ISA Variant Scope | Which ISA variants (e.g., Thumb/Thumb-2, microMIPS, RV32 vs RV64 extensions) are in-scope for priority fixture coverage vs best-effort? | End of P1 |
+| ADR-009 ISA Variant Scope | Which ISA variants (e.g., Thumb/Thumb-2, microMIPS, RV32 vs RV64 extensions) are in-scope for priority fixture coverage vs best-effort? **Decided: x86 has both 32-bit and 64-bit fixture coverage; other ISA families have one representative variant each — ARM64 (AArch64), RISC-V 64, MIPS32 — for diverse bitwidth coverage.** Other variants (ARM32/Thumb, RV32, MIPS64, microMIPS) are best-effort with no dedicated fixtures. See `tests/specs/fixtures.md` §1. | End of P1 (decided) |
 
 ## 5. Release and Versioning Plan
 

@@ -5,7 +5,9 @@
 # Overview
 - Pip-installable Python wrapper around the Ghidra C++ decompiler, bundling runtime assets. Multi-ISA.
 - Spec-first; no production code yet.
-- Phase P0 (Spec Lock) is **in progress**; consistency fixes applied, pending user acceptance to exit P0.
+- Phase P0 (Spec Lock) is **complete**.
+- Phase P1 (Contract Test Harness) is **complete** — 26 test definitions, 10 fixtures, contract traceability matrix, ADRs resolved.
+- **Next phase: P2 (Linux MVP delivery).**
 
 # Non-goals
 - Not a general Ghidra automation framework; only exposes the decompiler surface.
@@ -33,7 +35,10 @@
   - Users provide `memory_image` + `base_address`, not file paths.
   - Convenience layer (binary file → memory → decompile) deferred to post-MVP.
   - Full rationale in `docs/specs.md` §5.5.
-- ADR-002 through ADR-008: unresolved (see `docs/roadmap.md` for schedule).
+- **ADR-003 (Determinism Oracle Level): DECIDED** — Normalized token/structure comparison, not canonical text.
+- **ADR-009 (ISA Variant Scope): DECIDED** — x86 32+64; ARM64, RISC-V 64, MIPS32; others best-effort.
+- ADR-002 (Bridge Surface): Deferred to start of P2.
+- ADR-004 through ADR-008: unresolved (see `docs/roadmap.md` for schedule).
 
 # Source of truth
 - `docs/specs.md` — SDD: API contract, data models, error taxonomy, cross-cutting requirements.
@@ -50,8 +55,8 @@
 
 # Tests
 - All tests are definitions-only; no live integration yet.
-- `tests/specs/test_catalog.md` — 24 test definitions across 5 categories (unit, contract, integration, regression, negative).
-- `tests/specs/fixtures.md` — fixture strategy with determinism rules and oracle approach.
+- `tests/specs/test_catalog.md` — 26 test definitions across 5 categories + contract-clause-to-test traceability matrix.
+- `tests/specs/fixtures.md` — 10 fixture definitions, oracle strategy, determinism rules.
 - 5 pytest skeleton files under `tests/{unit,contract,integration,regression,negative}/`.
 
 # Vendored upstream

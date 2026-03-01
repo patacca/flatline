@@ -12,11 +12,13 @@
 | `fx_add_arm64` | Memory image (AArch64) | Multi-ISA known-function path (ARM) | Raw memory extracted from simple arithmetic function; ARM AArch64 |
 | `fx_add_riscv64` | Memory image (RISC-V 64) | Multi-ISA known-function path (RISC-V) | Raw memory extracted from simple arithmetic function; RISC-V 64-bit |
 | `fx_add_mips32` | Memory image (MIPS32) | Multi-ISA known-function path (MIPS) | Raw memory extracted from simple arithmetic function; MIPS 32-bit |
+| `fx_add_elf32` | Memory image (x86_32) | x86 32-bit bitwidth coverage | Raw memory extracted from simple arithmetic function ELF; x86 32-bit; validates x86 family has both 32-bit and 64-bit fixture coverage |
+| `fx_warning_elf64` | Memory image (x86_64) | Warning-inducing decompilation | Raw memory extracted from function with unreachable blocks, unimplemented instructions, or other warning-triggering patterns; used to validate warning-only success path and WarningItem structure |
 
 Fixture format resolved by ADR-001 (Option A: memory + architecture + function-level).
 Fixtures are raw memory images with accompanying metadata (base address, architecture).
 Source binaries (ELF) are used during fixture generation but are not runtime test inputs.
-Multi-ISA fixtures cover one known function per non-x86 priority ISA to satisfy M1 per-ISA coverage requirement.
+Multi-ISA fixtures cover representative variants per ISA family: x86 (32+64), ARM64, RISC-V 64, MIPS32 (ADR-009).
 
 ## 2. Expected-Output Strategy
 

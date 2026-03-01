@@ -27,3 +27,11 @@ def test_u005_function_info_fields_from_stub():
 
     Validates: FunctionInfo required fields present; DiagnosticFlags aggregation
     matches individual flag values; TypeInfo metatype is a valid stable string."""
+
+
+@pytest.mark.skip(reason="Spec-only skeleton; no runtime integration in this phase")
+def test_u006_analysis_budget_passthrough():
+    """U-006: analysis_budget is accepted and passed through; omission does not error.
+
+    Validates: Request with analysis_budget makes the budget value available to
+    the bridge layer. Request without analysis_budget succeeds without error."""

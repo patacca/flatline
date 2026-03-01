@@ -549,8 +549,12 @@ Extensibility:
 
 ## 9. Open Questions
 
-- Should warning codes be globally namespaced now to prevent future collisions? (Deferred to P1 per ADR-003; initial codes will be defined when determinism oracle level is decided.)
-- Is canonicalized C output required as a hard contract, or only semantic/token-level stability?
+Resolved:
+- ~~Is canonicalized C output required as a hard contract, or only semantic/token-level stability?~~ **Resolved (ADR-003):** Normalized token/structure comparison, not canonical text. See `tests/specs/fixtures.md` §2.
+- ~~For multi-ISA fixture variants: ARM64 vs ARM32? MIPS32 vs MIPS64?~~ **Resolved (ADR-009):** x86 gets both 32-bit and 64-bit fixture coverage; other ISA families have one representative variant each — ARM64, RISC-V 64, MIPS32 — for diverse bitwidth coverage. Other variants best-effort. See `tests/specs/fixtures.md` §1.
+
+Open:
+- Should warning codes be globally namespaced now to prevent future collisions? (Initial codes will be defined during P2 implementation.)
 - Should analysis-budget defaults vary by platform or target ISA, or remain globally fixed?
 - How strict should package-size limits be for bundled runtime assets, given the multi-ISA asset footprint?
 - Should session-level failure categories (startup, initialization) be defined explicitly in the `GhidralibError` hierarchy, or is the current `ErrorItem` taxonomy sufficient?
@@ -559,7 +563,6 @@ Extensibility:
 - Should `TypeInfo` expose sub-type details (struct fields, array element type, pointer target) in MVP, or is the flat `name`/`size`/`metatype` sufficient? (Affects `TypeInfo` definition and bridge complexity.)
 - Should `CallSiteInfo` include a `callee_name` field when the target is a known function symbol? (Affects bridge scope.)
 - Should `JumpTableInfo` include an `is_complete` flag for partial recovery? (Affects test assertions.)
-- For multi-ISA fixture variants: ARM64 vs ARM32? MIPS32 vs MIPS64? Current proposal: ARM64/RISC-V64/MIPS32 for diverse bitwidth coverage.
 
 ## 10. Assumptions
 
