@@ -103,7 +103,7 @@ and release activities require distinct checkpoints.
 | ADR title | Question answered | Needed by |
 | --- | --- | --- |
 | ADR-001 Public Scope Model | What is the MVP input model: memory+arch (A), full-binary (B), or hybrid (C)? **Decided: Option A for MVP.** See `specs.md` §5.5. | End of P0 (decided) |
-| ADR-002 Bridge Surface Stability | What exact boundary is considered stable API vs internal? | Start of P2 (deferred from P1: requires implementation context to enumerate bridge boundary; public Python API contract in `specs.md` §3 is sufficient for P1 test definitions) |
+| ADR-002 Bridge Surface Stability | What exact boundary is considered stable API vs internal? **Decided: nanobind C++ extension module.** Stable boundary is the public Python API (`specs.md` §3); the nanobind extension and all C++ bridge code are unstable internals. See `specs.md` §6. | Start of P2 (decided) |
 | ADR-003 Determinism Oracle Level | How strict should C output comparison be (canonical text vs semantic tokens)? **Decided: normalized token/structure comparison, not canonical text.** See `tests/specs/fixtures.md` §2. | End of P1 (decided) |
 | ADR-004 Runtime Asset Policy | Which language/compiler assets per ISA are mandatory for MVP package? Must address: priority ISA full bundles, non-priority ISA inclusion/exclusion criteria, and package size budget. | End of P2 |
 | ADR-005 Analysis Budget Defaults | What are default time/resource limits per request? | End of P2 |

@@ -186,7 +186,7 @@ Unmapped internal metatypes (not surfaced through the public API): `TYPE_PTRREL`
 - `compiler_spec: str` — compiler specification name (from `CompilerTag::getName()`)
 
 `WarningItem` fields:
-- `code: str` — stable warning code (stable across patch/minor releases; initial enumeration deferred to P1 per ADR-003)
+- `code: str` — stable warning code using hierarchical namespace (`<phase>.<code>`, e.g., `analyze.W001`); stable across patch/minor releases; initial code enumeration deferred to P2 implementation
 - `message: str` — human-readable warning text (informative, not exact-match stable)
 - `phase: str` — phase that produced the warning (`init`, `analyze`, `emit`)
 
@@ -468,7 +468,7 @@ Consequences:
 
 Adapter boundaries:
 - `Public Contract Layer`: Python request/result models and error taxonomy.
-- `Bridge Contract Layer`: strict translation between public models and native decompiler calls.
+- `Bridge Contract Layer`: strict translation between public models and native decompiler calls. Implemented as a nanobind C++ extension module (ADR-002). The extension module and all C++ code are unstable internals.
 - `Upstream Adapter Layer`: handles upstream callable surface and lifecycle changes.
 
 Contract-test strategy:
@@ -560,7 +560,7 @@ Open:
 - Should session-level failure categories (startup, initialization) be defined explicitly in the `GhidralibError` hierarchy, or is the current `ErrorItem` taxonomy sufficient?
 - Should the runtime data package bundle all Ghidra-supported ISA assets or only the priority set (x86, ARM, RISC-V, MIPS), with an extension mechanism for others?
 - Should ISA-specific Sleigh compilation (`.sla` files) happen at build time or install time?
-- Should `TypeInfo` expose sub-type details (struct fields, array element type, pointer target) in MVP, or is the flat `name`/`size`/`metatype` sufficient? (Affects `TypeInfo` definition and bridge complexity.)
+- ~~Should `TypeInfo` expose sub-type details (struct fields, array element type, pointer target) in MVP, or is the flat `name`/`size`/`metatype` sufficient?~~ **Resolved:** Flat `name`/`size`/`metatype` for MVP. Sub-type details (struct fields, pointer target, array element) deferred to post-MVP.
 - Should `CallSiteInfo` include a `callee_name` field when the target is a known function symbol? (Affects bridge scope.)
 - Should `JumpTableInfo` include an `is_complete` flag for partial recovery? (Affects test assertions.)
 

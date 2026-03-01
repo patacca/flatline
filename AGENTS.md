@@ -4,18 +4,18 @@
 
 # Overview
 - Pip-installable Python wrapper around the Ghidra C++ decompiler, bundling runtime assets. Multi-ISA.
-- Spec-first; no production code yet.
 - Phase P0 (Spec Lock) is **complete**.
 - Phase P1 (Contract Test Harness) is **complete** — 26 test definitions, 10 fixtures, contract traceability matrix, ADRs resolved.
-- **Next phase: P2 (Linux MVP delivery).**
+- **Phase P2 (Linux MVP delivery) — in progress.** P2-Step-1 complete: Python data models, error hierarchy, 10 tests passing (6 unit + 4 contract).
+- Next: P2-Step-2 (nanobind C++ bridge skeleton, LoadImage, session lifecycle).
 
 # Non-goals
 - Not a general Ghidra automation framework; only exposes the decompiler surface.
 - No UI, no project database management.
 
 # Architecture (3-layer adapter)
-1. **Public Contract** — Python request/result models, error taxonomy
-2. **Bridge Contract** — translates public models ↔ native decompiler calls
+1. **Public Contract** — Python request/result models, error taxonomy (`src/ghidralib/_models.py`, `_errors.py`)
+2. **Bridge Contract** — nanobind C++ extension module (ADR-002); translates public models ↔ native decompiler calls
 3. **Upstream Adapter** — wraps Ghidra C++ callable surface
 
 # Conventions
@@ -37,7 +37,7 @@
   - Full rationale in `docs/specs.md` §5.5.
 - **ADR-003 (Determinism Oracle Level): DECIDED** — Normalized token/structure comparison, not canonical text.
 - **ADR-009 (ISA Variant Scope): DECIDED** — x86 32+64; ARM64, RISC-V 64, MIPS32; others best-effort.
-- ADR-002 (Bridge Surface): Deferred to start of P2.
+- **ADR-002 (Bridge Surface): DECIDED** — nanobind C++ extension module. Public Python API is stable; bridge is internal.
 - ADR-004 through ADR-008: unresolved (see `docs/roadmap.md` for schedule).
 
 # Source of truth
@@ -68,7 +68,7 @@
 - **Run single test:** `tox -e py313,py314 -- tests/unit/test_models.py::test_name -v`
 
 # Tests
-- All tests are definitions-only (skip-decorated); no live integration yet.
+- 10 tests passing (6 unit, 4 contract); 16 still skip-decorated (need native bridge).
 - `tests/conftest.py` — shared configuration; auto-applies category markers from directory names.
 - `tests/specs/test_catalog.md` — 26 test definitions across 5 categories + contract-clause-to-test traceability matrix.
 - `tests/specs/fixtures.md` — 10 fixture definitions, oracle strategy, determinism rules.
