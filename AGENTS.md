@@ -10,7 +10,8 @@
 - Bridge now pre-validates requested `language_id` / `compiler_spec` against enumerated pairs before native decompile calls and returns structured `unsupported_target` on mismatch (no silent fallback); malformed native "success" payloads are normalized to structured `internal_error`.
 - Bridge startup now validates `runtime_data_dir` path existence and supports runtime-data-backed pair enumeration fallback (`.ldefs` parsing with backing spec-file filtering) when native pair listing is missing/empty.
 - Build toolchain dependencies stay in `build-system.requires` (no user-facing `native` extra); native-dependent pytest items use `@pytest.mark.requires_native` and auto-skip with an actionable reason when `flatline._flatline_native` is unavailable.
-- Next: replace skeleton native startup/decompile path with real Ghidra lifecycle (`startDecompilerLibrary`, architecture init, `LoadImage`) while preserving current bridge-level validation/enumeration guarantees.
+- Native extension now links against a static Ghidra decompiler library (82 upstream C++ source files compiled via Meson, zlib required). `startDecompilerLibrary` initializes process-global state once via `std::once_flag`; `SleighArchitecture::getDescriptions()` provides native pair enumeration (285 language/compiler pairs with full Ghidra runtime data). Decompile pipeline remains a stub (`internal_error`) pending next step.
+- Next: wire real decompile pipeline -- `SleighArchitecture` init per-request, `LoadImage` adapter, action/decompile/output extraction -- while preserving current bridge-level validation/enumeration guarantees.
 
 # Non-goals
 - Not a general Ghidra automation framework; only exposes the decompiler surface.
@@ -18,7 +19,7 @@
 
 # Architecture (3-layer adapter)
 1. **Public Contract** — Python request/result models, error taxonomy, and session lifecycle surface (`src/flatline/_models.py`, `_errors.py`, `_session.py`)
-2. **Bridge Contract** — nanobind C++ extension module (ADR-002); translates public models ↔ native decompiler calls. Current skeleton source in `src/flatline/_flatline_native.cpp`; runtime fallback in `src/flatline/_bridge.py`.
+2. **Bridge Contract** — nanobind C++ extension module (ADR-002); translates public models <-> native decompiler calls. Source in `src/flatline/_flatline_native.cpp` (linked against `ghidra_decompiler` static lib); runtime fallback in `src/flatline/_bridge.py`.
 3. **Upstream Adapter** — wraps Ghidra C++ callable surface
 
 # Conventions
@@ -63,7 +64,7 @@
 - `src/flatline/_session.py` — `DecompilerSession` lifecycle + one-shot operation wrappers.
 - `src/flatline/_bridge.py` — internal bridge session protocol + fallback bridge implementation.
 - `src/flatline/_runtime_data.py` — runtime-data discovery/validation helpers for language/compiler pair enumeration.
-- `src/flatline/_flatline_native.cpp` — nanobind extension skeleton source (wired via optional Meson `native_bridge` feature).
+- `src/flatline/_flatline_native.cpp` — nanobind extension source with Ghidra startup + pair enumeration (wired via optional Meson `native_bridge` feature; links `ghidra_decompiler` static lib).
 - `docs/` — specs, roadmap, planning artifacts.
 - `notes/api/decompiler_inventory.md` — 18 required callable symbols with inputs/outputs, init order, thread-safety.
 - `notes/r2ghidra/integration_map.md` — 5-section integration analysis; classifies each block as reusable / reimplement / skip. Keep as a reference implementation only.
