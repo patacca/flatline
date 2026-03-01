@@ -20,6 +20,7 @@
 3. **Upstream Adapter** — wraps Ghidra C++ callable surface
 
 # Conventions
+- **File length:** aim for files no longer than 700 lines whenever possible. Split into focused modules if a file grows beyond this.
 - **Spec-first / TDD:** test definitions precede code.
 - **Error model:** Hard errors on invalid input; warnings on degraded success. No silent fallbacks.
 - **All structured results are frozen value copies** — no native pointers cross the ABI boundary.
