@@ -1,114 +1,98 @@
 # Maintenance
-- Update this file on every repo operation to reflect the current state.
-- Keep updates minimal: only facts that save significant re-derivation time for future prompts.
+- Update this file on every repo operation; only facts that save re-derivation time.
 
 # Overview
-- Pip-installable Python wrapper around the Ghidra C++ decompiler, bundling runtime assets. Multi-ISA.
-- **Phase P2 (Linux MVP delivery) — in progress.** Phases P0 (Spec Lock) and P1 (Contract Test Harness) are complete.
-- Public API: `DecompilerSession` lifecycle + one-shot operation wrappers (`_session.py`); data models and error hierarchy in `_models.py` / `_errors.py`.
-- Bridge: nanobind C++ extension (`_flatline_native.cpp`) built via optional Meson `native_bridge` feature (`auto` default); Python fallback in `_bridge.py`. Bridge normalizes native tuple/dict payloads to public dataclasses and maps native failures to structured result categories (`invalid_argument`, `unsupported_target`, `invalid_address`, `decompile_failed`, `internal_error`).
-- Bridge now pre-validates requested `language_id` / `compiler_spec` against enumerated pairs before native decompile calls and returns structured `unsupported_target` on mismatch (no silent fallback); malformed native "success" payloads are normalized to structured `internal_error`.
-- Bridge startup now validates `runtime_data_dir` path existence and supports runtime-data-backed pair enumeration fallback (`.ldefs` parsing with backing spec-file filtering) when native pair listing is missing/empty.
-- Runtime-data pair enumeration now tolerates malformed `.ldefs` files during recursive discovery: malformed files are skipped with a single `RuntimeWarning` when valid pairs exist, and raise deterministic `internal_error` only when no valid pairs can be produced.
-- Build toolchain dependencies stay in `build-system.requires` (no user-facing `native` extra); native-dependent pytest items use `@pytest.mark.requires_native` and auto-skip with an actionable reason when `flatline._flatline_native` is unavailable.
-- Meson now stages nanobind headers/sources into the build tree before compiling the native extension, preventing editable rebuild failures caused by pip build-isolation temp paths disappearing during `tox` imports.
-- Native extension now links against a static Ghidra decompiler library (82 upstream C++ source files compiled via Meson, zlib required). `startDecompilerLibrary` initializes process-global state once via `std::once_flag`; `SleighArchitecture::getDescriptions()` provides native pair enumeration. Decompile path now executes real per-request flow (`SleighArchitecture` init, custom `LoadImage`, action reset/perform, `docFunction`, and structured `FunctionInfo` extraction).
-- Current runtime caveat: repository `third_party/ghidra` does not include compiled `.sla` assets, so decompile requests commonly return structured `decompile_failed` (and native `std::bad_cast` is mapped to `decompile_failed`).
-- Next: compile/provide runtime `.sla` assets for fixture targets and replace placeholder integration/negative/regression skeleton assertions.
-
-# Non-goals
-- Not a general Ghidra automation framework; only exposes the decompiler surface.
-- No UI, no project database management.
+- Pip-installable Python wrapper around Ghidra C++ decompiler, bundling runtime assets. Multi-ISA.
+- **Phase P2 (Linux MVP) — in progress.** P0, P1 complete.
+- **Caveat:** `third_party/ghidra` lacks compiled `.sla` assets; decompile requests commonly return `decompile_failed`.
+- **Next:** compile/provide `.sla` assets for fixture targets; replace placeholder skeleton assertions.
+- Not a general Ghidra automation framework; decompiler surface only. No UI, no project DB.
 
 # Architecture (3-layer adapter)
-1. **Public Contract** — Python request/result models, error taxonomy, and session lifecycle surface (`src/flatline/_models.py`, `_errors.py`, `_session.py`)
-2. **Bridge Contract** — nanobind C++ extension module (ADR-002); translates public models <-> native decompiler calls. Source in `src/flatline/_flatline_native.cpp` (linked against `ghidra_decompiler` static lib); runtime fallback in `src/flatline/_bridge.py`.
-3. **Upstream Adapter** — wraps Ghidra C++ callable surface
+1. **Public Contract** — `DecompilerSession` lifecycle + one-shot wrappers (`_session.py`); models/errors in `_models.py` / `_errors.py`.
+2. **Bridge Contract** — nanobind C++ extension (`_flatline_native.cpp`, ADR-002) with Python fallback (`_bridge.py`). Pre-validates language/compiler pairs; `.ldefs`-based fallback enumeration when native listing unavailable.
+3. **Native layer** — 82 upstream C++ sources compiled via Meson (zlib required), linked as `ghidra_decompiler` static lib. Per-request flow: `SleighArchitecture` init, custom `LoadImage`, action reset/perform, `docFunction`, structured `FunctionInfo` extraction.
 
 # Conventions
-- **File length:** aim for files no longer than 700 lines whenever possible. Split into focused modules if a file grows beyond this.
-- **Spec-first / TDD:** test definitions precede code.
-- **Error model:** Hard errors on invalid input; warnings on degraded success. No silent fallbacks.
-- **All structured results are frozen value copies** — no native pointers cross the ABI boundary.
-- **C++ standard: C++20** — enforced via `default_options: ['cpp_std=c++20']` in root `meson.build` and `-std=c++20` in `src/flatline/meson.build`. All C++ source must compile clean under C++20.
-- **Code style:** see `docs/code_style.md` for naming, formatting, import, test, and annotation rules.
-- **ASCII only in code:** all source files (`.py`, `.cpp`, `.h`, `meson.build`) must use only ASCII characters. No Unicode symbols, smart quotes, em-dashes, or non-ASCII identifiers.
+- **File length:** max ~700 lines; split if exceeded.
+- **Spec-first / TDD:** tests precede code.
+- **Error model:** hard errors on invalid input; warnings on degraded success; no silent fallbacks.
+- **Frozen value copies** — no native pointers cross ABI boundary.
+- **C++20** — `default_options: ['cpp_std=c++20']` in root `meson.build`, `-std=c++20` in `src/flatline/meson.build`.
+- **Code style:** `docs/code_style.md`.
+- **ASCII only** in `.py`, `.cpp`, `.h`, `meson.build`.
 
 # Baseline and policy
 - Upstream pin: `Ghidra_12.0.3_build` @ `09f14c92d3` (2026-02-10).
 - MVP host: Linux x86_64, Python 3.13+, latest-upstream-only.
-- MVP target ISAs: any Ghidra-supported; priority: x86, ARM, RISC-V, MIPS (32/64-bit each).
+- MVP ISAs: any Ghidra-supported; priority x86, ARM, RISC-V, MIPS (32/64 each).
 - Stable public Python API over unstable upstream internals.
-- **Always work in a Python venv** — mandatory for all development and testing.
+- **Always work in a Python venv.**
 
 # ADR status
-- **ADR-001 (Public Scope Model): DECIDED — Option A** (Memory + Architecture + Function-Level).
-  - Users provide `memory_image` + `base_address`, not file paths.
-  - Convenience layer (binary file → memory → decompile) deferred to post-MVP.
-  - Full rationale in `docs/specs.md` §5.5.
-- **ADR-003 (Determinism Oracle Level): DECIDED** — Normalized token/structure comparison, not canonical text.
-- **ADR-009 (ISA Variant Scope): DECIDED** — x86 32+64; ARM64, RISC-V 64, MIPS32; others best-effort.
-- **ADR-002 (Bridge Surface): DECIDED** — nanobind C++ extension module. Public Python API is stable; bridge is internal.
-- ADR-004 through ADR-008: unresolved (see `docs/roadmap.md` for schedule).
+- **ADR-001 (Public Scope Model): Option A** — Memory + Architecture + Function-Level. Users provide `memory_image` + `base_address`. Convenience file-to-memory layer deferred post-MVP. Rationale: `docs/specs.md` S5.5.
+- **ADR-002 (Bridge Surface): nanobind C++ extension.** Public API stable; bridge internal.
+- **ADR-003 (Determinism Oracle): Normalized token/structure comparison**, not canonical text.
+- **ADR-009 (ISA Variant Scope):** x86 32+64; ARM64, RISC-V 64, MIPS32; others best-effort.
+- ADR-004 through ADR-008: unresolved (`docs/roadmap.md`).
 
 # Source of truth
 - `docs/specs.md` — SDD: API contract, data models, error taxonomy, cross-cutting requirements.
-- `docs/roadmap.md` — 7 phases (P0–P6), 6 milestones (M0–M5), risk register, ADR backlog.
-- `docs/code_style.md` — code style guide: naming, formatting, imports, annotations, test conventions.
+- `docs/roadmap.md` — 7 phases (P0-P6), 6 milestones (M0-M5), risk register, ADR backlog.
+- `docs/code_style.md` — naming, formatting, imports, annotations, test conventions.
+- `docs/compact_agent.md` — compact prompt template for lossless AGENTS.md compression.
 - `docs/planning.md` — original brief/requirements.
 - `docs/preplanning.md` — discovery constraints and experiment plan (completed).
 - `docs/refine_plan.md` — plan refinement checklist and cross-file consistency guide.
 
 # Repo structure (non-vendored)
-- `pyproject.toml` — project metadata, tool settings (pytest, ruff). Build backend: `meson-python`.
-- `meson.build` (root) + `src/flatline/meson.build` — meson build definitions.
-- `meson_options.txt` — meson feature flags (`native_bridge` for optional nanobind extension build).
-- `src/flatline/` — installable Python package (src layout).
-- `src/flatline/_session.py` — `DecompilerSession` lifecycle + one-shot operation wrappers.
-- `src/flatline/_bridge.py` — internal bridge session protocol + fallback bridge implementation.
-- `src/flatline/_runtime_data.py` — runtime-data discovery/validation helpers for language/compiler pair enumeration.
-- `src/flatline/_flatline_native.cpp` — nanobind extension source with Ghidra startup, pair enumeration, and per-request native decompile pipeline (wired via optional Meson `native_bridge` feature; links `ghidra_decompiler` static lib).
+- `pyproject.toml` — metadata, tool settings. Build backend: `meson-python`.
+- `meson.build` (root) + `src/flatline/meson.build` — build definitions.
+- `meson_options.txt` — feature flags (`native_bridge`).
+- `src/flatline/` — installable package (src layout).
+- `src/flatline/_session.py` — `DecompilerSession` lifecycle + one-shot wrappers.
+- `src/flatline/_bridge.py` — bridge session protocol + fallback implementation.
+- `src/flatline/_runtime_data.py` — runtime-data discovery/validation for language/compiler pair enumeration.
+- `src/flatline/_flatline_native.cpp` — nanobind extension: Ghidra startup, pair enumeration, native decompile pipeline (links `ghidra_decompiler`).
 - `docs/` — specs, roadmap, planning artifacts.
-- `notes/api/decompiler_inventory.md` — 18 required callable symbols with inputs/outputs, init order, thread-safety.
-- `notes/r2ghidra/integration_map.md` — 5-section integration analysis; classifies each block as reusable / reimplement / skip. Keep as a reference implementation only.
-- `tests/` — test catalog, fixture strategy, pytest skeletons, and `conftest.py`.
+- `notes/api/decompiler_inventory.md` — 18 required callable symbols with I/O, init order, thread-safety.
+- `notes/r2ghidra/integration_map.md` — 5-section integration analysis (reusable/reimplement/skip). Reference only.
+- `tests/` — catalog, fixtures, pytest skeletons, `conftest.py`.
 
 # Build & development commands
-- **Always activate the venv first:** `source .venv/bin/activate`
-- **Always use `tox`** for running tests and lint — prefer tox over invoking `pytest` or `ruff` directly.
-- **Install editable (dev):** `pip install -e ".[dev]"`
-- **Install editable with native bridge forced on:** `pip install -e ".[dev]" -Csetup-args=-Dnative_bridge=enabled`
-- **Debug build (no optimizations, with debug symbols):** `pip install -e ".[dev]" -Csetup-args=--buildtype=debug`
-- **Release build (optimized, no debug symbols):** `pip install -e ".[dev]" -Csetup-args=--buildtype=release`
-- Meson buildtype defaults to `release` (-O3, no debug symbols) when not overridden. Override with `-Csetup-args=--buildtype=<debug|release|debugoptimized>` via pip or `--buildtype=<...>` via `meson setup`.
-- **Build wheel:** `python -m build` (requires `build` package)
-- **Run all checks (tests + lint):** `tox` (envs: `py313`, `py314`, `lint`)
-- **Run tests only:** `tox -e py313,py314`
-- **Run lint only:** `tox -e lint`
-- **Run native-dependent tests:** `tox -e py313,py314 -- -m requires_native` (auto-skips if native extension is unavailable)
-- Tox is configured for offline/local execution: skips package install, runs `pytest`/`ruff` from `.venv`, and sets `PYTHONPATH=src`.
-- `skip_missing_interpreters = true` is enabled (e.g., `py313` is skipped if `python3.13` is unavailable).
-- **Run single test category:** `tox -e py313,py314 -- -m unit` (also: `contract`, `integration`, `regression`, `negative`)
-- **Run single test file:** `tox -e py313,py314 -- tests/unit/test_models.py`
-- **Run single test:** `tox -e py313,py314 -- tests/unit/test_models.py::test_name -v`
+- **Activate venv:** `source .venv/bin/activate`
+- **Always use `tox`** for tests and lint.
+- **Editable install:** `pip install -e ".[dev]"`
+- **Editable + native forced:** `pip install -e ".[dev]" -Csetup-args=-Dnative_bridge=enabled`
+- **Debug build:** `pip install -e ".[dev]" -Csetup-args=--buildtype=debug`
+- **Release build:** `pip install -e ".[dev]" -Csetup-args=--buildtype=release`
+- Meson buildtype defaults `release` (-O3). Override: `-Csetup-args=--buildtype=<debug|release|debugoptimized>`.
+- **Build wheel:** `python -m build`
+- **All checks:** `tox` (envs: `py313`, `py314`, `lint`)
+- **Tests only:** `tox -e py313,py314`
+- **Lint only:** `tox -e lint`
+- **Native tests:** `tox -e py313,py314 -- -m requires_native`
+- **Single category:** `tox -e py313,py314 -- -m unit` (also: `contract`, `integration`, `regression`, `negative`)
+- **Single file:** `tox -e py313,py314 -- tests/unit/test_models.py`
+- **Single test:** `tox -e py313,py314 -- tests/unit/test_models.py::test_name -v`
+- Tox: offline/local, skips package install, runs from `.venv`, `PYTHONPATH=src`. `skip_missing_interpreters = true`.
 
 # Tests
-- 28 tests passing (22 unit, 6 contract); 16 native-dependent spec placeholders currently skip at runtime while integration assertions are still skeleton-only.
-- `tests/conftest.py` — shared configuration; auto-applies category markers from directory names.
-- `tests/specs/test_catalog.md` — 37 test definitions across 5 categories + contract-clause-to-test traceability matrix.
-- `tests/specs/fixtures.md` — 10 fixture definitions, oracle strategy, determinism rules.
-- `tests/unit/test_native_bridge_runtime_spec.py` — native-required runtime smoke test ensures decompile path is no longer the old stub response.
-- `tests/unit/test_runtime_data_spec.py` — runtime-data enumeration hardening tests for malformed `.ldefs` tolerance and deterministic failure behavior.
-- 5 pytest skeleton files under `tests/{unit,contract,integration,regression,negative}/`.
+- 28 passing (22 unit, 6 contract); 16 native-dependent placeholders skip at runtime.
+- `tests/conftest.py` — auto-applies category markers from directory names.
+- `tests/specs/test_catalog.md` — 37 definitions, 5 categories, contract traceability matrix.
+- `tests/specs/fixtures.md` — 10 fixtures, oracle strategy, determinism rules.
+- `tests/unit/test_native_bridge_runtime_spec.py` — native smoke test (decompile path no longer stub).
+- `tests/unit/test_runtime_data_spec.py` — `.ldefs` tolerance and deterministic failure tests.
+- 5 skeleton files under `tests/{unit,contract,integration,regression,negative}/`.
 
 # Vendored upstream
-- `third_party/ghidra` — upstream Ghidra source snapshot.
-- `third_party/r2ghidra` — reference integration code and patches.
-- Treat as read-only unless explicitly asked to modify.
+- `third_party/ghidra` — upstream snapshot. `third_party/r2ghidra` — reference integration.
+- Read-only unless explicitly asked.
 
 # Key data models (from specs.md)
 - `DecompileRequest` — `memory_image`, `base_address`, `function_address`, `language_id`, `compiler_spec`, `runtime_data_dir`, `function_size_hint`, `analysis_budget`.
-- `DecompileResult` — decompiled C output, structured `FunctionInfo`, warnings, error, metadata.
+- `DecompileResult` — decompiled C, structured `FunctionInfo`, warnings, error, metadata.
 - `FunctionInfo` — name, entry_address, size, is_complete, prototype, local_variables, call_sites, jump_tables, diagnostics, varnode_count.
 - `FunctionPrototype` — calling_convention, parameters, return_type, is_noreturn, has_this_pointer, recovery flags.
 - `TypeInfo` — name, size, metatype (stable string enum).
