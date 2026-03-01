@@ -70,6 +70,9 @@
 - **Always use `tox`** for running tests and lint — prefer tox over invoking `pytest` or `ruff` directly.
 - **Install editable (dev):** `pip install -e ".[dev]"`
 - **Install editable with native bridge forced on:** `pip install -e ".[dev]" -Csetup-args=-Dnative_bridge=enabled`
+- **Debug build (no optimizations, with debug symbols):** `pip install -e ".[dev]" -Csetup-args=--buildtype=debug`
+- **Release build (optimized, no debug symbols):** `pip install -e ".[dev]" -Csetup-args=--buildtype=release`
+- Meson buildtype defaults to `release` (-O3, no debug symbols) when not overridden. Override with `-Csetup-args=--buildtype=<debug|release|debugoptimized>` via pip or `--buildtype=<...>` via `meson setup`.
 - **Build wheel:** `python -m build` (requires `build` package)
 - **Run all checks (tests + lint):** `tox` (envs: `py313`, `py314`, `lint`)
 - **Run tests only:** `tox -e py313,py314`

@@ -44,7 +44,6 @@ if nanobind_available
       nanobind_source_dir / 'nb_combined.cpp',
     ],
     cpp_args: [
-      '-std=c++20',
       '-fvisibility=hidden',
       '-fno-strict-aliasing',
       '-DNB_COMPACT_ASSERTIONS',
