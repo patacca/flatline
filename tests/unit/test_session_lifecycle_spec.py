@@ -1,4 +1,4 @@
-"""Unit tests for session lifecycle and bridge delegation (specs.md §3.1, §7)."""
+"""Unit tests for session lifecycle and bridge delegation (specs.md section 3.1, 7)."""
 
 from __future__ import annotations
 

@@ -98,8 +98,9 @@ that tools cannot enforce.
 - **Naming:** `test_<catalog_id>_<short_description>` with a docstring that
   starts with the catalog ID (e.g., `"""U-001: ..."`).
 - **Spec references:** docstrings and inline comments cite `specs.md` sections.
-- **Skip-decorating:** tests that need the native bridge use
-  `@pytest.mark.skip(reason="requires native bridge")`.
+- **Native-dependent tests:** tests that require the compiled bridge use
+  `@pytest.mark.requires_native`. Collection-time skip logic in `tests/conftest.py`
+  adds a clear actionable skip reason when `flatline._flatline_native` is unavailable.
 - **Helpers:** test-local stub builders are module-level `_stub_*` functions, not
   fixtures, unless shared across files (then go in `conftest.py`).
 

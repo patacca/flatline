@@ -1,14 +1,16 @@
 """Bridge session abstraction and fallback implementation.
 
-This module defines the internal bridge-session boundary between the stable
-Python API and the unstable native bridge implementation.
+Internal bridge-session boundary between the stable Python public API and the
+unstable native bridge implementation (specs.md section 6). The BridgeSession
+protocol and its implementations are private; only the public Python API is
+stable (specs.md section 3, ADR-002).
 """
 
 from __future__ import annotations
 
 import importlib
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from flatline._errors import ERROR_CATEGORIES, InternalError
 from flatline._models import (
@@ -30,6 +32,8 @@ from flatline._models import (
 from flatline._version import __version__
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from flatline._models import DecompileRequest
 
 

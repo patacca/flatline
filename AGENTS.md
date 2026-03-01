@@ -4,13 +4,11 @@
 
 # Overview
 - Pip-installable Python wrapper around the Ghidra C++ decompiler, bundling runtime assets. Multi-ISA.
-- Phase P0 (Spec Lock) is **complete**.
-- Phase P1 (Contract Test Harness) is **complete** — 34 test definitions, 10 fixtures, contract traceability matrix, ADRs resolved.
-- **Phase P2 (Linux MVP delivery) — in progress.** P2-Step-1 complete: Python data models, error hierarchy.
-- P2-Step-2 skeleton landed: public `DecompilerSession` lifecycle API, internal bridge-session abstraction, and nanobind C++ skeleton source (`_flatline_native.cpp`) including a LoadImage-like memory reader helper.
-- Bridge adapter now normalizes native tuple/dict payloads into public dataclasses and maps native decompile exceptions to structured `internal_error` results.
-- Meson native build wiring landed behind feature option `native_bridge` (`auto` default); `_flatline_native` builds when `nanobind` dependency is available.
-- Next: implement real Ghidra lifecycle (`startDecompilerLibrary`, architecture init, real `LoadImage`) and bridge-backed live enumeration/decompile behavior.
+- **Phase P2 (Linux MVP delivery) — in progress.** Phases P0 (Spec Lock) and P1 (Contract Test Harness) are complete.
+- Public API: `DecompilerSession` lifecycle + one-shot operation wrappers (`_session.py`); data models and error hierarchy in `_models.py` / `_errors.py`.
+- Bridge: nanobind C++ extension (`_flatline_native.cpp`) built via optional Meson `native_bridge` feature (`auto` default); Python fallback in `_bridge.py`. Bridge normalizes native tuple/dict payloads to public dataclasses and maps exceptions to structured `internal_error` results.
+- Build toolchain dependencies stay in `build-system.requires` (no user-facing `native` extra); native-dependent pytest items use `@pytest.mark.requires_native` and auto-skip with an actionable reason when `flatline._flatline_native` is unavailable.
+- Next: real Ghidra lifecycle (`startDecompilerLibrary`, architecture init, `LoadImage`) and bridge-backed live enumeration/decompile behavior.
 
 # Non-goals
 - Not a general Ghidra automation framework; only exposes the decompiler surface.
@@ -25,6 +23,7 @@
 - **Spec-first / TDD:** test definitions precede code.
 - **Error model:** Hard errors on invalid input; warnings on degraded success. No silent fallbacks.
 - **All structured results are frozen value copies** — no native pointers cross the ABI boundary.
+- **C++ standard: C++20** — enforced via `default_options: ['cpp_std=c++20']` in root `meson.build` and `-std=c++20` in `src/flatline/meson.build`. All C++ source must compile clean under C++20.
 - **Code style:** see `docs/code_style.md` for naming, formatting, import, test, and annotation rules.
 - **ASCII only in code:** all source files (`.py`, `.cpp`, `.h`, `meson.build`) must use only ASCII characters. No Unicode symbols, smart quotes, em-dashes, or non-ASCII identifiers.
 
@@ -70,10 +69,12 @@
 - **Always activate the venv first:** `source .venv/bin/activate`
 - **Always use `tox`** for running tests and lint — prefer tox over invoking `pytest` or `ruff` directly.
 - **Install editable (dev):** `pip install -e ".[dev]"`
+- **Install editable with native bridge forced on:** `pip install -e ".[dev]" -Csetup-args=-Dnative_bridge=enabled`
 - **Build wheel:** `python -m build` (requires `build` package)
 - **Run all checks (tests + lint):** `tox` (envs: `py313`, `py314`, `lint`)
 - **Run tests only:** `tox -e py313,py314`
 - **Run lint only:** `tox -e lint`
+- **Run native-dependent tests:** `tox -e py313,py314 -- -m requires_native` (auto-skips if native extension is unavailable)
 - Tox is configured for offline/local execution: skips package install, runs `pytest`/`ruff` from `.venv`, and sets `PYTHONPATH=src`.
 - `skip_missing_interpreters = true` is enabled (e.g., `py313` is skipped if `python3.13` is unavailable).
 - **Run single test category:** `tox -e py313,py314 -- -m unit` (also: `contract`, `integration`, `regression`, `negative`)
@@ -81,7 +82,7 @@
 - **Run single test:** `tox -e py313,py314 -- tests/unit/test_models.py::test_name -v`
 
 # Tests
-- 18 tests passing (12 unit, 6 contract); 16 still skip-decorated (need native bridge runtime wiring).
+- 18 tests passing (12 unit, 6 contract); 16 native-dependent spec placeholders currently skip at runtime while integration assertions are still skeleton-only.
 - `tests/conftest.py` — shared configuration; auto-applies category markers from directory names.
 - `tests/specs/test_catalog.md` — 34 test definitions across 5 categories + contract-clause-to-test traceability matrix.
 - `tests/specs/fixtures.md` — 10 fixture definitions, oracle strategy, determinism rules.

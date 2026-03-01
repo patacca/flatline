@@ -9,7 +9,8 @@ No file in this directory performs real native integration calls yet.
 - `tests/specs/fixtures.md`: minimal fixture set and update policy.
 - `tests/unit/`: unit-level contract and model checks (skeleton only).
 - `tests/contract/`: public API stability contract checks (skeleton only).
-- `tests/integration/`: end-to-end workflow checks (skeleton only, currently skipped).
+- `tests/integration/`: end-to-end workflow checks (skeleton only; native-dependent and
+  auto-skipped when `flatline._flatline_native` is unavailable).
 - `tests/regression/`: pinned-output regression checks (skeleton only).
 - `tests/negative/`: error-path and invalid-input checks (skeleton only).
 - `tests/fixtures/README.md`: fixture inventory placeholder.

@@ -95,7 +95,7 @@ assertions, oracle strategy, and determinism constraints.
 | §3.5 Additive fields only in minor | Schema stability | C-001, C-004 |
 | §7 Session isolation | No cross-session leakage | I-003 |
 | §7 Startup determinism | Repeatable startup under pinned upstream | I-004 |
-| §6 Bridge contract layer | Bridge boundary translates native payloads into stable Python contract objects | U-010, U-011 |
+| §6 Bridge contract layer | Bridge boundary translates native payloads into stable Python contract objects; native exceptions normalized to structured results | U-010, U-011, U-012 |
 | §7 Performance budget | p95 latency within threshold | R-003 |
 | Regression: simple function | Normalized output stable | R-001 |
 | Regression: jump-table | Switch structure + jump table data stable | R-002 |

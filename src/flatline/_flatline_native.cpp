@@ -18,7 +18,7 @@ namespace nb = nanobind;
 class MemoryLoadImageSkeleton {
 public:
     MemoryLoadImageSkeleton(std::uint64_t base_address, nb::bytes memory_image)
-        : base_address_(base_address), memory_image_(static_cast<std::string>(memory_image)) {}
+        : base_address_(base_address), memory_image_(nb::cast<std::string>(memory_image)) {}
 
     nb::bytes read(std::uint64_t address, std::size_t size) const {
         const std::uint64_t start = base_address_;
@@ -48,8 +48,16 @@ public:
     nb::dict decompile_function(const nb::dict &request) const {
         nb::dict metadata;
         metadata["decompiler_version"] = "";
-        metadata["language_id"] = request.contains("language_id") ? request["language_id"] : "";
-        metadata["compiler_spec"] = request.contains("compiler_spec") ? request["compiler_spec"] : "";
+        if (request.contains("language_id")) {
+            metadata["language_id"] = request["language_id"];
+        } else {
+            metadata["language_id"] = "";
+        }
+        if (request.contains("compiler_spec")) {
+            metadata["compiler_spec"] = request["compiler_spec"];
+        } else {
+            metadata["compiler_spec"] = "";
+        }
         metadata["diagnostics"] = nb::dict();
 
         nb::dict error;

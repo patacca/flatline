@@ -1,4 +1,4 @@
-"""Contract tests for session and operation API shape (specs.md §3.1, §3.2)."""
+"""Contract tests for session and operation API shape (specs.md section 3.1, 3.2)."""
 
 from __future__ import annotations
 

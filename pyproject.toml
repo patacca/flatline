@@ -1,5 +1,5 @@
 [build-system]
-requires = ["meson-python >= 0.17", "meson >= 1.6"]
+requires = ["meson-python >= 0.17", "meson >= 1.6", "nanobind >= 2.0"]
 build-backend = "mesonpy"
 
 [project]
@@ -25,6 +25,7 @@ markers = [
     "integration: End-to-end with real decompiler (I-xxx)",
     "regression: Output/latency stability baselines (R-xxx)",
     "negative: Error-path / rejection tests (N-xxx)",
+    "requires_native: Needs compiled flatline._flatline_native importable in this test env",
 ]
 # Show skip reasons in short summary; verbose on CI
 addopts = "-ra"

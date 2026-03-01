@@ -1,7 +1,7 @@
-"""Contract tests for API schema and taxonomy stability (specs.md §3, §3.4, §3.5).
+"""Contract tests for API schema and taxonomy stability (specs.md section 3, 3.4, 3.5).
 
 These tests verify that public types, field names, error categories, and version
-metadata remain stable across releases — the contract-level guarantees that
+metadata remain stable across releases -- the contract-level guarantees that
 downstream code depends on. No native bridge required.
 """
 
@@ -43,7 +43,7 @@ from flatline import (
 
 def test_c001_result_schema_stability():
     """C-001: Required result keys/types remain stable across compatible releases."""
-    # DecompileResult required fields (specs.md §3.3)
+    # DecompileResult required fields (specs.md section 3.3)
     result_fields = {f.name for f in dataclasses.fields(DecompileResult)}
     assert result_fields == {"c_code", "function_info", "warnings", "error", "metadata"}
 
@@ -71,7 +71,7 @@ def test_c001_result_schema_stability():
 
 def test_c002_error_taxonomy_stability():
     """C-002: Error categories are contract-stable identifiers."""
-    # Exactly 5 categories defined (specs.md §3.4)
+    # Exactly 5 categories defined (specs.md section 3.4)
     expected_categories = {
         "invalid_argument",
         "unsupported_target",
@@ -113,13 +113,13 @@ def test_c003_version_reporting_contains_upstream_pin():
 
     assert isinstance(info, VersionInfo)
 
-    # All required fields populated (specs.md §3.3 VersionInfo)
+    # All required fields populated (specs.md section 3.3 VersionInfo)
     assert isinstance(info.flatline_version, str) and info.flatline_version
     assert isinstance(info.upstream_tag, str) and info.upstream_tag
     assert isinstance(info.upstream_commit, str) and info.upstream_commit
     assert isinstance(info.runtime_data_revision, str)
 
-    # Pin matches known baseline (docs/roadmap.md §0)
+    # Pin matches known baseline (docs/roadmap.md section 0)
     assert info.upstream_tag == "Ghidra_12.0.3_build"
     assert info.upstream_commit == "09f14c92d3da6e5d5f6b7dea115409719db3cce1"
 
@@ -138,7 +138,7 @@ def test_c004_structured_result_schema_stability():
     """C-004: Structured result objects (FunctionInfo, FunctionPrototype, TypeInfo)
     have stable required fields and types. Metatype strings are stable enum values.
     """
-    # FunctionPrototype fields (specs.md §3.3)
+    # FunctionPrototype fields (specs.md section 3.3)
     proto_fields = {f.name for f in dataclasses.fields(FunctionPrototype)}
     assert proto_fields == {
         "calling_convention", "parameters", "return_type",
@@ -180,7 +180,7 @@ def test_c004_structured_result_schema_stability():
     pair_fields = {f.name for f in dataclasses.fields(LanguageCompilerPair)}
     assert pair_fields == {"language_id", "compiler_spec"}
 
-    # Metatype strings are the stable enum values (specs.md §3.3)
+    # Metatype strings are the stable enum values (specs.md section 3.3)
     expected_metatypes = {
         "void", "bool", "int", "uint", "float", "pointer",
         "array", "struct", "union", "code", "enum", "unknown",

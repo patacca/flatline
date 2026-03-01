@@ -1,7 +1,7 @@
-"""Unit tests for public Python contract (specs.md §3).
+"""Unit tests for public Python contract (specs.md section 3).
 
 Tests validate data model construction, field enforcement, error taxonomy,
-and advisory-field passthrough — all pure Python, no native bridge required.
+and advisory-field passthrough -- all pure Python, no native bridge required.
 """
 
 from __future__ import annotations
@@ -95,18 +95,18 @@ def test_u001_request_schema_required_fields():
         "language_id": "x86:LE:64:default",
     }
 
-    # Each required field omitted → TypeError (Python enforcement)
+    # Each required field omitted -> TypeError (Python enforcement)
     for field in ("memory_image", "base_address", "function_address", "language_id"):
         kwargs = {k: v for k, v in base_kwargs.items() if k != field}
         with pytest.raises(TypeError):
             DecompileRequest(**kwargs)
 
-    # Empty memory image → InvalidArgumentError (semantic validation, specs.md §3.4)
+    # Empty memory image -> InvalidArgumentError (semantic validation, specs.md section 3.4)
     with pytest.raises(InvalidArgumentError) as exc_info:
         DecompileRequest(**{**base_kwargs, "memory_image": b""})
     assert exc_info.value.category == "invalid_argument"
 
-    # Empty language_id → InvalidArgumentError
+    # Empty language_id -> InvalidArgumentError
     with pytest.raises(InvalidArgumentError) as exc_info:
         DecompileRequest(**{**base_kwargs, "language_id": ""})
     assert exc_info.value.category == "invalid_argument"
@@ -133,12 +133,12 @@ def test_u002_unknown_compiler_rejected_without_fallback():
     """U-002: Unknown compiler identifiers are hard failures, never implicit fallback."""
     known_specs = frozenset({"gcc", "default", "windows"})
 
-    # Unknown compiler → UnsupportedTargetError
+    # Unknown compiler -> UnsupportedTargetError
     with pytest.raises(UnsupportedTargetError) as exc_info:
         _validate_compiler_spec("unknown_compiler", known_specs)
     assert exc_info.value.category == "unsupported_target"
 
-    # Empty string → UnsupportedTargetError (no empty-string fallback)
+    # Empty string -> UnsupportedTargetError (no empty-string fallback)
     with pytest.raises(UnsupportedTargetError):
         _validate_compiler_spec("", known_specs)
 
@@ -210,15 +210,15 @@ def test_u004_function_size_hint_passthrough():
         "language_id": "x86:LE:64:default",
     }
 
-    # Without hint — defaults to None, no error
+    # Without hint -- defaults to None, no error
     req_no_hint = DecompileRequest(**base_kwargs)
     assert req_no_hint.function_size_hint is None
 
-    # With hint — value preserved
+    # With hint -- value preserved
     req_with_hint = DecompileRequest(**base_kwargs, function_size_hint=64)
     assert req_with_hint.function_size_hint == 64
 
-    # Zero hint — advisory, no error
+    # Zero hint -- advisory, no error
     req_zero_hint = DecompileRequest(**base_kwargs, function_size_hint=0)
     assert req_zero_hint.function_size_hint == 0
 
@@ -338,11 +338,11 @@ def test_u006_analysis_budget_passthrough():
         "language_id": "x86:LE:64:default",
     }
 
-    # Without budget — defaults to None, no error
+    # Without budget -- defaults to None, no error
     req_no_budget = DecompileRequest(**base_kwargs)
     assert req_no_budget.analysis_budget is None
 
-    # With budget dict — value preserved
+    # With budget dict -- value preserved
     budget = {"max_instructions": 50000, "timeout_ms": 5000}
     req_with_budget = DecompileRequest(**base_kwargs, analysis_budget=budget)
     assert req_with_budget.analysis_budget == budget
