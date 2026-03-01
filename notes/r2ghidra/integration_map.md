@@ -111,8 +111,9 @@ Classification:
 
 Contract cross-references (see `notes/api/decompiler_inventory.md` §Post-Decompilation Contract):
 - `arch.getWarnings()` loop / `func->warningHeader(...)` → Cat 7 (Diagnostics): `Funcdata::warningHeader`, `CommentDatabase::beginComment`
-- Exception handling (`LowlevelError` catch) → Cat 7 (Diagnostics): exception hierarchy
+- Exception handling (`LowlevelError` catch, `DecoderError` catch) → Cat 7 (Diagnostics): exception hierarchy (note: `DecoderError` is NOT in `LowlevelError` hierarchy)
 - `R2PrintC` / `docFunction` → Cat 2 (C/text output): `PrintLanguage::docFunction`
+- Budget controls: `Architecture::max_instructions` (default 100000) limits flow analysis — `ghidralib` should expose this as a configurable parameter
 
 ## 6. Radare2 Adapter Boundaries
 
