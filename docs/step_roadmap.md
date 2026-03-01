@@ -64,4 +64,4 @@ You are continuing an in-progress software project using the existing repo + pri
 6) **Validation** — exact commands + expected "done" outcome.
 7) **Non-blocking questions** — grouped by topic + potential impact (only if it could change conclusions).
 
-End with a short proposed **git commit message**.
+End with a short proposed **git commit message**. Try to fit the first line within 50 characters.
