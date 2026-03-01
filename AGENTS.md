@@ -9,6 +9,7 @@
 - Bridge: nanobind C++ extension (`_flatline_native.cpp`) built via optional Meson `native_bridge` feature (`auto` default); Python fallback in `_bridge.py`. Bridge normalizes native tuple/dict payloads to public dataclasses and maps native failures to structured result categories (`invalid_argument`, `unsupported_target`, `invalid_address`, `decompile_failed`, `internal_error`).
 - Bridge now pre-validates requested `language_id` / `compiler_spec` against enumerated pairs before native decompile calls and returns structured `unsupported_target` on mismatch (no silent fallback); malformed native "success" payloads are normalized to structured `internal_error`.
 - Bridge startup now validates `runtime_data_dir` path existence and supports runtime-data-backed pair enumeration fallback (`.ldefs` parsing with backing spec-file filtering) when native pair listing is missing/empty.
+- Runtime-data pair enumeration now tolerates malformed `.ldefs` files during recursive discovery: malformed files are skipped with a single `RuntimeWarning` when valid pairs exist, and raise deterministic `internal_error` only when no valid pairs can be produced.
 - Build toolchain dependencies stay in `build-system.requires` (no user-facing `native` extra); native-dependent pytest items use `@pytest.mark.requires_native` and auto-skip with an actionable reason when `flatline._flatline_native` is unavailable.
 - Meson now stages nanobind headers/sources into the build tree before compiling the native extension, preventing editable rebuild failures caused by pip build-isolation temp paths disappearing during `tox` imports.
 - Native extension now links against a static Ghidra decompiler library (82 upstream C++ source files compiled via Meson, zlib required). `startDecompilerLibrary` initializes process-global state once via `std::once_flag`; `SleighArchitecture::getDescriptions()` provides native pair enumeration. Decompile path now executes real per-request flow (`SleighArchitecture` init, custom `LoadImage`, action reset/perform, `docFunction`, and structured `FunctionInfo` extraction).
@@ -92,11 +93,12 @@
 - **Run single test:** `tox -e py313,py314 -- tests/unit/test_models.py::test_name -v`
 
 # Tests
-- 24 tests passing (18 unit, 6 contract); 16 native-dependent spec placeholders currently skip at runtime while integration assertions are still skeleton-only.
+- 28 tests passing (22 unit, 6 contract); 16 native-dependent spec placeholders currently skip at runtime while integration assertions are still skeleton-only.
 - `tests/conftest.py` — shared configuration; auto-applies category markers from directory names.
-- `tests/specs/test_catalog.md` — 36 test definitions across 5 categories + contract-clause-to-test traceability matrix.
+- `tests/specs/test_catalog.md` — 37 test definitions across 5 categories + contract-clause-to-test traceability matrix.
 - `tests/specs/fixtures.md` — 10 fixture definitions, oracle strategy, determinism rules.
 - `tests/unit/test_native_bridge_runtime_spec.py` — native-required runtime smoke test ensures decompile path is no longer the old stub response.
+- `tests/unit/test_runtime_data_spec.py` — runtime-data enumeration hardening tests for malformed `.ldefs` tolerance and deterministic failure behavior.
 - 5 pytest skeleton files under `tests/{unit,contract,integration,regression,negative}/`.
 
 # Vendored upstream

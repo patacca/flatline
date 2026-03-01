@@ -7,6 +7,7 @@ bridge session startup and enumeration path.
 
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 from xml.etree import ElementTree
 
@@ -46,6 +47,8 @@ _COMPILER_SPEC_PATH_ATTRS: tuple[str, ...] = (
     "compilerSpecFile",
 )
 
+_MAX_PARSE_FAILURE_PREVIEW = 5
+
 
 def enumerate_runtime_data_language_compilers(
     runtime_data_dir: str | None,
@@ -55,7 +58,9 @@ def enumerate_runtime_data_language_compilers(
     Rules:
     - `runtime_data_dir=None` returns an empty list.
     - missing/non-directory paths raise `InternalError`.
-    - malformed `.ldefs` XML raises `InternalError`.
+    - malformed `.ldefs` XML is skipped if at least one valid pair is found.
+    - malformed `.ldefs` XML raises `InternalError` if no valid pairs are found.
+    - malformed `.ldefs` XML emits one `RuntimeWarning` when skipped.
     - compiler entries with a declared backing spec path are filtered out when
       the backing spec file does not exist.
     """
@@ -64,9 +69,33 @@ def enumerate_runtime_data_language_compilers(
         return []
 
     pair_tuples: set[tuple[str, str]] = set()
+    parse_failures: list[tuple[Path, str]] = []
     ldefs_paths = sorted(runtime_path.rglob("*.ldefs"))
     for ldefs_path in ldefs_paths:
-        pair_tuples.update(_pairs_from_ldefs(ldefs_path))
+        file_pairs, parse_error = _pairs_from_ldefs_tolerant(ldefs_path)
+        pair_tuples.update(file_pairs)
+        if parse_error is not None:
+            parse_failures.append((ldefs_path, parse_error))
+
+    if parse_failures and pair_tuples:
+        warnings.warn(
+            (
+                "Skipped malformed .ldefs files while enumerating runtime data "
+                f"({len(parse_failures)} file(s)): "
+                f"{_format_parse_failure_summary(parse_failures)}. "
+                "Returning language/compiler pairs from valid files."
+            ),
+            RuntimeWarning,
+            stacklevel=2,
+        )
+    elif parse_failures and not pair_tuples:
+        raise InternalError(
+            (
+                "No valid language/compiler pairs found; malformed .ldefs files "
+                f"were encountered ({len(parse_failures)} file(s)): "
+                f"{_format_parse_failure_summary(parse_failures)}"
+            ),
+        )
 
     return [
         LanguageCompilerPair(language_id=language_id, compiler_spec=compiler_spec)
@@ -85,11 +114,17 @@ def _validate_runtime_data_dir(runtime_data_dir: str | None) -> Path | None:
     return runtime_path
 
 
-def _pairs_from_ldefs(ldefs_path: Path) -> set[tuple[str, str]]:
+def _pairs_from_ldefs_tolerant(ldefs_path: Path) -> tuple[set[tuple[str, str]], str | None]:
+    """Parse one `.ldefs` file with tolerant error reporting."""
     try:
-        tree = ElementTree.parse(ldefs_path)
+        pair_tuples = _pairs_from_ldefs(ldefs_path)
     except ElementTree.ParseError as exc:
-        raise InternalError(f"invalid .ldefs XML file: {ldefs_path}: {exc}") from exc
+        return set(), f"invalid .ldefs XML file: {ldefs_path}: {exc}"
+    return pair_tuples, None
+
+
+def _pairs_from_ldefs(ldefs_path: Path) -> set[tuple[str, str]]:
+    tree = ElementTree.parse(ldefs_path)
 
     root = tree.getroot()
     pair_tuples: set[tuple[str, str]] = set()
@@ -107,6 +142,15 @@ def _pairs_from_ldefs(ldefs_path: Path) -> set[tuple[str, str]]:
             ),
         )
     return pair_tuples
+
+
+def _format_parse_failure_summary(parse_failures: list[tuple[Path, str]]) -> str:
+    preview_failures = parse_failures[:_MAX_PARSE_FAILURE_PREVIEW]
+    parts = [f"{path}: {message}" for path, message in preview_failures]
+    remaining_count = len(parse_failures) - len(preview_failures)
+    if remaining_count > 0:
+        parts.append(f"... and {remaining_count} more")
+    return "; ".join(parts)
 
 
 def _compiler_pairs_for_language(
