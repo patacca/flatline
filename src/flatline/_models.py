@@ -1,6 +1,6 @@
-"""ghidralib data models.
+"""flatline data models.
 
-Frozen value types for the public API contract (specs.md §3.3).
+Frozen value types for the public API contract (specs.md section 3.3).
 All structured result objects are pure Python frozen dataclasses.
 No native pointers or references survive past the bridge boundary.
 """
@@ -8,11 +8,14 @@ No native pointers or references survive past the bridge boundary.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING
 
-from ghidralib._errors import InvalidArgumentError, UnsupportedTargetError
+from flatline._errors import InvalidArgumentError, UnsupportedTargetError
 
-# --- Stable enumerations (specs.md §3.3) ---
+if TYPE_CHECKING:
+    from typing import Any
+
+# --- Stable enumerations (specs.md section 3.3) ---
 
 VALID_METATYPES: frozenset[str] = frozenset({
     "void", "bool", "int", "uint", "float", "pointer",
@@ -154,7 +157,7 @@ class LanguageCompilerPair:
 class VersionInfo:
     """Runtime version information."""
 
-    ghidralib_version: str
+    flatline_version: str
     upstream_tag: str
     upstream_commit: str
     runtime_data_revision: str
@@ -197,11 +200,11 @@ class DecompileResult:
 
 # --- Validation helpers (used by bridge, not user-facing) ---
 
-def validate_compiler_spec(compiler_spec: str, known_specs: frozenset[str]) -> None:
+def _validate_compiler_spec(compiler_spec: str, known_specs: frozenset[str]) -> None:
     """Validate compiler_spec against a known set.
 
     Raises UnsupportedTargetError if not found. Never silently falls back
-    to a default compiler (specs.md §3.4, §4.4).
+    to a default compiler (specs.md section 3.4, section 4.4).
     """
     if compiler_spec not in known_specs:
         raise UnsupportedTargetError(

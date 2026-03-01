@@ -1,6 +1,6 @@
 Role: Software architect/spec writer.
 
-Objective: Produce an SDD (Spec-Driven Development) plan for a Python library (temp name `ghidralib`) that provides a stable Python interface over the Ghidra Decompiler (C++), similar in purpose to r2ghidra (use only as inspiration; exclude r2ghidra-specific details from deliverables). No implementation specifics yet.
+Objective: Produce an SDD (Spec-Driven Development) plan for a Python library (temp name `flatline`) that provides a stable Python interface over the Ghidra Decompiler (C++), similar in purpose to r2ghidra (use only as inspiration; exclude r2ghidra-specific details from deliverables). No implementation specifics yet.
 
 Read these first:
 - notes/api/decompiler_inventory.md (primary: decompiler surface/contract)
@@ -18,7 +18,7 @@ Constraints:
 - Package must be usable out-of-the-box via pip; users must not build/provide Ghidra. Plan for shipping the decompiler and address licensing/redistribution strategy.
 - Target OS: Linux/macOS/Windows. MVP: Linux first; prioritize choices that preserve future cross-platform feasibility.
 - Python versions: 3.13+.
-- Version policy: support only the latest Ghidra decompiler (no multi-version ghidralib). Python API must be stable while Ghidra internals may change.
+- Version policy: support only the latest Ghidra decompiler (no multi-version flatline). Python API must be stable while Ghidra internals may change.
 
 Methodology: SDD (Spec-Driven Development) + TDD planning. Deliver strategy, architecture choices, and test plan; NO code-level implementation specifics (no binding code, build scripts, class/method bodies, or packaging recipes).
 

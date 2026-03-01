@@ -11,7 +11,7 @@ You are continuing an in-progress software project using the existing repo + pri
 - `tests/specs/test_catalog.md` (test definitions, contract traceability matrix)
 - `tests/specs/fixtures.md` (fixture definitions, oracle strategy, determinism rules)
 - `tests/**/*.py` (pytest skeletons and passing tests)
-- `src/ghidralib/` (current implementation)
+- `src/flatline/` (current implementation)
 
 ## Secondary reference
 - `docs/planning.md` (original brief/requirements — consult for intent, not current state)

@@ -1,4 +1,4 @@
-"""Shared pytest configuration, markers, and fixture stubs for ghidralib tests."""
+"""Shared pytest configuration, markers, and fixture stubs for flatline tests."""
 
 from __future__ import annotations
 

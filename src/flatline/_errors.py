@@ -1,12 +1,12 @@
-"""ghidralib error taxonomy.
+"""flatline error taxonomy.
 
-Stable exception hierarchy mapped from error categories (specs.md §3.4).
+Stable exception hierarchy mapped from error categories (specs.md section 3.4).
 Category names are contract-stable across minor/patch releases.
 """
 
 from __future__ import annotations
 
-# Stable error categories (specs.md §3.4)
+# --- Stable error categories (specs.md section 3.4) ---
 ERROR_CATEGORIES: frozenset[str] = frozenset({
     "invalid_argument",
     "unsupported_target",
@@ -16,8 +16,8 @@ ERROR_CATEGORIES: frozenset[str] = frozenset({
 })
 
 
-class GhidralibError(Exception):
-    """Base exception for all ghidralib errors."""
+class FlatlineError(Exception):
+    """Base exception for all flatline errors."""
 
     category: str = ""
 
@@ -26,38 +26,38 @@ class GhidralibError(Exception):
         return self.args[0] if self.args else ""
 
 
-class InvalidArgumentError(GhidralibError):
+class InvalidArgumentError(FlatlineError):
     """Invalid or missing request arguments."""
 
     category = "invalid_argument"
 
 
-class UnsupportedTargetError(GhidralibError):
+class UnsupportedTargetError(FlatlineError):
     """Unsupported language or compiler specification."""
 
     category = "unsupported_target"
 
 
-class InvalidAddressError(GhidralibError):
+class InvalidAddressError(FlatlineError):
     """Invalid or unmapped address."""
 
     category = "invalid_address"
 
 
-class DecompileFailedError(GhidralibError):
+class DecompileFailedError(FlatlineError):
     """Decompilation failed."""
 
     category = "decompile_failed"
 
 
-class InternalError(GhidralibError):
+class InternalError(FlatlineError):
     """Unexpected internal error."""
 
     category = "internal_error"
 
 
-# Category string → exception class mapping
-CATEGORY_TO_EXCEPTION: dict[str, type[GhidralibError]] = {
+# --- Category string -> exception class mapping ---
+CATEGORY_TO_EXCEPTION: dict[str, type[FlatlineError]] = {
     cls.category: cls
     for cls in (
         InvalidArgumentError,

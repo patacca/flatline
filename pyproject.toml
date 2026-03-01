@@ -3,7 +3,7 @@ requires = ["meson-python >= 0.17", "meson >= 1.6"]
 build-backend = "mesonpy"
 
 [project]
-name = "ghidralib"
+name = "flatline"
 version = "0.1.0-dev"
 description = "Python wrapper around the Ghidra decompiler"
 requires-python = ">= 3.13"
@@ -50,7 +50,7 @@ select = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["ghidralib"]
+known-first-party = ["flatline"]
 
 # -- tox -------------------------------------------------------------------
 [tool.tox]

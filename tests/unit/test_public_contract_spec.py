@@ -8,16 +8,16 @@ from __future__ import annotations
 
 import pytest
 
-from ghidralib import (
+from flatline import (
     VALID_METATYPES,
     CallSiteInfo,
     DecompileRequest,
     DecompileResult,
     DiagnosticFlags,
     ErrorItem,
+    FlatlineError,
     FunctionInfo,
     FunctionPrototype,
-    GhidralibError,
     InvalidArgumentError,
     JumpTableInfo,
     ParameterInfo,
@@ -26,7 +26,7 @@ from ghidralib import (
     UnsupportedTargetError,
     VariableInfo,
 )
-from ghidralib._models import validate_compiler_spec
+from flatline._models import _validate_compiler_spec
 
 # ---------------------------------------------------------------------------
 # Helpers for building synthetic objects
@@ -135,19 +135,19 @@ def test_u002_unknown_compiler_rejected_without_fallback():
 
     # Unknown compiler → UnsupportedTargetError
     with pytest.raises(UnsupportedTargetError) as exc_info:
-        validate_compiler_spec("unknown_compiler", known_specs)
+        _validate_compiler_spec("unknown_compiler", known_specs)
     assert exc_info.value.category == "unsupported_target"
 
     # Empty string → UnsupportedTargetError (no empty-string fallback)
     with pytest.raises(UnsupportedTargetError):
-        validate_compiler_spec("", known_specs)
+        _validate_compiler_spec("", known_specs)
 
     # Known compiler passes without error
-    validate_compiler_spec("gcc", known_specs)
-    validate_compiler_spec("default", known_specs)
+    _validate_compiler_spec("gcc", known_specs)
+    _validate_compiler_spec("default", known_specs)
 
-    # Error inherits from GhidralibError
-    assert issubclass(UnsupportedTargetError, GhidralibError)
+    # Error inherits from FlatlineError
+    assert issubclass(UnsupportedTargetError, FlatlineError)
 
 
 # ---------------------------------------------------------------------------

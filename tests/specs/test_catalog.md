@@ -20,7 +20,7 @@ assertions, oracle strategy, and determinism constraints.
 | --- | --- | --- | --- | --- | --- | --- |
 | C-001 | Public result schema stability | None | Call API stub and inspect result keys/types | Required keys/types unchanged | JSON-schema-like oracle | Additive fields allowed only |
 | C-002 | Error taxonomy stability | None | Trigger representative error categories in harness stubs | Category names stable | Enum/name oracle | Categories cannot be removed in minor/patch |
-| C-003 | Version reporting contract | None | Query version endpoint | Includes ghidralib + upstream pin metadata | Field-presence oracle | Pin fields always populated |
+| C-003 | Version reporting contract | None | Query version endpoint | Includes flatline + upstream pin metadata | Field-presence oracle | Pin fields always populated |
 | C-004 | Structured result object schema stability | None | Call API stub and inspect FunctionInfo, FunctionPrototype, TypeInfo fields/types | Required fields/types unchanged; metatype strings are stable enum values | JSON-schema-like oracle | Additive fields allowed only; metatype mapping is contract-stable |
 
 ## 3. Integration Tests (future live calls)
@@ -60,7 +60,7 @@ assertions, oracle strategy, and determinism constraints.
 | --- | --- | --- |
 | §3.2 `list_language_compilers()` | Enumerate valid pairs from runtime data | I-002 |
 | §3.2 `decompile_function(request)` | Decompile one function; no native exceptions leak | I-001, I-005, I-006 |
-| §3.2 `get_version_info()` | Report ghidralib + upstream pin metadata | C-003 |
+| §3.2 `get_version_info()` | Report flatline + upstream pin metadata | C-003 |
 | §3.3 DecompileRequest required fields | Missing fields → `invalid_argument` | U-001 |
 | §3.3 DecompileRequest `compiler_spec` validation | Unknown compiler → hard error | U-002, N-003 |
 | §3.3 DecompileRequest `function_size_hint` | Advisory; omission not an error | U-004 |
@@ -73,7 +73,7 @@ assertions, oracle strategy, and determinism constraints.
 | §3.3 DiagnosticFlags | Aggregated boolean flags | U-005, I-005 |
 | §3.3 LanguageCompilerPair | language_id + compiler_spec fields | I-002 |
 | §3.3 WarningItem structure | code, message, phase fields | I-007 |
-| §3.3 VersionInfo fields | ghidralib_version, upstream_tag, upstream_commit, runtime_data_revision | C-003 |
+| §3.3 VersionInfo fields | flatline_version, upstream_tag, upstream_commit, runtime_data_revision | C-003 |
 | §3.4 Unknown compiler → hard error | No implicit fallback | U-002, N-003 |
 | §3.4 Unknown language → hard error | No fallback substitution | N-002 |
 | §3.4 Invalid address → hard error | Not warning-only | N-001 |

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import dataclasses
 
-from ghidralib import (
+from flatline import (
     CATEGORY_TO_EXCEPTION,
     ERROR_CATEGORIES,
     VALID_METATYPES,
@@ -19,9 +19,9 @@ from ghidralib import (
     DecompileResult,
     DiagnosticFlags,
     ErrorItem,
+    FlatlineError,
     FunctionInfo,
     FunctionPrototype,
-    GhidralibError,
     InternalError,
     InvalidAddressError,
     InvalidArgumentError,
@@ -85,9 +85,9 @@ def test_c002_error_taxonomy_stability():
     assert set(CATEGORY_TO_EXCEPTION.keys()) == expected_categories
     assert len(set(CATEGORY_TO_EXCEPTION.values())) == 5
 
-    # All exception classes inherit from GhidralibError
+    # All exception classes inherit from FlatlineError
     for category, exc_cls in CATEGORY_TO_EXCEPTION.items():
-        assert issubclass(exc_cls, GhidralibError)
+        assert issubclass(exc_cls, FlatlineError)
         assert exc_cls.category == category
 
     # Direct class-level category verification
@@ -108,13 +108,13 @@ def test_c002_error_taxonomy_stability():
 # ---------------------------------------------------------------------------
 
 def test_c003_version_reporting_contains_upstream_pin():
-    """C-003: Version endpoint includes ghidralib and upstream pin information."""
+    """C-003: Version endpoint includes flatline and upstream pin information."""
     info = get_version_info()
 
     assert isinstance(info, VersionInfo)
 
     # All required fields populated (specs.md §3.3 VersionInfo)
-    assert isinstance(info.ghidralib_version, str) and info.ghidralib_version
+    assert isinstance(info.flatline_version, str) and info.flatline_version
     assert isinstance(info.upstream_tag, str) and info.upstream_tag
     assert isinstance(info.upstream_commit, str) and info.upstream_commit
     assert isinstance(info.runtime_data_revision, str)
@@ -126,7 +126,7 @@ def test_c003_version_reporting_contains_upstream_pin():
     # VersionInfo fields match spec
     version_fields = {f.name for f in dataclasses.fields(VersionInfo)}
     assert version_fields == {
-        "ghidralib_version", "upstream_tag", "upstream_commit", "runtime_data_revision",
+        "flatline_version", "upstream_tag", "upstream_commit", "runtime_data_revision",
     }
 
 

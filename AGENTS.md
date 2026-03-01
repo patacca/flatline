@@ -14,7 +14,7 @@
 - No UI, no project database management.
 
 # Architecture (3-layer adapter)
-1. **Public Contract** — Python request/result models, error taxonomy (`src/ghidralib/_models.py`, `_errors.py`)
+1. **Public Contract** — Python request/result models, error taxonomy (`src/flatline/_models.py`, `_errors.py`)
 2. **Bridge Contract** — nanobind C++ extension module (ADR-002); translates public models ↔ native decompiler calls
 3. **Upstream Adapter** — wraps Ghidra C++ callable surface
 
@@ -44,7 +44,7 @@
 
 # Source of truth
 - `docs/specs.md` — SDD: API contract, data models, error taxonomy, cross-cutting requirements.
-- `docs/roadmap.md` — 7 phases (P0–P6), 5 milestones (M1–M5), risk register, ADR backlog.
+- `docs/roadmap.md` — 7 phases (P0–P6), 6 milestones (M0–M5), risk register, ADR backlog.
 - `docs/code_style.md` — code style guide: naming, formatting, imports, annotations, test conventions.
 - `docs/planning.md` — original brief/requirements.
 - `docs/preplanning.md` — discovery constraints and experiment plan (completed).
@@ -52,8 +52,8 @@
 
 # Repo structure (non-vendored)
 - `pyproject.toml` — project metadata, tool settings (pytest, ruff). Build backend: `meson-python`.
-- `meson.build` (root) + `src/ghidralib/meson.build` — meson build definitions.
-- `src/ghidralib/` — installable Python package (src layout).
+- `meson.build` (root) + `src/flatline/meson.build` — meson build definitions.
+- `src/flatline/` — installable Python package (src layout).
 - `docs/` — specs, roadmap, planning artifacts.
 - `notes/api/decompiler_inventory.md` — 18 required callable symbols with inputs/outputs, init order, thread-safety.
 - `notes/r2ghidra/integration_map.md` — 5-section integration analysis; classifies each block as reusable / reimplement / skip. Keep as a reference implementation only.
@@ -93,5 +93,5 @@
 - `LanguageCompilerPair` — `language_id`, `compiler_spec`.
 - `WarningItem` — `code`, `message`, `phase`.
 - `ErrorItem` — `category`, `message`, `retryable`.
-- `VersionInfo` — `ghidralib_version`, `upstream_tag`, `upstream_commit`, `runtime_data_revision`.
-- `GhidralibError` — 5 categories: `invalid_argument`, `unsupported_target`, `invalid_address`, `decompile_failed`, `internal_error`.
+- `VersionInfo` — `flatline_version`, `upstream_tag`, `upstream_commit`, `runtime_data_revision`.
+- `FlatlineError` — 5 categories: `invalid_argument`, `unsupported_target`, `invalid_address`, `decompile_failed`, `internal_error`.

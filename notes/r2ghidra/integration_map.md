@@ -22,7 +22,7 @@ Notes:
 
 Classification:
 - `Reusable as-is`: action reset/perform ordering (`action->reset(*func)` then `perform(*func)`) and high-level lifecycle shape.
-- `Reimplement in ghidralib`: context object creation, initialization API, lock model, and startup path handling.
+- `Reimplement in flatline`: context object creation, initialization API, lock model, and startup path handling.
 - `Not needed for MVP`: radare2 command-dispatch wrappers (`pd:g*` modes and command help plumbing).
 
 ## 2. Binary Bytes and Memory Model
@@ -39,7 +39,7 @@ Notes:
 
 Classification:
 - `Reusable as-is`: none.
-- `Reimplement in ghidralib`: load-image backend (file-backed ELF/raw reader), readonly policy, and any VMA policy.
+- `Reimplement in flatline`: load-image backend (file-backed ELF/raw reader), readonly policy, and any VMA policy.
 - `Not needed for MVP`: radare2-specific `roprop` heuristics and IO map pointer scans.
 
 ## 3. Architecture and Context Metadata
@@ -60,7 +60,7 @@ Notes:
 
 Classification:
 - `Reusable as-is`: small generic pieces in `R2Architecture` (e.g., `buildAction` tweak pattern) are conceptually reusable, code is not.
-- `Reimplement in ghidralib`: symbol ingestion, function registration, type/comment bridges, and metadata import pipeline.
+- `Reimplement in flatline`: symbol ingestion, function registration, type/comment bridges, and metadata import pipeline.
 - `Not needed for MVP`: deep radare2 type-db synchronization and flag-name reconciliation complexity in `R2Scope`.
 
 Contract cross-references (see `notes/api/decompiler_inventory.md` §Post-Decompilation Contract):
@@ -83,7 +83,7 @@ Notes:
 
 Classification:
 - `Reusable as-is`: ordering and core Ghidra API calls.
-- `Reimplement in ghidralib`: function lookup strategy and invocation surface independent of radare2 `RAnalFunction`.
+- `Reimplement in flatline`: function lookup strategy and invocation surface independent of radare2 `RAnalFunction`.
 - `Not needed for MVP`: alternate output modes (`JSON`, side-by-side disasm views, debug XML command modes).
 
 Contract cross-references (see `notes/api/decompiler_inventory.md` §Post-Decompilation Contract):
@@ -106,14 +106,14 @@ Notes:
 
 Classification:
 - `Reusable as-is`: `R2PrintC` is mostly Ghidra-side C printer customization and can be copied/adapted if desired.
-- `Reimplement in ghidralib`: structured error/status mapping, warning extraction API, result serialization shape.
+- `Reimplement in flatline`: structured error/status mapping, warning extraction API, result serialization shape.
 - `Not needed for MVP`: XML->radare2 code-metadata parsing and annotation machinery.
 
 Contract cross-references (see `notes/api/decompiler_inventory.md` §Post-Decompilation Contract):
 - `arch.getWarnings()` loop / `func->warningHeader(...)` → Cat 7 (Diagnostics): `Funcdata::warningHeader`, `CommentDatabase::beginComment`
 - Exception handling (`LowlevelError` catch, `DecoderError` catch) → Cat 7 (Diagnostics): exception hierarchy (note: `DecoderError` is NOT in `LowlevelError` hierarchy)
 - `R2PrintC` / `docFunction` → Cat 2 (C/text output): `PrintLanguage::docFunction`
-- Budget controls: `Architecture::max_instructions` (default 100000) limits flow analysis — `ghidralib` should expose this as a configurable parameter
+- Budget controls: `Architecture::max_instructions` (default 100000) limits flow analysis — `flatline` should expose this as a configurable parameter
 
 ## 6. Radare2 Adapter Boundaries
 
@@ -128,7 +128,7 @@ Generic decompiler glue:
 - Language-description enumeration via `SleighArchitecture` facilities.
 
 Notes:
-- `ghidralib` should keep the generic glue, but introduce new neutral adapters (file loader, neutral symbol/comment model).
+- `flatline` should keep the generic glue, but introduce new neutral adapters (file loader, neutral symbol/comment model).
 - Direct dependency on radare2 runtime objects is incompatible with pip-installable standalone MVP and must be removed.
 
 ## 7. Upstream API Divergences
@@ -146,5 +146,5 @@ Notes:
 
 Classification:
 - `Reusable as-is`: none.
-- `Reimplement in ghidralib`: language enumeration calls should target upstream `getDescriptions(void)` and keep any cache-reset behavior explicit in library lifecycle.
+- `Reimplement in flatline`: language enumeration calls should target upstream `getDescriptions(void)` and keep any cache-reset behavior explicit in library lifecycle.
 - `Not needed for MVP`: patch-level compatibility aliases such as `getLanguageDescriptions()`.

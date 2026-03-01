@@ -1,4 +1,4 @@
-# ghidralib Specification (SDD)
+# flatline Specification (SDD)
 
 ## 0. Scope and Sources
 
@@ -76,7 +76,7 @@ Secondary (Next):
 | `DiagnosticFlags` | Aggregated boolean diagnostic flags from the decompiler: completion, unreachable blocks, unimplemented instructions, bad data, no code. |
 | `StorageInfo` | Variable/parameter storage location: address space name, byte offset, byte size. |
 | `LanguageCompilerPair` | One valid `language_id` + `compiler_spec` entry known to current runtime data directory. |
-| `GhidralibError` | Stable Python exception hierarchy mapped from status/error categories. |
+| `FlatlineError` | Stable Python exception hierarchy mapped from status/error categories. |
 
 Derived from:
 - Consolidated MVP contract requirements in this specification.
@@ -87,7 +87,7 @@ Derived from:
 | --- | --- | --- |
 | `list_language_compilers()` | Enumerate valid language/compiler pairs | Returns only pairs with required backing assets present in runtime data. Covers all bundled ISAs (priority: x86, ARM, RISC-V, MIPS; plus any other Ghidra-supported ISAs whose assets are included). |
 | `decompile_function(request)` | Decompile one function | Returns `DecompileResult`; no native exceptions leak across public boundary. |
-| `get_version_info()` | Report runtime versions | Includes ghidralib version, pinned upstream commit/tag, and runtime data revision id. |
+| `get_version_info()` | Report runtime versions | Includes flatline version, pinned upstream commit/tag, and runtime data revision id. |
 
 ### 3.3 Data Model
 
@@ -196,7 +196,7 @@ Unmapped internal metatypes (not surfaced through the public API): `TYPE_PTRREL`
 - `retryable: bool` — whether the operation may succeed on retry with the same inputs
 
 `VersionInfo` fields:
-- `ghidralib_version: str`
+- `flatline_version: str`
 - `upstream_tag: str`
 - `upstream_commit: str`
 - `runtime_data_revision: str`
@@ -241,7 +241,7 @@ SemVer rules:
 - Patch: bug fixes with no contract shape changes.
 
 Latest-upstream-only policy:
-- Each ghidralib release line tracks exactly one upstream Ghidra decompiler revision.
+- Each flatline release line tracks exactly one upstream Ghidra decompiler revision.
 - Upstream bump occurs in normal minor/major releases, never by supporting multiple upstream versions at once.
 
 ## 4. Decompiler-Facing Contract and Mapping
@@ -523,7 +523,7 @@ Extensibility:
 ### 8.1 MVP Commitments (Kept)
 
 - Linux host-first single-function scope.
-- Multi-ISA target support: any Ghidra decompiler-supported architecture. Priority ISAs with full fixture coverage: x86 (32/64-bit), ARM (32/64-bit), RISC-V (32/64-bit), MIPS (32/64-bit). Other Ghidra-supported ISAs available through bundled runtime data with enumeration and error-contract coverage.
+- Multi-ISA target support: any Ghidra decompiler-supported architecture. Priority ISAs (x86, ARM, RISC-V, MIPS) have bundled runtime data and representative fixture coverage per ADR-009: x86 (32+64-bit), ARM64, RISC-V 64, MIPS32. Other Ghidra-supported ISAs available through bundled runtime data with enumeration and error-contract coverage.
 - Runtime data directory contract with packaged default and explicit override; bundles language/compiler assets for all priority ISAs.
 - Pair enumeration from language descriptions with existence filtering across all bundled ISAs.
 - Structured results with warnings/errors/metadata.
@@ -557,7 +557,7 @@ Open:
 - Should warning codes be globally namespaced now to prevent future collisions? (Initial codes will be defined during P2 implementation.)
 - Should analysis-budget defaults vary by platform or target ISA, or remain globally fixed?
 - How strict should package-size limits be for bundled runtime assets, given the multi-ISA asset footprint?
-- Should session-level failure categories (startup, initialization) be defined explicitly in the `GhidralibError` hierarchy, or is the current `ErrorItem` taxonomy sufficient?
+- Should session-level failure categories (startup, initialization) be defined explicitly in the `FlatlineError` hierarchy, or is the current `ErrorItem` taxonomy sufficient?
 - Should the runtime data package bundle all Ghidra-supported ISA assets or only the priority set (x86, ARM, RISC-V, MIPS), with an extension mechanism for others?
 - Should ISA-specific Sleigh compilation (`.sla` files) happen at build time or install time?
 - ~~Should `TypeInfo` expose sub-type details (struct fields, array element type, pointer target) in MVP, or is the flat `name`/`size`/`metatype` sufficient?~~ **Resolved:** Flat `name`/`size`/`metatype` for MVP. Sub-type details (struct fields, pointer target, array element) deferred to post-MVP.

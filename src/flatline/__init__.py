@@ -1,16 +1,18 @@
-"""ghidralib — Python wrapper around the Ghidra decompiler."""
+"""flatline -- Python wrapper around the Ghidra decompiler."""
 
-from ghidralib._errors import (
+from __future__ import annotations
+
+from flatline._errors import (
     CATEGORY_TO_EXCEPTION,
     ERROR_CATEGORIES,
     DecompileFailedError,
-    GhidralibError,
+    FlatlineError,
     InternalError,
     InvalidAddressError,
     InvalidArgumentError,
     UnsupportedTargetError,
 )
-from ghidralib._models import (
+from flatline._models import (
     VALID_METATYPES,
     VALID_WARNING_PHASES,
     CallSiteInfo,
@@ -40,7 +42,7 @@ _RUNTIME_DATA_REVISION = ""  # populated when runtime data is bundled
 def get_version_info() -> VersionInfo:
     """Report runtime version information."""
     return VersionInfo(
-        ghidralib_version=__version__,
+        flatline_version=__version__,
         upstream_tag=_UPSTREAM_TAG,
         upstream_commit=_UPSTREAM_COMMIT,
         runtime_data_revision=_RUNTIME_DATA_REVISION,
@@ -58,9 +60,9 @@ __all__ = [
     "DecompileResult",
     "DiagnosticFlags",
     "ErrorItem",
+    "FlatlineError",
     "FunctionInfo",
     "FunctionPrototype",
-    "GhidralibError",
     "InternalError",
     "InvalidAddressError",
     "InvalidArgumentError",

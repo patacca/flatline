@@ -1,3 +1,11 @@
+"""Regression tests for output and latency stability (specs.md §4).
+
+Guard against unintended changes in decompiler output or performance.
+Skipped until the native bridge is available.
+"""
+
+from __future__ import annotations
+
 import pytest
 
 

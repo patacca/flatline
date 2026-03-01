@@ -1,3 +1,11 @@
+"""Integration tests for end-to-end decompiler pipeline (specs.md §4).
+
+Each test exercises the full request-bridge-decompile-result path against
+real Ghidra runtime data. Skipped until the native bridge is available.
+"""
+
+from __future__ import annotations
+
 import pytest
 
 

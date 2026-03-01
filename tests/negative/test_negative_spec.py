@@ -1,3 +1,11 @@
+"""Negative tests for error-path and rejection behaviour (specs.md §3.4).
+
+Verify that invalid inputs produce structured error responses, not crashes
+or silent fallbacks. Skipped until the native bridge is available.
+"""
+
+from __future__ import annotations
+
 import pytest
 
 

@@ -1,4 +1,4 @@
-# Preplanning Doc for `ghidralib` Standalone Python Decompiler
+# Preplanning Doc for `flatline` Standalone Python Decompiler
 
 ## Summary
 This document defines the discovery-phase plan for a standalone Python library that wraps the Ghidra decompiler.
@@ -15,7 +15,7 @@ The MVP targets Linux x86_64, decompiles one function, uses a C ABI consumed by 
 - Any later upgrade requires a dedicated revalidation pass (API inventory diff + experiment rerun).
 
 ### Distribution model (mandatory)
-- `ghidralib` MVP must be independently installable from `pip`.
+- `flatline` MVP must be independently installable from `pip`.
 - Runtime must not require a full external Ghidra repository.
 - MVP ships a curated x86_64 language-spec bundle required for decompilation.
 
@@ -82,7 +82,7 @@ Map and classify:
 
 Required classification per block:
 - `Reusable as-is`
-- `Reimplement in ghidralib`
+- `Reimplement in flatline`
 - `Not needed for MVP`
 
 ## 4. Analysis Track C: Language / Compiler Spec Sourcing (Required)
@@ -107,7 +107,7 @@ The plan must define:
 - How the location is passed to the C layer (context params, not global hidden state)
 
 Default decision for MVP:
-- Ship curated x86_64 language bundle in `ghidralib` package.
+- Ship curated x86_64 language bundle in `flatline` package.
 - Do not require full Ghidra checkout at runtime.
 
 ## 5. Analysis Track D: Function Boundary and CFG Assumptions

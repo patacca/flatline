@@ -1,18 +1,22 @@
-# ghidralib
+# flatline
 
 Python wrapper around the Ghidra decompiler. Provides a stable, pip-installable
-interface for single-function decompilation with structured output — no Ghidra
+interface for single-function decompilation with structured output -- no Ghidra
 installation required.
+
+Named after Dixie Flatline from William Gibson's *Neuromancer* (1984) -- a dead
+hacker's ROM construct, a consciousness extracted from hardware. A fitting
+metaphor for decompilation: extracting meaning from dead code.
 
 ## Features
 
-- **Single-function decompilation** — pass a memory image, base address, and
+- **Single-function decompilation** -- pass a memory image, base address, and
   function entry point; get back structured C output with diagnostics.
-- **Multi-ISA** — supports any Ghidra-supported target architecture. Priority
+- **Multi-ISA** -- supports any Ghidra-supported target architecture. Priority
   coverage for x86 (32/64), ARM (32/64), RISC-V (32/64), and MIPS (32/64).
-- **Self-contained** — runtime data (language/compiler specs) is bundled in the
+- **Self-contained** -- runtime data (language/compiler specs) is bundled in the
   wheel; no external Ghidra build needed.
-- **Deterministic** — repeated decompiles of the same input produce
+- **Deterministic** -- repeated decompiles of the same input produce
   structurally equivalent output.
 
 ## Requirements
@@ -24,7 +28,7 @@ installation required.
 ## Installation
 
 ```bash
-pip install ghidralib
+pip install flatline
 ```
 
 For development:
@@ -38,7 +42,7 @@ pip install -e ".[dev]"
 ## Quick start
 
 ```python
-from ghidralib import decompile, DecompileRequest
+from flatline import decompile, DecompileRequest
 
 result = decompile(DecompileRequest(
     memory_image=raw_bytes,
