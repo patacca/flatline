@@ -16,6 +16,7 @@ class _NativeSessionSuccessDouble:
     def __init__(self) -> None:
         self.closed = False
         self.last_request_payload: dict[str, Any] | None = None
+        self.decompile_calls = 0
 
     def close(self) -> None:
         self.closed = True
@@ -24,6 +25,7 @@ class _NativeSessionSuccessDouble:
         return [("x86:LE:64:default", "gcc")]
 
     def decompile_function(self, request_payload: dict[str, Any]) -> dict[str, Any]:
+        self.decompile_calls += 1
         self.last_request_payload = request_payload
         return {
             "c_code": "int add(int a, int b) { return a + b; }",
@@ -96,6 +98,30 @@ class _NativeSessionFailureDouble:
         return None
 
 
+class _NativeSessionInvalidSuccessShapeDouble:
+    """Native-session test double returning a malformed success payload."""
+
+    def list_language_compilers(self) -> list[tuple[str, str]]:
+        return [("x86:LE:64:default", "gcc")]
+
+    def decompile_function(self, request_payload: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "c_code": "int add(int a, int b) { return a + b; }",
+            "function_info": None,
+            "warnings": [],
+            "error": None,
+            "metadata": {
+                "decompiler_version": "0.1.0-dev",
+                "language_id": request_payload["language_id"],
+                "compiler_spec": request_payload["compiler_spec"] or "",
+                "diagnostics": {},
+            },
+        }
+
+    def close(self) -> None:
+        return None
+
+
 class _NativeModuleDouble:
     """Module-level test double exposing create_session."""
 
@@ -159,6 +185,72 @@ def test_u011_bridge_session_adapts_native_payloads(monkeypatch: pytest.MonkeyPa
 
     bridge_session.close()
     assert native_session.closed is True
+
+
+def test_u002_bridge_rejects_unsupported_target_without_native_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """U-002: Bridge validates language/compiler and rejects unsupported targets."""
+    native_session = _NativeSessionSuccessDouble()
+    native_module = _NativeModuleDouble(native_session=native_session)
+    monkeypatch.setattr(bridge_module.importlib, "import_module", lambda _: native_module)
+
+    bridge_session = bridge_module.create_bridge_session()
+
+    unknown_language_request = DecompileRequest(
+        memory_image=b"\x90\xc3",
+        base_address=0x1000,
+        function_address=0x1000,
+        language_id="arm:LE:64:v8A",
+        compiler_spec="gcc",
+    )
+    unknown_language_result = bridge_session.decompile_function(unknown_language_request)
+
+    assert unknown_language_result.error is not None
+    assert unknown_language_result.error.category == "unsupported_target"
+    assert unknown_language_result.function_info is None
+    assert unknown_language_result.c_code is None
+    assert native_session.decompile_calls == 0
+
+    unknown_compiler_request = DecompileRequest(
+        memory_image=b"\x90\xc3",
+        base_address=0x1000,
+        function_address=0x1000,
+        language_id="x86:LE:64:default",
+        compiler_spec="windows",
+    )
+    unknown_compiler_result = bridge_session.decompile_function(unknown_compiler_request)
+
+    assert unknown_compiler_result.error is not None
+    assert unknown_compiler_result.error.category == "unsupported_target"
+    assert unknown_compiler_result.function_info is None
+    assert unknown_compiler_result.c_code is None
+    assert native_session.decompile_calls == 0
+
+
+def test_u011_bridge_rejects_malformed_native_success_payload(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """U-011: Malformed native success payloads are normalized to internal_error."""
+    native_module = _NativeModuleDouble(native_session=_NativeSessionInvalidSuccessShapeDouble())
+    monkeypatch.setattr(bridge_module.importlib, "import_module", lambda _: native_module)
+
+    bridge_session = bridge_module.create_bridge_session()
+    request = DecompileRequest(
+        memory_image=b"\x90\xc3",
+        base_address=0x1000,
+        function_address=0x1000,
+        language_id="x86:LE:64:default",
+        compiler_spec="gcc",
+    )
+
+    result = bridge_session.decompile_function(request)
+
+    assert isinstance(result, DecompileResult)
+    assert result.error is not None
+    assert result.error.category == "internal_error"
+    assert result.function_info is None
+    assert result.c_code is None
 
 
 def test_u012_bridge_session_normalizes_native_exceptions(monkeypatch: pytest.MonkeyPatch) -> None:

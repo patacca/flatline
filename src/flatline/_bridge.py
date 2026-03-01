@@ -99,10 +99,42 @@ class _NativeBridgeSession:
     def decompile_function(self, request: DecompileRequest) -> DecompileResult:
         request_payload = _request_to_native_payload(request)
         try:
+            target_error = self._validate_target_selection(request)
+            if target_error is not None:
+                return target_error
             raw_result = self._native_session.decompile_function(request_payload)
             return _coerce_decompile_result(raw_result, request)
         except Exception as exc:
             return _internal_error_result(request, f"native decompile failed: {exc}")
+
+    def _validate_target_selection(self, request: DecompileRequest) -> DecompileResult | None:
+        known_pairs = self.list_language_compilers()
+        compilers_by_language: dict[str, set[str]] = {}
+        for pair in known_pairs:
+            if pair.language_id not in compilers_by_language:
+                compilers_by_language[pair.language_id] = set()
+            compilers_by_language[pair.language_id].add(pair.compiler_spec)
+
+        available_compilers = compilers_by_language.get(request.language_id)
+        if available_compilers is None:
+            return _unsupported_target_result(
+                request,
+                f"unsupported language_id: {request.language_id!r}",
+            )
+
+        if request.compiler_spec is None:
+            return None
+
+        if request.compiler_spec not in available_compilers:
+            return _unsupported_target_result(
+                request,
+                (
+                    f"unsupported compiler_spec {request.compiler_spec!r} "
+                    f"for language_id {request.language_id!r}"
+                ),
+            )
+
+        return None
 
 
 def _request_to_native_payload(request: DecompileRequest) -> dict[str, Any]:
@@ -158,6 +190,11 @@ def _coerce_decompile_result(raw_result: Any, request: DecompileRequest) -> Deco
     if error is not None:
         c_code = None
         function_info = None
+    else:
+        if c_code is None:
+            raise InternalError("decompile_result.c_code must be set when error is None")
+        if function_info is None:
+            raise InternalError("decompile_result.function_info must be set when error is None")
 
     return DecompileResult(
         c_code=c_code,
@@ -216,16 +253,26 @@ def _coerce_metadata(raw_metadata: Any, request: DecompileRequest) -> dict[str, 
     if not isinstance(diagnostics, Mapping):
         diagnostics = {}
 
+    decompiler_version = metadata.get("decompiler_version")
+    if decompiler_version is None:
+        decompiler_version = __version__
+    language_id = metadata.get("language_id")
+    if language_id is None:
+        language_id = request.language_id
+    compiler_spec = metadata.get("compiler_spec")
+    if compiler_spec is None:
+        compiler_spec = request.compiler_spec or ""
+
     metadata["decompiler_version"] = _require_str(
-        metadata.get("decompiler_version", __version__),
+        decompiler_version,
         "metadata.decompiler_version",
     )
     metadata["language_id"] = _require_str(
-        metadata.get("language_id", request.language_id),
+        language_id,
         "metadata.language_id",
     )
     metadata["compiler_spec"] = _require_str(
-        metadata.get("compiler_spec", request.compiler_spec or ""),
+        compiler_spec,
         "metadata.compiler_spec",
     )
     metadata["diagnostics"] = dict(diagnostics)
@@ -429,22 +476,53 @@ def _coerce_diagnostic_flags(raw_diagnostics: Any) -> DiagnosticFlags:
 
 
 def _internal_error_result(request: DecompileRequest, message: str) -> DecompileResult:
+    return _error_result(
+        request,
+        category="internal_error",
+        message=message,
+        retryable=False,
+    )
+
+
+def _unsupported_target_result(request: DecompileRequest, message: str) -> DecompileResult:
+    return _error_result(
+        request,
+        category="unsupported_target",
+        message=message,
+        retryable=False,
+    )
+
+
+def _error_result(
+    request: DecompileRequest,
+    *,
+    category: str,
+    message: str,
+    retryable: bool,
+) -> DecompileResult:
+    if category not in ERROR_CATEGORIES:
+        raise InternalError(f"unsupported error category for result: {category!r}")
+
     return DecompileResult(
         c_code=None,
         function_info=None,
         warnings=[],
         error=ErrorItem(
-            category="internal_error",
+            category=category,
             message=message,
-            retryable=False,
+            retryable=retryable,
         ),
-        metadata={
-            "decompiler_version": __version__,
-            "language_id": request.language_id,
-            "compiler_spec": request.compiler_spec or "",
-            "diagnostics": {},
-        },
+        metadata=_default_error_metadata(request),
     )
+
+
+def _default_error_metadata(request: DecompileRequest) -> dict[str, Any]:
+    return {
+        "decompiler_version": __version__,
+        "language_id": request.language_id,
+        "compiler_spec": request.compiler_spec or "",
+        "diagnostics": {},
+    }
 
 
 def _require_mapping(raw_value: Any, field_name: str) -> Mapping[str, Any]:

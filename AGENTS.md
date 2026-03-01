@@ -7,6 +7,7 @@
 - **Phase P2 (Linux MVP delivery) — in progress.** Phases P0 (Spec Lock) and P1 (Contract Test Harness) are complete.
 - Public API: `DecompilerSession` lifecycle + one-shot operation wrappers (`_session.py`); data models and error hierarchy in `_models.py` / `_errors.py`.
 - Bridge: nanobind C++ extension (`_flatline_native.cpp`) built via optional Meson `native_bridge` feature (`auto` default); Python fallback in `_bridge.py`. Bridge normalizes native tuple/dict payloads to public dataclasses and maps exceptions to structured `internal_error` results.
+- Bridge now pre-validates requested `language_id` / `compiler_spec` against enumerated pairs before native decompile calls and returns structured `unsupported_target` on mismatch (no silent fallback); malformed native "success" payloads are normalized to structured `internal_error`.
 - Build toolchain dependencies stay in `build-system.requires` (no user-facing `native` extra); native-dependent pytest items use `@pytest.mark.requires_native` and auto-skip with an actionable reason when `flatline._flatline_native` is unavailable.
 - Next: real Ghidra lifecycle (`startDecompilerLibrary`, architecture init, `LoadImage`) and bridge-backed live enumeration/decompile behavior.
 
@@ -86,7 +87,7 @@
 - **Run single test:** `tox -e py313,py314 -- tests/unit/test_models.py::test_name -v`
 
 # Tests
-- 18 tests passing (12 unit, 6 contract); 16 native-dependent spec placeholders currently skip at runtime while integration assertions are still skeleton-only.
+- 20 tests passing (14 unit, 6 contract); 16 native-dependent spec placeholders currently skip at runtime while integration assertions are still skeleton-only.
 - `tests/conftest.py` — shared configuration; auto-applies category markers from directory names.
 - `tests/specs/test_catalog.md` — 34 test definitions across 5 categories + contract-clause-to-test traceability matrix.
 - `tests/specs/fixtures.md` — 10 fixture definitions, oracle strategy, determinism rules.
