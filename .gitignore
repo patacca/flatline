@@ -37,6 +37,12 @@ coverage.xml
 # Ruff
 .ruff_cache/
 
+# Tox
+.tox/
+
+# Claude Code
+.claude/
+
 # IDE
 .vscode/
 .idea/
