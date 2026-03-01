@@ -3,8 +3,23 @@
 - Keep updates minimal: only facts that save significant re-derivation time for future prompts.
 
 # Overview
-- Spec-first Python wrapper around the Ghidra decompiler (no production code yet).
+- Pip-installable Python wrapper around the Ghidra C++ decompiler, bundling runtime assets. Multi-ISA.
+- Spec-first; no production code yet.
 - Phase P0 (Spec Lock) is **in progress**; consistency fixes applied, pending user acceptance to exit P0.
+
+# Non-goals
+- Not a general Ghidra automation framework; only exposes the decompiler surface.
+- No UI, no project database management.
+
+# Architecture (3-layer adapter)
+1. **Public Contract** — Python request/result models, error taxonomy
+2. **Bridge Contract** — translates public models ↔ native decompiler calls
+3. **Upstream Adapter** — wraps Ghidra C++ callable surface
+
+# Conventions
+- **Spec-first / TDD:** test definitions precede code.
+- **Error model:** Hard errors on invalid input; warnings on degraded success. No silent fallbacks.
+- **All structured results are frozen value copies** — no native pointers cross the ABI boundary.
 
 # Baseline and policy
 - Upstream pin: `Ghidra_12.0.3_build` @ `09f14c92d3` (2026-02-10).
