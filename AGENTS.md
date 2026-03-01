@@ -56,11 +56,16 @@
 - `notes/r2ghidra/integration_map.md` — 5-section integration analysis; classifies each block as reusable / reimplement / skip. Keep as a reference implementation only.
 - `tests/` — test catalog, fixture strategy, pytest skeletons, and `conftest.py`.
 
-# Development workflow
+# Build & development commands
 - **Always activate the venv first:** `source .venv/bin/activate`
-- **Install editable:** `pip install -e ".[dev]"`
-- **Run tests:** `pytest` (all), `pytest -m unit` (category filter)
-- **Lint:** `ruff check src/ tests/`
+- **Install editable (dev):** `pip install -e ".[dev]"`
+- **Build wheel:** `python -m build` (requires `build` package)
+- **Run all checks (tests + lint):** `tox` (envs: `py313`, `py314`, `lint`)
+- **Run tests only:** `tox -e py313,py314`
+- **Run lint only:** `tox -e lint`
+- **Run single test category:** `tox -e py313,py314 -- -m unit` (also: `contract`, `integration`, `regression`, `negative`)
+- **Run single test file:** `tox -e py313,py314 -- tests/unit/test_models.py`
+- **Run single test:** `tox -e py313,py314 -- tests/unit/test_models.py::test_name -v`
 
 # Tests
 - All tests are definitions-only (skip-decorated); no live integration yet.
