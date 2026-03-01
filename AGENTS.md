@@ -21,7 +21,6 @@
 - `docs/planning.md` — original brief/requirements.
 - `docs/preplanning.md` — discovery constraints and experiment plan (completed).
 - `docs/refine_plan.md` — plan refinement checklist and cross-file consistency guide.
-- `docs/refinement_v2_analysis.md` — refinement v2 analysis: gap audit, consistency review, structured object expansion.
 
 # Repo structure (non-vendored)
 - `docs/` — specs, roadmap, planning artifacts.
