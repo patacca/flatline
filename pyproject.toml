@@ -1,0 +1,50 @@
+[build-system]
+requires = ["meson-python >= 0.17", "meson >= 1.6"]
+build-backend = "mesonpy"
+
+[project]
+name = "ghidralib"
+version = "0.1.0-dev"
+description = "Python wrapper around the Ghidra decompiler"
+requires-python = ">= 3.13"
+license = "Apache-2.0"
+
+[project.optional-dependencies]
+dev = [
+    "pytest >= 8.0",
+    "ruff >= 0.9",
+]
+
+# -- pytest ----------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "unit: Pure-logic tests with no native dependencies (U-xxx)",
+    "contract: Schema/type stability tests (C-xxx)",
+    "integration: End-to-end with real decompiler (I-xxx)",
+    "regression: Output/latency stability baselines (R-xxx)",
+    "negative: Error-path / rejection tests (N-xxx)",
+]
+# Show skip reasons in short summary; verbose on CI
+addopts = "-ra"
+
+# -- ruff ------------------------------------------------------------------
+[tool.ruff]
+target-version = "py313"
+line-length = 99
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "RUF", # ruff-specific
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ghidralib"]

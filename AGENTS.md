@@ -48,13 +48,23 @@
 - `docs/refine_plan.md` — plan refinement checklist and cross-file consistency guide.
 
 # Repo structure (non-vendored)
+- `pyproject.toml` — project metadata, tool settings (pytest, ruff). Build backend: `meson-python`.
+- `meson.build` (root) + `src/ghidralib/meson.build` — meson build definitions.
+- `src/ghidralib/` — installable Python package (src layout).
 - `docs/` — specs, roadmap, planning artifacts.
 - `notes/api/decompiler_inventory.md` — 18 required callable symbols with inputs/outputs, init order, thread-safety.
 - `notes/r2ghidra/integration_map.md` — 5-section integration analysis; classifies each block as reusable / reimplement / skip. Keep as a reference implementation only.
-- `tests/` — test catalog, fixture strategy, and pytest skeletons.
+- `tests/` — test catalog, fixture strategy, pytest skeletons, and `conftest.py`.
+
+# Development workflow
+- **Always activate the venv first:** `source .venv/bin/activate`
+- **Install editable:** `pip install -e ".[dev]"`
+- **Run tests:** `pytest` (all), `pytest -m unit` (category filter)
+- **Lint:** `ruff check src/ tests/`
 
 # Tests
-- All tests are definitions-only; no live integration yet.
+- All tests are definitions-only (skip-decorated); no live integration yet.
+- `tests/conftest.py` — shared configuration; auto-applies category markers from directory names.
 - `tests/specs/test_catalog.md` — 26 test definitions across 5 categories + contract-clause-to-test traceability matrix.
 - `tests/specs/fixtures.md` — 10 fixture definitions, oracle strategy, determinism rules.
 - 5 pytest skeleton files under `tests/{unit,contract,integration,regression,negative}/`.
