@@ -4,7 +4,7 @@
 
 # Overview
 - Spec-first Python wrapper around the Ghidra decompiler (no production code yet).
-- Phase P0 (Spec Lock) is **complete**; ready to enter P1 (Contract Test Harness).
+- Phase P0 (Spec Lock) is **in progress**; consistency fixes applied, pending user acceptance to exit P0.
 
 # Baseline and policy
 - Upstream pin: `Ghidra_12.0.3_build` @ `09f14c92d3` (2026-02-10).
@@ -44,11 +44,14 @@
 - Treat as read-only unless explicitly asked to modify.
 
 # Key data models (from specs.md)
-- `DecompileRequest` — `memory_image`, `base_address`, `language_id`, `compiler_id`, `entry_points`.
+- `DecompileRequest` — `memory_image`, `base_address`, `function_address`, `language_id`, `compiler_spec`, `runtime_data_dir`, `function_size_hint`, `analysis_budget`.
 - `DecompileResult` — decompiled C output, structured `FunctionInfo`, warnings, error, metadata.
 - `FunctionInfo` — name, entry_address, size, is_complete, prototype, local_variables, call_sites, jump_tables, diagnostics, varnode_count.
 - `FunctionPrototype` — calling_convention, parameters, return_type, is_noreturn, has_this_pointer, recovery flags.
 - `TypeInfo` — name, size, metatype (stable string enum).
 - `DiagnosticFlags` — is_complete, has_unreachable_blocks, has_unimplemented, has_bad_data, has_no_code.
-- `LanguageCompilerPair` — architecture/compiler selection.
+- `LanguageCompilerPair` — `language_id`, `compiler_spec`.
+- `WarningItem` — `code`, `message`, `phase`.
+- `ErrorItem` — `category`, `message`, `retryable`.
+- `VersionInfo` — `ghidralib_version`, `upstream_tag`, `upstream_commit`, `runtime_data_revision`.
 - `GhidralibError` — 5 categories: `invalid_argument`, `unsupported_target`, `invalid_address`, `decompile_failed`, `internal_error`.

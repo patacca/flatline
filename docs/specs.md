@@ -158,6 +158,8 @@ are planned extensions (see §8.3).
 Metatype string mapping (upstream C++ enum → stable Python string):
 `TYPE_VOID`→`"void"`, `TYPE_BOOL`→`"bool"`, `TYPE_INT`→`"int"`, `TYPE_UINT`→`"uint"`, `TYPE_FLOAT`→`"float"`, `TYPE_PTR`→`"pointer"`, `TYPE_ARRAY`→`"array"`, `TYPE_STRUCT`→`"struct"`, `TYPE_UNION`→`"union"`, `TYPE_CODE`→`"code"`, `TYPE_ENUM_INT`/`TYPE_ENUM_UINT`→`"enum"`, `TYPE_UNKNOWN`→`"unknown"`.
 
+Unmapped internal metatypes (not surfaced through the public API): `TYPE_PTRREL` (relative pointer), `TYPE_SPACEBASE` (stack/space base), `TYPE_PARTIALSTRUCT`, `TYPE_PARTIALUNION`, `TYPE_PARTIALENUM` (partial analysis artifacts). If a type with an unmapped metatype is encountered at the bridge boundary, it is mapped to `"unknown"`.
+
 `CallSiteInfo` fields:
 - `instruction_address: int` — address of the CALL instruction
 - `target_address: int | None` — resolved callee address (`None` for indirect calls)
@@ -179,15 +181,19 @@ Metatype string mapping (upstream C++ enum → stable Python string):
 - `offset: int` — byte offset within address space
 - `size: int` — size in bytes
 
-`WarningItem` minimum keys:
-- `code` (stable across patch/minor releases; initial enumeration deferred to P1 per ADR-003)
-- `message`
-- `phase` (`init`, `analyze`, `emit`)
+`LanguageCompilerPair` fields:
+- `language_id: str` — language identifier (from `LanguageDescription::getId()`)
+- `compiler_spec: str` — compiler specification name (from `CompilerTag::getName()`)
 
-`ErrorItem` minimum keys:
-- `category` (`invalid_argument`, `unsupported_target`, `invalid_address`, `decompile_failed`, `internal_error`)
-- `message`
-- `retryable` (bool)
+`WarningItem` fields:
+- `code: str` — stable warning code (stable across patch/minor releases; initial enumeration deferred to P1 per ADR-003)
+- `message: str` — human-readable warning text (informative, not exact-match stable)
+- `phase: str` — phase that produced the warning (`init`, `analyze`, `emit`)
+
+`ErrorItem` fields:
+- `category: str` — stable error category (`invalid_argument`, `unsupported_target`, `invalid_address`, `decompile_failed`, `internal_error`)
+- `message: str` — human-readable error text (informative, not exact-match stable)
+- `retryable: bool` — whether the operation may succeed on retry with the same inputs
 
 `VersionInfo` fields:
 - `ghidralib_version: str`
@@ -195,7 +201,7 @@ Metatype string mapping (upstream C++ enum → stable Python string):
 - `upstream_commit: str`
 - `runtime_data_revision: str`
 
-All structured result objects (`FunctionInfo`, `FunctionPrototype`, `ParameterInfo`, `VariableInfo`, `TypeInfo`, `CallSiteInfo`, `JumpTableInfo`, `DiagnosticFlags`, `StorageInfo`) are pure Python frozen value types. Data is extracted at the bridge boundary; no native pointers or references survive past the bridge call.
+All structured result objects (`FunctionInfo`, `FunctionPrototype`, `ParameterInfo`, `VariableInfo`, `TypeInfo`, `CallSiteInfo`, `JumpTableInfo`, `DiagnosticFlags`, `StorageInfo`, `LanguageCompilerPair`, `WarningItem`, `ErrorItem`, `VersionInfo`) are pure Python frozen value types. Data is extracted at the bridge boundary; no native pointers or references survive past the bridge call.
 
 Error model for structured results:
 - If `DecompileResult.error` is set, then `function_info` is `None` and `c_code` is `None`.
