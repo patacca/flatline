@@ -61,6 +61,7 @@
 
 # Build & development commands
 - **Always activate the venv first:** `source .venv/bin/activate`
+- **Always use `tox`** for running tests and lint — prefer tox over invoking `pytest` or `ruff` directly.
 - **Install editable (dev):** `pip install -e ".[dev]"`
 - **Build wheel:** `python -m build` (requires `build` package)
 - **Run all checks (tests + lint):** `tox` (envs: `py313`, `py314`, `lint`)
