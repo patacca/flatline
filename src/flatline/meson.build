@@ -28,7 +28,26 @@ if not native_bridge_opt.disabled()
       nanobind_include_dir = nanobind_lines[0]
       nanobind_source_dir = nanobind_lines[1]
       nanobind_robin_map_include_dir = nanobind_lines[2]
-      nanobind_available = true
+
+      # meson-python editable rebuilds run outside pip's build-isolation temp dirs.
+      # Stage nanobind source + headers into the Meson build tree so paths remain valid.
+      nanobind_stage_root = meson.current_build_dir() / 'nanobind_staged'
+      nanobind_stage = run_command(
+        py,
+        '-c',
+        'import pathlib; import shutil; import sys; include_dir = pathlib.Path(sys.argv[1]); source_dir = pathlib.Path(sys.argv[2]); robin_dir = pathlib.Path(sys.argv[3]); stage_root = pathlib.Path(sys.argv[4]); stage_root.mkdir(parents=True, exist_ok=True); shutil.copytree(include_dir, stage_root / "include", dirs_exist_ok=True); shutil.copytree(source_dir, stage_root / "src", dirs_exist_ok=True); shutil.copytree(robin_dir, stage_root / "robin_map_include", dirs_exist_ok=True)',
+        nanobind_include_dir,
+        nanobind_source_dir,
+        nanobind_robin_map_include_dir,
+        nanobind_stage_root,
+        check: false,
+      )
+      if nanobind_stage.returncode() == 0
+        nanobind_include_dir = nanobind_stage_root / 'include'
+        nanobind_source_dir = nanobind_stage_root / 'src'
+        nanobind_robin_map_include_dir = nanobind_stage_root / 'robin_map_include'
+        nanobind_available = true
+      endif
     endif
   endif
 
