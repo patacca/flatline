@@ -63,6 +63,11 @@ Classification:
 - `Reimplement in ghidralib`: symbol ingestion, function registration, type/comment bridges, and metadata import pipeline.
 - `Not needed for MVP`: deep radare2 type-db synchronization and flag-name reconciliation complexity in `R2Scope`.
 
+Contract cross-references (see `notes/api/decompiler_inventory.md` §Post-Decompilation Contract):
+- `R2Scope::registerFunction` → Cat 4 (Symbols): `Scope::addFunction`, `Scope::findFunction`
+- `buildTypegrp` → Cat 5 (Types): `TypeFactory`, `Architecture::types`
+- `buildCommentDB` → Cat 7 (Diagnostics): `Architecture::commentdb`, `CommentDatabase`
+
 ## 4. Decompilation Invocation Path
 
 Relevant files/functions:
@@ -81,6 +86,11 @@ Classification:
 - `Reimplement in ghidralib`: function lookup strategy and invocation surface independent of radare2 `RAnalFunction`.
 - `Not needed for MVP`: alternate output modes (`JSON`, side-by-side disasm views, debug XML command modes).
 
+Contract cross-references (see `notes/api/decompiler_inventory.md` §Post-Decompilation Contract):
+- `action->reset(*func)` + `action->perform(*func)` → Cat 1 (Entrypoints): `Funcdata` result container, `Action::perform` return status
+- `arch.print->docFunction(func)` → Cat 2 (C/text output): `PrintLanguage::docFunction`
+- Function lookup via scope → Cat 1 (Entrypoints): `Scope::findFunction`
+
 ## 5. Output and Error Handling
 
 Relevant files/functions:
@@ -98,6 +108,11 @@ Classification:
 - `Reusable as-is`: `R2PrintC` is mostly Ghidra-side C printer customization and can be copied/adapted if desired.
 - `Reimplement in ghidralib`: structured error/status mapping, warning extraction API, result serialization shape.
 - `Not needed for MVP`: XML->radare2 code-metadata parsing and annotation machinery.
+
+Contract cross-references (see `notes/api/decompiler_inventory.md` §Post-Decompilation Contract):
+- `arch.getWarnings()` loop / `func->warningHeader(...)` → Cat 7 (Diagnostics): `Funcdata::warningHeader`, `CommentDatabase::beginComment`
+- Exception handling (`LowlevelError` catch) → Cat 7 (Diagnostics): exception hierarchy
+- `R2PrintC` / `docFunction` → Cat 2 (C/text output): `PrintLanguage::docFunction`
 
 ## 6. Radare2 Adapter Boundaries
 
