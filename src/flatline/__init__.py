@@ -31,21 +31,22 @@ from flatline._models import (
     VersionInfo,
     WarningItem,
 )
-
-__version__ = "0.1.0-dev"
-
-_UPSTREAM_TAG = "Ghidra_12.0.3_build"
-_UPSTREAM_COMMIT = "09f14c92d3da6e5d5f6b7dea115409719db3cce1"
-_RUNTIME_DATA_REVISION = ""  # populated when runtime data is bundled
+from flatline._session import DecompilerSession, decompile_function, list_language_compilers
+from flatline._version import (
+    RUNTIME_DATA_REVISION,
+    UPSTREAM_COMMIT,
+    UPSTREAM_TAG,
+    __version__,
+)
 
 
 def get_version_info() -> VersionInfo:
     """Report runtime version information."""
     return VersionInfo(
         flatline_version=__version__,
-        upstream_tag=_UPSTREAM_TAG,
-        upstream_commit=_UPSTREAM_COMMIT,
-        runtime_data_revision=_RUNTIME_DATA_REVISION,
+        upstream_tag=UPSTREAM_TAG,
+        upstream_commit=UPSTREAM_COMMIT,
+        runtime_data_revision=RUNTIME_DATA_REVISION,
     )
 
 
@@ -58,6 +59,7 @@ __all__ = [
     "DecompileFailedError",
     "DecompileRequest",
     "DecompileResult",
+    "DecompilerSession",
     "DiagnosticFlags",
     "ErrorItem",
     "FlatlineError",
@@ -76,5 +78,7 @@ __all__ = [
     "VersionInfo",
     "WarningItem",
     "__version__",
+    "decompile_function",
     "get_version_info",
+    "list_language_compilers",
 ]

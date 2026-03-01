@@ -85,9 +85,14 @@ Derived from:
 
 | Operation | Purpose | Minimum behavior |
 | --- | --- | --- |
-| `list_language_compilers()` | Enumerate valid language/compiler pairs | Returns only pairs with required backing assets present in runtime data. Covers all bundled ISAs (priority: x86, ARM, RISC-V, MIPS; plus any other Ghidra-supported ISAs whose assets are included). |
-| `decompile_function(request)` | Decompile one function | Returns `DecompileResult`; no native exceptions leak across public boundary. |
+| `DecompilerSession.list_language_compilers()` | Enumerate valid language/compiler pairs | Returns only pairs with required backing assets present in runtime data. Covers all bundled ISAs (priority: x86, ARM, RISC-V, MIPS; plus any other Ghidra-supported ISAs whose assets are included). |
+| `DecompilerSession.decompile_function(request)` | Decompile one function | Returns `DecompileResult`; no native exceptions leak across public boundary. |
+| `flatline.list_language_compilers(runtime_data_dir=None)` | One-shot convenience wrapper for pair enumeration | Creates a short-lived `DecompilerSession`, runs enumeration, and closes the session deterministically. |
+| `flatline.decompile_function(request)` | One-shot convenience wrapper for decompilation | Creates a short-lived `DecompilerSession`, runs decompilation, and closes the session deterministically. |
 | `get_version_info()` | Report runtime versions | Includes flatline version, pinned upstream commit/tag, and runtime data revision id. |
+
+`DecompilerSession` is the canonical surface for repeated calls in one process.
+Module-level operation functions are convenience wrappers for single-call workflows.
 
 ### 3.3 Data Model
 
@@ -220,6 +225,7 @@ Rules:
 - Unknown/unsupported language ids are hard errors. Error category: `unsupported_target`.
 - Invalid/unmapped addresses are hard errors, not warning-only degraded output. Error category: `invalid_address`.
 - Empty or zero-length memory images are hard errors. Error category: `invalid_argument`.
+- Calling session operations after `DecompilerSession.close()` is a hard error. Error category: `invalid_argument`.
 - Error categories are contract-stable; text may change but remains human-readable.
 - Warning-only outcomes must still return successful operation status when C output is valid.
 - When `error` is set, `function_info` is always `None` and `c_code` is always `None`.

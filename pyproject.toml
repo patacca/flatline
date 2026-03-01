@@ -56,16 +56,22 @@ known-first-party = ["flatline"]
 [tool.tox]
 requires = ["tox >= 4.0"]
 env_list = ["py313", "py314", "lint"]
+skip_missing_interpreters = true
 
 [tool.tox.env_run_base]
-deps = [".[dev]"]
+skip_install = true
+deps = []
+set_env = { PYTHONPATH = "{tox_root}/src" }
+allowlist_externals = ["{tox_root}/.venv/bin/pytest"]
 commands = [
-    ["pytest", { replace = "posargs", default = ["-ra"], extend = true }],
+    ["{tox_root}/.venv/bin/pytest", { replace = "posargs", default = ["-ra"], extend = true }],
 ]
 
 [tool.tox.env.lint]
-deps = [".[dev]"]
-commands = [["ruff", "check", "src/", "tests/"]]
+skip_install = true
+deps = []
+allowlist_externals = ["{tox_root}/.venv/bin/ruff"]
+commands = [["{tox_root}/.venv/bin/ruff", "check", "src/", "tests/"]]
 
 [tool.tox.env.py313]
 base_python = ["python3.13"]

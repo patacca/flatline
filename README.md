@@ -42,9 +42,9 @@ pip install -e ".[dev]"
 ## Quick start
 
 ```python
-from flatline import decompile, DecompileRequest
+from flatline import DecompileRequest, decompile_function
 
-result = decompile(DecompileRequest(
+result = decompile_function(DecompileRequest(
     memory_image=raw_bytes,
     base_address=0x400000,
     function_address=0x401000,
@@ -61,15 +61,14 @@ print(result.c_code)
 # Activate the venv (required for all commands)
 source .venv/bin/activate
 
-# Run tests
-pytest              # all tests
-pytest -m unit      # only unit tests
-
-# Lint
-ruff check src/ tests/
-
-# Multi-version testing
+# Run tests + lint across configured environments
 tox
+
+# Run lint only
+tox -e lint
+
+# Run unit tests only
+tox -e py313,py314 -- -m unit
 ```
 
 ## Project status

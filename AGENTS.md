@@ -5,17 +5,18 @@
 # Overview
 - Pip-installable Python wrapper around the Ghidra C++ decompiler, bundling runtime assets. Multi-ISA.
 - Phase P0 (Spec Lock) is **complete**.
-- Phase P1 (Contract Test Harness) is **complete** — 26 test definitions, 10 fixtures, contract traceability matrix, ADRs resolved.
-- **Phase P2 (Linux MVP delivery) — in progress.** P2-Step-1 complete: Python data models, error hierarchy, 10 tests passing (6 unit + 4 contract).
-- Next: P2-Step-2 (nanobind C++ bridge skeleton, LoadImage, session lifecycle).
+- Phase P1 (Contract Test Harness) is **complete** — 31 test definitions, 10 fixtures, contract traceability matrix, ADRs resolved.
+- **Phase P2 (Linux MVP delivery) — in progress.** P2-Step-1 complete: Python data models, error hierarchy.
+- P2-Step-2 skeleton landed: public `DecompilerSession` lifecycle API, internal bridge-session abstraction, and nanobind C++ skeleton source (`_flatline_native.cpp`) including a LoadImage-like memory reader helper.
+- Next: wire native build integration + real Ghidra lifecycle (`startDecompilerLibrary`, architecture init, real `LoadImage`, bridge-backed list/decompile paths).
 
 # Non-goals
 - Not a general Ghidra automation framework; only exposes the decompiler surface.
 - No UI, no project database management.
 
 # Architecture (3-layer adapter)
-1. **Public Contract** — Python request/result models, error taxonomy (`src/flatline/_models.py`, `_errors.py`)
-2. **Bridge Contract** — nanobind C++ extension module (ADR-002); translates public models ↔ native decompiler calls
+1. **Public Contract** — Python request/result models, error taxonomy, and session lifecycle surface (`src/flatline/_models.py`, `_errors.py`, `_session.py`)
+2. **Bridge Contract** — nanobind C++ extension module (ADR-002); translates public models ↔ native decompiler calls. Current skeleton source in `src/flatline/_flatline_native.cpp`; runtime fallback in `src/flatline/_bridge.py`.
 3. **Upstream Adapter** — wraps Ghidra C++ callable surface
 
 # Conventions
@@ -54,6 +55,9 @@
 - `pyproject.toml` — project metadata, tool settings (pytest, ruff). Build backend: `meson-python`.
 - `meson.build` (root) + `src/flatline/meson.build` — meson build definitions.
 - `src/flatline/` — installable Python package (src layout).
+- `src/flatline/_session.py` — `DecompilerSession` lifecycle + one-shot operation wrappers.
+- `src/flatline/_bridge.py` — internal bridge session protocol + fallback bridge implementation.
+- `src/flatline/_flatline_native.cpp` — nanobind extension skeleton source (not yet wired into build).
 - `docs/` — specs, roadmap, planning artifacts.
 - `notes/api/decompiler_inventory.md` — 18 required callable symbols with inputs/outputs, init order, thread-safety.
 - `notes/r2ghidra/integration_map.md` — 5-section integration analysis; classifies each block as reusable / reimplement / skip. Keep as a reference implementation only.
@@ -67,14 +71,16 @@
 - **Run all checks (tests + lint):** `tox` (envs: `py313`, `py314`, `lint`)
 - **Run tests only:** `tox -e py313,py314`
 - **Run lint only:** `tox -e lint`
+- Tox is configured for offline/local execution: skips package install, runs `pytest`/`ruff` from `.venv`, and sets `PYTHONPATH=src`.
+- `skip_missing_interpreters = true` is enabled (e.g., `py313` is skipped if `python3.13` is unavailable).
 - **Run single test category:** `tox -e py313,py314 -- -m unit` (also: `contract`, `integration`, `regression`, `negative`)
 - **Run single test file:** `tox -e py313,py314 -- tests/unit/test_models.py`
 - **Run single test:** `tox -e py313,py314 -- tests/unit/test_models.py::test_name -v`
 
 # Tests
-- 10 tests passing (6 unit, 4 contract); 16 still skip-decorated (need native bridge).
+- 15 tests passing (9 unit, 6 contract); 16 still skip-decorated (need native bridge runtime wiring).
 - `tests/conftest.py` — shared configuration; auto-applies category markers from directory names.
-- `tests/specs/test_catalog.md` — 26 test definitions across 5 categories + contract-clause-to-test traceability matrix.
+- `tests/specs/test_catalog.md` — 31 test definitions across 5 categories + contract-clause-to-test traceability matrix.
 - `tests/specs/fixtures.md` — 10 fixture definitions, oracle strategy, determinism rules.
 - 5 pytest skeleton files under `tests/{unit,contract,integration,regression,negative}/`.
 

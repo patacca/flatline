@@ -13,6 +13,9 @@ assertions, oracle strategy, and determinism constraints.
 | U-004 | Validate function_size_hint passthrough | None | Build request with and without function_size_hint | Hint value is available to bridge layer; omission does not error | Presence/absence oracle | Advisory field; never causes hard error when omitted |
 | U-005 | Validate FunctionInfo fields from stub | None | Build synthetic FunctionInfo from adapter stub with known values | All required fields present with correct types; DiagnosticFlags aggregation correct | Field-presence + type oracle | Required fields invariant across releases |
 | U-006 | Validate analysis_budget passthrough | None | Build request with and without analysis_budget | Budget value is available to bridge layer; omission does not error | Presence/absence oracle | Advisory field; never causes hard error when omitted |
+| U-007 | Validate session lifecycle semantics | None | Open/close a DecompilerSession via context manager and explicit close | Session closes deterministically and close() is idempotent | Lifecycle-state oracle | Closed state transitions are deterministic |
+| U-008 | Validate closed-session rejection behavior | None | Close session, then call list/decompile methods | Calls fail with `invalid_argument` | Error-category oracle | Closed session never performs bridge operations |
+| U-009 | Validate session-to-bridge delegation | None | Use a bridge test double and call list/decompile through session | Session forwards calls and request payload unchanged | Delegation oracle | Bridge call shape is stable |
 
 ## 2. Contract Tests
 
@@ -22,6 +25,8 @@ assertions, oracle strategy, and determinism constraints.
 | C-002 | Error taxonomy stability | None | Trigger representative error categories in harness stubs | Category names stable | Enum/name oracle | Categories cannot be removed in minor/patch |
 | C-003 | Version reporting contract | None | Query version endpoint | Includes flatline + upstream pin metadata | Field-presence oracle | Pin fields always populated |
 | C-004 | Structured result object schema stability | None | Call API stub and inspect FunctionInfo, FunctionPrototype, TypeInfo fields/types | Required fields/types unchanged; metatype strings are stable enum values | JSON-schema-like oracle | Additive fields allowed only; metatype mapping is contract-stable |
+| C-005 | Session API surface stability | None | Inspect `DecompilerSession` for required methods | Lifecycle and operation methods are present and callable | API-surface oracle | Required methods remain stable |
+| C-006 | Top-level operation function availability | None | Inspect module-level operation callables and signatures | `decompile_function` and `list_language_compilers` exist with stable parameters | Signature oracle | Parameter names remain stable |
 
 ## 3. Integration Tests (future live calls)
 
@@ -59,7 +64,9 @@ assertions, oracle strategy, and determinism constraints.
 | Spec clause (specs.md) | Contract requirement | Test IDs |
 | --- | --- | --- |
 | §3.2 `list_language_compilers()` | Enumerate valid pairs from runtime data | I-002 |
-| §3.2 `decompile_function(request)` | Decompile one function; no native exceptions leak | I-001, I-005, I-006 |
+| §3.2 `decompile_function(request)` | Decompile one function; no native exceptions leak | I-001, I-005, I-006, U-009 |
+| §3.1 `DecompilerSession` lifecycle | Long-lived session owns lifecycle of one bridge/native context | U-007, U-008, C-005 |
+| §3.2 top-level operation wrappers | Public operation callables are exposed from package root | C-006 |
 | §3.2 `get_version_info()` | Report flatline + upstream pin metadata | C-003 |
 | §3.3 DecompileRequest required fields | Missing fields → `invalid_argument` | U-001 |
 | §3.3 DecompileRequest `compiler_spec` validation | Unknown compiler → hard error | U-002, N-003 |
