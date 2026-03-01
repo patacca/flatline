@@ -17,7 +17,7 @@ Product policy:
 
 | Phase | Focus | Entry criteria | Exit criteria |
 | --- | --- | --- | --- |
-| P0 | Spec lock | Inventory, MVP contract, experiment notes exist | `docs/specs.md` and this roadmap accepted; open questions tracked |
+| P0 | Spec lock | Inventory, MVP contract, experiment notes exist | `docs/specs.md` and this roadmap accepted; open questions tracked; structured result object definitions (fields, types, error model, ownership/lifetime) locked in `specs.md` §3.3 |
 | P1 | Contract test harness | P0 complete | Definitions-only test suites and oracle strategy committed |
 | P2 | Linux MVP delivery | P1 complete | Linux host function decompilation contract satisfied for priority-ISA fixture matrix (x86, ARM, RISC-V, MIPS) and enumeration/error contract for all bundled ISAs |
 | P3 | Packaging + compliance hardening | P2 complete | Bundled runtime assets policy finalized; license notices/compliance checks pass |
@@ -29,11 +29,12 @@ Product policy:
 
 ### M0: Planning closure
 - Inputs:
-- `docs/specs.md`
-- `docs/roadmap.md`
-- `tests/specs/*`
+  - `docs/specs.md`
+  - `docs/roadmap.md`
+  - `tests/specs/*`
 - Exit checks:
-- Decision points resolved or explicitly deferred with owner/date.
+  - Decision points resolved or explicitly deferred with owner/date.
+  - Structured result object definitions (`FunctionInfo`, `FunctionPrototype`, `ParameterInfo`, `VariableInfo`, `TypeInfo`, `CallSiteInfo`, `JumpTableInfo`, `DiagnosticFlags`, `StorageInfo`) with fields, types, error model, and ownership/lifetime locked in `specs.md` §3.3.
 
 ### M1: Contract harness ready
 - Inputs:

@@ -65,7 +65,16 @@ Secondary (Next):
 | --- | --- |
 | `DecompilerSession` | Long-lived object owning one native `Architecture` instance and immutable startup config. Session lifecycle maps to Architecture construction through destruction. |
 | `DecompileRequest` | Input payload for one function decompilation: memory image, base address, function entry address, language, optional compiler and analysis options. |
-| `DecompileResult` | Output payload containing rendered C text, warnings, structured error (if any), and metadata. |
+| `DecompileResult` | Output payload containing rendered C text, structured function info, warnings, structured error (if any), and metadata. |
+| `FunctionInfo` | Structured post-decompile data for one function: name, address, size, prototype, local variables, call sites, jump tables, diagnostics. Populated on success, `None` on error. |
+| `FunctionPrototype` | Recovered function signature: calling convention, parameters, return type, and recovery-status flags. |
+| `ParameterInfo` | One function parameter: name, type, index, and optional storage location. |
+| `VariableInfo` | One local variable: name, type, and optional storage location. |
+| `TypeInfo` | Recovered type descriptor: name, size, and stable metatype classification string. |
+| `CallSiteInfo` | One call instruction within the function: instruction address and optional resolved target address. |
+| `JumpTableInfo` | One recovered jump table: switch address, target count, and resolved target addresses. |
+| `DiagnosticFlags` | Aggregated boolean diagnostic flags from the decompiler: completion, unreachable blocks, unimplemented instructions, bad data, no code. |
+| `StorageInfo` | Variable/parameter storage location: address space name, byte offset, byte size. |
 | `LanguageCompilerPair` | One valid `language_id` + `compiler_spec` entry known to current runtime data directory. |
 | `GhidralibError` | Stable Python exception hierarchy mapped from status/error categories. |
 
@@ -100,16 +109,78 @@ are planned extensions (see §8.3).
 
 `DecompileResult` fields:
 - `c_code: str | None`
+- `function_info: FunctionInfo | None` — populated on success, `None` on error
 - `warnings: list[WarningItem]`
 - `error: ErrorItem | None`
 - `metadata: dict[str, Any]` with stable top-level keys:
-- `metadata["decompiler_version"]`
-- `metadata["language_id"]`
-- `metadata["compiler_spec"]`
-- `metadata["diagnostics"]`
+  - `metadata["decompiler_version"]`
+  - `metadata["language_id"]`
+  - `metadata["compiler_spec"]`
+  - `metadata["diagnostics"]` — legacy key; superseded by `function_info.diagnostics` when `function_info` is present
+
+`FunctionInfo` fields:
+- `name: str` — function name (from `Funcdata::getName()`)
+- `entry_address: int` — function entry point virtual address (from `Funcdata::getAddress()`)
+- `size: int` — function body size in bytes (from `Funcdata::getSize()`)
+- `is_complete: bool` — whether decompilation completed fully (from `Funcdata::isProcComplete()`)
+- `prototype: FunctionPrototype` — recovered function signature
+- `local_variables: list[VariableInfo]` — local scope symbols
+- `call_sites: list[CallSiteInfo]` — call instructions within the function
+- `jump_tables: list[JumpTableInfo]` — recovered jump tables
+- `diagnostics: DiagnosticFlags` — aggregated diagnostic status flags
+- `varnode_count: int` — total Varnode count (complexity metric, from `Funcdata::numVarnodes()`)
+
+`FunctionPrototype` fields:
+- `calling_convention: str | None` — calling convention model name (from `FuncProto::getModelName()`)
+- `parameters: list[ParameterInfo]` — recovered parameters
+- `return_type: TypeInfo` — recovered return type
+- `is_noreturn: bool` — function does not return (from `FuncProto::isNoReturn()`)
+- `has_this_pointer: bool` — has implicit this parameter (from `FuncProto::hasThisPointer()`)
+- `has_input_errors: bool` — parameter recovery incomplete (from `FuncProto::hasInputErrors()`)
+- `has_output_errors: bool` — return type recovery incomplete (from `FuncProto::hasOutputErrors()`)
+
+`ParameterInfo` fields:
+- `name: str` — parameter name (from `Symbol::getName()`)
+- `type: TypeInfo` — parameter type (from `Symbol::getType()`)
+- `index: int` — parameter position in signature
+- `storage: StorageInfo | None` — storage location if mapped
+
+`VariableInfo` fields:
+- `name: str` — variable name (from `Symbol::getName()`)
+- `type: TypeInfo` — variable type (from `Symbol::getType()`)
+- `storage: StorageInfo | None` — storage location if mapped
+
+`TypeInfo` fields:
+- `name: str` — type name (from `Datatype::getName()`)
+- `size: int` — type size in bytes (from `Datatype::getSize()`)
+- `metatype: str` — stable metatype classification string (from `Datatype::getMetatype()`)
+
+Metatype string mapping (upstream C++ enum → stable Python string):
+`TYPE_VOID`→`"void"`, `TYPE_BOOL`→`"bool"`, `TYPE_INT`→`"int"`, `TYPE_UINT`→`"uint"`, `TYPE_FLOAT`→`"float"`, `TYPE_PTR`→`"pointer"`, `TYPE_ARRAY`→`"array"`, `TYPE_STRUCT`→`"struct"`, `TYPE_UNION`→`"union"`, `TYPE_CODE`→`"code"`, `TYPE_ENUM_INT`/`TYPE_ENUM_UINT`→`"enum"`, `TYPE_UNKNOWN`→`"unknown"`.
+
+`CallSiteInfo` fields:
+- `instruction_address: int` — address of the CALL instruction
+- `target_address: int | None` — resolved callee address (`None` for indirect calls)
+
+`JumpTableInfo` fields:
+- `switch_address: int` — address of the switch/indirect-branch instruction
+- `target_count: int` — number of resolved target addresses
+- `target_addresses: list[int]` — resolved target addresses
+
+`DiagnosticFlags` fields:
+- `is_complete: bool` — `Funcdata::isProcComplete()`
+- `has_unreachable_blocks: bool` — `Funcdata::hasUnreachableBlocks()`
+- `has_unimplemented: bool` — `Funcdata::hasUnimplemented()`
+- `has_bad_data: bool` — `Funcdata::hasBadData()`
+- `has_no_code: bool` — `Funcdata::hasNoCode()`
+
+`StorageInfo` fields:
+- `space: str` — address space name (from `AddrSpace::getName()`)
+- `offset: int` — byte offset within address space
+- `size: int` — size in bytes
 
 `WarningItem` minimum keys:
-- `code` (stable across patch/minor releases)
+- `code` (stable across patch/minor releases; initial enumeration deferred to P1 per ADR-003)
 - `message`
 - `phase` (`init`, `analyze`, `emit`)
 
@@ -124,17 +195,29 @@ are planned extensions (see §8.3).
 - `upstream_commit: str`
 - `runtime_data_revision: str`
 
+All structured result objects (`FunctionInfo`, `FunctionPrototype`, `ParameterInfo`, `VariableInfo`, `TypeInfo`, `CallSiteInfo`, `JumpTableInfo`, `DiagnosticFlags`, `StorageInfo`) are pure Python frozen value types. Data is extracted at the bridge boundary; no native pointers or references survive past the bridge call.
+
+Error model for structured results:
+- If `DecompileResult.error` is set, then `function_info` is `None` and `c_code` is `None`.
+- If decompilation succeeds, `function_info` is populated (never `None`) and `c_code` is set.
+- Recovery failures within `function_info` are signaled via `prototype.has_input_errors` / `has_output_errors` and `diagnostics` flags, not by making individual fields `None`.
+
 Derived from:
 - Consolidated MVP data and error contract in this specification.
 - Consolidated invalid-address hard-failure requirement carried into negative tests.
+- Structured object definitions derived from `notes/api/decompiler_inventory.md` §§1-7 (post-decompilation contract).
 
 ### 3.4 Error Model
 
 Rules:
-- Unknown compiler ids are hard errors (no implicit fallback).
-- Invalid/unmapped addresses are hard errors, not warning-only degraded output.
+- Unknown compiler ids are hard errors (no implicit fallback). Error category: `unsupported_target`.
+- Unknown/unsupported language ids are hard errors. Error category: `unsupported_target`.
+- Invalid/unmapped addresses are hard errors, not warning-only degraded output. Error category: `invalid_address`.
+- Empty or zero-length memory images are hard errors. Error category: `invalid_argument`.
 - Error categories are contract-stable; text may change but remains human-readable.
 - Warning-only outcomes must still return successful operation status when C output is valid.
+- When `error` is set, `function_info` is always `None` and `c_code` is always `None`.
+- When decompilation succeeds, `function_info` is always populated (never `None`).
 
 Derived from:
 - Consolidated fallback-rejection and error semantics in this specification.
@@ -192,6 +275,7 @@ Known limits at baseline:
 | Language/compiler descriptions | `list_language_compilers()` | Enumerated pairs are valid and loadable; bridge must validate compiler IDs against enumerated set before native call, since `LanguageDescription::getCompiler()` silently falls back to first/default compiler for unknown IDs (§3.4) |
 | Function lookup/materialization | `decompile_function(request)` address targeting | Missing/invalid function target returns structured error category |
 | Action execution pipeline | Internal execution of request | Successful path yields `c_code` and optional warnings |
+| Post-decompile structured data (Funcdata, FuncProto, Scope, Types) | `DecompileResult.function_info` | Structured function metadata, prototype, variables, call sites, jump tables, diagnostics extracted field-by-field at bridge boundary (not via XML serialization) |
 | Warning propagation | `DecompileResult.warnings` | Warning codes are stable identifiers |
 | Failure propagation | `DecompileResult.error` / exception mapping | No uncaught native exception reaches user |
 
@@ -402,6 +486,7 @@ Concurrency model:
 - Session object is not implicitly shared across threads.
 - Global startup/cache mutation is serialized.
 - Parallel decompilation requires explicit session isolation policy.
+- Concurrency model assumes CPython GIL or caller-provided external serialization. Free-threaded Python (3.13t) support is post-MVP.
 
 Performance budgets (planning targets):
 - Session startup (warm): bounded target defined per release.
@@ -458,13 +543,17 @@ Extensibility:
 
 ## 9. Open Questions
 
-- Should warning codes be globally namespaced now to prevent future collisions?
+- Should warning codes be globally namespaced now to prevent future collisions? (Deferred to P1 per ADR-003; initial codes will be defined when determinism oracle level is decided.)
 - Is canonicalized C output required as a hard contract, or only semantic/token-level stability?
 - Should analysis-budget defaults vary by platform or target ISA, or remain globally fixed?
 - How strict should package-size limits be for bundled runtime assets, given the multi-ISA asset footprint?
 - Should session-level failure categories (startup, initialization) be defined explicitly in the `GhidralibError` hierarchy, or is the current `ErrorItem` taxonomy sufficient?
 - Should the runtime data package bundle all Ghidra-supported ISA assets or only the priority set (x86, ARM, RISC-V, MIPS), with an extension mechanism for others?
 - Should ISA-specific Sleigh compilation (`.sla` files) happen at build time or install time?
+- Should `TypeInfo` expose sub-type details (struct fields, array element type, pointer target) in MVP, or is the flat `name`/`size`/`metatype` sufficient? (Affects `TypeInfo` definition and bridge complexity.)
+- Should `CallSiteInfo` include a `callee_name` field when the target is a known function symbol? (Affects bridge scope.)
+- Should `JumpTableInfo` include an `is_complete` flag for partial recovery? (Affects test assertions.)
+- For multi-ISA fixture variants: ARM64 vs ARM32? MIPS32 vs MIPS64? Current proposal: ARM64/RISC-V64/MIPS32 for diverse bitwidth coverage.
 
 ## 10. Assumptions
 

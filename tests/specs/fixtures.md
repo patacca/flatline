@@ -9,10 +9,14 @@
 | `fx_invalid_addr_case` | Logical case over `fx_add_elf64` | Invalid address negative behavior | Uses unmapped address input against `fx_add_elf64` memory image |
 | `fx_runtime_data_min` | Runtime data directory | Pair enumeration and startup validation | Contains curated language/compiler assets required for MVP |
 | `fx_invalid_memory` | Empty/zero-length memory image | Invalid memory image input | Tests structured error path for degenerate memory input |
+| `fx_add_arm64` | Memory image (AArch64) | Multi-ISA known-function path (ARM) | Raw memory extracted from simple arithmetic function; ARM AArch64 |
+| `fx_add_riscv64` | Memory image (RISC-V 64) | Multi-ISA known-function path (RISC-V) | Raw memory extracted from simple arithmetic function; RISC-V 64-bit |
+| `fx_add_mips32` | Memory image (MIPS32) | Multi-ISA known-function path (MIPS) | Raw memory extracted from simple arithmetic function; MIPS 32-bit |
 
 Fixture format resolved by ADR-001 (Option A: memory + architecture + function-level).
 Fixtures are raw memory images with accompanying metadata (base address, architecture).
 Source binaries (ELF) are used during fixture generation but are not runtime test inputs.
+Multi-ISA fixtures cover one known function per non-x86 priority ISA to satisfy M1 per-ISA coverage requirement.
 
 ## 2. Expected-Output Strategy
 

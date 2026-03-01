@@ -19,3 +19,17 @@ def test_i003_sequential_session_isolation():
 @pytest.mark.skip(reason="Spec-only skeleton; no runtime integration in this phase")
 def test_i004_startup_and_minimal_load_smoke_path():
     """I-004: Startup/runtime-data initialization and minimal load path remain deterministic."""
+
+
+@pytest.mark.skip(reason="Spec-only skeleton; no runtime integration in this phase")
+def test_i005_known_function_produces_function_info():
+    """I-005: Known function decompile produces populated FunctionInfo with expected
+    prototype shape (parameter count, return type), diagnostics flags, and non-zero
+    varnode_count."""
+
+
+@pytest.mark.skip(reason="Spec-only skeleton; no runtime integration in this phase")
+def test_i006_multi_isa_known_function():
+    """I-006: Known function decompilation succeeds for each non-x86 priority ISA
+    (ARM64, RISC-V 64, MIPS32) with non-empty C output and populated function_info.
+    Parameterized over fx_add_arm64, fx_add_riscv64, fx_add_mips32 fixtures."""

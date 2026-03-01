@@ -21,6 +21,7 @@
 - `docs/planning.md` — original brief/requirements.
 - `docs/preplanning.md` — discovery constraints and experiment plan (completed).
 - `docs/refine_plan.md` — plan refinement checklist and cross-file consistency guide.
+- `docs/refinement_v2_analysis.md` — refinement v2 analysis: gap audit, consistency review, structured object expansion.
 
 # Repo structure (non-vendored)
 - `docs/` — specs, roadmap, planning artifacts.
@@ -30,7 +31,7 @@
 
 # Tests
 - All tests are definitions-only; no live integration yet.
-- `tests/specs/test_catalog.md` — 21 test definitions across 5 categories (unit, contract, integration, regression, negative).
+- `tests/specs/test_catalog.md` — 24 test definitions across 5 categories (unit, contract, integration, regression, negative).
 - `tests/specs/fixtures.md` — fixture strategy with determinism rules and oracle approach.
 - 5 pytest skeleton files under `tests/{unit,contract,integration,regression,negative}/`.
 
@@ -41,6 +42,10 @@
 
 # Key data models (from specs.md)
 - `DecompileRequest` — `memory_image`, `base_address`, `language_id`, `compiler_id`, `entry_points`.
-- `DecompileResult` — decompiled C output, metadata, function info.
+- `DecompileResult` — decompiled C output, structured `FunctionInfo`, warnings, error, metadata.
+- `FunctionInfo` — name, entry_address, size, is_complete, prototype, local_variables, call_sites, jump_tables, diagnostics, varnode_count.
+- `FunctionPrototype` — calling_convention, parameters, return_type, is_noreturn, has_this_pointer, recovery flags.
+- `TypeInfo` — name, size, metatype (stable string enum).
+- `DiagnosticFlags` — is_complete, has_unreachable_blocks, has_unimplemented, has_bad_data, has_no_code.
 - `LanguageCompilerPair` — architecture/compiler selection.
 - `GhidralibError` — 5 categories: `invalid_argument`, `unsupported_target`, `invalid_address`, `decompile_failed`, `internal_error`.

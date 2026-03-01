@@ -1,54 +1,56 @@
-You are refining an EXISTING plan (previous iteration). Treat the repo’s current state as the latest output of that plan.
+You are refining an EXISTING plan (previous iteration). Treat the repo’s current state as the latest output of that plan. Do **not** create a new plan; regenerate the **same deliverables** as a consistent vNext with the smallest necessary changes.
 
 ## Inputs (read first)
 - `planning.md`, `specs.md`, `roadmap.md`, `tests/**`
+- `notes/api/decompiler_inventory.md` (decompiler/Python API contract)
 
-## Extra reference (read ONLY if needed)
+## Extra reference (read ONLY if needed to resolve uncertainty/conflict)
 - `third_party/ghidra/Ghidra/Features/Decompiler/src/decompile/cpp/**`
-  - Use only to confirm/resolve uncertainties or conflicts about *decompiler requirements* already claimed/assumed in the plan/specs/tests.
-  - Cite exact file paths + identifiers (e.g., function/class) when used.
+  - Use only to verify specific decompiler-contract details that are ambiguous/contradictory in repo docs/tests.
+  - When used, cite exact file paths + identifiers (class/function/symbol) and update the contract details in `notes/api/decompiler_inventory.md`.
 
 ## Core rule
-The prior deliverables + intent are the baseline. Do NOT invent a new plan. Regenerate the SAME deliverables as a consistent vNext with the smallest necessary changes.
+Prior deliverables + intent are the baseline and the only required outputs. Preserve scope, naming, and structure unless a minimal change is required for consistency/testability.
 
 ## Tasks
 1) **Baseline extraction**
-   - From `planning.md`: list explicitly stated deliverables/artifacts + success/acceptance criteria.
-   - These define the ONLY required outputs.
+   - From `planning.md`: enumerate deliverables/artifacts + explicit success/acceptance criteria.
 
 2) **Deliverables audit (repo vs baseline)**
-   - For each baseline deliverable: Present / Missing / Partial / Unclear.
-   - Include file + heading/section refs; for gaps, state minimal fix.
+   - For each deliverable: Present / Missing / Partial / Unclear.
+   - Cite file + heading/section; for gaps, propose the minimal fix.
 
 3) **Cross-file consistency**
-   - Find contradictions/drift across `planning.md` ↔ `specs.md` ↔ `roadmap.md` ↔ `tests/**`.
+   - Detect contradictions/drift across `planning.md` ↔ `specs.md` ↔ `roadmap.md` ↔ `tests/**` ↔ `notes/api/decompiler_inventory.md`.
    - Classify: Hard conflict / Soft inconsistency / Omission.
-   - For each: evidence (file+section) + ONE best minimal fix.
+   - For each: evidence (file+section) + ONE minimal fix.
 
 4) **Architecture/strategy validation (within prior intent)**
-   - Extract key prior decisions (boundaries, data flow, APIs, storage, invariants, testing strategy, security/perf assumptions) with evidence.
-   - Flag grey areas/unstated assumptions that block implementation/testing.
+   - Extract key prior decisions (boundaries, data flow, APIs, invariants, testing strategy, security/perf assumptions) with evidence.
+   - Flag grey areas/unstated assumptions that could break implementation/testing.
    - Recommend minimal clarifications/adjustments (preserve intent).
 
-5) **ADR-001 decision (must do)**
-   - Locate ADR-001; extract context/options/constraints already present.
-   - Decide ADR-001 (choose an option), add rationale, consequences, and follow-ups.
-   - Ensure consistency with `planning.md`/`specs.md`/`roadmap.md`/`tests/**`.
-   - If ADR-001 hinges on decompiler requirements and the repo docs are ambiguous/conflicting, verify ONLY the specific points in the Ghidra source folder above and cite paths/identifiers.
+5) **Expand the stable Python interface (structured results)**
+   - Using `notes/api/decompiler_inventory.md` as the contract baseline, propose an incremental vNext that returns *structured objects* (not only C text), while keeping compatibility.
+   - Define the objects (fields/types), error model, and ownership/lifetime rules (as relevant).
+   - Map each new object/field to: (a) a concrete consumer need in plan/specs/tests, and (b) a decompiler capability per the inventory; verify in Ghidra sources ONLY if the inventory/docs/tests are unclear.
+   - **The definition of the structured objects exposed by the contract baseline is a P0 requirement.** The roadmap must include it as an exit criterion for P0 (Spec lock), not deferred to later phases.
+   - Update/extend tests and docs minimally to lock behavior.
 
 6) **Produce vNext deliverables (same set)**
    - Provide patch-style edits mapped to specific files/sections to update the EXISTING deliverables set.
-   - Ensure acceptance criteria remain testable and roadmap sequencing stays coherent.
+   - Keep acceptance criteria testable and roadmap sequencing coherent.
+   - Ensure the roadmap P0 exit criteria include the structured-object definitions from Task 5 (fields, types, error model, ownership/lifetime).
 
-7) **Questions (only when blocking)**
-   - If something is ambiguous/insufficient to proceed safely, ask targeted blocking questions.
-   - Group by topic; say why each blocks. Otherwise proceed without questions.
+7) **Questions / clarifications**
+   - If anything is ambiguous (even if not fully blocking) and could change conclusions, ask targeted questions.
+   - Group by topic; include why it matters and what decision it affects. Otherwise proceed.
 
 ## Output (strict order)
 - **Summary** (≤8 bullets)
 - **Deliverables Gap Audit** (table)
-- **Inconsistencies & Grey Areas** (ranked, with evidence + minimal fix)
+- **Inconsistencies & Grey Areas** (ranked; evidence + minimal fix)
 - **Architecture/Strategy Review** (evidence-based)
-- **ADR-001 Decision** (decision + rationale + consequences + follow-ups; cite sources if checked)
+- **Python Interface Expansion** (proposed objects + compatibility + tests/docs impact; cite sources if checked)
 - **Proposed Updates** (patch-style by file/section; minimal changes)
-- **Blocking Questions** (only if truly blocking)
+- **Questions** (only if applicable)

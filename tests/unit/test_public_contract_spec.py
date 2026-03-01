@@ -19,3 +19,11 @@ def test_u003_result_metadata_required_keys():
 @pytest.mark.skip(reason="Spec-only skeleton; no runtime integration in this phase")
 def test_u004_function_size_hint_passthrough():
     """U-004: function_size_hint is accepted and passed through; omission does not error."""
+
+
+@pytest.mark.skip(reason="Spec-only skeleton; no runtime integration in this phase")
+def test_u005_function_info_fields_from_stub():
+    """U-005: FunctionInfo fields are populated from adapter stub with correct types.
+
+    Validates: FunctionInfo required fields present; DiagnosticFlags aggregation
+    matches individual flag values; TypeInfo metatype is a valid stable string."""
