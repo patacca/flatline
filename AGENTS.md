@@ -4,7 +4,8 @@
 
 # Baseline and policy
 - Upstream pin: `Ghidra_12.0.3_build` @ `09f14c92d3` (2026-02-10).
-- MVP: Linux x86_64, Python 3.13+, latest-upstream-only.
+- MVP host: Linux x86_64, Python 3.13+, latest-upstream-only.
+- MVP target ISAs: any Ghidra-supported; priority: x86, ARM, RISC-V, MIPS (32/64-bit each).
 - Stable public Python API over unstable upstream internals.
 
 # ADR status

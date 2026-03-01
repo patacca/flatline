@@ -18,7 +18,8 @@ Retired sources (content merged into this spec and test catalog):
 Hard constraints:
 - In-process Python to native bridge is mandatory.
 - Installable from `pip` without requiring users to provide/build Ghidra.
-- MVP target: Linux first; architecture must preserve macOS/Windows feasibility.
+- MVP host platform: Linux x86_64; architecture must preserve macOS/Windows host feasibility.
+- MVP target ISA scope: any Ghidra decompiler-supported binary architecture. Priority ISAs: x86 (32/64), ARM (32/64), RISC-V (32/64), MIPS (32/64). Runtime data must bundle language/compiler assets for all priority ISAs at minimum.
 - Python: `3.13+`.
 - Version policy: support only the latest Ghidra decompiler version.
 
@@ -27,6 +28,7 @@ Hard constraints:
 Goals:
 - Provide a stable Python-first decompilation contract that remains consistent while upstream internals change.
 - Expose single-function decompilation with explicit language/compiler selection and structured diagnostics.
+- Support decompilation of any Ghidra-supported target ISA from a single installation, with priority coverage for x86, ARM, RISC-V, and MIPS families.
 - Make runtime assets self-contained for out-of-the-box installation.
 - Define testable behavioral guarantees before implementation details.
 
@@ -35,6 +37,7 @@ Non-goals:
 - Whole-program project modeling in MVP.
 - Supporting multiple Ghidra decompiler versions simultaneously.
 - Defining build scripts, binding mechanics, or C/C++ implementation internals in this document.
+- Guaranteeing identical decompilation quality across all ISAs; priority ISAs (x86, ARM, RISC-V, MIPS) have full fixture coverage, other Ghidra-supported ISAs are best-effort with enumeration and error-contract coverage only.
 
 ## 2. Personas and Use Cases
 
@@ -45,7 +48,8 @@ Personas:
 
 Primary use cases:
 - Decompile one function by memory image + architecture + entry address (ADR-001 resolved: Option A).
-- Enumerate valid `(language_id, compiler_spec)` pairs shipped in runtime data.
+- Decompile functions from any Ghidra-supported target ISA (x86, ARM, RISC-V, MIPS, and others) by specifying the appropriate `language_id`.
+- Enumerate valid `(language_id, compiler_spec)` pairs shipped in runtime data, spanning all bundled ISAs.
 - Fail predictably on invalid addresses/unsupported language selection.
 - Run repeated decompiles in one process with isolated request state.
 
@@ -72,7 +76,7 @@ Derived from:
 
 | Operation | Purpose | Minimum behavior |
 | --- | --- | --- |
-| `list_language_compilers()` | Enumerate valid language/compiler pairs | Returns only pairs with required backing assets present in runtime data. |
+| `list_language_compilers()` | Enumerate valid language/compiler pairs | Returns only pairs with required backing assets present in runtime data. Covers all bundled ISAs (priority: x86, ARM, RISC-V, MIPS; plus any other Ghidra-supported ISAs whose assets are included). |
 | `decompile_function(request)` | Decompile one function | Returns `DecompileResult`; no native exceptions leak across public boundary. |
 | `get_version_info()` | Report runtime versions | Includes ghidralib version, pinned upstream commit/tag, and runtime data revision id. |
 
@@ -177,6 +181,8 @@ Known limits at baseline:
 - Entry-point-only function targeting in MVP.
 - CFG recovery can be best-effort; unresolved indirect flows may degrade output quality.
 - Global startup/cache state implies constrained mutation semantics across threads.
+- Decompilation quality may vary across ISAs depending on upstream Sleigh specification maturity; priority ISAs (x86, ARM, RISC-V, MIPS) are validated by fixture matrix, other ISAs are best-effort.
+- Some ISA variants (e.g., Thumb/Thumb-2 for ARM, microMIPS) inherit the upstream decompiler's support level without additional library-level guarantees.
 
 ### 4.4 Mapping to Public API
 
@@ -352,7 +358,7 @@ Consequences:
 - `DecompileRequest` includes `memory_image` and `base_address` as required fields (§3.3).
 - Option C convenience layer (binary file → memory extraction → decompile) is explicit
   Next-scope (§8.3).
-- Fixture strategy uses raw memory images extracted from reference binaries.
+- Fixture strategy uses raw memory images extracted from reference binaries, with fixtures covering each priority ISA (x86, ARM, RISC-V, MIPS).
 
 ### 5.6 Decision Points Requiring User Choice
 
@@ -399,8 +405,9 @@ Concurrency model:
 
 Performance budgets (planning targets):
 - Session startup (warm): bounded target defined per release.
-- Single-function decompile on MVP fixture set: p95 budget tracked in CI.
+- Single-function decompile on MVP fixture set: p95 budget tracked in CI per priority ISA.
 - Regression threshold policy: fail CI on sustained >15% regression for pinned matrix.
+- Performance budgets are tracked independently per ISA family; different Sleigh specifications may have inherently different analysis costs.
 
 Security boundaries:
 - Untrusted memory images are treated as untrusted input.
@@ -424,9 +431,10 @@ Extensibility:
 
 ### 8.1 MVP Commitments (Kept)
 
-- Linux-first single-function scope.
-- Runtime data directory contract with packaged default and explicit override.
-- Pair enumeration from language descriptions with existence filtering.
+- Linux host-first single-function scope.
+- Multi-ISA target support: any Ghidra decompiler-supported architecture. Priority ISAs with full fixture coverage: x86 (32/64-bit), ARM (32/64-bit), RISC-V (32/64-bit), MIPS (32/64-bit). Other Ghidra-supported ISAs available through bundled runtime data with enumeration and error-contract coverage.
+- Runtime data directory contract with packaged default and explicit override; bundles language/compiler assets for all priority ISAs.
+- Pair enumeration from language descriptions with existence filtering across all bundled ISAs.
 - Structured results with warnings/errors/metadata.
 
 ### 8.2 Items Marked Obsolete and Replaced
@@ -445,19 +453,24 @@ Extensibility:
 - Multi-region memory input and section metadata (readonly ranges, symbols) extensions
   to `DecompileRequest`.
 - Batch decompilation APIs.
-- Cross-platform artifact parity (macOS/Windows).
+- Cross-platform host parity (macOS/Windows).
+- Extended fixture coverage for non-priority Ghidra-supported ISAs beyond the MVP set.
 
 ## 9. Open Questions
 
 - Should warning codes be globally namespaced now to prevent future collisions?
 - Is canonicalized C output required as a hard contract, or only semantic/token-level stability?
-- Should analysis-budget defaults vary by platform or remain globally fixed?
-- How strict should package-size limits be for bundled runtime assets?
+- Should analysis-budget defaults vary by platform or target ISA, or remain globally fixed?
+- How strict should package-size limits be for bundled runtime assets, given the multi-ISA asset footprint?
 - Should session-level failure categories (startup, initialization) be defined explicitly in the `GhidralibError` hierarchy, or is the current `ErrorItem` taxonomy sufficient?
+- Should the runtime data package bundle all Ghidra-supported ISA assets or only the priority set (x86, ARM, RISC-V, MIPS), with an extension mechanism for others?
+- Should ISA-specific Sleigh compilation (`.sla` files) happen at build time or install time?
 
 ## 10. Assumptions
 
 - Upstream baseline remains fixed until deliberate bump planning is triggered.
 - Users accept latest-upstream-only support policy.
 - MVP fixture binaries can be redistributed under project licensing policy.
-- Linux-first release can ship before cross-platform parity without violating product goals.
+- Linux host-first release can ship before cross-platform host parity without violating product goals.
+- Upstream Sleigh specifications for priority ISAs (x86, ARM, RISC-V, MIPS) are sufficiently mature for production-quality decompilation.
+- Bundling language/compiler assets for all priority ISAs does not exceed acceptable package size limits (tracked in risk register).
