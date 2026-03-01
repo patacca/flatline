@@ -23,6 +23,7 @@
 - **Error model:** Hard errors on invalid input; warnings on degraded success. No silent fallbacks.
 - **All structured results are frozen value copies** — no native pointers cross the ABI boundary.
 - **Code style:** see `docs/code_style.md` for naming, formatting, import, test, and annotation rules.
+- **ASCII only in code:** all source files (`.py`, `.cpp`, `.h`, `meson.build`) must use only ASCII characters. No Unicode symbols, smart quotes, em-dashes, or non-ASCII identifiers.
 
 # Baseline and policy
 - Upstream pin: `Ghidra_12.0.3_build` @ `09f14c92d3` (2026-02-10).

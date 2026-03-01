@@ -4,6 +4,13 @@ Authoritative style rules for the ghidralib codebase.
 Tooling config lives in `pyproject.toml`; this document captures conventions
 that tools cannot enforce.
 
+## Character set
+
+- **ASCII only:** all source files (`.py`, `.cpp`, `.h`, `meson.build`) must
+  contain only ASCII characters (U+0000–U+007F). No Unicode symbols, smart
+  quotes, em-dashes, or non-ASCII identifiers. String literals that genuinely
+  need non-ASCII content (e.g., test vectors) are the sole exception.
+
 ## Formatting and linting
 
 - **Runner:** tox — use `tox` (or `tox -e lint`, `tox -e py313`, etc.) instead of
