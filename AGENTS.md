@@ -22,6 +22,7 @@
 - **Spec-first / TDD:** test definitions precede code.
 - **Error model:** Hard errors on invalid input; warnings on degraded success. No silent fallbacks.
 - **All structured results are frozen value copies** — no native pointers cross the ABI boundary.
+- **Code style:** see `docs/code_style.md` for naming, formatting, import, test, and annotation rules.
 
 # Baseline and policy
 - Upstream pin: `Ghidra_12.0.3_build` @ `09f14c92d3` (2026-02-10).
@@ -43,6 +44,7 @@
 # Source of truth
 - `docs/specs.md` — SDD: API contract, data models, error taxonomy, cross-cutting requirements.
 - `docs/roadmap.md` — 7 phases (P0–P6), 5 milestones (M1–M5), risk register, ADR backlog.
+- `docs/code_style.md` — code style guide: naming, formatting, imports, annotations, test conventions.
 - `docs/planning.md` — original brief/requirements.
 - `docs/preplanning.md` — discovery constraints and experiment plan (completed).
 - `docs/refine_plan.md` — plan refinement checklist and cross-file consistency guide.
