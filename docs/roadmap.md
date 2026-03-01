@@ -34,7 +34,7 @@ Product policy:
   - `tests/specs/*`
 - Exit checks:
   - Decision points resolved or explicitly deferred with owner/date.
-  - Structured result object definitions (`FunctionInfo`, `FunctionPrototype`, `ParameterInfo`, `VariableInfo`, `TypeInfo`, `CallSiteInfo`, `JumpTableInfo`, `DiagnosticFlags`, `StorageInfo`) with fields, types, error model, and ownership/lifetime locked in `specs.md` §3.3.
+  - Structured result object definitions (`FunctionInfo`, `FunctionPrototype`, `ParameterInfo`, `VariableInfo`, `TypeInfo`, `CallSiteInfo`, `JumpTableInfo`, `DiagnosticFlags`, `StorageInfo`, `LanguageCompilerPair`, `WarningItem`, `ErrorItem`, `VersionInfo`) with fields, types, error model, and ownership/lifetime locked in `specs.md` §3.3.
 
 ### M1: Contract harness ready
 - Inputs:
