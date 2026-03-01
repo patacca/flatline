@@ -23,3 +23,4 @@ Pip-installable Python wrapper around the Ghidra C++ decompiler, bundling runtim
 - **Error model:** Hard errors on invalid input; warnings on degraded success. No silent fallbacks.
 - **All structured results are frozen value copies** — no native pointers cross the ABI boundary.
 - **AGENTS.md must be updated** on every repo operation to reflect current state.
+- **Always work in a Python venv** — mandatory for all development and testing.

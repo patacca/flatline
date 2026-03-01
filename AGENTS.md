@@ -11,6 +11,7 @@
 - MVP host: Linux x86_64, Python 3.13+, latest-upstream-only.
 - MVP target ISAs: any Ghidra-supported; priority: x86, ARM, RISC-V, MIPS (32/64-bit each).
 - Stable public Python API over unstable upstream internals.
+- **Always work in a Python venv** — mandatory for all development and testing.
 
 # ADR status
 - **ADR-001 (Public Scope Model): DECIDED — Option A** (Memory + Architecture + Function-Level).
