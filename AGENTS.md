@@ -1,3 +1,7 @@
+# Maintenance
+- Update this file on every repo operation to reflect the current state.
+- Keep updates minimal: only facts that save significant re-derivation time for future prompts.
+
 # Overview
 - Spec-first Python wrapper around the Ghidra decompiler (no production code yet).
 - Phase P0 (Spec Lock) is **complete**; ready to enter P1 (Contract Test Harness).
