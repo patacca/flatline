@@ -14,8 +14,9 @@ metaphor for decompilation: extracting meaning from dead code.
   function entry point; get back structured C output with diagnostics.
 - **Multi-ISA** -- supports any Ghidra-supported target architecture. Priority
   coverage for x86 (32/64), ARM (32/64), RISC-V (32/64), and MIPS (32/64).
-- **Self-contained** -- runtime data (language/compiler specs) is bundled in the
-  wheel; no external Ghidra build needed.
+- **Packaged runtime data** -- compiled Sleigh runtime assets come from the
+  companion `ghidra-sleigh` package, so production installs do not depend on a
+  vendored `third_party/ghidra` tree.
 - **Deterministic** -- repeated decompiles of the same input produce
   structurally equivalent output.
 
@@ -29,7 +30,7 @@ metaphor for decompilation: extracting meaning from dead code.
 ## Installation
 
 ```bash
-pip install flatline
+pip install flatline ghidra-sleigh
 ```
 
 For development:
@@ -39,6 +40,9 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 ```
+
+`ghidra-sleigh` exposes `ghidra_sleigh.get_runtime_data_dir()` and should track
+flatline's pinned Ghidra version.
 
 ### Native bridge
 
@@ -76,6 +80,7 @@ importable.
 
 ```python
 from flatline import DecompileRequest, decompile_function
+import ghidra_sleigh
 
 result = decompile_function(DecompileRequest(
     memory_image=raw_bytes,
@@ -83,6 +88,7 @@ result = decompile_function(DecompileRequest(
     function_address=0x401000,
     language_id="x86:LE:64:default",
     compiler_spec="gcc",
+    runtime_data_dir=ghidra_sleigh.get_runtime_data_dir(),
 ))
 
 print(result.c_code)
@@ -106,6 +112,14 @@ tox -e py313,py314 -- -m unit
 # Run native-dependent tests (skipped automatically when the extension is absent)
 tox -e py313,py314 -- -m requires_native
 ```
+
+`tox` test envs build and install `flatline[test]` wheels inside `.tox/`, so
+the suite exercises the packaged artifact rather than `PYTHONPATH=src`.
+
+## Release Notes
+
+Project history lives in [CHANGELOG.md](CHANGELOG.md). Update it for every
+release using the Keep a Changelog structure already in the file.
 
 ## Project status
 

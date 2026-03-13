@@ -27,3 +27,4 @@ Logical test cases without separate artifact files:
 Runtime data source for native tests: `ghidra_sleigh.get_runtime_data_dir()`.
 Upstream pin used when generated: `Ghidra_12.0.3_build` @ `09f14c92d3da6e5d5f6b7dea115409719db3cce1`.
 License / redistribution note: all fixture bytes are redistributable synthetic machine code authored in-repo or compiled from tiny in-repo source snippets without third-party binary payloads.
+Fixture regeneration updates test artifacts only; release-facing user changes belong in `CHANGELOG.md`.

@@ -2,13 +2,14 @@
 - Update this file on every repo operation; only facts that save re-derivation time.
 
 # Overview
-- Pip-installable Python wrapper around Ghidra C++ decompiler, bundling runtime assets. Multi-ISA.
+- Pip-installable Python wrapper around the Ghidra C++ decompiler, consuming packaged runtime assets from `ghidra-sleigh`. Multi-ISA.
 - **Phase P2 (Linux MVP) — in progress.** P0, P1 complete.
 - `.sla` runtime data now comes from external `ghidra-sleigh` (pip name) / `ghidra_sleigh` (import) package; default build ships all processor families, lighter build uses `all_processors=false`.
 - End-to-end decompilation verified: x86_64 `add(a,b)` produces correct C output with full structured data.
 - Priority-ISA native memory fixtures are now committed as `tests/fixtures/*.hex`: x86_64, x86_32, AArch64, RISC-V 64, MIPS32, plus x86_64 switch and warning fixtures.
 - Fixture sources now live beside the artifacts under `tests/fixtures/sources/`, with regeneration scripted in `tests/fixtures/generate_hex_fixtures.py`.
 - Tox now tests the installed package artifact: `py313`/`py314` build `flatline[test]` wheels inside `.tox`, while `lint` remains package-skip + `ruff`.
+- `CHANGELOG.md` exists at the repo root, follows Keep a Changelog, and must be updated for every release.
 - **Next:** capture remaining P2 perf/jump-table baselines and decide whether `ghidra-sleigh` should become a required runtime dependency or stay as an explicit install/validation step under ADR-004.
 - Not a general Ghidra automation framework; decompiler surface only. No UI, no project DB.
 
@@ -45,6 +46,7 @@
 - `docs/specs.md` — SDD: API contract, data models, error taxonomy, cross-cutting requirements.
 - `docs/roadmap.md` — 7 phases (P0-P6), 6 milestones (M0-M5), risk register, ADR backlog.
 - `docs/code_style.md` — naming, formatting, imports, annotations, test conventions.
+- `CHANGELOG.md` — release history; update on every release.
 - `docs/compact_agent.md` — compact prompt template for lossless AGENTS.md compression.
 - `docs/planning.md` — original brief/requirements.
 - `docs/preplanning.md` — discovery constraints and experiment plan (completed).
@@ -90,7 +92,7 @@
 
 # Tests
 - `tox`: `py314` passes all 51 tests (23 unit, 6 contract, 10 integration, 7 regression, 5 negative) against the installed wheel artifact; `py313` skips when `python3.13` is absent.
-- `.sla` files compiled for priority ISAs (DATA, x86, AARCH64, RISCV, MIPS) under `third_party/ghidra/Ghidra/Processors/*/data/languages/`.
+- Native tests expect compiled `.sla` data from the installed `ghidra-sleigh` package, currently covering DATA, x86, AARCH64, RISCV, and MIPS.
 - Native tox runs resolve runtime data from `ghidra_sleigh.get_runtime_data_dir()`; `DecompileRequest` / `DecompilerSession` now coerce path-like `runtime_data_dir` inputs to strings.
 - `tests/conftest.py` — auto-applies category markers from directory names.
 - `tests/specs/test_catalog.md` — 37 definitions, 5 categories, contract traceability matrix.

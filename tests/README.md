@@ -7,6 +7,13 @@ installed `ghidra_sleigh` runtime-data package when the native bridge is availab
 Tox test envs install the built `flatline[test]` package, so native suites
 exercise the installed artifact instead of `PYTHONPATH=src`.
 
+## Running the suite
+
+- `source .venv/bin/activate && tox`: all configured test and lint envs.
+- `source .venv/bin/activate && tox -e py313,py314`: tests only.
+- `source .venv/bin/activate && tox -e py313,py314 -- -m requires_native`: native-only coverage against the installed wheel artifact.
+- `source .venv/bin/activate && tox -e lint`: Ruff only.
+
 ## Layout
 
 - `tests/specs/test_catalog.md`: canonical list of test definitions and oracle strategy.
