@@ -41,7 +41,7 @@ coverage.xml
 .tox/
 
 # Claude Code
-.claude/
+.claude/settings.local.json
 docs/tasks/
 
 # IDE

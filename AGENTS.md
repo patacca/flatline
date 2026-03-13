@@ -10,9 +10,9 @@
 - Not a general Ghidra automation framework; decompiler surface only. No UI, no project DB.
 
 # Architecture (3-layer adapter)
-1. **Public Contract** — `DecompilerSession` lifecycle + one-shot wrappers (`_session.py`); models/errors in `_models.py` / `_errors.py`.
-2. **Bridge Contract** — nanobind C++ extension (`_flatline_native.cpp`, ADR-002) with Python fallback (`_bridge.py`). Pre-validates language/compiler pairs; `.ldefs`-based fallback enumeration when native listing unavailable.
-3. **Native layer** — 82 upstream C++ sources compiled via Meson (zlib required), linked as `ghidra_decompiler` static lib. Per-request flow: `SleighArchitecture` init, custom `LoadImage`, action reset/perform, `docFunction`, structured `FunctionInfo` extraction.
+1. **Public Contract** — `DecompilerSession` lifecycle + one-shot wrappers (`_session.py`); Python request/result models and error taxonomy in `_models.py` / `_errors.py`.
+2. **Bridge Contract** — nanobind C++ extension (`_flatline_native.cpp`, ADR-002) with Python fallback (`_bridge.py`). Pre-validates language/compiler pairs; `.ldefs`-based fallback enumeration when native listing unavailable. Translates public models ↔ native calls. Unstable internal.
+3. **Native layer** — Upstream Adapter, wraps Ghidra C++ callable surface; changes absorb upstream drift. 82 upstream C++ sources compiled via Meson (zlib required), linked as `ghidra_decompiler` static lib. Per-request flow: `SleighArchitecture` init, custom `LoadImage`, action reset/perform, `docFunction`, structured `FunctionInfo` extraction.
 
 # Conventions
 - **File length:** max ~700 lines; split if exceeded.
