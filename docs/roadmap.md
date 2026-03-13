@@ -51,11 +51,11 @@ Product policy:
 - session startup, pair enumeration, single-function decompile behavior
 - priority-ISA fixture results (x86, ARM, RISC-V, MIPS) and enumeration coverage for all bundled ISAs
 - Exit checks:
-- known-function and jump-table fixtures produce deterministic pass under oracle rules for each priority ISA
+- known-function fixtures for each priority ISA and the committed jump-table fixture produce deterministic pass under oracle rules
 - invalid-address, unsupported-language/compiler produce structured failures (ISA-independent)
 - bridge ownership and lifetime contract verified by contract/integration definitions
 - `list_language_compilers()` returns valid pairs spanning all priority ISAs and any additionally bundled ISAs
-- per-ISA performance baselines captured for priority ISAs
+- per-ISA performance baselines captured for priority ISAs, with the x86_64 jump-table fixture tracked separately
 
 ### M3: Packaging and compliance complete
 - Inputs:

@@ -42,6 +42,8 @@ class NativeFixture:
     expected_return_type_metatype: str
     expected_varnode_count: int
     expected_warning_count: int = 0
+    warm_p95_budget_seconds: float | None = None
+    expected_jump_table_switch_address: int | None = None
     expected_jump_table_targets: tuple[int, ...] = ()
     base_address: int = 0x1000
     function_address: int = 0x1000
@@ -88,6 +90,15 @@ MULTI_ISA_FIXTURE_IDS: tuple[str, ...] = (
     "fx_add_mips32",
 )
 
+PERFORMANCE_FIXTURE_IDS: tuple[str, ...] = (
+    "fx_add_elf64",
+    "fx_add_elf32",
+    "fx_add_arm64",
+    "fx_add_riscv64",
+    "fx_add_mips32",
+    "fx_switch_elf64",
+)
+
 
 _FIXTURES: dict[str, NativeFixture] = {
     "fx_add_elf64": NativeFixture(
@@ -106,6 +117,7 @@ _FIXTURES: dict[str, NativeFixture] = {
         expected_return_type_size=4,
         expected_return_type_metatype="int",
         expected_varnode_count=5,
+        warm_p95_budget_seconds=0.05,
     ),
     "fx_add_elf32": NativeFixture(
         fixture_id="fx_add_elf32",
@@ -123,6 +135,7 @@ _FIXTURES: dict[str, NativeFixture] = {
         expected_return_type_size=4,
         expected_return_type_metatype="int",
         expected_varnode_count=4,
+        warm_p95_budget_seconds=0.05,
     ),
     "fx_add_arm64": NativeFixture(
         fixture_id="fx_add_arm64",
@@ -140,6 +153,7 @@ _FIXTURES: dict[str, NativeFixture] = {
         expected_return_type_size=4,
         expected_return_type_metatype="int",
         expected_varnode_count=5,
+        warm_p95_budget_seconds=0.05,
     ),
     "fx_add_riscv64": NativeFixture(
         fixture_id="fx_add_riscv64",
@@ -157,6 +171,7 @@ _FIXTURES: dict[str, NativeFixture] = {
         expected_return_type_size=8,
         expected_return_type_metatype="int",
         expected_varnode_count=5,
+        warm_p95_budget_seconds=0.075,
     ),
     "fx_add_mips32": NativeFixture(
         fixture_id="fx_add_mips32",
@@ -174,6 +189,7 @@ _FIXTURES: dict[str, NativeFixture] = {
         expected_return_type_size=4,
         expected_return_type_metatype="int",
         expected_varnode_count=4,
+        warm_p95_budget_seconds=0.05,
     ),
     "fx_switch_elf64": NativeFixture(
         fixture_id="fx_switch_elf64",
@@ -195,6 +211,8 @@ _FIXTURES: dict[str, NativeFixture] = {
         expected_return_type_size=4,
         expected_return_type_metatype="uint",
         expected_varnode_count=40,
+        warm_p95_budget_seconds=0.1,
+        expected_jump_table_switch_address=0x1009,
         expected_jump_table_targets=(
             0x1010,
             0x1051,

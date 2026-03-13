@@ -37,6 +37,9 @@ Metadata:
 - Enforce required keys and value types.
 - Allow additive keys in minor releases.
 
+Regression baselines:
+- `tests/_native_fixtures.py` carries the committed normalized C baselines, jump-table switch/target expectations, and warm-session p95 budgets used by the native regression suite.
+
 ## 3. Determinism Rules
 
 - Freeze fixture binaries and runtime-data revision identifiers per release branch.

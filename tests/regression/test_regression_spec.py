@@ -9,6 +9,7 @@ import pytest
 
 from tests._native_fixtures import (
     MULTI_ISA_FIXTURE_IDS,
+    PERFORMANCE_FIXTURE_IDS,
     assert_successful_result,
     get_native_fixture,
     normalize_c_code,
@@ -46,30 +47,35 @@ def test_r002_jump_table_output_regression_guard(native_runtime_data_dir: str) -
     assert normalize_c_code(result.c_code) == fixture.normalized_c
     assert result.function_info.jump_tables
     jump_table = result.function_info.jump_tables[0]
+    assert jump_table.switch_address == fixture.expected_jump_table_switch_address
     assert jump_table.target_count == len(fixture.expected_jump_table_targets)
     assert tuple(jump_table.target_addresses) == fixture.expected_jump_table_targets
 
 
-def test_r003_latency_budget_regression_guard(native_runtime_data_dir: str) -> None:
-    """R-003: Decompile latency stays within the gross regression budget."""
-    add_fixture = get_native_fixture("fx_add_elf64")
-    switch_fixture = get_native_fixture("fx_switch_elf64")
-    thresholds = {
-        add_fixture.fixture_id: 0.25,
-        switch_fixture.fixture_id: 0.25,
-    }
+@pytest.mark.parametrize("fixture_id", PERFORMANCE_FIXTURE_IDS)
+def test_r003_latency_budget_regression_guard(
+    native_runtime_data_dir: str,
+    fixture_id: str,
+) -> None:
+    """R-003: Warm-session decompile latency stays within fixture budgets."""
+    fixture = get_native_fixture(fixture_id)
+    budget = fixture.warm_p95_budget_seconds
+    assert budget is not None
 
     with open_native_session(native_runtime_data_dir) as session:
-        for fixture in (add_fixture, switch_fixture):
-            request = fixture.build_request(native_runtime_data_dir)
-            session.decompile_function(request)
-            samples: list[float] = []
-            for _ in range(20):
-                started = perf_counter()
-                result = session.decompile_function(request)
-                samples.append(perf_counter() - started)
-                assert_successful_result(result)
-            assert _p95(samples) < thresholds[fixture.fixture_id]
+        request = fixture.build_request(native_runtime_data_dir)
+        session.decompile_function(request)
+        samples: list[float] = []
+        for _ in range(20):
+            started = perf_counter()
+            result = session.decompile_function(request)
+            samples.append(perf_counter() - started)
+            assert_successful_result(result)
+
+    measured_p95 = _p95(samples)
+    assert measured_p95 < budget, (
+        f"{fixture.fixture_id} p95 {measured_p95:.6f}s exceeded budget {budget:.6f}s"
+    )
 
 
 @pytest.mark.parametrize("fixture_id", MULTI_ISA_FIXTURE_IDS)
