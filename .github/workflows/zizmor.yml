@@ -1,14 +1,7 @@
 name: GitHub Actions Security Analysis with zizmor 🌈
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/**"
-  pull_request:
-    branches: ["**"]
-    paths:
-      - ".github/workflows/**"
+  workflow_dispatch: # disabled until Advanced Security is available
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
