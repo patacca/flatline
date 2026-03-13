@@ -114,7 +114,8 @@ static NativeRequest parse_request(const nb::dict &request) {
     if (!request.contains("memory_image")) {
         throw std::invalid_argument("missing required field: memory_image");
     }
-    parsed.memory_image = nb::cast<std::string>(nb::cast<nb::bytes>(request["memory_image"]));
+    nb::bytes raw_bytes = nb::cast<nb::bytes>(request["memory_image"]);
+    parsed.memory_image = std::string(raw_bytes.c_str(), raw_bytes.size());
     if (parsed.memory_image.empty()) {
         throw std::invalid_argument("memory_image must not be empty");
     }
@@ -593,7 +594,7 @@ static void ensure_library_initialized(const std::string &runtime_data_dir) {
 class MemoryLoadImageSkeleton {
 public:
     MemoryLoadImageSkeleton(std::uint64_t base_address, nb::bytes memory_image)
-        : base_address_(base_address), memory_image_(nb::cast<std::string>(memory_image)) {}
+        : base_address_(base_address), memory_image_(memory_image.c_str(), memory_image.size()) {}
 
     nb::bytes read(std::uint64_t address, std::size_t size) const {
         std::uint64_t end = 0;
