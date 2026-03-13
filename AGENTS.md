@@ -6,6 +6,7 @@
 - **Phase P2 (Linux MVP) — in progress.** P0, P1 complete.
 - `.sla` runtime data now comes from the `ghidra-sleigh` runtime dependency (pip name) / `ghidra_sleigh` (import); default build ships all processor families, lighter build uses `all_processors=false`.
 - `pyproject.toml` now pins `ghidra-sleigh == 12.0.4` to match the vendored `Ghidra_12.0.4_build` native baseline.
+- `third_party/ghidra` is now tracked by the top-level repo as a git submodule pinned to `Ghidra_12.0.4_build` / `e40ed13014025f82488b1f8f7bca566894ac376b`; `third_party/r2ghidra` remains a local read-only reference checkout ignored by the parent repo.
 - End-to-end decompilation verified: x86_64 `add(a,b)` produces correct C output with full structured data.
 - Priority-ISA native memory fixtures are now committed as `tests/fixtures/*.hex`: x86_64, x86_32, AArch64, RISC-V 64, MIPS32, plus x86_64 switch and warning fixtures.
 - Fixture sources now live beside the artifacts under `tests/fixtures/sources/`, with regeneration scripted in `tests/fixtures/generate_hex_fixtures.py`.
@@ -105,6 +106,7 @@
 
 # Vendored upstream
 - `third_party/ghidra` — upstream snapshot. `third_party/r2ghidra` — reference integration.
+- `.gitmodules` tracks `third_party/ghidra` as the vendored native-source submodule. `third_party/r2ghidra/` is ignored by the parent repo and remains reference-only.
 - Read-only unless explicitly asked.
 
 # Key data models (from specs.md)
