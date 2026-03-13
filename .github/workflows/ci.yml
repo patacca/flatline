@@ -16,11 +16,11 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install ruff
-        run: pip install "ruff>=0.9"
+      - name: Install tox
+        run: pip install tox
 
       - name: Lint
-        run: ruff check src/ tests/
+        run: tox -e lint
 
   build:
     runs-on: ubuntu-latest
