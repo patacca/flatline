@@ -4,16 +4,21 @@ build-backend = "mesonpy"
 
 [project]
 name = "flatline"
-version = "0.1.0-dev"
+version = "0.1.0.dev0"
 description = "Python wrapper around the Ghidra decompiler"
 requires-python = ">= 3.13"
 license = "Apache-2.0"
 
 [project.optional-dependencies]
-dev = [
+test = [
     "ghidra-sleigh",
     "pytest >= 8.0",
+]
+lint = [
     "ruff >= 0.9",
+]
+dev = [
+    "flatline[test,lint]",
     "tox >= 4.0",
 ]
 
@@ -61,22 +66,23 @@ env_list = ["py313", "py314", "lint"]
 skip_missing_interpreters = true
 
 [tool.tox.env_run_base]
-skip_install = true
-deps = []
-set_env = { PYTHONPATH = "{tox_root}/src" }
-allowlist_externals = ["{tox_root}/.venv/bin/pytest"]
+package = "wheel"
+wheel_build_env = ".pkg-{env_name}"
+extras = ["test"]
 commands = [
-    ["{tox_root}/.venv/bin/pytest", { replace = "posargs", default = ["-ra"], extend = true }],
+    ["pytest", { replace = "posargs", default = ["-ra"], extend = true }],
 ]
 
 [tool.tox.env.lint]
-skip_install = true
-deps = []
-allowlist_externals = ["{tox_root}/.venv/bin/ruff"]
-commands = [["{tox_root}/.venv/bin/ruff", "check", "src/", "tests/"]]
+package = "skip"
+extras = []
+# Mirrors [project.optional-dependencies].lint; duplicated because
+# package = "skip" prevents using extras.
+deps = ["ruff >= 0.9"]
+commands = [["ruff", "check", "src/", "tests/"]]
 
 [tool.tox.env.py313]
-base_python = ["python3.13"]
+base_python = "python3.13"
 
 [tool.tox.env.py314]
-base_python = ["python3.14"]
+base_python = "python3.14"

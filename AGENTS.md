@@ -8,6 +8,7 @@
 - End-to-end decompilation verified: x86_64 `add(a,b)` produces correct C output with full structured data.
 - Priority-ISA native memory fixtures are now committed as `tests/fixtures/*.hex`: x86_64, x86_32, AArch64, RISC-V 64, MIPS32, plus x86_64 switch and warning fixtures.
 - Fixture sources now live beside the artifacts under `tests/fixtures/sources/`, with regeneration scripted in `tests/fixtures/generate_hex_fixtures.py`.
+- Tox now tests the installed package artifact: `py313`/`py314` build `flatline[test]` wheels inside `.tox`, while `lint` remains package-skip + `ruff`.
 - **Next:** capture remaining P2 perf/jump-table baselines and decide whether `ghidra-sleigh` should become a required runtime dependency or stay as an explicit install/validation step under ADR-004.
 - Not a general Ghidra automation framework; decompiler surface only. No UI, no project DB.
 
@@ -84,11 +85,11 @@
 - **Single category:** `tox -e py313,py314 -- -m unit` (also: `contract`, `integration`, `regression`, `negative`)
 - **Single file:** `tox -e py313,py314 -- tests/unit/test_models.py`
 - **Single test:** `tox -e py313,py314 -- tests/unit/test_models.py::test_name -v`
-- Tox: offline/local, skips package install, runs from `.venv`, `PYTHONPATH=src`. `skip_missing_interpreters = true`.
+- Tox: `py313`/`py314` build and install `flatline[test]` wheels in `.tox`; `lint` skips package install and runs `ruff` directly. `skip_missing_interpreters = true`.
 - `ghidra-sleigh` source-build details live in its own repo; use its documented Meson options there, not from this workspace.
 
 # Tests
-- `tox`: `py314` passes all 51 tests (23 unit, 6 contract, 10 integration, 7 regression, 5 negative); `py313` skips when `python3.13` is absent.
+- `tox`: `py314` passes all 51 tests (23 unit, 6 contract, 10 integration, 7 regression, 5 negative) against the installed wheel artifact; `py313` skips when `python3.13` is absent.
 - `.sla` files compiled for priority ISAs (DATA, x86, AARCH64, RISCV, MIPS) under `third_party/ghidra/Ghidra/Processors/*/data/languages/`.
 - Native tox runs resolve runtime data from `ghidra_sleigh.get_runtime_data_dir()`; `DecompileRequest` / `DecompilerSession` now coerce path-like `runtime_data_dir` inputs to strings.
 - `tests/conftest.py` — auto-applies category markers from directory names.

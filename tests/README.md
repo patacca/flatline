@@ -4,6 +4,8 @@ This `tests/` tree now mixes specification artifacts with executable pytest
 coverage. Unit and contract suites remain pure Python; integration,
 regression, and negative suites use committed native-memory fixtures and the
 installed `ghidra_sleigh` runtime-data package when the native bridge is available.
+Tox test envs install the built `flatline[test]` package, so native suites
+exercise the installed artifact instead of `PYTHONPATH=src`.
 
 ## Layout
 

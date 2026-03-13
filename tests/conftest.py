@@ -18,9 +18,8 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 FIXTURES_DIR = REPO_ROOT / "tests" / "fixtures"
 NATIVE_MODULE = "flatline._flatline_native"
 NATIVE_SKIP_REASON = (
-    "requires native bridge extension; ensure flatline._flatline_native is importable "
-    "and ghidra-sleigh is installed (for example: pip install -e \".[dev]\" "
-    "-Csetup-args=-Dnative_bridge=enabled)"
+    "requires native bridge extension; ensure the tox test env can build/install "
+    "flatline with flatline._flatline_native importable and ghidra-sleigh available"
 )
 
 
