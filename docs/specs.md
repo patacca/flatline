@@ -85,10 +85,10 @@ Derived from:
 
 | Operation | Purpose | Minimum behavior |
 | --- | --- | --- |
-| `DecompilerSession.list_language_compilers()` | Enumerate valid language/compiler pairs | Returns only pairs with required backing assets present in runtime data. Covers all bundled ISAs (priority: x86, ARM, RISC-V, MIPS; plus any other Ghidra-supported ISAs whose assets are included). |
+| `DecompilerSession.list_language_compilers()` | Enumerate valid language/compiler pairs | Returns only pairs with required backing assets present in runtime data. If `runtime_data_dir` was omitted at session startup, the session auto-discovers the installed `ghidra_sleigh` runtime-data root first. Covers all bundled ISAs (priority: x86, ARM, RISC-V, MIPS; plus any other Ghidra-supported ISAs whose assets are included). |
 | `DecompilerSession.decompile_function(request)` | Decompile one function | Returns `DecompileResult`; no native exceptions leak across public boundary. |
-| `flatline.list_language_compilers(runtime_data_dir=None)` | One-shot convenience wrapper for pair enumeration | Creates a short-lived `DecompilerSession`, runs enumeration, and closes the session deterministically. |
-| `flatline.decompile_function(request)` | One-shot convenience wrapper for decompilation | Creates a short-lived `DecompilerSession`, runs decompilation, and closes the session deterministically. |
+| `flatline.list_language_compilers(runtime_data_dir=None)` | One-shot convenience wrapper for pair enumeration | Creates a short-lived `DecompilerSession`, auto-discovers the installed `ghidra_sleigh` runtime-data root when `runtime_data_dir` is omitted, runs enumeration, and closes the session deterministically. |
+| `flatline.decompile_function(request)` | One-shot convenience wrapper for decompilation | Creates a short-lived `DecompilerSession`, auto-discovers the installed `ghidra_sleigh` runtime-data root when `request.runtime_data_dir` is omitted, runs decompilation, and closes the session deterministically. |
 | `get_version_info()` | Report runtime versions | Includes flatline version, pinned upstream commit/tag, and runtime data revision id. |
 
 `DecompilerSession` is the canonical surface for repeated calls in one process.
@@ -102,7 +102,7 @@ Module-level operation functions are convenience wrappers for single-call workfl
 - `function_address` (required): entry point virtual address within the memory image
 - `language_id` (required)
 - `compiler_spec` (optional, explicit validation required)
-- `runtime_data_dir` (optional override)
+- `runtime_data_dir` (optional explicit override over the dependency-provided default runtime-data root)
 - `function_size_hint` (optional advisory)
 - `analysis_budget` (optional deterministic budget object)
 
@@ -225,11 +225,13 @@ Rules:
 - Unknown/unsupported language ids are hard errors. Error category: `unsupported_target`.
 - Invalid/unmapped addresses are hard errors, not warning-only degraded output. Error category: `invalid_address`.
 - Empty or zero-length memory images are hard errors. Error category: `invalid_argument`.
+- Omitting `runtime_data_dir` when the `ghidra-sleigh` dependency is unavailable is a hard startup error. Error category: `internal_error`.
 - Calling session operations after `DecompilerSession.close()` is a hard error. Error category: `invalid_argument`.
 - Error categories are contract-stable; text may change but remains human-readable.
 - Warning-only outcomes must still return successful operation status when C output is valid.
 - When `error` is set, `function_info` is always `None` and `c_code` is always `None`.
 - When decompilation succeeds, `function_info` is always populated (never `None`).
+- Auto-discovered `ghidra-sleigh` runtime data that does not match flatline's pinned upstream baseline must emit an observable warning, not degrade silently. Explicit `runtime_data_dir` overrides are treated as user-managed custom assets.
 
 Derived from:
 - Consolidated fallback-rejection and error semantics in this specification.
@@ -530,7 +532,7 @@ Extensibility:
 
 - Linux host-first single-function scope.
 - Multi-ISA target support: any Ghidra decompiler-supported architecture. Priority ISAs (x86, ARM, RISC-V, MIPS) have bundled runtime data and representative fixture coverage per ADR-009: x86 (32+64-bit), ARM64, RISC-V 64, MIPS32. Other Ghidra-supported ISAs available through bundled runtime data with enumeration and error-contract coverage.
-- Runtime data directory contract with packaged default and explicit override; bundles language/compiler assets for all priority ISAs.
+- Runtime data directory contract with dependency-backed default and explicit override; flatline installs `ghidra-sleigh` for the default UX, auto-discovers its runtime-data root when no override is provided, and still accepts custom runtime-data paths.
 - Pair enumeration from language descriptions with existence filtering across all bundled ISAs.
 - Structured results with warnings/errors/metadata.
 
@@ -558,15 +560,15 @@ Extensibility:
 Resolved:
 - ~~Is canonicalized C output required as a hard contract, or only semantic/token-level stability?~~ **Resolved (ADR-003):** Normalized token/structure comparison, not canonical text. See `tests/specs/fixtures.md` §2.
 - ~~For multi-ISA fixture variants: ARM64 vs ARM32? MIPS32 vs MIPS64?~~ **Resolved (ADR-009):** x86 gets both 32-bit and 64-bit fixture coverage; other ISA families have one representative variant each — ARM64, RISC-V 64, MIPS32 — for diverse bitwidth coverage. Other variants best-effort. See `tests/specs/fixtures.md` §1.
+- ~~How strict should package-size limits or install-profile guidance be now that runtime data is distributed via `ghidra-sleigh` and its default build is multi-ISA?~~ **Resolved (ADR-004):** Flatline's default install depends on `ghidra-sleigh` and therefore follows its full multi-ISA runtime-data profile for the out-of-the-box UX. `all_processors=false` remains supported only as a custom runtime-data choice via explicit `runtime_data_dir`. Flatline does not add a second wheel-size gate in P2; size/compliance remains a P3 concern.
+- ~~How should flatline pin or validate compatible `ghidra-sleigh` versions so runtime data matches flatline's pinned Ghidra upstream revision?~~ **Resolved (ADR-004):** Flatline auto-discovers the installed `ghidra_sleigh` runtime-data root by default, warns when the companion package advertises a different upstream tag/commit than flatline's pin, and still allows explicit `runtime_data_dir` overrides for user-managed custom assets.
+- ~~Should the runtime data package bundle all Ghidra-supported ISA assets or only the priority set (x86, ARM, RISC-V, MIPS), with an extension mechanism for others?~~ **Resolved (ADR-010):** `ghidra-sleigh` defaults to shipping compiled runtime data for all Ghidra processor families and also supports a lighter major-ISA build via `all_processors=false`. ADR-004 now defines flatline's default policy as depending on the full install while leaving lighter builds as explicit overrides.
+- ~~Should ISA-specific Sleigh compilation (`.sla` files) happen at build time or install time?~~ **Resolved (ADR-010):** Build time. `ghidra-sleigh` builds `sleighc` from Ghidra C++ sources and ships the compiled `.sla` outputs as package data.
 
 Open:
 - Should warning codes be globally namespaced now to prevent future collisions? (Initial codes will be defined during P2 implementation.)
 - Should analysis-budget defaults vary by platform or target ISA, or remain globally fixed?
 - Should session-level failure categories (startup, initialization) be defined explicitly in the `FlatlineError` hierarchy, or is the current `ErrorItem` taxonomy sufficient?
-- How strict should package-size limits or install-profile guidance be now that runtime data is distributed via `ghidra-sleigh` and its default build is multi-ISA?
-- How should flatline pin or validate compatible `ghidra-sleigh` versions so runtime data matches flatline's pinned Ghidra upstream revision?
-- ~~Should the runtime data package bundle all Ghidra-supported ISA assets or only the priority set (x86, ARM, RISC-V, MIPS), with an extension mechanism for others?~~ **Resolved (ADR-010):** `ghidra-sleigh` defaults to shipping compiled runtime data for all Ghidra processor families and also supports a lighter major-ISA build via `all_processors=false`. Flatline's default profile policy remains tracked in ADR-004.
-- ~~Should ISA-specific Sleigh compilation (`.sla` files) happen at build time or install time?~~ **Resolved (ADR-010):** Build time. `ghidra-sleigh` builds `sleighc` from Ghidra C++ sources and ships the compiled `.sla` outputs as package data.
 - ~~Should `TypeInfo` expose sub-type details (struct fields, array element type, pointer target) in MVP, or is the flat `name`/`size`/`metatype` sufficient?~~ **Resolved:** Flat `name`/`size`/`metatype` for MVP. Sub-type details (struct fields, pointer target, array element) deferred to post-MVP.
 - Should `CallSiteInfo` include a `callee_name` field when the target is a known function symbol? (Affects bridge scope.)
 - Should `JumpTableInfo` include an `is_complete` flag for partial recovery? (Affects test assertions.)

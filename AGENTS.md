@@ -4,13 +4,14 @@
 # Overview
 - Pip-installable Python wrapper around the Ghidra C++ decompiler, consuming packaged runtime assets from `ghidra-sleigh`. Multi-ISA.
 - **Phase P2 (Linux MVP) — in progress.** P0, P1 complete.
-- `.sla` runtime data now comes from external `ghidra-sleigh` (pip name) / `ghidra_sleigh` (import) package; default build ships all processor families, lighter build uses `all_processors=false`.
+- `.sla` runtime data now comes from the `ghidra-sleigh` runtime dependency (pip name) / `ghidra_sleigh` (import); default build ships all processor families, lighter build uses `all_processors=false`.
 - End-to-end decompilation verified: x86_64 `add(a,b)` produces correct C output with full structured data.
 - Priority-ISA native memory fixtures are now committed as `tests/fixtures/*.hex`: x86_64, x86_32, AArch64, RISC-V 64, MIPS32, plus x86_64 switch and warning fixtures.
 - Fixture sources now live beside the artifacts under `tests/fixtures/sources/`, with regeneration scripted in `tests/fixtures/generate_hex_fixtures.py`.
 - Tox now tests the installed package artifact: `py313`/`py314` build `flatline[test]` wheels inside `.tox`, while `lint` remains package-skip + `ruff`.
+- Public sessions now auto-discover `ghidra_sleigh.get_runtime_data_dir()` when `runtime_data_dir` is omitted; explicit `runtime_data_dir` values still override the default, and auto-discovered Ghidra pin drift is surfaced as a runtime warning.
 - `CHANGELOG.md` exists at the repo root, follows Keep a Changelog, and must be updated for every release.
-- **Next:** capture remaining P2 perf/jump-table baselines and decide whether `ghidra-sleigh` should become a required runtime dependency or stay as an explicit install/validation step under ADR-004.
+- **Next:** capture remaining P2 perf/jump-table baselines and decide whether the flatline upstream pin should be bumped to match the currently published `ghidra-sleigh` baseline or continue warning on default-runtime pin drift until that bump happens.
 - Not a general Ghidra automation framework; decompiler surface only. No UI, no project DB.
 
 # Architecture (3-layer adapter)
@@ -38,9 +39,10 @@
 - **ADR-001 (Public Scope Model): Option A** — Memory + Architecture + Function-Level. Users provide `memory_image` + `base_address`. Convenience file-to-memory layer deferred post-MVP. Rationale: `docs/specs.md` S5.5.
 - **ADR-002 (Bridge Surface): nanobind C++ extension.** Public API stable; bridge internal.
 - **ADR-003 (Determinism Oracle): Normalized token/structure comparison**, not canonical text.
+- **ADR-004 (Runtime Asset Policy):** Flatline depends on `ghidra-sleigh` for its default runtime-data UX, auto-discovers the installed package when `runtime_data_dir` is omitted, expects the full multi-ISA install by default, and keeps lighter/custom runtime-data roots behind explicit `runtime_data_dir` overrides. No second flatline-side size gate in P2; auto-discovered upstream pin drift emits a warning instead of silently switching baselines.
 - **ADR-009 (ISA Variant Scope):** x86 32+64; ARM64, RISC-V 64, MIPS32; others best-effort.
-- **ADR-010 (Runtime Data Packaging):** Separate `ghidra-sleigh` pip package (repo `patacca/ghidra-sleigh`, import `ghidra_sleigh`). Builds `sleighc` at package build time, ships compiled `.sla` files as package data, and exposes `ghidra_sleigh.get_runtime_data_dir()`. Use a `ghidra-sleigh` version that matches flatline's pinned Ghidra tag. ADR-004 remains open for flatline's default asset profile, size budget, and optional-dependency policy.
-- ADR-004 through ADR-008: unresolved (`docs/roadmap.md`).
+- **ADR-010 (Runtime Data Packaging):** Separate `ghidra-sleigh` pip package (repo `patacca/ghidra-sleigh`, import `ghidra_sleigh`). Builds `sleighc` at package build time, ships compiled `.sla` files as package data, and exposes `ghidra_sleigh.get_runtime_data_dir()`. Flatline now layers ADR-004's dependency-backed default policy on top of this mechanism.
+- ADR-005 through ADR-008: unresolved (`docs/roadmap.md`).
 
 # Source of truth
 - `docs/specs.md` — SDD: API contract, data models, error taxonomy, cross-cutting requirements.
@@ -79,7 +81,6 @@
 - **Release build:** `pip install -e ".[dev]" -Csetup-args=-Dbuildtype=release`
 - Meson buildtype defaults `release` (-O3). Override: `-Csetup-args=-Dbuildtype=<debug|release|debugoptimized>`.
 - **Build wheel:** `python -m build`
-- **Install external runtime data package:** `pip install ghidra-sleigh`
 - **All checks:** `tox` (envs: `py313`, `py314`, `lint`)
 - **Tests only:** `tox -e py313,py314`
 - **Lint only:** `tox -e lint`
@@ -91,14 +92,14 @@
 - `ghidra-sleigh` source-build details live in its own repo; use its documented Meson options there, not from this workspace.
 
 # Tests
-- `tox`: `py314` passes all 51 tests (23 unit, 6 contract, 10 integration, 7 regression, 5 negative) against the installed wheel artifact; `py313` skips when `python3.13` is absent.
-- Native tests expect compiled `.sla` data from the installed `ghidra-sleigh` package, currently covering DATA, x86, AARCH64, RISCV, and MIPS.
-- Native tox runs resolve runtime data from `ghidra_sleigh.get_runtime_data_dir()`; `DecompileRequest` / `DecompilerSession` now coerce path-like `runtime_data_dir` inputs to strings.
+- `tox`: `py314` passes all 57 tests (29 unit, 6 contract, 10 integration, 7 regression, 5 negative) against the installed wheel artifact; `py313` skips when `python3.13` is absent.
+- Native tests expect compiled `.sla` data from the installed `ghidra-sleigh` runtime dependency, currently covering DATA, x86, AARCH64, RISCV, and MIPS.
+- Native tox runs still resolve runtime data from `ghidra_sleigh.get_runtime_data_dir()` explicitly; public `DecompilerSession` startup now auto-discovers that default path when `runtime_data_dir` is omitted, and `DecompileRequest` / `DecompilerSession` coerce path-like `runtime_data_dir` inputs to strings.
 - `tests/conftest.py` — auto-applies category markers from directory names.
-- `tests/specs/test_catalog.md` — 37 definitions, 5 categories, contract traceability matrix.
+- `tests/specs/test_catalog.md` — 38 definitions, 5 categories, contract traceability matrix.
 - `tests/specs/fixtures.md` — 10 fixtures, oracle strategy, determinism rules.
 - `tests/unit/test_native_bridge_runtime_spec.py` — native smoke test uses committed x86_64 add fixture and the real Ghidra runtime-data root.
-- `tests/unit/test_runtime_data_spec.py` — `.ldefs` tolerance and deterministic failure tests.
+- `tests/unit/test_runtime_data_spec.py` — `.ldefs` tolerance, dependency-backed default runtime-data discovery, and deterministic failure tests.
 - `tests/integration/test_integration_spec.py`, `tests/regression/test_regression_spec.py`, and `tests/negative/test_negative_spec.py` now assert against committed native fixtures instead of spec-only skips.
 
 # Vendored upstream

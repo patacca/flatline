@@ -7,12 +7,15 @@ bridge session startup and enumeration path.
 
 from __future__ import annotations
 
+import importlib
 import warnings
+from os import fspath
 from pathlib import Path
 from xml.etree import ElementTree
 
 from flatline._errors import InternalError
 from flatline._models import LanguageCompilerPair
+from flatline._version import UPSTREAM_COMMIT, UPSTREAM_TAG
 
 _LANGUAGE_TAGS: frozenset[str] = frozenset({
     "language",
@@ -48,6 +51,28 @@ _COMPILER_SPEC_PATH_ATTRS: tuple[str, ...] = (
 )
 
 _MAX_PARSE_FAILURE_PREVIEW = 5
+
+
+def resolve_session_runtime_data_dir(runtime_data_dir: str | Path | None) -> str:
+    """Resolve the runtime-data root for public session entry points.
+
+    Explicit overrides are normalized and used as-is. When omitted, flatline
+    auto-discovers the installed `ghidra_sleigh` package to preserve the
+    one-package default UX, while surfacing upstream-pin drift via warnings.
+    """
+    if runtime_data_dir is not None:
+        return fspath(runtime_data_dir)
+
+    ghidra_sleigh = _load_runtime_data_package()
+    runtime_data_getter = getattr(ghidra_sleigh, "get_runtime_data_dir", None)
+    if not callable(runtime_data_getter):
+        raise InternalError(
+            "ghidra-sleigh does not expose a callable get_runtime_data_dir(); "
+            "reinstall the package or pass runtime_data_dir explicitly"
+        )
+
+    _warn_on_runtime_pin_mismatch(ghidra_sleigh)
+    return fspath(runtime_data_getter())
 
 
 def enumerate_runtime_data_language_compilers(
@@ -211,3 +236,43 @@ def _get_first_non_empty_attr(
         if value:
             return value
     return None
+
+
+def _load_runtime_data_package() -> object:
+    try:
+        return importlib.import_module("ghidra_sleigh")
+    except ImportError as exc:
+        raise InternalError(
+            "flatline requires ghidra-sleigh for default runtime data; "
+            "reinstall flatline or pass runtime_data_dir explicitly"
+        ) from exc
+
+
+def _warn_on_runtime_pin_mismatch(ghidra_sleigh: object) -> None:
+    runtime_tag = getattr(ghidra_sleigh, "GHIDRA_TAG", None)
+    runtime_commit = getattr(ghidra_sleigh, "GHIDRA_COMMIT", None)
+    if runtime_tag == UPSTREAM_TAG and runtime_commit == UPSTREAM_COMMIT:
+        return
+
+    warnings.warn(
+        (
+            "Auto-discovered ghidra-sleigh runtime data does not match flatline's "
+            "pinned Ghidra baseline "
+            f"(flatline: {UPSTREAM_TAG} @ {UPSTREAM_COMMIT}; "
+            f"ghidra-sleigh: {_format_runtime_signature(runtime_tag, runtime_commit)}). "
+            "Default runtime discovery will continue, but you should align the "
+            "companion package or pass runtime_data_dir explicitly for custom assets."
+        ),
+        RuntimeWarning,
+        stacklevel=3,
+    )
+
+
+def _format_runtime_signature(runtime_tag: object, runtime_commit: object) -> str:
+    normalized_tag = runtime_tag if isinstance(runtime_tag, str) and runtime_tag else "unknown-tag"
+    normalized_commit = (
+        runtime_commit
+        if isinstance(runtime_commit, str) and runtime_commit
+        else "unknown-commit"
+    )
+    return f"{normalized_tag} @ {normalized_commit}"

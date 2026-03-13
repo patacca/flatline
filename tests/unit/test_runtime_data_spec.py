@@ -7,7 +7,30 @@ from pathlib import Path
 import pytest
 
 from flatline import InternalError, LanguageCompilerPair
-from flatline._runtime_data import enumerate_runtime_data_language_compilers
+from flatline import _runtime_data as runtime_data_module
+from flatline._runtime_data import (
+    enumerate_runtime_data_language_compilers,
+    resolve_session_runtime_data_dir,
+)
+from flatline._version import UPSTREAM_COMMIT, UPSTREAM_TAG
+
+
+class _GhidraSleighModuleDouble:
+    """Minimal ghidra-sleigh package double for default-runtime resolution tests."""
+
+    def __init__(
+        self,
+        runtime_dir: Path,
+        *,
+        ghidra_tag: str = UPSTREAM_TAG,
+        ghidra_commit: str = UPSTREAM_COMMIT,
+    ) -> None:
+        self.GHIDRA_TAG = ghidra_tag
+        self.GHIDRA_COMMIT = ghidra_commit
+        self._runtime_dir = runtime_dir
+
+    def get_runtime_data_dir(self) -> Path:
+        return self._runtime_dir
 
 
 def _make_valid_runtime_data(runtime_dir: Path) -> None:
@@ -74,3 +97,75 @@ def test_runtime_data_enumeration_rejects_missing_runtime_dir(tmp_path: Path) ->
 
     assert "runtime_data_dir does not exist" in exc_info.value.message
 
+
+def test_runtime_data_resolution_uses_compatible_ghidra_sleigh_default(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Compatible ghidra-sleigh installs become the public default runtime-data root."""
+    runtime_dir = tmp_path / "runtime_data"
+    runtime_dir.mkdir()
+    ghidra_sleigh_module = _GhidraSleighModuleDouble(runtime_dir)
+    monkeypatch.setattr(
+        runtime_data_module.importlib,
+        "import_module",
+        lambda _: ghidra_sleigh_module,
+    )
+
+    assert resolve_session_runtime_data_dir(None) == str(runtime_dir)
+
+
+def test_runtime_data_resolution_warns_on_default_pin_mismatch(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Auto-discovered defaults stay usable but warn on upstream-pin drift."""
+    runtime_dir = tmp_path / "runtime_data"
+    runtime_dir.mkdir()
+    ghidra_sleigh_module = _GhidraSleighModuleDouble(
+        runtime_dir,
+        ghidra_tag="Ghidra_12.0.4_build",
+        ghidra_commit="e40ed13014025f82488b1f8f7bca566894ac376b",
+    )
+    monkeypatch.setattr(
+        runtime_data_module.importlib,
+        "import_module",
+        lambda _: ghidra_sleigh_module,
+    )
+
+    with pytest.warns(RuntimeWarning, match="does not match flatline's pinned Ghidra"):
+        resolved_runtime_dir = resolve_session_runtime_data_dir(None)
+
+    assert resolved_runtime_dir == str(runtime_dir)
+
+
+def test_runtime_data_resolution_rejects_missing_packaged_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Omitted runtime_data_dir is a startup error when the dependency is absent."""
+
+    def _raise_import_error(_: str) -> Path:
+        raise ImportError("module not found")
+
+    monkeypatch.setattr(runtime_data_module.importlib, "import_module", _raise_import_error)
+
+    with pytest.raises(InternalError) as exc_info:
+        resolve_session_runtime_data_dir(None)
+
+    assert "flatline requires ghidra-sleigh" in exc_info.value.message
+
+
+def test_runtime_data_resolution_preserves_explicit_override(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Explicit runtime-data overrides bypass ghidra-sleigh auto-discovery."""
+    runtime_dir = tmp_path / "runtime_data"
+    runtime_dir.mkdir()
+
+    def _unexpected_import(_: str) -> Path:
+        raise AssertionError("explicit runtime_data_dir should not import ghidra_sleigh")
+
+    monkeypatch.setattr(runtime_data_module.importlib, "import_module", _unexpected_import)
+
+    assert resolve_session_runtime_data_dir(runtime_dir) == str(runtime_dir)

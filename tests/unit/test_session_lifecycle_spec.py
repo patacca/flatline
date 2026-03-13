@@ -12,6 +12,7 @@ from flatline import (
     InvalidArgumentError,
     LanguageCompilerPair,
 )
+from flatline import _session as session_module
 
 
 class _FakeBridgeSession:
@@ -103,3 +104,54 @@ def test_u009_session_delegates_to_bridge() -> None:
     assert result.error is not None
     assert result.error.category == "internal_error"
     assert bridge.last_request == req
+
+
+def test_u016_session_resolves_default_runtime_data_before_bridge_startup(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """U-016: Public sessions resolve the packaged default runtime-data root."""
+    bridge = _FakeBridgeSession()
+    resolve_calls: list[str | None] = []
+    bridge_calls: list[str | None] = []
+
+    def _resolve_runtime_data_dir(runtime_data_dir: str | None) -> str:
+        resolve_calls.append(runtime_data_dir)
+        return "/tmp/flatline-runtime"
+
+    def _create_bridge_session(runtime_data_dir: str | None) -> _FakeBridgeSession:
+        bridge_calls.append(runtime_data_dir)
+        return bridge
+
+    monkeypatch.setattr(
+        session_module,
+        "resolve_session_runtime_data_dir",
+        _resolve_runtime_data_dir,
+    )
+    monkeypatch.setattr(session_module, "create_bridge_session", _create_bridge_session)
+
+    session = session_module.DecompilerSession()
+
+    assert resolve_calls == [None]
+    assert bridge_calls == ["/tmp/flatline-runtime"]
+    assert session._runtime_data_dir == "/tmp/flatline-runtime"
+
+
+def test_u016_injected_bridge_skips_default_runtime_resolution(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """U-016: Injected bridge doubles do not trigger packaged-default discovery."""
+
+    def _unexpected_runtime_resolution(runtime_data_dir: str | None) -> str:
+        raise AssertionError(
+            f"resolve_session_runtime_data_dir should not be called: {runtime_data_dir!r}"
+        )
+
+    monkeypatch.setattr(
+        session_module,
+        "resolve_session_runtime_data_dir",
+        _unexpected_runtime_resolution,
+    )
+
+    session = session_module.DecompilerSession(_bridge_session=_FakeBridgeSession())
+
+    assert session.is_closed is False

@@ -30,7 +30,7 @@ metaphor for decompilation: extracting meaning from dead code.
 ## Installation
 
 ```bash
-pip install flatline ghidra-sleigh
+pip install flatline
 ```
 
 For development:
@@ -41,8 +41,12 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-`ghidra-sleigh` exposes `ghidra_sleigh.get_runtime_data_dir()` and should track
-flatline's pinned Ghidra version.
+`flatline` depends on `ghidra-sleigh` for its default runtime-data path, so
+`DecompilerSession` and the one-shot wrappers auto-discover runtime data when
+`runtime_data_dir` is omitted. `runtime_data_dir` remains available as an
+explicit override for custom or reduced runtime-data roots. If the installed
+`ghidra-sleigh` package advertises a different Ghidra tag/commit than flatline's
+pin, flatline emits a runtime warning instead of silently switching baselines.
 
 ### Native bridge
 
@@ -80,7 +84,6 @@ importable.
 
 ```python
 from flatline import DecompileRequest, decompile_function
-import ghidra_sleigh
 
 result = decompile_function(DecompileRequest(
     memory_image=raw_bytes,
@@ -88,11 +91,13 @@ result = decompile_function(DecompileRequest(
     function_address=0x401000,
     language_id="x86:LE:64:default",
     compiler_spec="gcc",
-    runtime_data_dir=ghidra_sleigh.get_runtime_data_dir(),
 ))
 
 print(result.c_code)
 ```
+
+Pass `runtime_data_dir=...` only when you need to override the dependency-backed
+default runtime-data root.
 
 ## Development
 

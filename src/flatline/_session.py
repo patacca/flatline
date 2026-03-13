@@ -6,11 +6,12 @@ convenience wrappers decompile_function / list_language_compilers (specs.md sect
 
 from __future__ import annotations
 
-from os import fspath
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from flatline._bridge import create_bridge_session
 from flatline._errors import InvalidArgumentError
+from flatline._runtime_data import resolve_session_runtime_data_dir
 
 if TYPE_CHECKING:
     from flatline._bridge import BridgeSession
@@ -25,13 +26,15 @@ class DecompilerSession:
 
     def __init__(
         self,
-        runtime_data_dir: str | None = None,
+        runtime_data_dir: str | Path | None = None,
         *,
         _bridge_session: BridgeSession | None = None,
     ) -> None:
         normalized_runtime_data_dir = None
-        if runtime_data_dir is not None:
-            normalized_runtime_data_dir = fspath(runtime_data_dir)
+        if _bridge_session is None:
+            normalized_runtime_data_dir = resolve_session_runtime_data_dir(runtime_data_dir)
+        elif runtime_data_dir is not None:
+            normalized_runtime_data_dir = str(Path(runtime_data_dir))
         self._runtime_data_dir = normalized_runtime_data_dir
         self._bridge_session = _bridge_session or create_bridge_session(
             normalized_runtime_data_dir
@@ -72,7 +75,9 @@ class DecompilerSession:
         self.close()
 
 
-def list_language_compilers(runtime_data_dir: str | None = None) -> list[LanguageCompilerPair]:
+def list_language_compilers(
+    runtime_data_dir: str | Path | None = None,
+) -> list[LanguageCompilerPair]:
     """Convenience wrapper for one-shot language/compiler enumeration."""
     with DecompilerSession(runtime_data_dir=runtime_data_dir) as session:
         return session.list_language_compilers()

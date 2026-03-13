@@ -1,7 +1,7 @@
 # Test Catalog
 
-All tests below are definitions-only for now. Each item includes purpose, fixtures, steps,
-assertions, oracle strategy, and determinism constraints.
+All tests below are the maintained contract catalog. Each item includes purpose,
+fixtures, steps, assertions, oracle strategy, and determinism constraints.
 
 ## 1. Unit Tests
 
@@ -22,6 +22,7 @@ assertions, oracle strategy, and determinism constraints.
 | U-013 | Validate runtime-data-backed language/compiler enumeration fallback | Synthetic runtime-data fixture (`.ldefs` + `.cspec`) | Enumerate pairs through bridge when native enumeration is unavailable/empty | Returns only valid `(language_id, compiler_spec)` pairs with existing backing spec files; native decompile validation uses the fallback pair set | Runtime-data enumeration oracle | Pair selection is deterministic and excludes entries with missing backing assets |
 | U-014 | Validate startup rejection for missing runtime_data_dir | None | Start bridge session with a non-existent `runtime_data_dir` | Deterministic startup failure with structured `internal_error` exception | Startup-path oracle | Missing runtime-data path never degrades to an empty/implicit default |
 | U-015 | Validate tolerant malformed `.ldefs` behavior | Synthetic runtime-data fixture (valid + malformed `.ldefs`) | Enumerate pairs from a runtime-data root containing both valid and malformed `.ldefs` files | Returns valid pairs, emits one warning for skipped malformed files; raises deterministic startup failure only when all `.ldefs` files are malformed | Runtime-data parse-tolerance oracle | Pair ordering deterministic; malformed-file observability stable |
+| U-016 | Validate dependency-backed default runtime-data discovery | Installed `ghidra-sleigh` package or module double | Start a public session with omitted `runtime_data_dir`; also exercise explicit overrides and advertised upstream-pin drift | Auto-discovers `ghidra_sleigh.get_runtime_data_dir()` for the default path, preserves explicit overrides, warns on auto-discovered pin mismatch, and fails deterministically only when the dependency is unavailable | Default-runtime resolution oracle | Default runtime-data discovery is deterministic and pin drift is never silent |
 
 ## 2. Contract Tests
 
@@ -34,7 +35,7 @@ assertions, oracle strategy, and determinism constraints.
 | C-005 | Session API surface stability | None | Inspect `DecompilerSession` for required methods | Lifecycle and operation methods are present and callable | API-surface oracle | Required methods remain stable |
 | C-006 | Top-level operation function availability | None | Inspect module-level operation callables and signatures | `decompile_function` and `list_language_compilers` exist with stable parameters | Signature oracle | Parameter names remain stable |
 
-## 3. Integration Tests (future live calls)
+## 3. Integration Tests
 
 | ID | Purpose | Fixtures | Steps | Assertions | Oracle strategy | Determinism constraints |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -69,13 +70,14 @@ assertions, oracle strategy, and determinism constraints.
 
 | Spec clause (specs.md) | Contract requirement | Test IDs |
 | --- | --- | --- |
-| §3.2 `list_language_compilers()` | Enumerate valid pairs from runtime data | I-002, U-013, U-015 |
+| §3.2 `list_language_compilers()` | Enumerate valid pairs from runtime data | I-002, U-013, U-015, U-016 |
 | §3.2 `decompile_function(request)` | Decompile one function; no native exceptions leak | I-001, I-005, I-006, U-009, U-012 |
-| §3.1 `DecompilerSession` lifecycle | Long-lived session owns lifecycle of one bridge/native context | U-007, U-008, C-005 |
+| §3.1 `DecompilerSession` lifecycle | Long-lived session owns lifecycle of one bridge/native context | U-007, U-008, U-016, C-005 |
 | §3.2 top-level operation wrappers | Public operation callables are exposed from package root | C-006 |
 | §3.2 `get_version_info()` | Report flatline + upstream pin metadata | C-003 |
 | §3.3 DecompileRequest required fields | Missing fields → `invalid_argument` | U-001 |
 | §3.3 DecompileRequest `compiler_spec` validation | Unknown compiler → hard error | U-002, N-003 |
+| §3.3 DecompileRequest `runtime_data_dir` | Omission uses dependency-backed default; explicit values remain overrides | U-016 |
 | §3.3 DecompileRequest `function_size_hint` | Advisory; omission not an error | U-004 |
 | §3.3 DecompileRequest `analysis_budget` | Advisory; omission not an error | U-006 |
 | §3.3 DecompileResult metadata keys | Required top-level keys always present | U-003, C-001 |
@@ -91,6 +93,7 @@ assertions, oracle strategy, and determinism constraints.
 | §3.4 Unknown language → hard error | No fallback substitution | N-002 |
 | §3.4 Invalid address → hard error | Not warning-only | N-001 |
 | §3.4 Empty memory → hard error | `invalid_argument` | U-001, N-005 |
+| §3.4 Missing default runtime dependency / auto-discovered pin drift | Missing dependency is a startup error; pin mismatch is warning-observable | U-016 |
 | §3.4 Error categories stable | Category names invariant across minor/patch | C-002 |
 | §3.4 Warning-only → successful status | c_code valid, error None, function_info populated | I-007 |
 | §3.4 Error set → function_info=None, c_code=None | Error model invariant | N-001, N-002, N-003, N-005 |
