@@ -5,13 +5,14 @@
 - Pip-installable Python wrapper around the Ghidra C++ decompiler, consuming packaged runtime assets from `ghidra-sleigh`. Multi-ISA.
 - **Phase P2 (Linux MVP) — in progress.** P0, P1 complete.
 - `.sla` runtime data now comes from the `ghidra-sleigh` runtime dependency (pip name) / `ghidra_sleigh` (import); default build ships all processor families, lighter build uses `all_processors=false`.
+- `pyproject.toml` now pins `ghidra-sleigh == 12.0.4` to match the vendored `Ghidra_12.0.4_build` native baseline.
 - End-to-end decompilation verified: x86_64 `add(a,b)` produces correct C output with full structured data.
 - Priority-ISA native memory fixtures are now committed as `tests/fixtures/*.hex`: x86_64, x86_32, AArch64, RISC-V 64, MIPS32, plus x86_64 switch and warning fixtures.
 - Fixture sources now live beside the artifacts under `tests/fixtures/sources/`, with regeneration scripted in `tests/fixtures/generate_hex_fixtures.py`.
 - Tox now tests the installed package artifact: `py313`/`py314` build `flatline[test]` wheels inside `.tox`, while `lint` remains package-skip + `ruff`.
 - Public sessions now auto-discover `ghidra_sleigh.get_runtime_data_dir()` when `runtime_data_dir` is omitted; explicit `runtime_data_dir` values still override the default, and auto-discovered Ghidra pin drift is surfaced as a runtime warning.
 - `CHANGELOG.md` exists at the repo root, follows Keep a Changelog, and must be updated for every release.
-- **Next:** capture remaining P2 perf/jump-table baselines and decide whether the flatline upstream pin should be bumped to match the currently published `ghidra-sleigh` baseline or continue warning on default-runtime pin drift until that bump happens.
+- **Next:** capture remaining P2 perf/jump-table baselines.
 - Not a general Ghidra automation framework; decompiler surface only. No UI, no project DB.
 
 # Architecture (3-layer adapter)
@@ -29,7 +30,7 @@
 - **ASCII only** in `.py`, `.cpp`, `.h`, `meson.build`.
 
 # Baseline and policy
-- Upstream pin: `Ghidra_12.0.3_build` @ `09f14c92d3` (2026-02-10).
+- Upstream pin: `Ghidra_12.0.4_build` @ `e40ed13014` (2026-03-03).
 - MVP host: Linux x86_64, Python 3.13+, latest-upstream-only.
 - MVP ISAs: any Ghidra-supported; priority x86, ARM, RISC-V, MIPS (32/64 each).
 - Stable public Python API over unstable upstream internals.

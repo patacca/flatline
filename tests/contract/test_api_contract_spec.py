@@ -120,8 +120,8 @@ def test_c003_version_reporting_contains_upstream_pin():
     assert isinstance(info.runtime_data_revision, str)
 
     # Pin matches known baseline (docs/roadmap.md section 0)
-    assert info.upstream_tag == "Ghidra_12.0.3_build"
-    assert info.upstream_commit == "09f14c92d3da6e5d5f6b7dea115409719db3cce1"
+    assert info.upstream_tag == "Ghidra_12.0.4_build"
+    assert info.upstream_commit == "e40ed13014025f82488b1f8f7bca566894ac376b"
 
     # VersionInfo fields match spec
     version_fields = {f.name for f in dataclasses.fields(VersionInfo)}

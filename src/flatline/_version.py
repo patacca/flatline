@@ -3,6 +3,6 @@
 from __future__ import annotations
 
 __version__ = "0.1.0-dev"
-UPSTREAM_TAG = "Ghidra_12.0.3_build"
-UPSTREAM_COMMIT = "09f14c92d3da6e5d5f6b7dea115409719db3cce1"
+UPSTREAM_TAG = "Ghidra_12.0.4_build"
+UPSTREAM_COMMIT = "e40ed13014025f82488b1f8f7bca566894ac376b"
 RUNTIME_DATA_REVISION = ""

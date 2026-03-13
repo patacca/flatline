@@ -8,9 +8,9 @@ The MVP targets Linux x86_64, decompiles one function, uses a C ABI consumed by 
 
 ### Upstream pin (mandatory)
 - MVP discovery is pinned to:
-  - Ghidra tag: `Ghidra_12.0.3_build`
-  - Ghidra commit: `09f14c92d3da6e5d5f6b7dea115409719db3cce1`
-  - Tag commit date: `2026-02-10`
+  - Ghidra tag: `Ghidra_12.0.4_build`
+  - Ghidra commit: `e40ed13014025f82488b1f8f7bca566894ac376b`
+  - Tag commit date: `2026-03-03`
 - All analysis notes and experiments must explicitly reference this pin.
 - Any later upgrade requires a dedicated revalidation pass (API inventory diff + experiment rerun).
 
@@ -51,7 +51,7 @@ Inventory columns (one row per symbol):
 - Error propagation mechanism
 - Thread-safety notes
 - MVP relevance (`required`, `optional`, `ignore`)
-- Pin reference (must include `Ghidra_12.0.3_build`)
+- Pin reference (must include `Ghidra_12.0.4_build`)
 
 Mandatory first-pass files:
 - `ifacedecomp.hh/.cc`
@@ -210,7 +210,7 @@ Each experiment note must contain:
 ## 10. Milestones
 
 - `M0`: repo/bootstrap and docs scaffolded
-- `M1`: pinned API inventory complete (`Ghidra_12.0.3_build`)
+- `M1`: pinned API inventory complete (`Ghidra_12.0.4_build`)
 - `M2`: `r2ghidra` mapping complete
 - `M3`: language-spec sourcing + bundle layout + enumeration plan complete
 - `M4`: experiments E1-E5 completed with results on pinned revision

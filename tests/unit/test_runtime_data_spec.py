@@ -124,8 +124,8 @@ def test_runtime_data_resolution_warns_on_default_pin_mismatch(
     runtime_dir.mkdir()
     ghidra_sleigh_module = _GhidraSleighModuleDouble(
         runtime_dir,
-        ghidra_tag="Ghidra_12.0.4_build",
-        ghidra_commit="e40ed13014025f82488b1f8f7bca566894ac376b",
+        ghidra_tag="Ghidra_12.0.3_build",
+        ghidra_commit="09f14c92d3da6e5d5f6b7dea115409719db3cce1",
     )
     monkeypatch.setattr(
         runtime_data_module.importlib,

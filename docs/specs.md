@@ -3,9 +3,9 @@
 ## 0. Scope and Sources
 
 Pinned upstream baseline:
-- Ghidra tag: `Ghidra_12.0.3_build`
-- Commit: `09f14c92d3da6e5d5f6b7dea115409719db3cce1`
-- Commit date: `2026-02-10`
+- Ghidra tag: `Ghidra_12.0.4_build`
+- Commit: `e40ed13014025f82488b1f8f7bca566894ac376b`
+- Commit date: `2026-03-03`
 
 Primary sources used for this spec:
 - `notes/api/decompiler_inventory.md` (decompiler-facing callable contract)

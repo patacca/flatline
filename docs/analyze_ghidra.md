@@ -2,8 +2,8 @@ You are documenting the **native Ghidra decompiler (C++) decompilation API contr
 
 ## Mandatory upstream pin
 Work **only** against:
-- Tag: `Ghidra_12.0.3_build`
-- Commit: `09f14c92d3da6e5d5f6b7dea115409719db3cce1` (tag date `2026-02-10`)
+- Tag: `Ghidra_12.0.4_build`
+- Commit: `e40ed13014025f82488b1f8f7bca566894ac376b` (tag date `2026-03-03`)
 
 For every factual claim, cite **(file path + class/function/symbol)** and **line numbers when practical**. If something depends on build flags or runtime config, say so.
 
