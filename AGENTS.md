@@ -6,7 +6,9 @@
 - **Phase P2 (Linux MVP) — in progress.** P0, P1 complete.
 - `.sla` runtime data now comes from external `ghidra-sleigh` (pip name) / `ghidra_sleigh` (import) package; default build ships all processor families, lighter build uses `all_processors=false`.
 - End-to-end decompilation verified: x86_64 `add(a,b)` produces correct C output with full structured data.
-- **Next:** create fixture memory images for priority ISAs; replace integration/negative/regression skeleton assertions.
+- Priority-ISA native memory fixtures are now committed as `tests/fixtures/*.hex`: x86_64, x86_32, AArch64, RISC-V 64, MIPS32, plus x86_64 switch and warning fixtures.
+- Fixture sources now live beside the artifacts under `tests/fixtures/sources/`, with regeneration scripted in `tests/fixtures/generate_hex_fixtures.py`.
+- **Next:** capture remaining P2 perf/jump-table baselines and decide whether `ghidra-sleigh` should become a required runtime dependency or stay as an explicit install/validation step under ADR-004.
 - Not a general Ghidra automation framework; decompiler surface only. No UI, no project DB.
 
 # Architecture (3-layer adapter)
@@ -59,7 +61,10 @@
 - `docs/` — specs, roadmap, planning artifacts.
 - `notes/api/decompiler_inventory.md` — 18 required callable symbols with I/O, init order, thread-safety.
 - `notes/r2ghidra/integration_map.md` — 5-section integration analysis (reusable/reimplement/skip). Reference only.
-- `tests/` — catalog, fixtures, pytest skeletons, `conftest.py`.
+- `tests/_native_fixtures.py` — committed native fixture catalog, normalized-output baselines, and session helpers.
+- `tests/` — catalog, committed fixtures, executable pytest suites, `conftest.py`.
+- `tests/fixtures/*.hex` — committed ASCII hex memory images for native integration/regression coverage.
+- `tests/fixtures/sources/` + `tests/fixtures/generate_hex_fixtures.py` — authoritative fixture source snippets and regeneration path.
 - External companion package: `ghidra-sleigh` (GitHub `patacca/ghidra-sleigh`) provides compiled Sleigh runtime data; it is not vendored in this repo.
 
 # Build & development commands
@@ -83,14 +88,15 @@
 - `ghidra-sleigh` source-build details live in its own repo; use its documented Meson options there, not from this workspace.
 
 # Tests
-- 28 passing (22 unit, 6 contract); 16 native-dependent placeholders skip at runtime.
+- `tox`: `py314` passes all 51 tests (23 unit, 6 contract, 10 integration, 7 regression, 5 negative); `py313` skips when `python3.13` is absent.
 - `.sla` files compiled for priority ISAs (DATA, x86, AARCH64, RISCV, MIPS) under `third_party/ghidra/Ghidra/Processors/*/data/languages/`.
+- Native tox runs resolve runtime data from `ghidra_sleigh.get_runtime_data_dir()`; `DecompileRequest` / `DecompilerSession` now coerce path-like `runtime_data_dir` inputs to strings.
 - `tests/conftest.py` — auto-applies category markers from directory names.
 - `tests/specs/test_catalog.md` — 37 definitions, 5 categories, contract traceability matrix.
 - `tests/specs/fixtures.md` — 10 fixtures, oracle strategy, determinism rules.
-- `tests/unit/test_native_bridge_runtime_spec.py` — native smoke test (decompile path no longer stub).
+- `tests/unit/test_native_bridge_runtime_spec.py` — native smoke test uses committed x86_64 add fixture and the real Ghidra runtime-data root.
 - `tests/unit/test_runtime_data_spec.py` — `.ldefs` tolerance and deterministic failure tests.
-- 5 skeleton files under `tests/{unit,contract,integration,regression,negative}/`.
+- `tests/integration/test_integration_spec.py`, `tests/regression/test_regression_spec.py`, and `tests/negative/test_negative_spec.py` now assert against committed native fixtures instead of spec-only skips.
 
 # Vendored upstream
 - `third_party/ghidra` — upstream snapshot. `third_party/r2ghidra` — reference integration.

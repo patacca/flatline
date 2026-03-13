@@ -63,7 +63,7 @@ assertions, oracle strategy, and determinism constraints.
 | N-002 | Unsupported language id failure | `fx_add_elf64` | Request unknown language id | Structured `unsupported_target` error; `function_info` is `None`; `c_code` is `None` | Category/status oracle | No fallback language substitution |
 | N-003 | Unsupported compiler for valid language | `fx_add_elf64` | Request invalid compiler for known language | Structured `unsupported_target` error; `function_info` is `None`; `c_code` is `None` | Category/status oracle | No implicit compiler fallback |
 | N-004 | Corrupt/missing runtime data directory | runtime data fixture | Start session with broken data dir | Deterministic startup failure | Startup error oracle | Error category stable across runs |
-| N-005 | Invalid memory image input | `fx_invalid_memory` (empty/zero-length memory image) | Request decompile with empty or zero-length memory image | Structured `invalid_argument` error; `function_info` is `None`; `c_code` is `None` | Category/status oracle | Error category stable; message text may vary |
+| N-005 | Invalid memory image input | `fx_invalid_memory` (empty/zero-length memory image) | Construct a request with empty or zero-length memory image | `InvalidArgumentError` with category `invalid_argument` is raised before decompile | Exception-category oracle | Error category stable; message text may vary |
 
 ## 6. Contract-Clause-to-Test Traceability
 
@@ -90,7 +90,7 @@ assertions, oracle strategy, and determinism constraints.
 | §3.4 Unknown compiler → hard error | No implicit fallback | U-002, N-003 |
 | §3.4 Unknown language → hard error | No fallback substitution | N-002 |
 | §3.4 Invalid address → hard error | Not warning-only | N-001 |
-| §3.4 Empty memory → hard error | `invalid_argument` | N-005 |
+| §3.4 Empty memory → hard error | `invalid_argument` | U-001, N-005 |
 | §3.4 Error categories stable | Category names invariant across minor/patch | C-002 |
 | §3.4 Warning-only → successful status | c_code valid, error None, function_info populated | I-007 |
 | §3.4 Error set → function_info=None, c_code=None | Error model invariant | N-001, N-002, N-003, N-005 |

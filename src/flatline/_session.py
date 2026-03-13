@@ -6,6 +6,7 @@ convenience wrappers decompile_function / list_language_compilers (specs.md sect
 
 from __future__ import annotations
 
+from os import fspath
 from typing import TYPE_CHECKING
 
 from flatline._bridge import create_bridge_session
@@ -28,8 +29,13 @@ class DecompilerSession:
         *,
         _bridge_session: BridgeSession | None = None,
     ) -> None:
-        self._runtime_data_dir = runtime_data_dir
-        self._bridge_session = _bridge_session or create_bridge_session(runtime_data_dir)
+        normalized_runtime_data_dir = None
+        if runtime_data_dir is not None:
+            normalized_runtime_data_dir = fspath(runtime_data_dir)
+        self._runtime_data_dir = normalized_runtime_data_dir
+        self._bridge_session = _bridge_session or create_bridge_session(
+            normalized_runtime_data_dir
+        )
         self._closed = False
 
     @property

@@ -1,19 +1,20 @@
-# Test Plan (Definitions Only)
+# Test Plan
 
-This `tests/` tree contains specification artifacts and pytest skeletons only.
-No file in this directory performs real native integration calls yet.
+This `tests/` tree now mixes specification artifacts with executable pytest
+coverage. Unit and contract suites remain pure Python; integration,
+regression, and negative suites use committed native-memory fixtures and the
+installed `ghidra_sleigh` runtime-data package when the native bridge is available.
 
 ## Layout
 
 - `tests/specs/test_catalog.md`: canonical list of test definitions and oracle strategy.
 - `tests/specs/fixtures.md`: minimal fixture set and update policy.
-- `tests/unit/`: unit-level contract and model checks (skeleton only).
-- `tests/contract/`: public API stability contract checks (skeleton only).
-- `tests/integration/`: end-to-end workflow checks (skeleton only; native-dependent and
-  auto-skipped when `flatline._flatline_native` is unavailable).
-- `tests/regression/`: pinned-output regression checks (skeleton only).
-- `tests/negative/`: error-path and invalid-input checks (skeleton only).
-- `tests/fixtures/README.md`: fixture inventory placeholder.
+- `tests/unit/`: unit-level contract and adapter checks.
+- `tests/contract/`: public API stability contract checks.
+- `tests/integration/`: end-to-end native decompile checks against committed fixtures.
+- `tests/regression/`: normalized output, jump-table, and latency guards.
+- `tests/negative/`: structured rejection/error-path checks.
+- `tests/fixtures/README.md`: fixture inventory, recipes, hashes, and provenance.
 
 ## Source Attribution
 

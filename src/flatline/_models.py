@@ -8,6 +8,7 @@ No native pointers or references survive past the bridge boundary.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from os import fspath
 from typing import TYPE_CHECKING
 
 from flatline._errors import InvalidArgumentError, UnsupportedTargetError
@@ -185,6 +186,8 @@ class DecompileRequest:
             raise InvalidArgumentError("memory_image must not be empty")
         if not isinstance(self.language_id, str) or not self.language_id:
             raise InvalidArgumentError("language_id must be a non-empty string")
+        if self.runtime_data_dir is not None:
+            object.__setattr__(self, "runtime_data_dir", fspath(self.runtime_data_dir))
 
 
 @dataclass(frozen=True)

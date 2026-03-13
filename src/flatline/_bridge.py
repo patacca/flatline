@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import importlib
 from collections.abc import Mapping, Sequence
+from os import fspath
 from typing import TYPE_CHECKING, Protocol
 
 from flatline._errors import ERROR_CATEGORIES, InternalError
@@ -575,16 +576,20 @@ def create_bridge_session(runtime_data_dir: str | None = None) -> BridgeSession:
     Tries to use a compiled native bridge when available. Falls back to a
     deterministic pure-Python skeleton implementation otherwise.
     """
-    runtime_data_pairs = enumerate_runtime_data_language_compilers(runtime_data_dir)
+    normalized_runtime_data_dir = None
+    if runtime_data_dir is not None:
+        normalized_runtime_data_dir = fspath(runtime_data_dir)
+
+    runtime_data_pairs = enumerate_runtime_data_language_compilers(normalized_runtime_data_dir)
     try:
         native_bridge = importlib.import_module("flatline._flatline_native")
     except ImportError:
         return _FallbackBridgeSession(
-            runtime_data_dir=runtime_data_dir,
+            runtime_data_dir=normalized_runtime_data_dir,
             runtime_data_pairs=runtime_data_pairs,
         )
     try:
-        native_session = native_bridge.create_session(runtime_data_dir)
+        native_session = native_bridge.create_session(normalized_runtime_data_dir)
     except Exception as exc:
         raise InternalError(f"native bridge session startup failed: {exc}") from exc
     return _NativeBridgeSession(

@@ -6,6 +6,8 @@ and advisory-field passthrough -- all pure Python, no native bridge required.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from flatline import (
@@ -221,6 +223,20 @@ def test_u004_function_size_hint_passthrough():
     # Zero hint -- advisory, no error
     req_zero_hint = DecompileRequest(**base_kwargs, function_size_hint=0)
     assert req_zero_hint.function_size_hint == 0
+
+
+def test_request_accepts_pathlike_runtime_data_dir() -> None:
+    """Runtime-data overrides accept `Path` inputs from `ghidra_sleigh`."""
+    runtime_dir = Path("/tmp/flatline-runtime")
+    request = DecompileRequest(
+        memory_image=b"\xcc\xc3",
+        base_address=0x1000,
+        function_address=0x1000,
+        language_id="x86:LE:64:default",
+        runtime_data_dir=runtime_dir,
+    )
+
+    assert request.runtime_data_dir == str(runtime_dir)
 
 
 # ---------------------------------------------------------------------------

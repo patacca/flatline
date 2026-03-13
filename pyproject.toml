@@ -11,6 +11,7 @@ license = "Apache-2.0"
 
 [project.optional-dependencies]
 dev = [
+    "ghidra-sleigh",
     "pytest >= 8.0",
     "ruff >= 0.9",
     "tox >= 4.0",

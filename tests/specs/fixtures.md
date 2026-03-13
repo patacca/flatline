@@ -19,6 +19,9 @@ Fixture format resolved by ADR-001 (Option A: memory + architecture + function-l
 Fixtures are raw memory images with accompanying metadata (base address, architecture).
 Source binaries (ELF) are used during fixture generation but are not runtime test inputs.
 Multi-ISA fixtures cover representative variants per ISA family: x86 (32+64), ARM64, RISC-V 64, MIPS32 (ADR-009).
+Committed fixture artifacts live under `tests/fixtures/*.hex`.
+Native tests resolve runtime data from the installed `ghidra-sleigh` package
+via `ghidra_sleigh.get_runtime_data_dir()`.
 
 ## 2. Expected-Output Strategy
 

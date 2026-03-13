@@ -51,7 +51,7 @@ _MAX_PARSE_FAILURE_PREVIEW = 5
 
 
 def enumerate_runtime_data_language_compilers(
-    runtime_data_dir: str | None,
+    runtime_data_dir: str | Path | None,
 ) -> list[LanguageCompilerPair]:
     """Enumerate valid language/compiler pairs from runtime data.
 
@@ -103,7 +103,7 @@ def enumerate_runtime_data_language_compilers(
     ]
 
 
-def _validate_runtime_data_dir(runtime_data_dir: str | None) -> Path | None:
+def _validate_runtime_data_dir(runtime_data_dir: str | Path | None) -> Path | None:
     if runtime_data_dir is None:
         return None
     runtime_path = Path(runtime_data_dir)

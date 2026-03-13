@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import importlib
 import importlib.util
 import pathlib
 
 import pytest
+
+from tests._native_fixtures import get_native_runtime_data_dir
 
 # ---------------------------------------------------------------------------
 # Directories
@@ -16,13 +19,20 @@ FIXTURES_DIR = REPO_ROOT / "tests" / "fixtures"
 NATIVE_MODULE = "flatline._flatline_native"
 NATIVE_SKIP_REASON = (
     "requires native bridge extension; ensure flatline._flatline_native is importable "
-    "(for example: pip install -e \".[dev]\" -Csetup-args=-Dnative_bridge=enabled)"
+    "and ghidra-sleigh is installed (for example: pip install -e \".[dev]\" "
+    "-Csetup-args=-Dnative_bridge=enabled)"
 )
 
 
 def _native_bridge_available() -> bool:
     """Return whether the compiled native bridge extension is importable."""
-    return importlib.util.find_spec(NATIVE_MODULE) is not None
+    if importlib.util.find_spec(NATIVE_MODULE) is None:
+        return False
+    try:
+        importlib.import_module(NATIVE_MODULE)
+    except ImportError:
+        return False
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -56,3 +66,12 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
 def fixtures_dir() -> pathlib.Path:
     """Return the path to the test fixtures directory."""
     return FIXTURES_DIR
+
+
+@pytest.fixture
+def native_runtime_data_dir() -> str:
+    """Return the installed `ghidra_sleigh` runtime-data root used by native tests."""
+    try:
+        return get_native_runtime_data_dir()
+    except RuntimeError as exc:
+        pytest.skip(str(exc))
