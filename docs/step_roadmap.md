@@ -29,6 +29,8 @@ You are continuing an in-progress software project using the existing repo + pri
 - Prefer incremental diffs over rewrites.
 - All structured result objects are **frozen Python value types** — no native pointers cross the bridge boundary.
 - Error model: hard errors on invalid input; warnings on degraded success. No silent fallbacks.
+- When an ADR resolves only the mechanism, keep any deferred policy/versioning questions open in the backlog instead of marking them fully resolved.
+- Runtime-data packaging uses the external package `ghidra-sleigh` (import `ghidra_sleigh`).
 - Keep `AGENTS.md` updated after meaningful repo changes (state, test counts, new files).
 - Always work inside the Python **venv** (`source .venv/bin/activate`).
 

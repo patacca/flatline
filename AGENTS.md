@@ -4,8 +4,9 @@
 # Overview
 - Pip-installable Python wrapper around Ghidra C++ decompiler, bundling runtime assets. Multi-ISA.
 - **Phase P2 (Linux MVP) — in progress.** P0, P1 complete.
-- **Caveat:** `third_party/ghidra` lacks compiled `.sla` assets; decompile requests commonly return `decompile_failed`.
-- **Next:** compile/provide `.sla` assets for fixture targets; replace placeholder skeleton assertions.
+- `.sla` runtime data now comes from external `ghidra-sleigh` (pip name) / `ghidra_sleigh` (import) package; default build ships all processor families, lighter build uses `all_processors=false`.
+- End-to-end decompilation verified: x86_64 `add(a,b)` produces correct C output with full structured data.
+- **Next:** create fixture memory images for priority ISAs; replace integration/negative/regression skeleton assertions.
 - Not a general Ghidra automation framework; decompiler surface only. No UI, no project DB.
 
 # Architecture (3-layer adapter)
@@ -34,6 +35,7 @@
 - **ADR-002 (Bridge Surface): nanobind C++ extension.** Public API stable; bridge internal.
 - **ADR-003 (Determinism Oracle): Normalized token/structure comparison**, not canonical text.
 - **ADR-009 (ISA Variant Scope):** x86 32+64; ARM64, RISC-V 64, MIPS32; others best-effort.
+- **ADR-010 (Runtime Data Packaging):** Separate `ghidra-sleigh` pip package (repo `patacca/ghidra-sleigh`, import `ghidra_sleigh`). Builds `sleighc` at package build time, ships compiled `.sla` files as package data, and exposes `ghidra_sleigh.get_runtime_data_dir()`. Use a `ghidra-sleigh` version that matches flatline's pinned Ghidra tag. ADR-004 remains open for flatline's default asset profile, size budget, and optional-dependency policy.
 - ADR-004 through ADR-008: unresolved (`docs/roadmap.md`).
 
 # Source of truth
@@ -58,16 +60,18 @@
 - `notes/api/decompiler_inventory.md` — 18 required callable symbols with I/O, init order, thread-safety.
 - `notes/r2ghidra/integration_map.md` — 5-section integration analysis (reusable/reimplement/skip). Reference only.
 - `tests/` — catalog, fixtures, pytest skeletons, `conftest.py`.
+- External companion package: `ghidra-sleigh` (GitHub `patacca/ghidra-sleigh`) provides compiled Sleigh runtime data; it is not vendored in this repo.
 
 # Build & development commands
 - **Activate venv:** `source .venv/bin/activate`
 - **Always use `tox`** for tests and lint.
 - **Editable install:** `pip install -e ".[dev]"`
 - **Editable + native forced:** `pip install -e ".[dev]" -Csetup-args=-Dnative_bridge=enabled`
-- **Debug build:** `pip install -e ".[dev]" -Csetup-args=--buildtype=debug`
-- **Release build:** `pip install -e ".[dev]" -Csetup-args=--buildtype=release`
-- Meson buildtype defaults `release` (-O3). Override: `-Csetup-args=--buildtype=<debug|release|debugoptimized>`.
+- **Debug build:** `pip install -e ".[dev]" -Csetup-args=-Dbuildtype=debug`
+- **Release build:** `pip install -e ".[dev]" -Csetup-args=-Dbuildtype=release`
+- Meson buildtype defaults `release` (-O3). Override: `-Csetup-args=-Dbuildtype=<debug|release|debugoptimized>`.
 - **Build wheel:** `python -m build`
+- **Install external runtime data package:** `pip install ghidra-sleigh`
 - **All checks:** `tox` (envs: `py313`, `py314`, `lint`)
 - **Tests only:** `tox -e py313,py314`
 - **Lint only:** `tox -e lint`
@@ -76,9 +80,11 @@
 - **Single file:** `tox -e py313,py314 -- tests/unit/test_models.py`
 - **Single test:** `tox -e py313,py314 -- tests/unit/test_models.py::test_name -v`
 - Tox: offline/local, skips package install, runs from `.venv`, `PYTHONPATH=src`. `skip_missing_interpreters = true`.
+- `ghidra-sleigh` source-build details live in its own repo; use its documented Meson options there, not from this workspace.
 
 # Tests
 - 28 passing (22 unit, 6 contract); 16 native-dependent placeholders skip at runtime.
+- `.sla` files compiled for priority ISAs (DATA, x86, AARCH64, RISCV, MIPS) under `third_party/ghidra/Ghidra/Processors/*/data/languages/`.
 - `tests/conftest.py` — auto-applies category markers from directory names.
 - `tests/specs/test_catalog.md` — 37 definitions, 5 categories, contract traceability matrix.
 - `tests/specs/fixtures.md` — 10 fixtures, oracle strategy, determinism rules.

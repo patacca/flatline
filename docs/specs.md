@@ -562,10 +562,11 @@ Resolved:
 Open:
 - Should warning codes be globally namespaced now to prevent future collisions? (Initial codes will be defined during P2 implementation.)
 - Should analysis-budget defaults vary by platform or target ISA, or remain globally fixed?
-- How strict should package-size limits be for bundled runtime assets, given the multi-ISA asset footprint?
 - Should session-level failure categories (startup, initialization) be defined explicitly in the `FlatlineError` hierarchy, or is the current `ErrorItem` taxonomy sufficient?
-- Should the runtime data package bundle all Ghidra-supported ISA assets or only the priority set (x86, ARM, RISC-V, MIPS), with an extension mechanism for others?
-- Should ISA-specific Sleigh compilation (`.sla` files) happen at build time or install time?
+- How strict should package-size limits or install-profile guidance be now that runtime data is distributed via `ghidra-sleigh` and its default build is multi-ISA?
+- How should flatline pin or validate compatible `ghidra-sleigh` versions so runtime data matches flatline's pinned Ghidra upstream revision?
+- ~~Should the runtime data package bundle all Ghidra-supported ISA assets or only the priority set (x86, ARM, RISC-V, MIPS), with an extension mechanism for others?~~ **Resolved (ADR-010):** `ghidra-sleigh` defaults to shipping compiled runtime data for all Ghidra processor families and also supports a lighter major-ISA build via `all_processors=false`. Flatline's default profile policy remains tracked in ADR-004.
+- ~~Should ISA-specific Sleigh compilation (`.sla` files) happen at build time or install time?~~ **Resolved (ADR-010):** Build time. `ghidra-sleigh` builds `sleighc` from Ghidra C++ sources and ships the compiled `.sla` outputs as package data.
 - ~~Should `TypeInfo` expose sub-type details (struct fields, array element type, pointer target) in MVP, or is the flat `name`/`size`/`metatype` sufficient?~~ **Resolved:** Flat `name`/`size`/`metatype` for MVP. Sub-type details (struct fields, pointer target, array element) deferred to post-MVP.
 - Should `CallSiteInfo` include a `callee_name` field when the target is a known function symbol? (Affects bridge scope.)
 - Should `JumpTableInfo` include an `is_complete` flag for partial recovery? (Affects test assertions.)
