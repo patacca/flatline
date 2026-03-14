@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
+pytest.importorskip("flatline._compliance", reason="dev-only module not shipped in wheel")
 from flatline._compliance import audit_release_compliance, expected_ghidra_sleigh_version
 from flatline._version import UPSTREAM_COMMIT, UPSTREAM_TAG
 

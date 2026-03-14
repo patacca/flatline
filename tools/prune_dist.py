@@ -1,38 +1,93 @@
-"""Prune the sdist to keep only the minimal third_party/ghidra subset.
+"""Prune the sdist to ship only what source-builders need.
 
-Meson dist includes the full ghidra submodule (~744 MB on disk).  The build
-only needs the decompiler C++ sources and the upstream license/notice files.
+Meson dist includes the full tracked repo tree.  The sdist only needs the
+build system files, the flatline source package, the upstream C++ sources,
+and the top-level license/notice artifacts.
+
 This script runs as a meson.add_dist_script() hook and removes everything
-else, shrinking the sdist from ~75 MB to ~4 MB.
+else (tests, docs, CI config, AI agent prompts, dev notes, etc.).
 """
 
 import os
 import shutil
-import sys
 
-GHIDRA_KEEP = {
-    "LICENSE",
-    "NOTICE",
-    "Ghidra/Features/Decompiler/src/decompile/cpp",
+# Top-level entries to remove entirely from the sdist.
+_REMOVE_TOPLEVEL = {
+    ".agents",
+    ".github",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "notes",
+    "tests",
+    "tools",
+}
+
+# Subdirectories inside docs/ to remove (AI prompts, internal dev docs).
+_REMOVE_DOCS_SUBDIRS = {
+    "ai",
+}
+
+# Individual doc files to remove (dev-only, not needed for source builds).
+_REMOVE_DOCS_FILES = {
+    "code_style.md",
+    "footprint.md",
+    "release_review.md",
+    "release_workflow.md",
+    "roadmap.md",
+}
+
+# Python source files in src/flatline/ that are dev-only CLI tools.
+_REMOVE_SRC_FILES = {
+    "_artifacts.py",
+    "_compliance.py",
+    "_footprint.py",
+    "_release.py",
 }
 
 
-def prune(dist_root: str) -> None:
-    ghidra_root = os.path.join(dist_root, "third_party", "ghidra")
-    if not os.path.isdir(ghidra_root):
-        return
+def _remove_path(path: str) -> None:
+    """Remove a file or directory tree if it exists."""
+    if os.path.isdir(path):
+        shutil.rmtree(path)
+    elif os.path.isfile(path) or os.path.islink(path):
+        os.remove(path)
 
+
+def prune(dist_root: str) -> None:
+    # --- Top-level removals ---
+    for entry in _REMOVE_TOPLEVEL:
+        _remove_path(os.path.join(dist_root, entry))
+
+    # --- docs/ selective pruning ---
+    docs_dir = os.path.join(dist_root, "docs")
+    if os.path.isdir(docs_dir):
+        for subdir in _REMOVE_DOCS_SUBDIRS:
+            _remove_path(os.path.join(docs_dir, subdir))
+        for filename in _REMOVE_DOCS_FILES:
+            _remove_path(os.path.join(docs_dir, filename))
+
+    # --- src/flatline/ dev-only modules ---
+    src_dir = os.path.join(dist_root, "src", "flatline")
+    if os.path.isdir(src_dir):
+        for filename in _REMOVE_SRC_FILES:
+            _remove_path(os.path.join(src_dir, filename))
+
+    # --- third_party/ghidra: keep only decompiler C++ and license files ---
+    ghidra_root = os.path.join(dist_root, "third_party", "ghidra")
+    if os.path.isdir(ghidra_root):
+        _prune_ghidra(ghidra_root)
+
+
+def _prune_ghidra(ghidra_root: str) -> None:
+    """Keep only LICENSE, NOTICE, and the decompiler C++ source tree."""
     for entry in os.listdir(ghidra_root):
         path = os.path.join(ghidra_root, entry)
         if entry in ("LICENSE", "NOTICE"):
             continue
         if entry == "Ghidra":
-            _prune_ghidra_subdir(os.path.join(ghidra_root, "Ghidra"))
+            _prune_ghidra_subdir(path)
             continue
-        if os.path.isdir(path):
-            shutil.rmtree(path)
-        else:
-            os.remove(path)
+        _remove_path(path)
 
 
 def _prune_ghidra_subdir(ghidra_dir: str) -> None:
@@ -45,10 +100,7 @@ def _prune_ghidra_subdir(ghidra_dir: str) -> None:
             entry_path = os.path.join(current, entry)
             if entry == segment:
                 continue
-            if os.path.isdir(entry_path):
-                shutil.rmtree(entry_path)
-            else:
-                os.remove(entry_path)
+            _remove_path(entry_path)
         current = os.path.join(current, segment)
         if not os.path.isdir(current):
             return

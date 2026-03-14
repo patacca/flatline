@@ -66,12 +66,15 @@ Product policy:
 - package installs without external Ghidra checkout
 - license/compliance review checklist signed off
 - default install footprint measured with `python -m flatline._footprint` and documented in `docs/footprint.md` against product policy, with any required tradeoffs made explicitly rather than by silent default ISA pruning
+- dev-only release tools (`_compliance`, `_footprint`, `_release`, `_artifacts`) excluded from wheels and sdists; only the public runtime modules and optional native extension ship in distribution artifacts
 
 ### M4: Release readiness
 - Inputs:
 - changelog, upgrade notes, regression/perf data, support-tier notes
 - `docs/release_notes.md` summarizing contract guarantees, support tiers /
   known-variant limits, and upgrade policy for the first public release
+- `docs/release_review.md` capturing the public artifact-review checklist and
+  the expected evidence for final human sign-off
 - `docs/release_workflow.md` capturing the initial public release procedure and
   the `0.1.0` SemVer recommendation for the current `0.1.0.dev0` branch
 - built-artifact audit evidence from `python -m flatline._artifacts`
@@ -79,8 +82,11 @@ Product policy:
 - SemVer classification approved
 - contract tests green on release matrix
 - release-facing support matrix and known-variant limits are ready
+- public artifact-review criteria are source-controlled and tied to the
+  deterministic readiness evidence
 - built wheel and sdist pass artifact audit for version/dependency metadata and
   shipped `LICENSE` / `NOTICE`
+- dev-only release tools are not present in the built wheel or sdist (audit tools are repo-level commands run from editable installs)
 
 Note: M4 covers the exit criteria of both P4 (Stabilization and regression control)
 and P5 (Initial public release). A separate M4b gate may be introduced if stabilization
@@ -127,7 +133,7 @@ and release activities require distinct checkpoints.
 | ADR-004 Runtime Asset Policy | Which `ghidra-sleigh` asset profile is flatline's default and how can users override it? **Decided:** flatline depends on `ghidra-sleigh` for the default runtime-data UX and auto-discovers its runtime-data root when `runtime_data_dir` is omitted. The default expectation is the full multi-ISA `ghidra-sleigh` install, which satisfies priority-ISA coverage plus bundled best-effort enumeration for other processors. Lighter builds such as `all_processors=false` remain supported only as explicit custom runtime-data roots passed via `runtime_data_dir`. Flatline does not add a second size gate in P2; size/compliance remains tracked for P3. Auto-discovered upstream tag/commit drift in `ghidra-sleigh` is surfaced as a runtime warning rather than a silent fallback. | End of P2 (decided) |
 | ADR-005 Analysis Budget Defaults | What are default time/resource limits per request? **Decided:** flatline applies a fixed per-request `AnalysisBudget(max_instructions=100000)` default across the Linux MVP matrix, and callers may override `max_instructions` explicitly per request. No wall-clock timeout is exposed in P2 because the pinned Ghidra callable surface only provides instruction-count limiting via `Architecture::max_instructions`. See `specs.md` §3.3 and §7. | End of P2 (decided) |
 | ADR-006 Logging and Diagnostics | Which diagnostic fields are emitted by default? **Decided:** P2 emits diagnostics only through startup/runtime-data `RuntimeWarning` messages and structured `WarningItem` / `ErrorItem` payloads. Diagnostic text may include full filesystem paths for debuggability; raw memory-image bytes are never emitted. No path redaction is applied because flatline is a library running in the caller's own process. No general-purpose logging sink is exposed in P2. | End of P2 (decided) |
-| ADR-007 License Compliance Process | What release-time checks are mandatory for redistribution? **Decided:** releases must ship root `LICENSE` and `NOTICE`, keep the pinned Ghidra source attribution and `ghidra-sleigh == 12.0.4` dependency pin recorded in `docs/compliance.md`, and pass `python -m flatline._compliance` before tagging. | End of P3 (decided) |
+| ADR-007 License Compliance Process | What release-time checks are mandatory for redistribution? **Decided:** releases must ship root `LICENSE` and `NOTICE`, keep the pinned Ghidra source attribution and `ghidra-sleigh == 12.0.4` dependency pin recorded in `docs/compliance.md`, and pass `python -m flatline._compliance` before tagging. The compliance, footprint, release-readiness, and artifact-audit tools (`_compliance`, `_footprint`, `_release`, `_artifacts`) are dev-only repo-level commands excluded from distribution artifacts (wheels and sdists). | End of P3 (decided) |
 | ADR-008 Cross-Platform Order | macOS-first or Windows-first after Linux host MVP? | Start of P6 |
 | ADR-012 Enriched Output Design | What pcode/varnode representation do frozen Python types expose, and at which decompilation stage is data extracted? Covers opcode table mapping, varnode graph topology (inputs/outputs/def-use edges), extraction point in the action pipeline (pre- vs post-simplification), and whether enriched data lives inside `FunctionInfo` or a separate companion type. Target use cases: BSim-style similarity with custom hyperparameters, binary diffing, data flow / taint analysis, semantic understanding. | Start of P7 |
 | ADR-009 ISA Variant Scope | Which ISA variants (e.g., Thumb/Thumb-2, microMIPS, RV32 vs RV64 extensions) are in-scope for priority fixture coverage vs best-effort? **Decided: x86 has both 32-bit and 64-bit fixture coverage; other ISA families have one representative variant each — ARM64 (AArch64), RISC-V 64, MIPS32 — for diverse bitwidth coverage.** Other variants (ARM32/Thumb, RV32, MIPS64, microMIPS) are best-effort with no dedicated fixtures. See `tests/specs/fixtures.md` §1. | End of P1 (decided) |

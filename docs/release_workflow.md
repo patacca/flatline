@@ -1,7 +1,8 @@
 # Initial Public Release Workflow
 
 This document records the remaining P5 release decision and the exact repo-side
-workflow to execute once the public artifact review is approved.
+workflow to execute once the public artifact review is approved. The source-
+controlled checklist for that human gate lives in `docs/release_review.md`.
 
 ## SemVer Decision
 
@@ -56,12 +57,13 @@ sdist.
 11. Audit the built sdist/wheel with `python -m flatline._artifacts dist`
     so the current version, dependency pin, and shipped `LICENSE` / `NOTICE`
     files are verified from the actual release artifacts
-12. Create the release tag with `git tag v0.1.0`
+12. Complete `docs/release_review.md` for the final human artifact review
+13. Create the release tag with `git tag v0.1.0`
 
 ## Hold Point
 
 Do not run `git tag v0.1.0` until the public artifact review is explicitly
-approved. `python -m flatline._artifacts dist` provides the deterministic
-artifact evidence for that review, but the review itself remains the human
-gate. This workflow is only the source-controlled procedure that prepares the
-repo for that final sign-off.
+approved. `python -m flatline._artifacts dist` provides deterministic artifact
+evidence for that review, and `docs/release_review.md` records the checklist
+used for the final human sign-off. This workflow is only the source-controlled
+procedure that prepares the repo for that final sign-off.

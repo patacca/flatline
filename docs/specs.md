@@ -557,12 +557,26 @@ Configuration:
 
 Packaging and compliance:
 - Release artifacts must ship the root `LICENSE` and `NOTICE` files; `pyproject.toml` declares both through `license-files`.
+- Wheels and sdists ship only the public runtime modules (`__init__`, `_bridge`,
+  `_errors`, `_models`, `_runtime_data`, `_session`, `_version`) plus the
+  optional native extension.  Dev-only release tools (`_compliance.py`,
+  `_footprint.py`, `_release.py`, `_artifacts.py`) are excluded from all
+  distribution artifacts: `meson.build` omits them from `py.install_sources()`,
+  and `tools/prune_dist.py` prunes them from Meson sdists.  The
+  `python -m flatline._xxx` invocations are repo-level release commands that
+  require a repo checkout with an editable install; they are not end-user
+  entry points.
 - Redistribution review passes only when `python -m flatline._compliance` succeeds from the repo root.
 - The compliance audit verifies the pinned Ghidra native-source attribution (`Ghidra_12.0.4_build` / `e40ed13014025f82488b1f8f7bca566894ac376b`), the default runtime dependency pin `ghidra-sleigh == 12.0.4`, and the synthetic-fixture redistribution note in `tests/fixtures/README.md`.
 - Built wheel and sdist artifacts are audited with `python -m flatline._artifacts`
   before tagging so release review can verify the current version metadata, the
   `ghidra-sleigh == 12.0.4` dependency pin, and the shipped `LICENSE` / `NOTICE`
   files from the actual artifacts rather than by repo contents alone.
+- The final public-artifact review gate is documented in
+  `docs/release_review.md`; it must stay source-controlled and tie the human
+  sign-off to the deterministic evidence from `python -m flatline._release`,
+  `tox`, `python -m flatline._compliance`, `python -m flatline._footprint`,
+  `python -m build`, and `python -m flatline._artifacts dist`.
 - Default-install footprint is measured with `python -m flatline._footprint`,
   using shipped payload files only (excluding interpreter-generated
   `__pycache__` / `.pyc` entries). `docs/footprint.md` records the current
@@ -581,6 +595,9 @@ Release-facing policy:
 - Release-facing upgrade notes must restate the latest-upstream-only policy,
   SemVer classification rules, the minimum one-minor deprecation window, and
   the caller-managed compatibility risk of custom `runtime_data_dir` roots.
+- The initial public release must also keep the human artifact-review checklist
+  in `docs/release_review.md` aligned with the release workflow, changelog, and
+  release notes so the final sign-off criteria are explicit.
 - The initial public release workflow and its `0.1.0` version recommendation
   are source-controlled in `docs/release_workflow.md` and audited by
   `python -m flatline._release` before the release tag is created.

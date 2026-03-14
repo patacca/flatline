@@ -5,6 +5,9 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+import pytest
+
+pytest.importorskip("flatline._release", reason="dev-only module not shipped in wheel")
 from flatline._release import audit_initial_public_release_readiness
 
 
@@ -60,6 +63,7 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
                 "# flatline",
                 "",
                 "[docs/release_notes.md](docs/release_notes.md)",
+                "[docs/release_review.md](docs/release_review.md)",
                 "[docs/release_workflow.md](docs/release_workflow.md)",
                 "",
             ]
@@ -72,6 +76,33 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
     )
     (repo_root / "docs" / "release_notes.md").write_text(
         "# Initial Public Release Notes\n",
+        encoding="ascii",
+    )
+    (repo_root / "docs" / "release_review.md").write_text(
+        "\n".join(
+            [
+                "# Public Artifact Review Checklist",
+                "",
+                "## Preconditions",
+                "- Current development version: `0.1.0.dev0`",
+                "- Planned public tag: `0.1.0`",
+                "- Run `python -m flatline._release`",
+                "- Run `tox`",
+                "- Run `python -m flatline._compliance`",
+                "- Run `python -m flatline._footprint`",
+                "- Run `python -m build`",
+                "- Run `python -m flatline._artifacts dist`",
+                "",
+                "## Review Evidence",
+                "- Verify `LICENSE` and `NOTICE` in the artifacts.",
+                "- Review `docs/release_notes.md` and `CHANGELOG.md`.",
+                "- Confirm `ghidra-sleigh == 12.0.4`.",
+                "",
+                "## Approval Record",
+                "- Reviewer:",
+                "",
+            ]
+        ),
         encoding="ascii",
     )
     (repo_root / "docs" / "release_workflow.md").write_text(
@@ -88,6 +119,7 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
                 "- Run `tox`",
                 "- Run `python -m build`",
                 "- Run `python -m flatline._artifacts dist`",
+                "- Review `docs/release_review.md`",
                 "- Update `CHANGELOG.md`",
                 "- Create `git tag v0.1.0`",
                 "",
@@ -154,6 +186,7 @@ def test_u021_initial_public_release_workflow_is_source_controlled(tmp_path: Pat
         "README.md",
         "docs/compliance.md",
         "docs/release_notes.md",
+        "docs/release_review.md",
         "docs/release_workflow.md",
     )
 
@@ -168,6 +201,7 @@ def test_u021_initial_public_release_workflow_is_source_controlled(tmp_path: Pat
         "tox",
         "python -m build",
         "python -m flatline._artifacts",
+        "docs/release_review.md",
         "CHANGELOG.md",
         "git tag v0.1.0",
     )
@@ -175,6 +209,7 @@ def test_u021_initial_public_release_workflow_is_source_controlled(tmp_path: Pat
         assert fragment in workflow_doc
 
     assert "docs/release_workflow.md" in readme
+    assert "docs/release_review.md" in readme
     assert '"build >= ' in pyproject
 
 

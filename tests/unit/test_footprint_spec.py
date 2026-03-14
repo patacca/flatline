@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path, PurePosixPath
 
+import pytest
+
+pytest.importorskip("flatline._footprint", reason="dev-only module not shipped in wheel")
 from flatline._compliance import expected_ghidra_sleigh_version
 from flatline._footprint import (
     format_default_install_footprint,

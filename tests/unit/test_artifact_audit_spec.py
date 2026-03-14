@@ -7,6 +7,9 @@ import tarfile
 import zipfile
 from pathlib import Path
 
+import pytest
+
+pytest.importorskip("flatline._artifacts", reason="dev-only module not shipped in wheel")
 from flatline._artifacts import audit_built_release_artifacts
 from flatline._compliance import expected_ghidra_sleigh_version
 

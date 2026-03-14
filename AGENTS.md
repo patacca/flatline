@@ -12,6 +12,7 @@
 - Priority-ISA native memory fixtures are now committed as `tests/fixtures/*.hex`: x86_64, x86_32, AArch64, RISC-V 64, MIPS32, plus x86_64 switch and warning fixtures.
 - Fixture sources now live beside the artifacts under `tests/fixtures/sources/`, with regeneration scripted in `tests/fixtures/generate_hex_fixtures.py`.
 - Tox now tests the installed package artifact: `py313`/`py314` build `flatline[test]` wheels inside `.tox`, while `lint` remains package-skip + `ruff`.
+- Wheels and sdists ship only the public runtime modules and optional native extension. Dev-only release tools (`_compliance.py`, `_footprint.py`, `_release.py`, `_artifacts.py`) are excluded from all distribution artifacts via `meson.build` `py.install_sources()` and the `tools/prune_dist.py` sdist pruning hook; their tests use `pytest.importorskip` and skip gracefully under tox wheel installs.
 - GitHub Actions CI uses `ubuntu-latest` for lint/build and pins `ubuntu-24.04` for perf-sensitive test/regression lanes; the general test lane runs non-regression tox envs across Python 3.13/3.14 and a dedicated `py314` regression lane enforces the committed normalized-output and warm-session p95 budgets.
 - Public sessions now auto-discover `ghidra_sleigh.get_runtime_data_dir()` when `runtime_data_dir` is omitted; explicit `runtime_data_dir` values still override the default, and auto-discovered Ghidra pin drift is surfaced as a runtime warning.
 - ADR-005 is now resolved: `AnalysisBudget` is a public frozen value type, omitted requests default to `max_instructions=100000`, mapping inputs are coerced/validated in `DecompileRequest`, and the native bridge applies the resolved cap to `Architecture::max_instructions`. Unsupported budget keys or non-positive limits fail as `invalid_argument`; wall-clock timeout remains out of scope for P2.
@@ -26,9 +27,10 @@
 - `CHANGELOG.md` exists at the repo root, follows Keep a Changelog, and must be updated for every release.
 - `docs/release_notes.md` now captures the initial public release-facing contract guarantees, support tiers, known-variant limits, and upgrade policy; `README.md` links it and now tracks P5 as the current focus.
 - `docs/release_workflow.md` now records the initial public release procedure and the first-release SemVer recommendation: finalize `0.1.0.dev0` as `0.1.0`; `python -m flatline._release` audits version/doc alignment and rejects dirty git worktrees before tagging because Meson sdists omit uncommitted changes.
+- `docs/release_review.md` now captures the source-controlled public artifact-review checklist and approval record template for the final human P5 sign-off; `python -m flatline._release` now requires that review doc alongside the release notes/workflow links.
 - `python -m flatline._artifacts dist` now audits built wheel/sdist artifacts for shipped `LICENSE` / `NOTICE`, current version metadata, and the pinned `ghidra-sleigh == 12.0.4` dependency before the human public-artifact review sign-off.
 - `pip install -e ".[dev]"` now installs `build >= 1.2`, so the documented `python -m build` release step works from the standard repo venv without extra manual tooling setup.
-- **Next:** once public artifact review is approved, run the documented initial public release workflow, bump to `0.1.0`, and create tag `v0.1.0`.
+- **Next:** once `docs/release_review.md` is completed and approved, run the documented initial public release workflow, bump to `0.1.0`, and create tag `v0.1.0`.
 - Post-MVP P7 will expose pcode ops and varnode graphs as frozen Python value types for downstream analysis (BSim-style similarity, binary diffing, data flow/taint). Design tracked in ADR-012.
 - Not a general Ghidra automation framework; decompiler surface only. No UI, no project DB.
 
@@ -63,7 +65,7 @@
 - **ADR-004 (Runtime Asset Policy):** Flatline depends on `ghidra-sleigh` for its default runtime-data UX, auto-discovers the installed package when `runtime_data_dir` is omitted, expects the full multi-ISA install by default, and keeps lighter/custom runtime-data roots behind explicit `runtime_data_dir` overrides. No second flatline-side size gate in P2; auto-discovered upstream pin drift emits a warning instead of silently switching baselines.
 - **ADR-005 (Analysis Budget Defaults):** Flatline applies a fixed per-request `AnalysisBudget(max_instructions=100000)` default across the Linux MVP matrix, callers may override `max_instructions` explicitly, and the native bridge wires the resolved value into `Architecture::max_instructions`. No wall-clock timeout is exposed in P2 because the pinned Ghidra callable surface does not provide a compatible cancellation hook.
 - **ADR-006 (Logging and Diagnostics):** P2 emits diagnostics only through startup/runtime-data `RuntimeWarning` messages and structured `WarningItem` / `ErrorItem` payloads. Diagnostic text includes full filesystem paths for debuggability; raw memory-image bytes are never emitted. No general-purpose logging sink is exposed in P2.
-- **ADR-007 (License Compliance Process):** releases ship root `LICENSE` + `NOTICE`, keep the pinned source/dependency references in `docs/compliance.md`, pass `python -m flatline._compliance`, and now keep the default-install footprint baseline refreshed in `docs/footprint.md` via `python -m flatline._footprint`.
+- **ADR-007 (License Compliance Process):** releases ship root `LICENSE` + `NOTICE`, keep the pinned source/dependency references in `docs/compliance.md`, pass `python -m flatline._compliance`, and now keep the default-install footprint baseline refreshed in `docs/footprint.md` via `python -m flatline._footprint`. The compliance/footprint/release/artifact-audit tools are dev-only repo-level commands excluded from distribution artifacts (wheels and sdists).
 - **ADR-008 (Cross-Platform Order):** unresolved (`docs/roadmap.md`).
 - **ADR-009 (ISA Variant Scope):** x86 32+64; ARM64, RISC-V 64, MIPS32; others best-effort.
 - **ADR-010 (Runtime Data Packaging):** Separate `ghidra-sleigh` pip package (repo `patacca/ghidra-sleigh`, import `ghidra_sleigh`). Builds `sleighc` at package build time, ships compiled `.sla` files as package data, and exposes `ghidra_sleigh.get_runtime_data_dir()`. Flatline now layers ADR-004's dependency-backed default policy on top of this mechanism.
@@ -82,6 +84,7 @@
 - `docs/compliance.md` — ADR-007 compliance manifest + redistribution checklist.
 - `docs/footprint.md` — default-install footprint baseline and size-policy note.
 - `docs/release_notes.md` — initial public release notes: contract guarantees, support tiers, known-variant limits, and upgrade policy.
+- `docs/release_review.md` — public artifact-review checklist and approval record template for the initial public release gate.
 
 # Repo structure (non-vendored)
 - `pyproject.toml` — metadata, tool settings. Build backend: `meson-python`.
@@ -89,16 +92,17 @@
 - `meson_options.txt` — feature flags (`native_bridge`).
 - `src/flatline/` — installable package (src layout).
 - `src/flatline/_session.py` — `DecompilerSession` lifecycle + one-shot wrappers.
-- `src/flatline/_compliance.py` — ADR-007 release-compliance audit (`python -m flatline._compliance`).
-- `src/flatline/_footprint.py` — default-install payload-footprint report (`python -m flatline._footprint`).
-- `src/flatline/_release.py` — initial-public-release readiness audit (`python -m flatline._release`) covering version alignment, release docs, the `0.1.0` recommendation, and a clean-worktree precondition.
-- `src/flatline/_artifacts.py` — built wheel/sdist audit (`python -m flatline._artifacts dist`) for release-artifact metadata and shipped notices.
+- `src/flatline/_compliance.py` — ADR-007 release-compliance audit (`python -m flatline._compliance`). Dev-only; excluded from wheels and sdists.
+- `src/flatline/_footprint.py` — default-install payload-footprint report (`python -m flatline._footprint`). Dev-only; excluded from wheels and sdists.
+- `src/flatline/_release.py` — initial-public-release readiness audit (`python -m flatline._release`) covering version alignment, release docs, the `0.1.0` recommendation, and a clean-worktree precondition. Dev-only; excluded from wheels and sdists.
+- `src/flatline/_artifacts.py` — built wheel/sdist audit (`python -m flatline._artifacts dist`) for release-artifact metadata and shipped notices. Dev-only; excluded from wheels and sdists.
 - `src/flatline/_bridge.py` — bridge session protocol + fallback implementation.
 - `src/flatline/_runtime_data.py` — runtime-data discovery/validation for language/compiler pair enumeration.
 - `src/flatline/_flatline_native.cpp` — nanobind extension: Ghidra startup, pair enumeration, native decompile pipeline (links `ghidra_decompiler`).
 - `docs/` — specs, roadmap, project documentation.
 - `docs/ai/` — agent prompts, planning artifacts, workflow templates.
 - `docs/release_notes.md` — initial public release notes and support-policy summary.
+- `docs/release_review.md` — public artifact-review checklist and approval record template.
 - `docs/release_workflow.md` — initial public release workflow, hold point, and `0.1.0` SemVer recommendation.
 - `notes/api/decompiler_inventory.md` — 18 required callable symbols with I/O, init order, thread-safety.
 - `notes/r2ghidra/integration_map.md` — 5-section integration analysis (reusable/reimplement/skip). Reference only.
@@ -130,20 +134,21 @@
 - `ghidra-sleigh` source-build details live in its own repo; use its documented Meson options there, not from this workspace.
 
 # Tests
-- `tox`: `py314` passes all 74 tests (41 unit, 6 contract, 10 integration, 12 regression, 5 negative) against the installed wheel artifact; `py313` skips when `python3.13` is absent.
+- `tox`: `py314` passes 67 tests and skips 4 dev-only files (34 unit + 6 contract + 10 integration + 12 regression + 5 negative passed; 9 dev-only unit tests across 4 files skip because their modules are excluded from wheels) against the installed wheel artifact; `py313` skips when `python3.13` is absent. Full 76-test suite (43 unit including 9 dev-only) runs only from an editable install.
 - Native tests expect compiled `.sla` data from the installed `ghidra-sleigh` runtime dependency, currently covering DATA, x86, AARCH64, RISCV, and MIPS.
 - Native tox runs still resolve runtime data from `ghidra_sleigh.get_runtime_data_dir()` explicitly; public `DecompilerSession` startup now auto-discovers that default path when `runtime_data_dir` is omitted, and `DecompileRequest` / `DecompilerSession` coerce path-like `runtime_data_dir` inputs to strings.
 - `tests/conftest.py` — auto-applies category markers from directory names.
-- `tests/specs/test_catalog.md` — 43 definitions, 5 categories, contract traceability matrix.
+- `tests/specs/test_catalog.md` — 44 definitions, 5 categories, contract traceability matrix.
 - `tests/specs/fixtures.md` — 10 fixtures, oracle strategy, determinism rules.
 - `tests/unit/test_ci_workflow_spec.py` — locks the pinned GitHub Actions regression gate (runner pin, py313/py314 non-regression matrix, dedicated `py314` regression lane).
 - `tests/unit/test_native_bridge_runtime_spec.py` — native smoke test uses committed x86_64 add fixture and the real Ghidra runtime-data root.
 - `tests/unit/test_runtime_data_spec.py` — `.ldefs` tolerance, dependency-backed default runtime-data discovery, and deterministic failure tests.
-- `tests/unit/test_compliance_spec.py` — ADR-007 compliance audit for required notice files, pinned-source references, and dependency-pin drift.
-- `tests/unit/test_footprint_spec.py` — default-install footprint measurement excludes `__pycache__` noise and keeps `docs/footprint.md` pinned to the current workflow/policy.
+- `tests/unit/test_compliance_spec.py` — ADR-007 compliance audit for required notice files, pinned-source references, and dependency-pin drift. Skips under tox (dev-only module).
+- `tests/unit/test_footprint_spec.py` — default-install footprint measurement excludes `__pycache__` noise and keeps `docs/footprint.md` pinned to the current workflow/policy. Skips under tox (dev-only module).
 - `tests/unit/test_release_notes_spec.py` — locks the initial public release notes doc and README against the P5 gate: contract guarantees, support tiers, known-variant limits, upgrade policy, and current-phase messaging.
-- `tests/unit/test_release_workflow_spec.py` — locks the initial public release workflow and SemVer recommendation: `0.1.0.dev0` finalizes to `0.1.0`, README links the workflow doc, and missing workflow docs or version drift fail deterministically.
-- `tests/unit/test_artifact_audit_spec.py` — built wheel/sdist audit for shipped notices plus current version and dependency metadata.
+- `tests/unit/test_release_review_spec.py` — locks the source-controlled public artifact-review checklist against the P5 gate: required readiness commands, artifact evidence, notices, release-doc references, and approval-record fields.
+- `tests/unit/test_release_workflow_spec.py` — locks the initial public release workflow and SemVer recommendation: `0.1.0.dev0` finalizes to `0.1.0`, README links the workflow doc, and missing workflow docs or version drift fail deterministically. Skips under tox (dev-only module).
+- `tests/unit/test_artifact_audit_spec.py` — built wheel/sdist audit for shipped notices plus current version and dependency metadata. Skips under tox (dev-only module).
 - `tests/unit/test_public_contract_spec.py` and `tests/unit/test_bridge_adapter_spec.py` now lock the ADR-005 contract: default `AnalysisBudget(max_instructions=100000)`, mapping coercion/validation, and stable native payload serialization.
 - `tests/unit/test_runtime_data_spec.py` and `tests/unit/test_bridge_adapter_spec.py` now also lock ADR-006 diagnostics: startup/runtime-data warnings and bridge error messages include full filesystem paths for debuggability.
 - `tests/regression/test_regression_spec.py` — R-002 now asserts the committed switch-site baseline for `fx_switch_elf64`; R-003 now parameterizes warm-session p95 budgets across the priority-ISA add fixtures plus `fx_switch_elf64`.

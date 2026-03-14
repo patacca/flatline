@@ -1,11 +1,7 @@
 py.install_sources(
   '__init__.py',
-  '_artifacts.py',
   '_bridge.py',
-  '_compliance.py',
   '_errors.py',
-  '_footprint.py',
-  '_release.py',
   '_models.py',
   '_runtime_data.py',
   '_session.py',

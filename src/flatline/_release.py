@@ -15,6 +15,7 @@ REQUIRED_ARTIFACTS = (
     "README.md",
     "docs/compliance.md",
     "docs/release_notes.md",
+    "docs/release_review.md",
     "docs/release_workflow.md",
 )
 INITIAL_PUBLIC_RELEASE_VERSION = "0.1.0"
@@ -294,6 +295,7 @@ def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseRead
         ("README.md", "readme_missing"),
         ("docs/compliance.md", "compliance_doc_missing"),
         ("docs/release_notes.md", "release_notes_missing"),
+        ("docs/release_review.md", "release_review_missing"),
         ("docs/release_workflow.md", "release_workflow_missing"),
     ):
         artifact_texts[relative_path] = _read_text(
@@ -314,7 +316,11 @@ def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseRead
     if readme_text is not None:
         _require_fragments(
             text=readme_text,
-            fragments=("docs/release_notes.md", "docs/release_workflow.md"),
+            fragments=(
+                "docs/release_notes.md",
+                "docs/release_review.md",
+                "docs/release_workflow.md",
+            ),
             code="readme_release_reference_missing",
             label="README.md",
             issues=issues,
@@ -340,6 +346,34 @@ def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseRead
             issues=issues,
         )
 
+    release_review_text = artifact_texts["docs/release_review.md"]
+    if release_review_text is not None:
+        _require_fragments(
+            text=release_review_text,
+            fragments=(
+                "# Public Artifact Review Checklist",
+                "## Preconditions",
+                "## Review Evidence",
+                "## Approval Record",
+                current_version,
+                f"`{INITIAL_PUBLIC_RELEASE_VERSION}`",
+                "python -m flatline._release",
+                "tox",
+                "python -m flatline._compliance",
+                "python -m flatline._footprint",
+                "python -m build",
+                "python -m flatline._artifacts dist",
+                "LICENSE",
+                "NOTICE",
+                "docs/release_notes.md",
+                "CHANGELOG.md",
+                "ghidra-sleigh == 12.0.4",
+            ),
+            code="release_review_missing_reference",
+            label="docs/release_review.md",
+            issues=issues,
+        )
+
     workflow_text = artifact_texts["docs/release_workflow.md"]
     if workflow_text is not None:
         _require_fragments(
@@ -355,6 +389,7 @@ def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseRead
                 "tox",
                 "python -m build",
                 "python -m flatline._artifacts",
+                "docs/release_review.md",
                 "CHANGELOG.md",
                 f"git tag v{INITIAL_PUBLIC_RELEASE_VERSION}",
             ),
