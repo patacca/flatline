@@ -8,8 +8,8 @@ Pinned baseline for this roadmap:
 
 Product policy:
 - Linux host MVP first; multi-ISA target from day one.
-- Priority target ISAs for MVP: x86 (32/64), ARM (32/64), RISC-V (32/64), MIPS (32/64).
-- All other Ghidra decompiler-supported ISAs available via bundled runtime data (best-effort, no dedicated fixtures).
+- Fixture-backed confidence targets for MVP: x86 (32/64), ARM64, RISC-V 64, and MIPS32.
+- Default runtime data exposes all bundled Ghidra decompiler-supported ISAs; non-fixture-backed ISAs and variants remain best-effort and must be documented as such in public support notes.
 - Cross-platform host expansion (macOS/Windows) after Linux contract stability gates.
 - One upstream decompiler version supported at a time (latest only).
 
@@ -19,10 +19,10 @@ Product policy:
 | --- | --- | --- | --- |
 | P0 | Spec lock | Inventory, MVP contract, experiment notes exist | `docs/specs.md` and this roadmap accepted; open questions tracked; structured result object definitions (fields, types, error model, ownership/lifetime) locked in `specs.md` §3.3 |
 | P1 | Contract test harness | P0 complete | Definitions-only test suites and oracle strategy committed |
-| P2 | Linux MVP delivery | P1 complete | Linux host function decompilation contract satisfied for priority-ISA fixture matrix (x86, ARM, RISC-V, MIPS) and enumeration/error contract for all bundled ISAs |
-| P3 | Packaging + compliance hardening | P2 complete | Bundled runtime assets policy finalized; license notices/compliance checks pass |
+| P2 | Linux MVP delivery | P1 complete | Linux host function decompilation contract satisfied for the fixture-backed confidence matrix (x86_64, x86_32, ARM64, RISC-V 64, MIPS32) and enumeration/error contract for all bundled ISAs |
+| P3 | Packaging + compliance hardening | P2 complete | Redistribution/compliance policy finalized; license notices/compliance checks pass; default-install support messaging matches the actual product UX |
 | P4 | Stabilization and regression control | P3 complete | Determinism/perf regression gates enforced in CI for pinned matrix |
-| P5 | Initial public release | P4 complete | Release notes include contract guarantees, known limits, upgrade policy |
+| P5 | Initial public release | P4 complete | Release notes include contract guarantees, support tiers / known variant limits, and upgrade policy |
 | P6 | Cross-platform expansion | P5 complete | macOS and Windows feasibility validated with equivalent contract coverage |
 
 ## 2. Detailed Milestone Gates
@@ -40,38 +40,39 @@ Product policy:
 - Inputs:
 - test catalog with unit/integration/regression/negative/contract coverage
 - fixture strategy and normalization/oracle rules
-- per-ISA fixture manifest covering all priority ISAs (x86, ARM, RISC-V, MIPS)
+- per-ISA fixture manifest covering the committed fixture-backed variants (x86_64, x86_32, ARM64, RISC-V 64, MIPS32)
 - Exit checks:
 - every API contract clause maps to at least one test ID
 - unsupported/invalid flows have explicit negative tests
-- priority ISAs each have at least one known-function fixture and one regression baseline
+- each committed fixture-backed variant has at least one known-function fixture and one regression baseline
 
 ### M2: Linux MVP behavior complete
 - Inputs:
 - session startup, pair enumeration, single-function decompile behavior
-- priority-ISA fixture results (x86, ARM, RISC-V, MIPS) and enumeration coverage for all bundled ISAs
+- fixture-backed confidence-matrix results (x86_64, x86_32, ARM64, RISC-V 64, MIPS32) and enumeration coverage for all bundled ISAs
 - Exit checks:
-- known-function fixtures for each priority ISA and the committed jump-table fixture produce deterministic pass under oracle rules
+- known-function fixtures for each committed confidence variant and the committed jump-table fixture produce deterministic pass under oracle rules
 - invalid-address, unsupported-language/compiler produce structured failures (ISA-independent)
 - bridge ownership and lifetime contract verified by contract/integration definitions
-- `list_language_compilers()` returns valid pairs spanning all priority ISAs and any additionally bundled ISAs
-- per-ISA performance baselines captured for priority ISAs, with the x86_64 jump-table fixture tracked separately
+- `list_language_compilers()` returns valid pairs spanning the fixture-backed confidence matrix and any additionally bundled ISAs
+- per-ISA performance baselines captured for the fixture-backed confidence matrix, with the x86_64 jump-table fixture tracked separately
 
 ### M3: Packaging and compliance complete
 - Inputs:
-- bundled runtime data policy and legal artifact manifest
+- legal artifact manifest and redistribution/compliance checklist
 - multi-ISA runtime asset inventory (language definitions, Sleigh specs, compiler specs for all bundled ISAs)
 - Exit checks:
 - package installs without external Ghidra checkout
 - license/compliance review checklist signed off
-- package size budget validated with multi-ISA asset footprint
+- default install footprint measured and documented against product policy, with any required tradeoffs made explicitly rather than by silent default ISA pruning
 
 ### M4: Release readiness
 - Inputs:
-- changelog, upgrade notes, regression/perf data
+- changelog, upgrade notes, regression/perf data, support-tier notes
 - Exit checks:
 - SemVer classification approved
 - contract tests green on release matrix
+- release-facing support matrix and known-variant limits are ready
 
 Note: M4 covers the exit criteria of both P4 (Stabilization and regression control)
 and P5 (Initial public release). A separate M4b gate may be introduced if stabilization
@@ -89,9 +90,10 @@ and release activities require distinct checkpoints.
 | --- | --- | --- | --- | --- |
 | Upstream callable-surface drift breaks bridge assumptions | High | High | Pin upstream per release; mandatory inventory diff + contract rerun before bump | Any upstream bump proposal |
 | Deterministic output drift across environments | Medium | High | Use normalized oracles and stable warning/error codes; pin fixture matrix | CI output diff on pinned fixtures |
-| Runtime package size grows beyond acceptable limits | Medium-High | Medium | Curated asset set per ISA; size budget gate in release checklist; consider optional ISA packs if total exceeds threshold | Artifact size threshold breach |
-| ISA-specific Sleigh spec immaturity degrades decompilation quality | Medium | Medium | Priority ISAs validated by fixture matrix; non-priority ISAs best-effort with enumeration/error coverage only | Fixture failure or user-reported quality regression per ISA |
+| Runtime package size grows beyond acceptable limits | Medium-High | Medium | Measure footprint against the one-package default UX, document the result, and require an explicit product/compliance decision before changing the default asset profile; lighter custom runtime-data roots remain an override path | Artifact size threshold breach |
+| ISA-specific Sleigh spec immaturity degrades decompilation quality | Medium | Medium | The committed confidence variants are validated by fixture matrix; non-fixture-backed ISAs remain best-effort with enumeration/error coverage only | Fixture failure or user-reported quality regression per ISA |
 | ISA variant edge cases (Thumb, microMIPS, RV extensions) cause unexpected failures | Medium | Medium | Restrict MVP fixtures to common ISA variants; document known variant limitations | Negative test failures on variant-specific fixtures |
+| Users mistake bundled-ISA enumeration for fixture-backed support guarantees | Medium | High | Publish support tiers and known-variant limits in release notes/docs; keep top-level scope wording aligned with the committed confidence matrix | Confusion in issue reports or support requests from best-effort targets |
 | ABI/bridge stability regressions | Medium | High | Strict contract tests and explicit stability tiers | Failing contract suite |
 | License/redistribution non-compliance | Low | High | Compliance checklist, notice bundling, source-attribution audit | Release candidate review |
 | CI/toolchain variance causes flaky results | Medium | Medium | Stable build/test matrix and deterministic fixture harness | Flake rate trend in CI |
@@ -112,6 +114,7 @@ and release activities require distinct checkpoints.
 | ADR-008 Cross-Platform Order | macOS-first or Windows-first after Linux host MVP? | Start of P6 |
 | ADR-009 ISA Variant Scope | Which ISA variants (e.g., Thumb/Thumb-2, microMIPS, RV32 vs RV64 extensions) are in-scope for priority fixture coverage vs best-effort? **Decided: x86 has both 32-bit and 64-bit fixture coverage; other ISA families have one representative variant each — ARM64 (AArch64), RISC-V 64, MIPS32 — for diverse bitwidth coverage.** Other variants (ARM32/Thumb, RV32, MIPS64, microMIPS) are best-effort with no dedicated fixtures. See `tests/specs/fixtures.md` §1. | End of P1 (decided) |
 | ADR-010 Runtime Data Packaging | How are compiled `.sla` and runtime data files packaged and distributed? **Decided: separate `ghidra-sleigh` pip package** (import `ghidra_sleigh`). It builds `sleighc` from Ghidra C++ sources at package build time, compiles `.sla` files ahead of use, ships them as package data, and exposes `ghidra_sleigh.get_runtime_data_dir()` for consumers. ADR-004 now defines flatline's default dependency-backed asset policy on top of this mechanism. See `patacca/ghidra-sleigh`. | Start of P2 (decided) |
+| ADR-011 Setup Failure Taxonomy | How should user-fixable install/startup/runtime-data failures be classified? **Decided:** expose `configuration_error` for missing/bad `runtime_data_dir`, unavailable default `ghidra-sleigh` runtime data, and other user-fixable setup failures; reserve `internal_error` for unexpected flatline/bridge/native bugs. | P3 (decided) |
 
 ## 5. Release and Versioning Plan
 
@@ -127,8 +130,8 @@ Versioning rules:
 Upstream bump protocol:
 1. Create bump candidate branch with new upstream pin.
 2. Regenerate decompiler inventory and diff callable contract.
-3. Re-run full fixture and contract matrix across all priority ISAs (x86, ARM, RISC-V, MIPS).
-4. Verify Sleigh spec compatibility for priority ISAs; flag any ISA-specific regressions.
+3. Re-run full fixture and contract matrix across the committed confidence variants (x86_64, x86_32, ARM64, RISC-V 64, MIPS32).
+4. Verify Sleigh spec compatibility for the committed confidence variants; flag any ISA-specific regressions.
 5. Classify changes:
 - Contract preserved -> minor release.
 - Contract changed -> major release with migration notes.
@@ -142,7 +145,7 @@ Deprecation policy:
 Required recurring artifacts per phase:
 - Decision log (ADR status).
 - Risk review update.
-- Contract-test coverage map (with per-ISA breakdown for priority ISAs).
+- Contract-test coverage map (with per-ISA breakdown for the committed confidence variants).
 - Fixture/version manifest (indexed by target ISA).
 
 Minimum weekly checks during active delivery:

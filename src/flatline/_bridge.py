@@ -13,7 +13,7 @@ from collections.abc import Mapping, Sequence
 from os import fspath
 from typing import TYPE_CHECKING, Protocol
 
-from flatline._errors import ERROR_CATEGORIES, InternalError
+from flatline._errors import ERROR_CATEGORIES, ConfigurationError, InternalError
 from flatline._models import (
     VALID_WARNING_PHASES,
     AnalysisBudget,
@@ -57,7 +57,7 @@ class _FallbackBridgeSession:
     """Pure-Python fallback until the native bridge is available.
 
     Keeps the public API usable while returning deterministic structured
-    internal_error responses for unimplemented native operations.
+    error responses for unimplemented native operations.
     """
 
     def __init__(
@@ -82,7 +82,10 @@ class _FallbackBridgeSession:
         if self._closed:
             return _internal_error_result(request, "bridge session is closed")
 
-        return _internal_error_result(request, "native bridge is not implemented in this build")
+        return _configuration_error_result(
+            request,
+            "native bridge is not implemented in this build",
+        )
 
 
 class _NativeBridgeSession:
@@ -526,6 +529,15 @@ def _unsupported_target_result(request: DecompileRequest, message: str) -> Decom
     )
 
 
+def _configuration_error_result(request: DecompileRequest, message: str) -> DecompileResult:
+    return _error_result(
+        request,
+        category="configuration_error",
+        message=message,
+        retryable=False,
+    )
+
+
 def _error_result(
     request: DecompileRequest,
     *,
@@ -607,6 +619,8 @@ def create_bridge_session(runtime_data_dir: str | None = None) -> BridgeSession:
     try:
         native_session = native_bridge.create_session(normalized_runtime_data_dir)
     except Exception as exc:
+        if isinstance(exc, ConfigurationError):
+            raise
         raise InternalError(
             f"native bridge session startup failed: {exc}"
         ) from exc

@@ -19,7 +19,7 @@ Hard constraints:
 - In-process Python to native bridge is mandatory.
 - Installable from `pip` without requiring users to provide/build Ghidra.
 - MVP host platform: Linux x86_64; architecture must preserve macOS/Windows host feasibility.
-- MVP target ISA scope: any Ghidra decompiler-supported binary architecture. Priority ISAs: x86 (32/64), ARM (32/64), RISC-V (32/64), MIPS (32/64). Runtime data must bundle language/compiler assets for all priority ISAs at minimum.
+- MVP target ISA scope: any Ghidra decompiler-supported binary architecture. Flatline's default runtime data exposes all bundled processor families. Confidence-backed fixture coverage is committed for x86 (32/64), ARM64, RISC-V 64, and MIPS32; other ISA variants remain best-effort.
 - Python: `3.13+`.
 - Version policy: support only the latest Ghidra decompiler version.
 
@@ -28,8 +28,9 @@ Hard constraints:
 Goals:
 - Provide a stable Python-first decompilation contract that remains consistent while upstream internals change.
 - Expose single-function decompilation with explicit language/compiler selection and structured diagnostics.
-- Support decompilation of any Ghidra-supported target ISA from a single installation, with priority coverage for x86, ARM, RISC-V, and MIPS families.
+- Support decompilation of any Ghidra-supported target ISA from a single installation, while publishing stronger confidence guarantees only for the fixture-backed variants.
 - Make runtime assets self-contained for out-of-the-box installation.
+- Make support-confidence boundaries explicit so callers can distinguish bundled breadth from fixture-backed confidence.
 - Define testable behavioral guarantees before implementation details.
 
 Non-goals:
@@ -37,14 +38,14 @@ Non-goals:
 - Whole-program project modeling in MVP.
 - Supporting multiple Ghidra decompiler versions simultaneously.
 - Defining build scripts, binding mechanics, or C/C++ implementation internals in this document.
-- Guaranteeing identical decompilation quality across all ISAs; priority ISAs (x86, ARM, RISC-V, MIPS) have full fixture coverage, other Ghidra-supported ISAs are best-effort with enumeration and error-contract coverage only.
+- Guaranteeing identical decompilation quality across all ISAs or ISA variants; only x86 (32/64), ARM64, RISC-V 64, and MIPS32 carry representative fixture-backed confidence, while other bundled targets are best-effort with enumeration and error-contract coverage only.
 
 ## 2. Personas and Use Cases
 
 Personas:
 - Reverse engineer automating decompilation pipelines from Python.
 - Security engineer building repeatable triage workflows.
-- CI operator requiring deterministic decompilation checks across releases.
+- Tooling engineer embedding deterministic decompilation checks into CI or release validation.
 
 Primary use cases:
 - Decompile one function by memory image + architecture + entry address (ADR-001 resolved: Option A).
@@ -200,12 +201,12 @@ limits remain a future extension requiring explicit upstream-compatible
 mechanisms.
 
 `WarningItem` fields:
-- `code: str` — stable warning code using hierarchical namespace (`<phase>.<code>`, e.g., `analyze.W001`); stable across patch/minor releases; initial code enumeration deferred to P2 implementation
+- `code: str` — stable warning code using hierarchical namespace (`<phase>.<code>`, e.g., `analyze.W001`); flatline reserves this namespace and may add new codes additively in minor releases
 - `message: str` — human-readable warning text (informative, not exact-match stable); may include full filesystem paths for debuggability
 - `phase: str` — phase that produced the warning (`init`, `analyze`, `emit`)
 
 `ErrorItem` fields:
-- `category: str` — stable error category (`invalid_argument`, `unsupported_target`, `invalid_address`, `decompile_failed`, `internal_error`)
+- `category: str` — stable error category (`invalid_argument`, `unsupported_target`, `invalid_address`, `decompile_failed`, `configuration_error`, `internal_error`)
 - `message: str` — human-readable error text (informative, not exact-match stable); may include full filesystem paths for debuggability
 - `retryable: bool` — whether the operation may succeed on retry with the same inputs
 
@@ -235,7 +236,7 @@ Rules:
 - Invalid/unmapped addresses are hard errors, not warning-only degraded output. Error category: `invalid_address`.
 - Empty or zero-length memory images are hard errors. Error category: `invalid_argument`.
 - Unsupported `analysis_budget` fields or non-positive `analysis_budget.max_instructions` values are hard errors. Error category: `invalid_argument`.
-- Omitting `runtime_data_dir` when the `ghidra-sleigh` dependency is unavailable is a hard startup error. Error category: `internal_error`.
+- Missing or malformed runtime-data setup is a hard startup error. Explicit bad `runtime_data_dir` values, malformed runtime-data roots, or omitting `runtime_data_dir` when the `ghidra-sleigh` dependency is unavailable all use error category: `configuration_error`.
 - Calling session operations after `DecompilerSession.close()` is a hard error. Error category: `invalid_argument`.
 - Error categories are contract-stable; text may change but remains human-readable.
 - Public warning/error text may include full filesystem paths for debuggability; raw memory-image bytes must never be emitted in diagnostics.
@@ -289,7 +290,7 @@ Known limits at baseline:
 - Entry-point-only function targeting in MVP.
 - CFG recovery can be best-effort; unresolved indirect flows may degrade output quality.
 - Global startup/cache state implies constrained mutation semantics across threads.
-- Decompilation quality may vary across ISAs depending on upstream Sleigh specification maturity; priority ISAs (x86, ARM, RISC-V, MIPS) are validated by fixture matrix, other ISAs are best-effort.
+- Decompilation quality may vary across ISAs depending on upstream Sleigh specification maturity; fixture-backed confidence is committed only for x86 (32/64), ARM64, RISC-V 64, and MIPS32, while other ISAs are best-effort.
 - Some ISA variants (e.g., Thumb/Thumb-2 for ARM, microMIPS) inherit the upstream decompiler's support level without additional library-level guarantees.
 
 ### 4.4 Mapping to Public API
@@ -439,7 +440,7 @@ Risks:
    Option A requires explicit caller specification. Not a blocker but affects UX.
 
 6. **Target persona alignment**: The primary personas (reverse engineers, security engineers,
-   CI operators) typically work with tools that already provide loaded memory and
+   tooling engineers integrating CI/release checks) typically work with tools that already provide loaded memory and
    architecture information. This reduces the practical UX burden of Option A relative
    to the general case.
 
@@ -458,7 +459,7 @@ Rationale:
   ELF/PE/Mach-O parsing outside the decompiler — a disproportionate scope, security,
   and maintenance cost for MVP.
 - Strongest determinism: fewer processing steps between input and decompilation output.
-- Target personas (reverse engineers, security engineers, CI operators) typically have
+- Target personas (reverse engineers, security engineers, tooling engineers integrating CI/release checks) typically have
   loaded memory maps available from existing tooling.
 - Simplest packaging and cross-platform story: no format-parser dependencies to ship.
 
@@ -550,7 +551,7 @@ Extensibility:
 ### 8.1 MVP Commitments (Kept)
 
 - Linux host-first single-function scope.
-- Multi-ISA target support: any Ghidra decompiler-supported architecture. Priority ISAs (x86, ARM, RISC-V, MIPS) have bundled runtime data and representative fixture coverage per ADR-009: x86 (32+64-bit), ARM64, RISC-V 64, MIPS32. Other Ghidra-supported ISAs available through bundled runtime data with enumeration and error-contract coverage.
+- Multi-ISA target support: any Ghidra decompiler-supported architecture. The default runtime-data install exposes all bundled processor families, while fixture-backed confidence is committed only for the ADR-009 matrix: x86 (32+64-bit), ARM64, RISC-V 64, and MIPS32. Other bundled ISAs and variants are available with enumeration and error-contract coverage only.
 - Runtime data directory contract with dependency-backed default and explicit override; flatline installs `ghidra-sleigh` for the default UX, auto-discovers its runtime-data root when no override is provided, and still accepts custom runtime-data paths.
 - Pair enumeration from language descriptions with existence filtering across all bundled ISAs.
 - Structured results with warnings/errors/metadata.
@@ -584,11 +585,11 @@ Resolved:
 - ~~Should the runtime data package bundle all Ghidra-supported ISA assets or only the priority set (x86, ARM, RISC-V, MIPS), with an extension mechanism for others?~~ **Resolved (ADR-010):** `ghidra-sleigh` defaults to shipping compiled runtime data for all Ghidra processor families and also supports a lighter major-ISA build via `all_processors=false`. ADR-004 now defines flatline's default policy as depending on the full install while leaving lighter builds as explicit overrides.
 - ~~Should ISA-specific Sleigh compilation (`.sla` files) happen at build time or install time?~~ **Resolved (ADR-010):** Build time. `ghidra-sleigh` builds `sleighc` from Ghidra C++ sources and ships the compiled `.sla` outputs as package data.
 - ~~Should analysis-budget defaults vary by platform or target ISA, or remain globally fixed?~~ **Resolved (ADR-005):** P2 uses a single fixed default, `AnalysisBudget(max_instructions=100000)`, across the Linux MVP matrix. Callers may override `max_instructions` per request; wall-clock timeout remains out of scope until the upstream callable surface exposes a compatible cancellation mechanism.
-- ~~Which diagnostic fields are emitted and redacted by default?~~ **Resolved (ADR-006):** P2 emits diagnostics only through startup/runtime-data `RuntimeWarning` messages plus structured `WarningItem` / `ErrorItem` results. Diagnostic text may include full filesystem paths for debuggability; raw memory-image bytes are never emitted. No path redaction is applied because flatline is a library running in the caller's own process, and its target personas (reverse engineers, security engineers, CI operators) benefit from full paths for troubleshooting.
+- ~~Which diagnostic fields are emitted and redacted by default?~~ **Resolved (ADR-006):** P2 emits diagnostics only through startup/runtime-data `RuntimeWarning` messages plus structured `WarningItem` / `ErrorItem` results. Diagnostic text may include full filesystem paths for debuggability; raw memory-image bytes are never emitted. No path redaction is applied because flatline is a library running in the caller's own process, and its target personas (reverse engineers, security engineers, tooling engineers) benefit from full paths for troubleshooting.
+- ~~Should warning codes be globally namespaced now to prevent future collisions?~~ **Resolved:** Yes, within flatline's public surface. Warning codes use the stable hierarchical namespace `<phase>.Wxxx` (for example `analyze.W001`), and new codes are added only additively.
+- ~~Should session-level failure categories (startup, initialization) be defined explicitly in the `FlatlineError` hierarchy, or is the current `ErrorItem` taxonomy sufficient?~~ **Resolved (ADR-011):** User-fixable install/startup/runtime-data failures use `configuration_error`, while unexpected flatline/bridge/native bugs remain `internal_error`.
 
 Open:
-- Should warning codes be globally namespaced now to prevent future collisions? (Initial codes will be defined during P2 implementation.)
-- Should session-level failure categories (startup, initialization) be defined explicitly in the `FlatlineError` hierarchy, or is the current `ErrorItem` taxonomy sufficient?
 - ~~Should `TypeInfo` expose sub-type details (struct fields, array element type, pointer target) in MVP, or is the flat `name`/`size`/`metatype` sufficient?~~ **Resolved:** Flat `name`/`size`/`metatype` for MVP. Sub-type details (struct fields, pointer target, array element) deferred to post-MVP.
 - Should `CallSiteInfo` include a `callee_name` field when the target is a known function symbol? (Affects bridge scope.)
 - Should `JumpTableInfo` include an `is_complete` flag for partial recovery? (Affects test assertions.)
@@ -599,5 +600,5 @@ Open:
 - Users accept latest-upstream-only support policy.
 - MVP fixture binaries can be redistributed under project licensing policy.
 - Linux host-first release can ship before cross-platform host parity without violating product goals.
-- Upstream Sleigh specifications for priority ISAs (x86, ARM, RISC-V, MIPS) are sufficiently mature for production-quality decompilation.
-- Bundling language/compiler assets for all priority ISAs does not exceed acceptable package size limits (tracked in risk register).
+- Upstream Sleigh specifications for the committed confidence variants (x86 32/64, ARM64, RISC-V 64, MIPS32) are sufficiently mature for production-quality decompilation.
+- Shipping the default full multi-ISA runtime-data install remains acceptable for the out-of-the-box UX, with footprint tracked explicitly as a release/compliance concern rather than an automatic trigger for default ISA fragmentation.

@@ -12,6 +12,7 @@ ERROR_CATEGORIES: frozenset[str] = frozenset({
     "unsupported_target",
     "invalid_address",
     "decompile_failed",
+    "configuration_error",
     "internal_error",
 })
 
@@ -50,6 +51,12 @@ class DecompileFailedError(FlatlineError):
     category = "decompile_failed"
 
 
+class ConfigurationError(FlatlineError):
+    """User-fixable install, startup, or runtime-data configuration issue."""
+
+    category = "configuration_error"
+
+
 class InternalError(FlatlineError):
     """Unexpected internal error."""
 
@@ -64,6 +71,7 @@ CATEGORY_TO_EXCEPTION: dict[str, type[FlatlineError]] = {
         UnsupportedTargetError,
         InvalidAddressError,
         DecompileFailedError,
+        ConfigurationError,
         InternalError,
     )
 }

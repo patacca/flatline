@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from flatline import InternalError, LanguageCompilerPair
+from flatline import ConfigurationError, LanguageCompilerPair
 from flatline import _runtime_data as runtime_data_module
 from flatline._runtime_data import (
     enumerate_runtime_data_language_compilers,
@@ -69,14 +69,14 @@ def test_runtime_data_enumeration_skips_malformed_ldefs_when_valid_pairs_exist(
 def test_runtime_data_enumeration_raises_when_only_malformed_ldefs_exist(
     tmp_path: Path,
 ) -> None:
-    """All-malformed `.ldefs` files produce deterministic `InternalError`."""
+    """All-malformed `.ldefs` files produce deterministic `ConfigurationError`."""
     runtime_dir = tmp_path / "runtime_data"
     languages_dir = runtime_dir / "languages"
     languages_dir.mkdir(parents=True)
     (languages_dir / "bad1.ldefs").write_text("", encoding="ascii")
     (languages_dir / "bad2.ldefs").write_text("<language_definitions>", encoding="ascii")
 
-    with pytest.raises(InternalError) as exc_info:
+    with pytest.raises(ConfigurationError) as exc_info:
         enumerate_runtime_data_language_compilers(str(runtime_dir))
 
     error_message = exc_info.value.message
@@ -94,7 +94,7 @@ def test_runtime_data_enumeration_rejects_missing_runtime_dir(tmp_path: Path) ->
     """Missing runtime-data directory remains a deterministic startup error."""
     missing_runtime_dir = tmp_path / "does-not-exist"
 
-    with pytest.raises(InternalError) as exc_info:
+    with pytest.raises(ConfigurationError) as exc_info:
         enumerate_runtime_data_language_compilers(str(missing_runtime_dir))
 
     error_message = exc_info.value.message
@@ -153,7 +153,7 @@ def test_runtime_data_resolution_rejects_missing_packaged_default(
 
     monkeypatch.setattr(runtime_data_module.importlib, "import_module", _raise_import_error)
 
-    with pytest.raises(InternalError) as exc_info:
+    with pytest.raises(ConfigurationError) as exc_info:
         resolve_session_runtime_data_dir(None)
 
     assert "flatline requires ghidra-sleigh" in exc_info.value.message

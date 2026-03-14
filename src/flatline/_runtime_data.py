@@ -13,7 +13,7 @@ from os import fspath
 from pathlib import Path
 from xml.etree import ElementTree
 
-from flatline._errors import InternalError
+from flatline._errors import ConfigurationError
 from flatline._models import LanguageCompilerPair
 from flatline._version import UPSTREAM_COMMIT, UPSTREAM_TAG
 
@@ -66,7 +66,7 @@ def resolve_session_runtime_data_dir(runtime_data_dir: str | Path | None) -> str
     ghidra_sleigh = _load_runtime_data_package()
     runtime_data_getter = getattr(ghidra_sleigh, "get_runtime_data_dir", None)
     if not callable(runtime_data_getter):
-        raise InternalError(
+        raise ConfigurationError(
             "ghidra-sleigh does not expose a callable get_runtime_data_dir(); "
             "reinstall the package or pass runtime_data_dir explicitly"
         )
@@ -82,9 +82,9 @@ def enumerate_runtime_data_language_compilers(
 
     Rules:
     - `runtime_data_dir=None` returns an empty list.
-    - missing/non-directory paths raise `InternalError`.
+    - missing/non-directory paths raise `ConfigurationError`.
     - malformed `.ldefs` XML is skipped if at least one valid pair is found.
-    - malformed `.ldefs` XML raises `InternalError` if no valid pairs are found.
+    - malformed `.ldefs` XML raises `ConfigurationError` if no valid pairs are found.
     - malformed `.ldefs` XML emits one `RuntimeWarning` when skipped.
     - compiler entries with a declared backing spec path are filtered out when
       the backing spec file does not exist.
@@ -114,7 +114,7 @@ def enumerate_runtime_data_language_compilers(
             stacklevel=2,
         )
     elif parse_failures and not pair_tuples:
-        raise InternalError(
+        raise ConfigurationError(
             (
                 "No valid language/compiler pairs found; malformed .ldefs files "
                 f"were encountered ({len(parse_failures)} file(s)): "
@@ -133,11 +133,11 @@ def _validate_runtime_data_dir(runtime_data_dir: str | Path | None) -> Path | No
         return None
     runtime_path = Path(runtime_data_dir)
     if not runtime_path.exists():
-        raise InternalError(
+        raise ConfigurationError(
             f"runtime_data_dir does not exist: {runtime_data_dir}"
         )
     if not runtime_path.is_dir():
-        raise InternalError(
+        raise ConfigurationError(
             f"runtime_data_dir is not a directory: {runtime_data_dir}"
         )
     return runtime_path
@@ -246,7 +246,7 @@ def _load_runtime_data_package() -> object:
     try:
         return importlib.import_module("ghidra_sleigh")
     except ImportError as exc:
-        raise InternalError(
+        raise ConfigurationError(
             "flatline requires ghidra-sleigh for default runtime data; "
             "reinstall flatline or pass runtime_data_dir explicitly"
         ) from exc

@@ -9,10 +9,10 @@ import pytest
 
 from flatline import (
     AnalysisBudget,
+    ConfigurationError,
     DecompileRequest,
     DecompileResult,
     FunctionInfo,
-    InternalError,
     LanguageCompilerPair,
 )
 from flatline import _bridge as bridge_module
@@ -449,7 +449,7 @@ def test_u014_bridge_rejects_missing_runtime_data_dir(
     monkeypatch.setattr(bridge_module.importlib, "import_module", _raise_import_error)
 
     missing_dir = tmp_path / "does-not-exist"
-    with pytest.raises(InternalError) as exc_info:
+    with pytest.raises(ConfigurationError) as exc_info:
         bridge_module.create_bridge_session(runtime_data_dir=str(missing_dir))
 
     error_message = exc_info.value.message

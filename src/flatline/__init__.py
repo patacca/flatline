@@ -5,6 +5,7 @@ from __future__ import annotations
 from flatline._errors import (
     CATEGORY_TO_EXCEPTION,
     ERROR_CATEGORIES,
+    ConfigurationError,
     DecompileFailedError,
     FlatlineError,
     InternalError,
@@ -58,6 +59,7 @@ __all__ = [
     "VALID_WARNING_PHASES",
     "AnalysisBudget",
     "CallSiteInfo",
+    "ConfigurationError",
     "DecompileFailedError",
     "DecompileRequest",
     "DecompileResult",

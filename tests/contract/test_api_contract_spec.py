@@ -16,6 +16,7 @@ from flatline import (
     VALID_WARNING_PHASES,
     AnalysisBudget,
     CallSiteInfo,
+    ConfigurationError,
     DecompileFailedError,
     DecompileResult,
     DiagnosticFlags,
@@ -72,19 +73,20 @@ def test_c001_result_schema_stability():
 
 def test_c002_error_taxonomy_stability():
     """C-002: Error categories are contract-stable identifiers."""
-    # Exactly 5 categories defined (specs.md section 3.4)
+    # Exactly 6 categories defined (specs.md section 3.4)
     expected_categories = {
         "invalid_argument",
         "unsupported_target",
         "invalid_address",
         "decompile_failed",
+        "configuration_error",
         "internal_error",
     }
     assert expected_categories == ERROR_CATEGORIES
 
     # Each category maps to a unique exception class
     assert set(CATEGORY_TO_EXCEPTION.keys()) == expected_categories
-    assert len(set(CATEGORY_TO_EXCEPTION.values())) == 5
+    assert len(set(CATEGORY_TO_EXCEPTION.values())) == 6
 
     # All exception classes inherit from FlatlineError
     for category, exc_cls in CATEGORY_TO_EXCEPTION.items():
@@ -96,6 +98,7 @@ def test_c002_error_taxonomy_stability():
     assert UnsupportedTargetError.category == "unsupported_target"
     assert InvalidAddressError.category == "invalid_address"
     assert DecompileFailedError.category == "decompile_failed"
+    assert ConfigurationError.category == "configuration_error"
     assert InternalError.category == "internal_error"
 
     # Instance .message property works

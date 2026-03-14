@@ -6,7 +6,12 @@ from dataclasses import replace
 
 import pytest
 
-from flatline import DecompileRequest, DecompilerSession, InternalError, InvalidArgumentError
+from flatline import (
+    ConfigurationError,
+    DecompileRequest,
+    DecompilerSession,
+    InvalidArgumentError,
+)
 from tests._native_fixtures import get_native_fixture, open_native_session
 
 
@@ -68,7 +73,7 @@ def test_n004_broken_runtime_data_dir_fails_startup(tmp_path) -> None:
     """N-004: Missing runtime data directory fails deterministically on startup."""
     missing_runtime_dir = tmp_path / "missing-runtime-data"
 
-    with pytest.raises(InternalError) as exc_info:
+    with pytest.raises(ConfigurationError) as exc_info:
         DecompilerSession(runtime_data_dir=str(missing_runtime_dir))
 
     assert "runtime_data_dir does not exist" in exc_info.value.message
