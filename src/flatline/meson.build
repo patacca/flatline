@@ -3,6 +3,7 @@ py.install_sources(
   '_bridge.py',
   '_compliance.py',
   '_errors.py',
+  '_footprint.py',
   '_models.py',
   '_runtime_data.py',
   '_session.py',

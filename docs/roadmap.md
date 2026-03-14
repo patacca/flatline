@@ -65,7 +65,7 @@ Product policy:
 - Exit checks:
 - package installs without external Ghidra checkout
 - license/compliance review checklist signed off
-- default install footprint measured and documented against product policy, with any required tradeoffs made explicitly rather than by silent default ISA pruning
+- default install footprint measured with `python -m flatline._footprint` and documented in `docs/footprint.md` against product policy, with any required tradeoffs made explicitly rather than by silent default ISA pruning
 
 ### M4: Release readiness
 - Inputs:

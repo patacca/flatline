@@ -127,7 +127,8 @@ the suite exercises the packaged artifact rather than `PYTHONPATH=src`.
 Project history lives in [CHANGELOG.md](CHANGELOG.md). Update it for every
 release using the Keep a Changelog structure already in the file.
 Redistribution/compliance guidance lives in [NOTICE](NOTICE) and
-[docs/compliance.md](docs/compliance.md).
+[docs/compliance.md](docs/compliance.md). The current default-install footprint
+baseline and size-policy note live in [docs/footprint.md](docs/footprint.md).
 
 ## Project status
 

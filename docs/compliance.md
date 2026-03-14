@@ -21,7 +21,8 @@ Mandatory release-time checks for redistribution:
    note intact.
 
 This decision resolves the redistribution-check process only. Default-install
-footprint measurement and any product-policy tradeoffs remain separate P3 work.
+footprint remains a separate P3 tracking item, now recorded through
+`python -m flatline._footprint` and `docs/footprint.md`.
 
 ## Artifact Manifest
 
@@ -30,6 +31,7 @@ footprint measurement and any product-policy tradeoffs remain separate P3 work.
 | `LICENSE` | Wheel, sdist, repo | Flatline's own Apache-2.0 license text |
 | `NOTICE` | Wheel, sdist, repo | Flatline redistribution notice with pinned Ghidra attribution and dependency references |
 | `docs/compliance.md` | Repo | ADR-007 decision record, manifest, and release checklist |
+| `docs/footprint.md` | Repo | Default-install footprint baseline and explicit size-policy note |
 | `third_party/ghidra/LICENSE` | Repo | Upstream Ghidra license text for the pinned native-source baseline |
 | `third_party/ghidra/NOTICE` | Repo | Upstream Ghidra attribution notice for the pinned native-source baseline |
 | `tests/fixtures/README.md` | Repo | Synthetic-fixture redistribution note and fixture manifest |
@@ -44,7 +46,9 @@ footprint measurement and any product-policy tradeoffs remain separate P3 work.
    and the dependency pin `ghidra-sleigh == 12.0.4`
 4. Preserve the root `LICENSE` and `NOTICE` files in release artifacts
 5. Preserve the `tests/fixtures/README.md` redistribution note
-6. Re-run `tox` before tagging a release
+6. Refresh `docs/footprint.md` from an installed-wheel environment with
+   `python -m flatline._footprint`
+7. Re-run `tox` before tagging a release
 
 ## Notes
 

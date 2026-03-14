@@ -553,6 +553,11 @@ Packaging and compliance:
 - Release artifacts must ship the root `LICENSE` and `NOTICE` files; `pyproject.toml` declares both through `license-files`.
 - Redistribution review passes only when `python -m flatline._compliance` succeeds from the repo root.
 - The compliance audit verifies the pinned Ghidra native-source attribution (`Ghidra_12.0.4_build` / `e40ed13014025f82488b1f8f7bca566894ac376b`), the default runtime dependency pin `ghidra-sleigh == 12.0.4`, and the synthetic-fixture redistribution note in `tests/fixtures/README.md`.
+- Default-install footprint is measured with `python -m flatline._footprint`,
+  using shipped payload files only (excluding interpreter-generated
+  `__pycache__` / `.pyc` entries). `docs/footprint.md` records the current
+  reference baseline and any explicit product-policy decision about keeping or
+  changing the full multi-ISA default.
 
 Extensibility:
 - Additive extension points via optional request fields and metadata keys.
