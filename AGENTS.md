@@ -23,6 +23,7 @@
 - `pyproject.toml` now declares `license-files = ["LICENSE", "NOTICE"]`, and `README.md` now points redistribution guidance at those artifacts while matching the actual fixture-backed confidence matrix (x86 32/64, ARM64, RISC-V 64, MIPS32; others best-effort).
 - `CHANGELOG.md` exists at the repo root, follows Keep a Changelog, and must be updated for every release.
 - **Next:** continue P3 packaging/compliance hardening after ADR-007, including default-install footprint measurement/documentation.
+- Post-MVP P7 will expose pcode ops and varnode graphs as frozen Python value types for downstream analysis (BSim-style similarity, binary diffing, data flow/taint). Design tracked in ADR-012.
 - Not a general Ghidra automation framework; decompiler surface only. No UI, no project DB.
 
 # Architecture (3-layer adapter)
@@ -56,10 +57,11 @@
 - **ADR-009 (ISA Variant Scope):** x86 32+64; ARM64, RISC-V 64, MIPS32; others best-effort.
 - **ADR-010 (Runtime Data Packaging):** Separate `ghidra-sleigh` pip package (repo `patacca/ghidra-sleigh`, import `ghidra_sleigh`). Builds `sleighc` at package build time, ships compiled `.sla` files as package data, and exposes `ghidra_sleigh.get_runtime_data_dir()`. Flatline now layers ADR-004's dependency-backed default policy on top of this mechanism.
 - ADR-007 through ADR-008: unresolved (`docs/roadmap.md`).
+- **ADR-012 (Enriched Output Design):** unresolved; post-MVP. Pcode ops and varnode data flow graphs as frozen Python types for similarity, diffing, and data flow analysis. Needed by P7.
 
 # Source of truth
 - `docs/specs.md` — SDD: API contract, data models, error taxonomy, cross-cutting requirements.
-- `docs/roadmap.md` — 7 phases (P0-P6), 6 milestones (M0-M5), risk register, ADR backlog.
+- `docs/roadmap.md` — 8 phases (P0-P7), 7 milestones (M0-M6), risk register, ADR backlog.
 - `docs/code_style.md` — naming, formatting, imports, annotations, test conventions.
 - `CHANGELOG.md` — release history; update on every release.
 - `docs/compact_agent.md` — compact prompt template for lossless AGENTS.md compression.
