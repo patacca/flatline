@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import subprocess
 import tomllib
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -130,6 +131,26 @@ def _load_pyproject_version(
             "pyproject.toml must declare a non-empty project version.",
         )
         return None
+
+    optional_dependencies = project_table.get("optional-dependencies")
+    if not isinstance(optional_dependencies, dict):
+        _append_issue(
+            issues,
+            "pyproject_optional_dependencies_missing",
+            "pyproject.toml must declare [project.optional-dependencies].",
+        )
+        return version
+
+    dev_dependencies = optional_dependencies.get("dev")
+    if not isinstance(dev_dependencies, list) or not any(
+        isinstance(dependency, str) and re.match(r"build\b", dependency)
+        for dependency in dev_dependencies
+    ):
+        _append_issue(
+            issues,
+            "dev_dependency_missing_build",
+            "pyproject.toml dev extras must include the `build` package for release builds.",
+        )
     return version
 
 
@@ -173,10 +194,70 @@ def _load_package_version(repo_root: Path, issues: list[ReleaseReadinessIssue]) 
     return version_match.group(1)
 
 
+def _audit_git_worktree(repo_root: Path, issues: list[ReleaseReadinessIssue]) -> None:
+    try:
+        repo_probe = subprocess.run(
+            ["git", "-C", str(repo_root), "rev-parse", "--show-toplevel"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError:
+        _append_issue(
+            issues,
+            "git_unavailable",
+            "git is required to audit release readiness.",
+        )
+        return
+    except subprocess.CalledProcessError as exc:
+        stderr = exc.stderr.strip()
+        detail = f": {stderr}" if stderr else ""
+        _append_issue(
+            issues,
+            "git_repo_missing",
+            f"Release readiness requires a git worktree rooted at {repo_root}{detail}",
+        )
+        return
+
+    repo_toplevel = Path(repo_probe.stdout.strip()).resolve()
+    if repo_toplevel != repo_root:
+        _append_issue(
+            issues,
+            "git_repo_root_mismatch",
+            (
+                "Release readiness must be run from the repository root: "
+                f"expected {repo_root}, got {repo_toplevel}."
+            ),
+        )
+        return
+
+    status_result = subprocess.run(
+        ["git", "-C", str(repo_root), "status", "--short", "--untracked-files=all"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    status_output = status_result.stdout.strip()
+    if not status_output:
+        return
+
+    _append_issue(
+        issues,
+        "git_worktree_dirty",
+        (
+            "Git worktree must be clean before building release artifacts because "
+            "Meson sdists omit uncommitted changes: "
+            f"{status_output}"
+        ),
+    )
+
+
 def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseReadinessReport:
     """Audit the repo's initial-public-release workflow and version recommendation."""
     root = Path(repo_root).resolve()
     issues: list[ReleaseReadinessIssue] = []
+
+    _audit_git_worktree(root, issues)
 
     project_version = _load_pyproject_version(root, issues)
     meson_version = _load_meson_version(root, issues)
@@ -267,11 +348,13 @@ def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseRead
                 "# Initial Public Release Workflow",
                 current_version,
                 f"`{INITIAL_PUBLIC_RELEASE_VERSION}`",
+                "git status --short",
                 "python -m flatline._release",
                 "python -m flatline._compliance",
                 "python -m flatline._footprint",
                 "tox",
                 "python -m build",
+                "python -m flatline._artifacts",
                 "CHANGELOG.md",
                 f"git tag v{INITIAL_PUBLIC_RELEASE_VERSION}",
             ),

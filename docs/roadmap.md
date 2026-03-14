@@ -74,10 +74,13 @@ Product policy:
   known-variant limits, and upgrade policy for the first public release
 - `docs/release_workflow.md` capturing the initial public release procedure and
   the `0.1.0` SemVer recommendation for the current `0.1.0.dev0` branch
+- built-artifact audit evidence from `python -m flatline._artifacts`
 - Exit checks:
 - SemVer classification approved
 - contract tests green on release matrix
 - release-facing support matrix and known-variant limits are ready
+- built wheel and sdist pass artifact audit for version/dependency metadata and
+  shipped `LICENSE` / `NOTICE`
 
 Note: M4 covers the exit criteria of both P4 (Stabilization and regression control)
 and P5 (Initial public release). A separate M4b gate may be introduced if stabilization

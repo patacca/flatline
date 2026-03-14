@@ -10,3 +10,5 @@ project(
 py = import('python').find_installation(pure: false)
 
 subdir('src/flatline')
+
+meson.add_dist_script(py, files('tools/prune_dist.py'))

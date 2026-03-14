@@ -32,28 +32,36 @@ python -m flatline._footprint
 
 `python -m flatline._release` is the source-controlled readiness audit for the
 initial public release gate. It checks the current version state, the expected
-`0.1.0` recommendation, and the presence of the required release documents.
+`0.1.0` recommendation, the presence of the required release documents, and a
+clean git worktree so Meson cannot silently drop uncommitted changes from the
+sdist.
 
 ## Release Steps
 
 1. Activate the repo venv: `source .venv/bin/activate`
-2. Run `python -m flatline._release`
-3. Run `tox`
-4. Run `python -m flatline._compliance`
-5. Run `python -m flatline._footprint` and refresh `docs/footprint.md` if the
+2. Confirm the worktree is clean with `git status --short` before building;
+   Meson sdists omit uncommitted changes from the archive
+3. Run `python -m flatline._release`
+4. Run `tox`
+5. Run `python -m flatline._compliance`
+6. Run `python -m flatline._footprint` and refresh `docs/footprint.md` if the
    installed-wheel baseline changed
-6. Update `CHANGELOG.md` by moving the release-ready entries from
+7. Update `CHANGELOG.md` by moving the release-ready entries from
    `## [Unreleased]` into a dated `## [0.1.0]` section
-7. Review `docs/release_notes.md`, `README.md`, and `docs/compliance.md` for
+8. Review `docs/release_notes.md`, `README.md`, and `docs/compliance.md` for
    any last release-facing drift
-8. Bump `pyproject.toml`, `meson.build`, and `src/flatline/_version.py` from
+9. Bump `pyproject.toml`, `meson.build`, and `src/flatline/_version.py` from
    `0.1.0.dev0` to `0.1.0`
-9. Build artifacts with `python -m build`
-10. Inspect the built sdist/wheel for the expected license and notice files
-11. Create the release tag with `git tag v0.1.0`
+10. Build artifacts with `python -m build`
+11. Audit the built sdist/wheel with `python -m flatline._artifacts dist`
+    so the current version, dependency pin, and shipped `LICENSE` / `NOTICE`
+    files are verified from the actual release artifacts
+12. Create the release tag with `git tag v0.1.0`
 
 ## Hold Point
 
 Do not run `git tag v0.1.0` until the public artifact review is explicitly
-approved. The review remains the human gate; this workflow is only the
-source-controlled procedure that prepares the repo for that final sign-off.
+approved. `python -m flatline._artifacts dist` provides the deterministic
+artifact evidence for that review, but the review itself remains the human
+gate. This workflow is only the source-controlled procedure that prepares the
+repo for that final sign-off.

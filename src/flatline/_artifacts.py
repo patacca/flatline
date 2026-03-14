@@ -1,0 +1,377 @@
+"""Built release artifact audit helpers for flatline."""
+
+from __future__ import annotations
+
+import argparse
+import re
+import tarfile
+import tomllib
+import zipfile
+from collections.abc import Sequence
+from dataclasses import dataclass
+from email.parser import Parser
+from pathlib import Path, PurePosixPath
+
+from flatline._compliance import expected_ghidra_sleigh_version
+
+REQUIRED_ARTIFACT_KINDS = ("wheel", "sdist")
+
+
+@dataclass(frozen=True)
+class BuiltArtifactIssue:
+    """One deterministic built-artifact audit failure."""
+
+    code: str
+    message: str
+
+
+@dataclass(frozen=True)
+class BuiltArtifactAuditReport:
+    """Audit result for built wheel and sdist artifacts."""
+
+    expected_version: str
+    expected_dependency_pin: str
+    required_artifact_kinds: tuple[str, ...]
+    wheel_artifacts: tuple[str, ...]
+    sdist_artifacts: tuple[str, ...]
+    issues: tuple[BuiltArtifactIssue, ...]
+
+    @property
+    def is_valid(self) -> bool:
+        """Return True when the built artifacts satisfy the release audit."""
+        return not self.issues
+
+
+def _append_issue(issues: list[BuiltArtifactIssue], code: str, message: str) -> None:
+    issues.append(BuiltArtifactIssue(code=code, message=message))
+
+
+def _read_text(
+    path: Path,
+    *,
+    missing_code: str,
+    issues: list[BuiltArtifactIssue],
+) -> str | None:
+    if not path.is_file():
+        _append_issue(issues, missing_code, f"Required file is missing: {path}")
+        return None
+
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError as exc:
+        _append_issue(issues, f"{missing_code}_unreadable", f"Could not read {path}: {exc}")
+        return None
+
+
+def _load_repo_version(repo_root: Path, issues: list[BuiltArtifactIssue]) -> str:
+    pyproject_text = _read_text(
+        repo_root / "pyproject.toml",
+        missing_code="pyproject_missing",
+        issues=issues,
+    )
+    if pyproject_text is None:
+        return "<unknown>"
+
+    try:
+        loaded = tomllib.loads(pyproject_text)
+    except tomllib.TOMLDecodeError as exc:
+        _append_issue(
+            issues,
+            "pyproject_invalid",
+            f"pyproject.toml is not valid TOML: {exc}",
+        )
+        return "<unknown>"
+
+    project_table = loaded.get("project")
+    if not isinstance(project_table, dict):
+        _append_issue(
+            issues,
+            "pyproject_project_missing",
+            "pyproject.toml is missing the [project] table.",
+        )
+        return "<unknown>"
+
+    version = project_table.get("version")
+    if not isinstance(version, str) or not version:
+        _append_issue(
+            issues,
+            "pyproject_version_missing",
+            "pyproject.toml must declare a non-empty project version.",
+        )
+        return "<unknown>"
+    return version
+
+
+def _normalize_requirement(requirement: str) -> str:
+    return re.sub(r"\s+", "", requirement).lower()
+
+
+def _metadata_parser() -> Parser:
+    return Parser()
+
+
+def _audit_metadata(
+    *,
+    metadata_text: str,
+    expected_version: str,
+    expected_dependency_pin: str,
+    artifact_label: str,
+    artifact_path: Path,
+    issues: list[BuiltArtifactIssue],
+) -> None:
+    metadata = _metadata_parser().parsestr(metadata_text)
+    version = metadata.get("Version")
+    if version != expected_version:
+        _append_issue(
+            issues,
+            f"{artifact_label}_version_mismatch",
+            (
+                f"{artifact_path} records version {version!r}; "
+                f"expected {expected_version!r}."
+            ),
+        )
+
+    requires_dist = metadata.get_all("Requires-Dist", failobj=[]) or []
+    normalized_requires = {_normalize_requirement(value) for value in requires_dist}
+    if _normalize_requirement(expected_dependency_pin) not in normalized_requires:
+        _append_issue(
+            issues,
+            f"{artifact_label}_dependency_pin_missing",
+            (
+                f"{artifact_path} does not declare the expected dependency pin "
+                f"{expected_dependency_pin!r}."
+            ),
+        )
+
+
+def _has_named_member(member_names: Sequence[str], required_name: str) -> bool:
+    return any(PurePosixPath(member_name).name == required_name for member_name in member_names)
+
+
+def _audit_wheel(
+    path: Path,
+    *,
+    expected_version: str,
+    expected_dependency_pin: str,
+    issues: list[BuiltArtifactIssue],
+) -> None:
+    try:
+        with zipfile.ZipFile(path) as wheel_file:
+            member_names = wheel_file.namelist()
+            if not _has_named_member(member_names, "LICENSE"):
+                _append_issue(
+                    issues,
+                    "wheel_license_missing",
+                    f"{path} is missing LICENSE.",
+                )
+            if not _has_named_member(member_names, "NOTICE"):
+                _append_issue(
+                    issues,
+                    "wheel_notice_missing",
+                    f"{path} is missing NOTICE.",
+                )
+
+            metadata_name = next(
+                (
+                    member_name
+                    for member_name in member_names
+                    if member_name.endswith(".dist-info/METADATA")
+                ),
+                None,
+            )
+            if metadata_name is None:
+                _append_issue(
+                    issues,
+                    "wheel_metadata_missing",
+                    f"{path} is missing dist-info/METADATA.",
+                )
+                return
+
+            metadata_text = wheel_file.read(metadata_name).decode("utf-8")
+    except (OSError, UnicodeDecodeError, zipfile.BadZipFile) as exc:
+        _append_issue(issues, "wheel_archive_invalid", f"Could not inspect {path}: {exc}")
+        return
+
+    _audit_metadata(
+        metadata_text=metadata_text,
+        expected_version=expected_version,
+        expected_dependency_pin=expected_dependency_pin,
+        artifact_label="wheel",
+        artifact_path=path,
+        issues=issues,
+    )
+
+
+def _audit_sdist(
+    path: Path,
+    *,
+    expected_version: str,
+    expected_dependency_pin: str,
+    issues: list[BuiltArtifactIssue],
+) -> None:
+    try:
+        with tarfile.open(path, mode="r:*") as sdist_file:
+            members = [member for member in sdist_file.getmembers() if member.isfile()]
+            member_names = [member.name for member in members]
+            if not _has_named_member(member_names, "LICENSE"):
+                _append_issue(
+                    issues,
+                    "sdist_license_missing",
+                    f"{path} is missing LICENSE.",
+                )
+            if not _has_named_member(member_names, "NOTICE"):
+                _append_issue(
+                    issues,
+                    "sdist_notice_missing",
+                    f"{path} is missing NOTICE.",
+                )
+
+            metadata_member = next(
+                (member for member in members if PurePosixPath(member.name).name == "PKG-INFO"),
+                None,
+            )
+            if metadata_member is None:
+                _append_issue(
+                    issues,
+                    "sdist_metadata_missing",
+                    f"{path} is missing PKG-INFO.",
+                )
+                return
+
+            extracted_member = sdist_file.extractfile(metadata_member)
+            if extracted_member is None:
+                _append_issue(
+                    issues,
+                    "sdist_metadata_missing",
+                    f"{path} is missing readable PKG-INFO contents.",
+                )
+                return
+
+            metadata_text = extracted_member.read().decode("utf-8")
+    except (OSError, UnicodeDecodeError, tarfile.TarError) as exc:
+        _append_issue(issues, "sdist_archive_invalid", f"Could not inspect {path}: {exc}")
+        return
+
+    _audit_metadata(
+        metadata_text=metadata_text,
+        expected_version=expected_version,
+        expected_dependency_pin=expected_dependency_pin,
+        artifact_label="sdist",
+        artifact_path=path,
+        issues=issues,
+    )
+
+
+def audit_built_release_artifacts(
+    repo_root: str | Path,
+    dist_dir: str | Path = "dist",
+) -> BuiltArtifactAuditReport:
+    """Audit the built wheel and sdist artifacts for the current repo version."""
+    root = Path(repo_root).resolve()
+    resolved_dist_dir = Path(dist_dir)
+    if not resolved_dist_dir.is_absolute():
+        resolved_dist_dir = root / resolved_dist_dir
+    resolved_dist_dir = resolved_dist_dir.resolve()
+
+    issues: list[BuiltArtifactIssue] = []
+    expected_version = _load_repo_version(root, issues)
+    expected_dependency_pin = f"ghidra-sleigh == {expected_ghidra_sleigh_version()}"
+
+    wheel_paths: tuple[str, ...] = ()
+    sdist_paths: tuple[str, ...] = ()
+    if not resolved_dist_dir.is_dir():
+        _append_issue(
+            issues,
+            "dist_dir_missing",
+            f"Built artifact directory is missing: {resolved_dist_dir}",
+        )
+    else:
+        wheels = tuple(sorted(resolved_dist_dir.glob("flatline-*.whl")))
+        sdists = tuple(sorted(resolved_dist_dir.glob("flatline-*.tar.gz")))
+
+        if not wheels:
+            _append_issue(
+                issues,
+                "wheel_artifact_missing",
+                f"No flatline wheel artifacts found in {resolved_dist_dir}",
+            )
+        if not sdists:
+            _append_issue(
+                issues,
+                "sdist_artifact_missing",
+                f"No flatline sdist artifacts found in {resolved_dist_dir}",
+            )
+
+        wheel_paths = tuple(str(path.resolve()) for path in wheels)
+        sdist_paths = tuple(str(path.resolve()) for path in sdists)
+
+        for wheel_path in wheels:
+            _audit_wheel(
+                wheel_path,
+                expected_version=expected_version,
+                expected_dependency_pin=expected_dependency_pin,
+                issues=issues,
+            )
+        for sdist_path in sdists:
+            _audit_sdist(
+                sdist_path,
+                expected_version=expected_version,
+                expected_dependency_pin=expected_dependency_pin,
+                issues=issues,
+            )
+
+    return BuiltArtifactAuditReport(
+        expected_version=expected_version,
+        expected_dependency_pin=expected_dependency_pin,
+        required_artifact_kinds=REQUIRED_ARTIFACT_KINDS,
+        wheel_artifacts=wheel_paths,
+        sdist_artifacts=sdist_paths,
+        issues=tuple(issues),
+    )
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Run the built-artifact audit as a small release-time CLI."""
+    parser = argparse.ArgumentParser(
+        prog="python -m flatline._artifacts",
+        description="Audit built flatline wheel and sdist artifacts.",
+    )
+    parser.add_argument(
+        "dist_dir",
+        nargs="?",
+        default="dist",
+        help="Directory containing built artifacts (default: dist).",
+    )
+    parser.add_argument(
+        "--repo-root",
+        default=".",
+        help="Repository root used to derive the expected version (default: current directory).",
+    )
+    args = parser.parse_args(argv)
+
+    report = audit_built_release_artifacts(args.repo_root, args.dist_dir)
+    audited_dist_dir = Path(args.dist_dir)
+    if not audited_dist_dir.is_absolute():
+        audited_dist_dir = Path(args.repo_root) / audited_dist_dir
+    audited_dist_dir = audited_dist_dir.resolve()
+
+    if report.is_valid:
+        print(f"Built artifact audit passed: {audited_dist_dir}")
+        print(f"- Expected version: {report.expected_version}")
+        print(f"- Expected dependency pin: {report.expected_dependency_pin}")
+        for wheel_path in report.wheel_artifacts:
+            print(f"- Wheel: {wheel_path}")
+        for sdist_path in report.sdist_artifacts:
+            print(f"- Sdist: {sdist_path}")
+        return 0
+
+    print(f"Built artifact audit failed: {audited_dist_dir}")
+    print(f"- Expected version: {report.expected_version}")
+    print(f"- Expected dependency pin: {report.expected_dependency_pin}")
+    for issue in report.issues:
+        print(f"- {issue.code}: {issue.message}")
+    return 1
+
+
+if __name__ == "__main__":  # pragma: no cover
+    raise SystemExit(main())

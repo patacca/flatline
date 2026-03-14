@@ -49,6 +49,9 @@ footprint remains a separate P3 tracking item, now recorded through
 6. Refresh `docs/footprint.md` from an installed-wheel environment with
    `python -m flatline._footprint`
 7. Re-run `tox` before tagging a release
+8. After `python -m build`, run `python -m flatline._artifacts dist` so the
+   built wheel and sdist are checked for the expected `LICENSE` / `NOTICE`
+   files plus the current version and dependency metadata
 
 ## Notes
 

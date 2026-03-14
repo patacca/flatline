@@ -22,6 +22,7 @@ lint = [
 ]
 dev = [
     "flatline[test,lint]",
+    "build >= 1.2",
     "tox >= 4.0",
 ]
 
