@@ -1,6 +1,7 @@
 py.install_sources(
   '__init__.py',
   '_bridge.py',
+  '_compliance.py',
   '_errors.py',
   '_models.py',
   '_runtime_data.py',

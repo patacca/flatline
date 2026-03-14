@@ -16,10 +16,12 @@
 - ADR-006 is now resolved: P2 emits diagnostics only through startup/runtime-data `RuntimeWarning` messages and structured `WarningItem` / `ErrorItem` payloads; diagnostic text includes full filesystem paths for debuggability, raw memory-image bytes are never emitted, and P2 exposes no public logging sink.
 - Persona/UX contract cleanup is now applied in `docs/specs.md` / `docs/roadmap.md`: top-level scope language distinguishes bundled-ISA breadth from fixture-backed confidence (x86 32/64, ARM64, RISC-V 64, MIPS32), release planning now requires public support-tier / known-variant notes, and package-size planning preserves the one-package default UX unless an explicit product/compliance decision changes it.
 - ADR-011 is now resolved: public error taxonomy adds `configuration_error` for user-fixable install/startup/runtime-data failures (missing/bad `runtime_data_dir`, missing default `ghidra-sleigh` runtime data, malformed runtime-data roots), while `internal_error` remains reserved for unexpected flatline/bridge/native bugs.
+- ADR-007 is now resolved: release redistribution checks require root `LICENSE` + `NOTICE`, a pinned-source compliance manifest in `docs/compliance.md`, and a passing `python -m flatline._compliance` audit covering the Ghidra attribution files, `ghidra-sleigh == 12.0.4`, and the fixture redistribution note.
 - Native regression baselines now include fixture-backed warm-session p95 budgets for `fx_add_elf64`, `fx_add_elf32`, `fx_add_arm64`, `fx_add_riscv64`, `fx_add_mips32`, and `fx_switch_elf64`; the switch regression also asserts recovered switch site `0x1009` plus its 9 target addresses.
 - `docs/roadmap.md` M2 wording now explicitly distinguishes per-ISA known-function fixtures from the single committed x86_64 jump-table fixture, and tracks the switch fixture's latency budget separately from the priority-ISA perf budgets.
+- `pyproject.toml` now declares `license-files = ["LICENSE", "NOTICE"]`, and `README.md` now points redistribution guidance at those artifacts while matching the actual fixture-backed confidence matrix (x86 32/64, ARM64, RISC-V 64, MIPS32; others best-effort).
 - `CHANGELOG.md` exists at the repo root, follows Keep a Changelog, and must be updated for every release.
-- **Next:** start P3 packaging/compliance hardening, beginning with ADR-007 license compliance process.
+- **Next:** continue P3 packaging/compliance hardening after ADR-007, including default-install footprint measurement/documentation.
 - Not a general Ghidra automation framework; decompiler surface only. No UI, no project DB.
 
 # Architecture (3-layer adapter)
@@ -63,6 +65,7 @@
 - `docs/planning.md` — original brief/requirements.
 - `docs/preplanning.md` — discovery constraints and experiment plan (completed).
 - `docs/refine_plan.md` — plan refinement checklist and cross-file consistency guide.
+- `docs/compliance.md` — ADR-007 compliance manifest + redistribution checklist.
 
 # Repo structure (non-vendored)
 - `pyproject.toml` — metadata, tool settings. Build backend: `meson-python`.
@@ -70,6 +73,7 @@
 - `meson_options.txt` — feature flags (`native_bridge`).
 - `src/flatline/` — installable package (src layout).
 - `src/flatline/_session.py` — `DecompilerSession` lifecycle + one-shot wrappers.
+- `src/flatline/_compliance.py` — ADR-007 release-compliance audit (`python -m flatline._compliance`).
 - `src/flatline/_bridge.py` — bridge session protocol + fallback implementation.
 - `src/flatline/_runtime_data.py` — runtime-data discovery/validation for language/compiler pair enumeration.
 - `src/flatline/_flatline_native.cpp` — nanobind extension: Ghidra startup, pair enumeration, native decompile pipeline (links `ghidra_decompiler`).
@@ -102,14 +106,15 @@
 - `ghidra-sleigh` source-build details live in its own repo; use its documented Meson options there, not from this workspace.
 
 # Tests
-- `tox`: `py314` passes all 64 tests (31 unit, 6 contract, 10 integration, 12 regression, 5 negative) against the installed wheel artifact; `py313` skips when `python3.13` is absent.
+- `tox`: `py314` passes all 66 tests (33 unit, 6 contract, 10 integration, 12 regression, 5 negative) against the installed wheel artifact; `py313` skips when `python3.13` is absent.
 - Native tests expect compiled `.sla` data from the installed `ghidra-sleigh` runtime dependency, currently covering DATA, x86, AARCH64, RISCV, and MIPS.
 - Native tox runs still resolve runtime data from `ghidra_sleigh.get_runtime_data_dir()` explicitly; public `DecompilerSession` startup now auto-discovers that default path when `runtime_data_dir` is omitted, and `DecompileRequest` / `DecompilerSession` coerce path-like `runtime_data_dir` inputs to strings.
 - `tests/conftest.py` — auto-applies category markers from directory names.
-- `tests/specs/test_catalog.md` — 38 definitions, 5 categories, contract traceability matrix.
+- `tests/specs/test_catalog.md` — 39 definitions, 5 categories, contract traceability matrix.
 - `tests/specs/fixtures.md` — 10 fixtures, oracle strategy, determinism rules.
 - `tests/unit/test_native_bridge_runtime_spec.py` — native smoke test uses committed x86_64 add fixture and the real Ghidra runtime-data root.
 - `tests/unit/test_runtime_data_spec.py` — `.ldefs` tolerance, dependency-backed default runtime-data discovery, and deterministic failure tests.
+- `tests/unit/test_compliance_spec.py` — ADR-007 compliance audit for required notice files, pinned-source references, and dependency-pin drift.
 - `tests/unit/test_public_contract_spec.py` and `tests/unit/test_bridge_adapter_spec.py` now lock the ADR-005 contract: default `AnalysisBudget(max_instructions=100000)`, mapping coercion/validation, and stable native payload serialization.
 - `tests/unit/test_runtime_data_spec.py` and `tests/unit/test_bridge_adapter_spec.py` now also lock ADR-006 diagnostics: startup/runtime-data warnings and bridge error messages include full filesystem paths for debuggability.
 - `tests/regression/test_regression_spec.py` — R-002 now asserts the committed switch-site baseline for `fx_switch_elf64`; R-003 now parameterizes warm-session p95 budgets across the priority-ISA add fixtures plus `fx_switch_elf64`.
@@ -132,4 +137,4 @@
 - `WarningItem` — `code`, `message`, `phase`.
 - `ErrorItem` — `category`, `message`, `retryable`.
 - `VersionInfo` — `flatline_version`, `upstream_tag`, `upstream_commit`, `runtime_data_revision`.
-- `FlatlineError` — 5 categories: `invalid_argument`, `unsupported_target`, `invalid_address`, `decompile_failed`, `internal_error`.
+- `FlatlineError` — 6 categories: `invalid_argument`, `unsupported_target`, `invalid_address`, `decompile_failed`, `configuration_error`, `internal_error`.

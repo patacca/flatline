@@ -1,0 +1,54 @@
+# Compliance
+
+## ADR-007 Decision
+
+ADR-007 is resolved for flatline P3 packaging/compliance hardening.
+
+Mandatory release-time checks for redistribution:
+
+1. `python -m flatline._compliance` must pass from the repo root.
+2. Release artifacts must ship the root `LICENSE` and `NOTICE` files, with
+   `pyproject.toml` declaring both through `license-files`.
+3. `NOTICE` must record the pinned native-source baseline
+   `Ghidra_12.0.4_build` / `e40ed13014025f82488b1f8f7bca566894ac376b`,
+   plus the upstream attribution file locations
+   `third_party/ghidra/LICENSE` and `third_party/ghidra/NOTICE`.
+4. The default runtime dependency pin `ghidra-sleigh == 12.0.4` must remain
+   explicit in both packaging metadata and the compliance docs so release
+   review does not silently drift away from the pinned Ghidra baseline.
+5. Fixture redistribution stays documented through
+   `tests/fixtures/README.md`; release review must keep that synthetic-fixture
+   note intact.
+
+This decision resolves the redistribution-check process only. Default-install
+footprint measurement and any product-policy tradeoffs remain separate P3 work.
+
+## Artifact Manifest
+
+| Artifact | Scope | Purpose |
+| --- | --- | --- |
+| `LICENSE` | Wheel, sdist, repo | Flatline's own Apache-2.0 license text |
+| `NOTICE` | Wheel, sdist, repo | Flatline redistribution notice with pinned Ghidra attribution and dependency references |
+| `docs/compliance.md` | Repo | ADR-007 decision record, manifest, and release checklist |
+| `third_party/ghidra/LICENSE` | Repo | Upstream Ghidra license text for the pinned native-source baseline |
+| `third_party/ghidra/NOTICE` | Repo | Upstream Ghidra attribution notice for the pinned native-source baseline |
+| `tests/fixtures/README.md` | Repo | Synthetic-fixture redistribution note and fixture manifest |
+| `ghidra-sleigh == 12.0.4` | Separate dependency | Default runtime-data companion package; review it as a pinned dependency, not as a bundled flatline artifact |
+
+## Release Checklist
+
+1. Activate the repo venv: `source .venv/bin/activate`
+2. Run the compliance audit: `python -m flatline._compliance`
+3. Verify the audit still reports the pinned Ghidra baseline
+   `Ghidra_12.0.4_build` / `e40ed13014025f82488b1f8f7bca566894ac376b`
+   and the dependency pin `ghidra-sleigh == 12.0.4`
+4. Preserve the root `LICENSE` and `NOTICE` files in release artifacts
+5. Preserve the `tests/fixtures/README.md` redistribution note
+6. Re-run `tox` before tagging a release
+
+## Notes
+
+- `third_party/ghidra` remains a read-only submodule pinned to the upstream
+  baseline above.
+- The compliance audit is intentionally small and deterministic; it validates
+  artifact presence and pinned references, not broader legal interpretation.

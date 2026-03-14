@@ -23,6 +23,7 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 | U-014 | Validate startup rejection for missing runtime_data_dir | None | Start bridge session with a non-existent `runtime_data_dir` | Deterministic startup failure with structured `configuration_error` exception and the full failing path in the public message | Startup-path oracle | Missing runtime-data path never degrades to an empty/implicit default |
 | U-015 | Validate tolerant malformed `.ldefs` behavior | Synthetic runtime-data fixture (valid + malformed `.ldefs`) | Enumerate pairs from a runtime-data root containing both valid and malformed `.ldefs` files | Returns valid pairs, emits one warning for skipped malformed files with full paths; raises deterministic `configuration_error` only when all `.ldefs` files are malformed | Runtime-data parse-tolerance oracle | Pair ordering deterministic; malformed-file observability stable |
 | U-016 | Validate dependency-backed default runtime-data discovery | Installed `ghidra-sleigh` package or module double | Start a public session with omitted `runtime_data_dir`; also exercise explicit overrides and advertised upstream-pin drift | Auto-discovers `ghidra_sleigh.get_runtime_data_dir()` for the default path, preserves explicit overrides, warns on auto-discovered pin mismatch, and fails deterministically only when the dependency is unavailable | Default-runtime resolution oracle | Default runtime-data discovery is deterministic and pin drift is never silent |
+| U-017 | Validate release-compliance audit | Repo manifest + synthetic temp repo | Run the ADR-007 compliance audit against the committed repo and against a temp repo with a missing `NOTICE` file and dependency pin drift | Audit passes only when the required license/notice artifacts, pinned Ghidra references, `ghidra-sleigh == 12.0.4` dependency pin, and fixture redistribution note are present; missing notice files or pin drift fail deterministically | Artifact-manifest oracle | Required redistribution artifacts and pinned references remain explicit across releases |
 
 ## 2. Contract Tests
 
@@ -102,6 +103,7 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 | §3.4 Error set → function_info=None, c_code=None | Error model invariant | N-001, N-002, N-003, N-005 |
 | §3.4 Success → function_info populated | Never None on success | I-005 |
 | §3.5 Additive fields only in minor | Schema stability | C-001, C-004 |
+| §7 Packaging and compliance | Release artifacts include notices and pinned attribution; ADR-007 audit passes | U-017 |
 | §7 Session isolation | No cross-session leakage | I-003 |
 | §7 Startup determinism | Repeatable startup under pinned upstream | I-004 |
 | §6 Bridge contract layer | Bridge boundary translates native payloads into stable Python contract objects; native exceptions normalized to structured results | U-010, U-011, U-012 |
@@ -118,6 +120,7 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 - Public contract, runtime-data policy, and error semantics: `docs/specs.md`.
 - Structured result object definitions: `docs/specs.md` §3.3.
 - Diagnostic path-visibility policy and public warning/error surfaces: `docs/specs.md` §3.4 and §7.
+- Redistribution/compliance manifest and release audit: `docs/compliance.md`.
 - Milestones and release gates for deterministic behavior: `docs/roadmap.md`.
 - Startup/minimal-load, known-function, invalid-address, and jump-table expectations are consolidated into this catalog from baseline experiment findings.
 - Error category definitions and stability rules: `docs/specs.md` §3.4.

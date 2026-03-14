@@ -13,7 +13,8 @@ metaphor for decompilation: extracting meaning from dead code.
 - **Single-function decompilation** -- pass a memory image, base address, and
   function entry point; get back structured C output with diagnostics.
 - **Multi-ISA** -- supports any Ghidra-supported target architecture. Priority
-  coverage for x86 (32/64), ARM (32/64), RISC-V (32/64), and MIPS (32/64).
+  fixture-backed confidence for x86 (32/64), ARM64, RISC-V 64, and MIPS32;
+  other bundled ISAs remain best-effort.
 - **Packaged runtime data** -- compiled Sleigh runtime assets come from the
   companion `ghidra-sleigh` package, so production installs do not depend on a
   vendored `third_party/ghidra` tree.
@@ -125,13 +126,17 @@ the suite exercises the packaged artifact rather than `PYTHONPATH=src`.
 
 Project history lives in [CHANGELOG.md](CHANGELOG.md). Update it for every
 release using the Keep a Changelog structure already in the file.
+Redistribution/compliance guidance lives in [NOTICE](NOTICE) and
+[docs/compliance.md](docs/compliance.md).
 
 ## Project status
 
-Early development (pre-MVP). The specification and test harness are complete;
-implementation is in progress. See [docs/roadmap.md](docs/roadmap.md) for the
-full plan.
+P2 is complete. The current focus is P3 packaging/compliance hardening, starting
+with the ADR-007 redistribution process captured in
+[docs/compliance.md](docs/compliance.md). See
+[docs/roadmap.md](docs/roadmap.md) for the phase plan.
 
 ## License
 
-Apache-2.0
+Apache-2.0. See [LICENSE](LICENSE) for the project license and [NOTICE](NOTICE)
+for redistribution-time attribution.
