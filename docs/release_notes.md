@@ -3,7 +3,9 @@
 These notes define the release-facing contract for flatline's first public
 release line. They summarize what users can rely on, which targets are
 fixture-backed versus best-effort, and how upgrades are handled while the
-project remains on the Linux MVP track.
+project remains on the Linux MVP track. The current development branch is
+versioned as `0.1.0.dev0`; the first public tag for this release line is
+`0.1.0`.
 
 ## Contract Guarantees
 

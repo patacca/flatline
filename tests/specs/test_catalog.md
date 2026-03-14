@@ -27,6 +27,7 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 | U-018 | Validate default-install footprint measurement and baseline docs | Synthetic distribution manifests + committed `docs/footprint.md` | Measure payload size from distribution file lists while excluding `__pycache__`, then verify the committed footprint doc still records the command, pin, and no-silent-pruning policy | Footprint report totals are deterministic; baseline docs preserve the release workflow and policy note | Payload-size + doc-fragment oracle | Measurement excludes interpreter-generated cache files; docs refresh when the pinned default profile changes |
 | U-019 | Validate CI regression workflow structure | Committed `.github/workflows/ci.yml` | Inspect the committed CI workflow definition | Perf-sensitive test/regression lanes pin `ubuntu-24.04`; lint/build may float on `ubuntu-latest`; non-regression tox lanes cover Python 3.13/3.14; a dedicated pinned regression lane runs `tox -e py314 -- -m regression` against the installed wheel artifact | Workflow-text oracle | Runner pinning on perf lanes and explicit tox commands remain source-controlled |
 | U-020 | Validate initial public release notes coverage | Committed `docs/release_notes.md` + `README.md` | Inspect the release-notes doc and README release/status sections | Release notes summarize contract guarantees, support tiers, known-variant limits, and upgrade policy; README links the release-notes doc and tracks the current P5 focus | Doc-fragment oracle | Release-facing support messaging remains aligned with the roadmap/specs contract |
+| U-021 | Validate initial public release workflow and SemVer recommendation | Committed `docs/release_workflow.md` + version files + README | Audit the repo's release-readiness helper against the committed workflow docs and a synthetic drift case | The initial public release stays classified as `0.1.0` from `0.1.0.dev0`; the release workflow remains source-controlled; missing workflow docs or version drift fail deterministically | Release-readiness audit oracle | The first public tag recommendation and required release commands remain explicit and version-consistent |
 
 ## 2. Contract Tests
 
@@ -107,6 +108,7 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 | §3.4 Success → function_info populated | Never None on success | I-005 |
 | §3.5 Additive fields only in minor | Schema stability | C-001, C-004 |
 | §7 Release-facing policy | Public release notes summarize contract guarantees, support tiers / known-variant limits, and upgrade policy | U-020 |
+| §3.5 SemVer baseline + §7 release workflow | The first public release finalizes `0.1.0.devN` as `0.1.0`, and the release workflow stays source-controlled and auditable | U-021 |
 | §7 Packaging and compliance | Release artifacts include notices and pinned attribution; ADR-007 audit passes; default-install footprint stays measured/documented with an explicit size-policy note | U-017, U-018 |
 | §7 Session isolation | No cross-session leakage | I-003 |
 | §7 Startup determinism | Repeatable startup under pinned upstream | I-004 |

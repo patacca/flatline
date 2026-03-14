@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ADR-010 decided: separate `ghidra-sleigh` pip package for runtime data
 - Initial public release notes documenting contract guarantees, support tiers,
   known-variant limits, and upgrade policy
+- Initial public release workflow documentation and a release-readiness audit
+  that keeps the `0.1.0` first-public-tag recommendation explicit
 
 ### Fixed
 - Size-aware `std::string` construction for `nb::bytes` to preserve embedded null bytes

@@ -72,6 +72,8 @@ Product policy:
 - changelog, upgrade notes, regression/perf data, support-tier notes
 - `docs/release_notes.md` summarizing contract guarantees, support tiers /
   known-variant limits, and upgrade policy for the first public release
+- `docs/release_workflow.md` capturing the initial public release procedure and
+  the `0.1.0` SemVer recommendation for the current `0.1.0.dev0` branch
 - Exit checks:
 - SemVer classification approved
 - contract tests green on release matrix
@@ -134,6 +136,8 @@ and release activities require distinct checkpoints.
 Release stream model:
 - One active stream per latest upstream decompiler pin.
 - Upstream bump replaces prior pin; no parallel support matrix across upstream versions.
+- The current P5 branch is the pre-release `0.1.0.dev0` line; once artifact
+  review passes, the initial public tag for this stream is `0.1.0`.
 
 Versioning rules:
 - `MAJOR`: breaking Python API contract change.

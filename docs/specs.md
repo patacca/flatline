@@ -267,6 +267,9 @@ SemVer rules:
 - Major: breaking Python API contract changes.
 - Minor: backward-compatible features, new optional fields, new warnings.
 - Patch: bug fixes with no contract shape changes.
+- The first public flatline release finalizes the existing `0.1.0.devN`
+  development line as `0.1.0`; that tag establishes the initial public SemVer
+  baseline for later major/minor/patch classification.
 
 Latest-upstream-only policy:
 - Each flatline release line tracks exactly one upstream Ghidra decompiler revision.
@@ -574,6 +577,9 @@ Release-facing policy:
 - Release-facing upgrade notes must restate the latest-upstream-only policy,
   SemVer classification rules, the minimum one-minor deprecation window, and
   the caller-managed compatibility risk of custom `runtime_data_dir` roots.
+- The initial public release workflow and its `0.1.0` version recommendation
+  are source-controlled in `docs/release_workflow.md` and audited by
+  `python -m flatline._release` before the release tag is created.
 
 Extensibility:
 - Additive extension points via optional request fields and metadata keys.
