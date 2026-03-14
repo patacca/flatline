@@ -3,7 +3,7 @@
 
 # Overview
 - Pip-installable Python wrapper around the Ghidra C++ decompiler, consuming packaged runtime assets from `ghidra-sleigh`. Multi-ISA.
-- **Phase P4 (Stabilization and regression control) — next.** P0-P3 deliverables are now committed locally.
+- **Phase P5 (Initial public release) — next.** P0-P4 deliverables are now committed locally.
 - `.sla` runtime data now comes from the `ghidra-sleigh` runtime dependency (pip name) / `ghidra_sleigh` (import); default build ships all processor families, lighter build uses `all_processors=false`.
 - `pyproject.toml` now pins `ghidra-sleigh == 12.0.4` to match the vendored `Ghidra_12.0.4_build` native baseline.
 - Flatline version strings are now normalized to the PEP 440 form `0.1.0.dev0` across `pyproject.toml`, `meson.build`, and `src/flatline/_version.py`.
@@ -12,6 +12,7 @@
 - Priority-ISA native memory fixtures are now committed as `tests/fixtures/*.hex`: x86_64, x86_32, AArch64, RISC-V 64, MIPS32, plus x86_64 switch and warning fixtures.
 - Fixture sources now live beside the artifacts under `tests/fixtures/sources/`, with regeneration scripted in `tests/fixtures/generate_hex_fixtures.py`.
 - Tox now tests the installed package artifact: `py313`/`py314` build `flatline[test]` wheels inside `.tox`, while `lint` remains package-skip + `ruff`.
+- GitHub Actions CI uses `ubuntu-latest` for lint/build and pins `ubuntu-24.04` for perf-sensitive test/regression lanes; the general test lane runs non-regression tox envs across Python 3.13/3.14 and a dedicated `py314` regression lane enforces the committed normalized-output and warm-session p95 budgets.
 - Public sessions now auto-discover `ghidra_sleigh.get_runtime_data_dir()` when `runtime_data_dir` is omitted; explicit `runtime_data_dir` values still override the default, and auto-discovered Ghidra pin drift is surfaced as a runtime warning.
 - ADR-005 is now resolved: `AnalysisBudget` is a public frozen value type, omitted requests default to `max_instructions=100000`, mapping inputs are coerced/validated in `DecompileRequest`, and the native bridge applies the resolved cap to `Architecture::max_instructions`. Unsupported budget keys or non-positive limits fail as `invalid_argument`; wall-clock timeout remains out of scope for P2.
 - ADR-006 is now resolved: P2 emits diagnostics only through startup/runtime-data `RuntimeWarning` messages and structured `WarningItem` / `ErrorItem` payloads; diagnostic text includes full filesystem paths for debuggability, raw memory-image bytes are never emitted, and P2 exposes no public logging sink.
@@ -23,9 +24,12 @@
 - `docs/roadmap.md` M2 wording now explicitly distinguishes per-ISA known-function fixtures from the single committed x86_64 jump-table fixture, and tracks the switch fixture's latency budget separately from the priority-ISA perf budgets.
 - `pyproject.toml` now declares `license-files = ["LICENSE", "NOTICE"]`, and `README.md` now points redistribution guidance at those artifacts while matching the actual fixture-backed confidence matrix (x86 32/64, ARM64, RISC-V 64, MIPS32; others best-effort).
 - `CHANGELOG.md` exists at the repo root, follows Keep a Changelog, and must be updated for every release.
-- **Next:** advance P4 by enforcing the existing determinism/perf regression budgets in CI or release automation.
+- **Next:** advance P5 by preparing initial-release notes, support-tier / known-variant limits, and upgrade-policy text for the first public release.
 - Post-MVP P7 will expose pcode ops and varnode graphs as frozen Python value types for downstream analysis (BSim-style similarity, binary diffing, data flow/taint). Design tracked in ADR-012.
 - Not a general Ghidra automation framework; decompiler surface only. No UI, no project DB.
+
+# Design posture
+- **User-centered library development.** Every feature, default, error message, and API surface is designed from the caller's perspective first. The library exists to serve its users; no design decision should work against them or force them to fight the API. When in doubt, choose the option that makes the user's life easier.
 
 # Architecture (3-layer adapter)
 1. **Public Contract** — `DecompilerSession` lifecycle + one-shot wrappers (`_session.py`); Python request/result models and error taxonomy in `_models.py` / `_errors.py`.
@@ -115,12 +119,13 @@
 - `ghidra-sleigh` source-build details live in its own repo; use its documented Meson options there, not from this workspace.
 
 # Tests
-- `tox`: `py314` passes all 68 tests (35 unit, 6 contract, 10 integration, 12 regression, 5 negative) against the installed wheel artifact; `py313` skips when `python3.13` is absent.
+- `tox`: `py314` passes all 69 tests (36 unit, 6 contract, 10 integration, 12 regression, 5 negative) against the installed wheel artifact; `py313` skips when `python3.13` is absent.
 - Native tests expect compiled `.sla` data from the installed `ghidra-sleigh` runtime dependency, currently covering DATA, x86, AARCH64, RISCV, and MIPS.
 - Native tox runs still resolve runtime data from `ghidra_sleigh.get_runtime_data_dir()` explicitly; public `DecompilerSession` startup now auto-discovers that default path when `runtime_data_dir` is omitted, and `DecompileRequest` / `DecompilerSession` coerce path-like `runtime_data_dir` inputs to strings.
 - `tests/conftest.py` — auto-applies category markers from directory names.
-- `tests/specs/test_catalog.md` — 40 definitions, 5 categories, contract traceability matrix.
+- `tests/specs/test_catalog.md` — 41 definitions, 5 categories, contract traceability matrix.
 - `tests/specs/fixtures.md` — 10 fixtures, oracle strategy, determinism rules.
+- `tests/unit/test_ci_workflow_spec.py` — locks the pinned GitHub Actions regression gate (runner pin, py313/py314 non-regression matrix, dedicated `py314` regression lane).
 - `tests/unit/test_native_bridge_runtime_spec.py` — native smoke test uses committed x86_64 add fixture and the real Ghidra runtime-data root.
 - `tests/unit/test_runtime_data_spec.py` — `.ldefs` tolerance, dependency-backed default runtime-data discovery, and deterministic failure tests.
 - `tests/unit/test_compliance_spec.py` — ADR-007 compliance audit for required notice files, pinned-source references, and dependency-pin drift.

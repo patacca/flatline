@@ -26,6 +26,7 @@ Hard constraints:
 ## 1. Goals and Non-Goals
 
 Goals:
+- **User-centered design.** Every feature, default, error message, and API surface is designed from the caller's perspective first. No design decision should work against the user or force them to fight the API.
 - Provide a stable Python-first decompilation contract that remains consistent while upstream internals change.
 - Expose single-function decompilation with explicit language/compiler selection and structured diagnostics.
 - Support decompilation of any Ghidra-supported target ISA from a single installation, while publishing stronger confidence guarantees only for the fixture-backed variants.
@@ -525,8 +526,10 @@ Concurrency model:
 
 Performance budgets (planning targets):
 - Session startup (warm): bounded target defined per release.
-- Single-function decompile on MVP fixture set: p95 budget tracked in CI per priority ISA.
-- Regression threshold policy: fail CI on sustained >15% regression for pinned matrix.
+- Single-function decompile on MVP fixture set: committed warm-session p95 budgets tracked per
+  fixture in `tests/_native_fixtures.py`.
+- Regression threshold policy: the pinned Linux CI regression lane fails when any committed
+  fixture exceeds its source-controlled normalized-output or warm-session p95 budget.
 - Performance budgets are tracked independently per ISA family; different Sleigh specifications may have inherently different analysis costs.
 
 Security boundaries:
