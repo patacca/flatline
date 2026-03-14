@@ -20,7 +20,7 @@ Advance the **next roadmap item** and reflect progress via **concrete repo chang
 7. `src/flatline/` (current implementation)
 
 ### Secondary reference
-- `docs/planning.md` (original brief/requirements -- consult for intent, not current state)
+- `docs/ai/planning.md` (original brief/requirements -- consult for intent, not current state)
 - `notes/api/decompiler_inventory.md` (decompiler callable surface, init order, thread-safety)
 
 ### Deep reference (ONLY if repo docs/tests cannot resolve ambiguity)

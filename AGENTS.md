@@ -72,10 +72,10 @@
 - `docs/roadmap.md` — 8 phases (P0-P7), 7 milestones (M0-M6), risk register, ADR backlog.
 - `docs/code_style.md` — naming, formatting, imports, annotations, test conventions.
 - `CHANGELOG.md` — release history; update on every release.
-- `docs/compact_agent.md` — compact prompt template for lossless AGENTS.md compression.
-- `docs/planning.md` — original brief/requirements.
-- `docs/preplanning.md` — discovery constraints and experiment plan (completed).
-- `docs/refine_plan.md` — plan refinement checklist and cross-file consistency guide.
+- `docs/ai/compact_agent.md` — compact prompt template for lossless AGENTS.md compression.
+- `docs/ai/planning.md` — original brief/requirements.
+- `docs/ai/preplanning.md` — discovery constraints and experiment plan (completed).
+- `docs/ai/refine_plan.md` — plan refinement checklist and cross-file consistency guide.
 - `docs/compliance.md` — ADR-007 compliance manifest + redistribution checklist.
 - `docs/footprint.md` — default-install footprint baseline and size-policy note.
 - `docs/release_notes.md` — initial public release notes: contract guarantees, support tiers, known-variant limits, and upgrade policy.
@@ -91,7 +91,8 @@
 - `src/flatline/_bridge.py` — bridge session protocol + fallback implementation.
 - `src/flatline/_runtime_data.py` — runtime-data discovery/validation for language/compiler pair enumeration.
 - `src/flatline/_flatline_native.cpp` — nanobind extension: Ghidra startup, pair enumeration, native decompile pipeline (links `ghidra_decompiler`).
-- `docs/` — specs, roadmap, planning artifacts.
+- `docs/` — specs, roadmap, project documentation.
+- `docs/ai/` — agent prompts, planning artifacts, workflow templates.
 - `docs/release_notes.md` — initial public release notes and support-policy summary.
 - `notes/api/decompiler_inventory.md` — 18 required callable symbols with I/O, init order, thread-safety.
 - `notes/r2ghidra/integration_map.md` — 5-section integration analysis (reusable/reimplement/skip). Reference only.
