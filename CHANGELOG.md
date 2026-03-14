@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - End-to-end decompilation verified: x86_64 produces correct structured C output
 - Ghidra decompiler library compilation and native startup/pair enumeration
 - Runtime-data bridge enumeration with fallback for malformed `.ldefs`
-- `flatline-sleigh` package design for compiled Sleigh runtime data (ADR-010)
+- `ghidra-sleigh` package design for compiled Sleigh runtime data (ADR-010)
 - `.sla` assets compiled for priority ISAs (DATA, x86, AARCH64, RISCV, MIPS)
 - Meson build system with C++20, nanobind, debug/release/debugoptimized build types
 - Python data models and `FlatlineError` error hierarchy
@@ -20,7 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tox configuration for multi-version Python testing (py313, py314, lint)
 - Code style guide enforcing ASCII-only source files via ruff
 - ADR-009 decided: ISA variant scope (x86 32+64, ARM64, RISC-V 64, MIPS32)
-- ADR-010 decided: separate `flatline-sleigh` pip package for runtime data
+- ADR-010 decided: separate `ghidra-sleigh` pip package for runtime data
+- Initial public release notes documenting contract guarantees, support tiers,
+  known-variant limits, and upgrade policy
 
 ### Fixed
 - Size-aware `std::string` construction for `nb::bytes` to preserve embedded null bytes
@@ -29,4 +31,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Renamed project from ghidralib to flatline repo-wide
-- `CLAUDE.md` converted to symlink pointing to `AGENTS.md`
+- Repository agent instructions now live in `AGENTS.md`

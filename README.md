@@ -126,15 +126,18 @@ the suite exercises the packaged artifact rather than `PYTHONPATH=src`.
 
 Project history lives in [CHANGELOG.md](CHANGELOG.md). Update it for every
 release using the Keep a Changelog structure already in the file.
+The release-facing contract guarantees, support tiers, known-variant limits,
+and upgrade policy for the first public release live in
+[docs/release_notes.md](docs/release_notes.md).
 Redistribution/compliance guidance lives in [NOTICE](NOTICE) and
 [docs/compliance.md](docs/compliance.md). The current default-install footprint
 baseline and size-policy note live in [docs/footprint.md](docs/footprint.md).
 
 ## Project status
 
-P2 is complete. The current focus is P3 packaging/compliance hardening, starting
-with the ADR-007 redistribution process captured in
-[docs/compliance.md](docs/compliance.md). See
+P4 is complete. The current focus is P5 initial public release preparation,
+with release-facing guarantees and support-policy notes captured in
+[docs/release_notes.md](docs/release_notes.md). See
 [docs/roadmap.md](docs/roadmap.md) for the phase plan.
 
 ## License

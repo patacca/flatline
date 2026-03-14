@@ -70,6 +70,8 @@ Product policy:
 ### M4: Release readiness
 - Inputs:
 - changelog, upgrade notes, regression/perf data, support-tier notes
+- `docs/release_notes.md` summarizing contract guarantees, support tiers /
+  known-variant limits, and upgrade policy for the first public release
 - Exit checks:
 - SemVer classification approved
 - contract tests green on release matrix

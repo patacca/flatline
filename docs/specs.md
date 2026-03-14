@@ -562,6 +562,19 @@ Packaging and compliance:
   reference baseline and any explicit product-policy decision about keeping or
   changing the full multi-ISA default.
 
+Release-facing policy:
+- Each public release must publish or update a release-notes artifact that
+  summarizes the contract guarantees users can rely on, the support tiers for
+  the supported host and target matrix, the known ISA-variant limits, and the
+  upgrade policy for that release line.
+- Release-facing support notes must distinguish the Linux x86_64
+  fixture-backed confidence matrix (x86 32/64, ARM64, RISC-V 64, MIPS32) from
+  bundled best-effort ISAs or variants that are covered only by enumeration
+  and error-contract tests.
+- Release-facing upgrade notes must restate the latest-upstream-only policy,
+  SemVer classification rules, the minimum one-minor deprecation window, and
+  the caller-managed compatibility risk of custom `runtime_data_dir` roots.
+
 Extensibility:
 - Additive extension points via optional request fields and metadata keys.
 - Future backends or advanced modes must preserve baseline contract semantics.

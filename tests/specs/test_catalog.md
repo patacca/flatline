@@ -26,6 +26,7 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 | U-017 | Validate release-compliance audit | Repo manifest + synthetic temp repo | Run the ADR-007 compliance audit against the committed repo and against a temp repo with a missing `NOTICE` file and dependency pin drift | Audit passes only when the required license/notice artifacts, pinned Ghidra references, `ghidra-sleigh == 12.0.4` dependency pin, and fixture redistribution note are present; missing notice files or pin drift fail deterministically | Artifact-manifest oracle | Required redistribution artifacts and pinned references remain explicit across releases |
 | U-018 | Validate default-install footprint measurement and baseline docs | Synthetic distribution manifests + committed `docs/footprint.md` | Measure payload size from distribution file lists while excluding `__pycache__`, then verify the committed footprint doc still records the command, pin, and no-silent-pruning policy | Footprint report totals are deterministic; baseline docs preserve the release workflow and policy note | Payload-size + doc-fragment oracle | Measurement excludes interpreter-generated cache files; docs refresh when the pinned default profile changes |
 | U-019 | Validate CI regression workflow structure | Committed `.github/workflows/ci.yml` | Inspect the committed CI workflow definition | Perf-sensitive test/regression lanes pin `ubuntu-24.04`; lint/build may float on `ubuntu-latest`; non-regression tox lanes cover Python 3.13/3.14; a dedicated pinned regression lane runs `tox -e py314 -- -m regression` against the installed wheel artifact | Workflow-text oracle | Runner pinning on perf lanes and explicit tox commands remain source-controlled |
+| U-020 | Validate initial public release notes coverage | Committed `docs/release_notes.md` + `README.md` | Inspect the release-notes doc and README release/status sections | Release notes summarize contract guarantees, support tiers, known-variant limits, and upgrade policy; README links the release-notes doc and tracks the current P5 focus | Doc-fragment oracle | Release-facing support messaging remains aligned with the roadmap/specs contract |
 
 ## 2. Contract Tests
 
@@ -105,6 +106,7 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 | §3.4 Error set → function_info=None, c_code=None | Error model invariant | N-001, N-002, N-003, N-005 |
 | §3.4 Success → function_info populated | Never None on success | I-005 |
 | §3.5 Additive fields only in minor | Schema stability | C-001, C-004 |
+| §7 Release-facing policy | Public release notes summarize contract guarantees, support tiers / known-variant limits, and upgrade policy | U-020 |
 | §7 Packaging and compliance | Release artifacts include notices and pinned attribution; ADR-007 audit passes; default-install footprint stays measured/documented with an explicit size-policy note | U-017, U-018 |
 | §7 Session isolation | No cross-session leakage | I-003 |
 | §7 Startup determinism | Repeatable startup under pinned upstream | I-004 |
@@ -122,6 +124,7 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 - Public contract, runtime-data policy, and error semantics: `docs/specs.md`.
 - Structured result object definitions: `docs/specs.md` §3.3.
 - Diagnostic path-visibility policy and public warning/error surfaces: `docs/specs.md` §3.4 and §7.
+- Initial public release notes and support messaging: `docs/release_notes.md`.
 - Redistribution/compliance manifest and release audit: `docs/compliance.md`.
 - Milestones and release gates for deterministic behavior: `docs/roadmap.md`.
 - Startup/minimal-load, known-function, invalid-address, and jump-table expectations are consolidated into this catalog from baseline experiment findings.
