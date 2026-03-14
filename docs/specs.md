@@ -46,6 +46,8 @@ Personas:
 - Reverse engineer automating decompilation pipelines from Python.
 - Security engineer building repeatable triage workflows.
 - Tooling engineer embedding deterministic decompilation checks into CI or release validation.
+- Researcher building binary similarity or diffing tools from decompiler output (post-MVP).
+- Security researcher performing data flow or taint analysis on decompiled functions (post-MVP).
 
 Primary use cases:
 - Decompile one function by memory image + architecture + entry address (ADR-001 resolved: Option A).
@@ -57,6 +59,12 @@ Primary use cases:
 Secondary (Next):
 - Batch execution over many functions with bounded resources.
 - Cross-platform parity (macOS/Windows).
+
+Post-MVP (Enriched Structured Output):
+- Extract pcode intermediate representation sequences for custom analysis pipelines.
+- Access varnode data flow graphs as frozen Python value types for binary similarity computation (e.g., BSim reimplementation with custom hyperparameters and feature vectors).
+- Build binary diffing pipelines using normalized function representations (pcode sequences, control flow graph edges, varnode topology).
+- Perform semantic analysis or taint tracking over structured decompiler output without requiring knowledge of Ghidra C++ internals.
 
 ## 3. Public Python API Contract
 
@@ -578,6 +586,16 @@ Extensibility:
 - Batch decompilation APIs.
 - Cross-platform host parity (macOS/Windows).
 - Extended fixture coverage for non-priority Ghidra-supported ISAs beyond the MVP set.
+- Enriched structured output: expose pcode operations and varnode data flow graphs
+  as frozen Python value types within `FunctionInfo`, enabling custom analysis
+  without direct access to Ghidra C++ internals. Pcode is a documented Ghidra IR
+  with a stable opcode table and formal Sleigh-specification semantics, not an
+  unstable internal. Varnodes are extracted as frozen data (space, offset, size,
+  opcode linkage) at the bridge boundary, not as live C++ object handles.
+  Target use cases include: BSim-style binary similarity with user-defined
+  hyperparameters/feature vectors, binary diffing via normalized function
+  fingerprints, data flow and taint analysis over use-def chains, and semantic
+  understanding pipelines. Design requires ADR-012.
 
 ## 9. Open Questions
 

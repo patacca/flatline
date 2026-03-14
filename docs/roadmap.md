@@ -24,6 +24,7 @@ Product policy:
 | P4 | Stabilization and regression control | P3 complete | Determinism/perf regression gates enforced in CI for pinned matrix |
 | P5 | Initial public release | P4 complete | Release notes include contract guarantees, support tiers / known variant limits, and upgrade policy |
 | P6 | Cross-platform expansion | P5 complete | macOS and Windows feasibility validated with equivalent contract coverage |
+| P7 | Enriched structured output | P5 complete | Pcode ops and varnode graphs exposed as frozen Python types; at least one downstream use case (similarity, diffing, or data flow) validated end-to-end |
 
 ## 2. Detailed Milestone Gates
 
@@ -84,6 +85,15 @@ and release activities require distinct checkpoints.
 - Exit checks:
 - platform-specific risk register entries are closed or accepted
 
+### M6: Enriched output readiness (post-MVP)
+- Inputs:
+- ADR-012 design decision on pcode/varnode representation and extraction strategy
+- frozen Python types for pcode operations and varnode data flow graphs
+- Exit checks:
+- pcode ops and varnode graphs extracted at bridge boundary as frozen value types, no live C++ handles cross ABI
+- at least one real-usage scenario (BSim-style similarity, binary diffing, or data flow analysis) demonstrated end-to-end
+- enriched output fields integrated into `FunctionInfo` or a dedicated companion type under the existing `DecompileResult` contract
+
 ## 3. Risk Register
 
 | Risk | Likelihood | Impact | Mitigation | Trigger/monitor |
@@ -112,6 +122,7 @@ and release activities require distinct checkpoints.
 | ADR-006 Logging and Diagnostics | Which diagnostic fields are emitted by default? **Decided:** P2 emits diagnostics only through startup/runtime-data `RuntimeWarning` messages and structured `WarningItem` / `ErrorItem` payloads. Diagnostic text may include full filesystem paths for debuggability; raw memory-image bytes are never emitted. No path redaction is applied because flatline is a library running in the caller's own process. No general-purpose logging sink is exposed in P2. | End of P2 (decided) |
 | ADR-007 License Compliance Process | What release-time checks are mandatory for redistribution? **Decided:** releases must ship root `LICENSE` and `NOTICE`, keep the pinned Ghidra source attribution and `ghidra-sleigh == 12.0.4` dependency pin recorded in `docs/compliance.md`, and pass `python -m flatline._compliance` before tagging. | End of P3 (decided) |
 | ADR-008 Cross-Platform Order | macOS-first or Windows-first after Linux host MVP? | Start of P6 |
+| ADR-012 Enriched Output Design | What pcode/varnode representation do frozen Python types expose, and at which decompilation stage is data extracted? Covers opcode table mapping, varnode graph topology (inputs/outputs/def-use edges), extraction point in the action pipeline (pre- vs post-simplification), and whether enriched data lives inside `FunctionInfo` or a separate companion type. Target use cases: BSim-style similarity with custom hyperparameters, binary diffing, data flow / taint analysis, semantic understanding. | Start of P7 |
 | ADR-009 ISA Variant Scope | Which ISA variants (e.g., Thumb/Thumb-2, microMIPS, RV32 vs RV64 extensions) are in-scope for priority fixture coverage vs best-effort? **Decided: x86 has both 32-bit and 64-bit fixture coverage; other ISA families have one representative variant each — ARM64 (AArch64), RISC-V 64, MIPS32 — for diverse bitwidth coverage.** Other variants (ARM32/Thumb, RV32, MIPS64, microMIPS) are best-effort with no dedicated fixtures. See `tests/specs/fixtures.md` §1. | End of P1 (decided) |
 | ADR-010 Runtime Data Packaging | How are compiled `.sla` and runtime data files packaged and distributed? **Decided: separate `ghidra-sleigh` pip package** (import `ghidra_sleigh`). It builds `sleighc` from Ghidra C++ sources at package build time, compiles `.sla` files ahead of use, ships them as package data, and exposes `ghidra_sleigh.get_runtime_data_dir()` for consumers. ADR-004 now defines flatline's default dependency-backed asset policy on top of this mechanism. See `patacca/ghidra-sleigh`. | Start of P2 (decided) |
 | ADR-011 Setup Failure Taxonomy | How should user-fixable install/startup/runtime-data failures be classified? **Decided:** expose `configuration_error` for missing/bad `runtime_data_dir`, unavailable default `ghidra-sleigh` runtime data, and other user-fixable setup failures; reserve `internal_error` for unexpected flatline/bridge/native bugs. | P3 (decided) |
