@@ -9,10 +9,18 @@ exercise the installed artifact instead of `PYTHONPATH=src`.
 
 ## Running the suite
 
-- `source .venv/bin/activate && tox`: all configured test and lint envs.
-- `source .venv/bin/activate && tox -e py313,py314`: tests only.
+- `source .venv/bin/activate && tox`: all configured test and lint envs (including dev-only).
+- `source .venv/bin/activate && tox -e py313,py314`: tests only (against installed wheel; dev-only tests skip).
+- `source .venv/bin/activate && tox -e dev`: dev-only tests (compliance, footprint, release workflow, artifact audit).
 - `source .venv/bin/activate && tox -e py313,py314 -- -m requires_native`: native-only coverage against the installed wheel artifact.
 - `source .venv/bin/activate && tox -e lint`: Ruff only.
+
+### Dev-only tests
+
+Four test files exercise dev-only modules (`_compliance`, `_footprint`, `_release`, `_artifacts`)
+that are excluded from wheel and sdist artifacts. The `dev` tox env runs them against the source
+tree via `PYTHONPATH=src` (no wheel build). Under `py313`/`py314` these tests skip gracefully
+because `pytest.importorskip` cannot find the modules in the installed wheel.
 
 ## Layout
 

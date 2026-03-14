@@ -13,8 +13,8 @@ from tests._native_fixtures import (
 pytestmark = pytest.mark.requires_native
 
 
-def test_native_decompile_path_is_not_stub(native_runtime_data_dir: str) -> None:
-    """The native bridge decompiles a real function, not a skeleton response."""
+def test_u011_native_bridge_produces_real_decompile_result(native_runtime_data_dir: str) -> None:
+    """U-011: The native bridge decompiles a real function, not a skeleton response."""
     fixture = get_native_fixture("fx_add_elf64")
 
     with open_native_session(native_runtime_data_dir) as session:

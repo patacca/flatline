@@ -49,10 +49,10 @@ def _make_valid_runtime_data(runtime_dir: Path) -> None:
     )
 
 
-def test_runtime_data_enumeration_skips_malformed_ldefs_when_valid_pairs_exist(
+def test_u015_malformed_ldefs_skipped_when_valid_pairs_exist(
     tmp_path: Path,
 ) -> None:
-    """Malformed `.ldefs` are skipped when valid files provide pairs."""
+    """U-015: Malformed .ldefs are skipped when valid files provide pairs."""
     runtime_dir = tmp_path / "runtime_data"
     _make_valid_runtime_data(runtime_dir)
     (runtime_dir / "languages" / "bad.ldefs").write_text("", encoding="ascii")
@@ -66,10 +66,10 @@ def test_runtime_data_enumeration_skips_malformed_ldefs_when_valid_pairs_exist(
     assert str(runtime_dir / "languages" / "bad.ldefs") in warning_message
 
 
-def test_runtime_data_enumeration_raises_when_only_malformed_ldefs_exist(
+def test_u015_malformed_ldefs_raise_when_all_files_malformed(
     tmp_path: Path,
 ) -> None:
-    """All-malformed `.ldefs` files produce deterministic `ConfigurationError`."""
+    """U-015: All-malformed .ldefs files produce deterministic ConfigurationError."""
     runtime_dir = tmp_path / "runtime_data"
     languages_dir = runtime_dir / "languages"
     languages_dir.mkdir(parents=True)
@@ -85,13 +85,13 @@ def test_runtime_data_enumeration_raises_when_only_malformed_ldefs_exist(
     assert str(runtime_dir / "languages" / "bad2.ldefs") in error_message
 
 
-def test_runtime_data_enumeration_returns_empty_list_for_none_runtime_dir() -> None:
-    """`runtime_data_dir=None` keeps returning an empty pair list."""
+def test_u013_enumeration_returns_empty_for_none_runtime_dir() -> None:
+    """U-013: runtime_data_dir=None keeps returning an empty pair list."""
     assert enumerate_runtime_data_language_compilers(None) == []
 
 
-def test_runtime_data_enumeration_rejects_missing_runtime_dir(tmp_path: Path) -> None:
-    """Missing runtime-data directory remains a deterministic startup error."""
+def test_u014_enumeration_rejects_missing_runtime_data_dir(tmp_path: Path) -> None:
+    """U-014: Missing runtime-data directory remains a deterministic startup error."""
     missing_runtime_dir = tmp_path / "does-not-exist"
 
     with pytest.raises(ConfigurationError) as exc_info:
@@ -102,11 +102,11 @@ def test_runtime_data_enumeration_rejects_missing_runtime_dir(tmp_path: Path) ->
     assert str(missing_runtime_dir) in error_message
 
 
-def test_runtime_data_resolution_uses_compatible_ghidra_sleigh_default(
+def test_u016_default_discovery_uses_compatible_ghidra_sleigh(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    """Compatible ghidra-sleigh installs become the public default runtime-data root."""
+    """U-016: Compatible ghidra-sleigh installs become the public default runtime-data root."""
     runtime_dir = tmp_path / "runtime_data"
     runtime_dir.mkdir()
     ghidra_sleigh_module = _GhidraSleighModuleDouble(runtime_dir)
@@ -119,11 +119,11 @@ def test_runtime_data_resolution_uses_compatible_ghidra_sleigh_default(
     assert resolve_session_runtime_data_dir(None) == str(runtime_dir)
 
 
-def test_runtime_data_resolution_warns_on_default_pin_mismatch(
+def test_u016_default_discovery_warns_on_pin_mismatch(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    """Auto-discovered defaults stay usable but warn on upstream-pin drift."""
+    """U-016: Auto-discovered defaults stay usable but warn on upstream-pin drift."""
     runtime_dir = tmp_path / "runtime_data"
     runtime_dir.mkdir()
     ghidra_sleigh_module = _GhidraSleighModuleDouble(
@@ -143,10 +143,10 @@ def test_runtime_data_resolution_warns_on_default_pin_mismatch(
     assert resolved_runtime_dir == str(runtime_dir)
 
 
-def test_runtime_data_resolution_rejects_missing_packaged_default(
+def test_u016_default_discovery_rejects_missing_dependency(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Omitted runtime_data_dir is a startup error when the dependency is absent."""
+    """U-016: Omitted runtime_data_dir is a startup error when the dependency is absent."""
 
     def _raise_import_error(_: str) -> Path:
         raise ImportError("module not found")
@@ -159,11 +159,11 @@ def test_runtime_data_resolution_rejects_missing_packaged_default(
     assert "flatline requires ghidra-sleigh" in exc_info.value.message
 
 
-def test_runtime_data_resolution_preserves_explicit_override(
+def test_u016_explicit_override_bypasses_default_discovery(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    """Explicit runtime-data overrides bypass ghidra-sleigh auto-discovery."""
+    """U-016: Explicit runtime-data overrides bypass ghidra-sleigh auto-discovery."""
     runtime_dir = tmp_path / "runtime_data"
     runtime_dir.mkdir()
 

@@ -35,4 +35,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Renamed project from ghidralib to flatline repo-wide
-- Repository agent instructions now live in `AGENTS.md`
+- Repository agent instructions now live in `AGENTS.md` / `CLAUDE.md`

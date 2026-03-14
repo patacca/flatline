@@ -54,8 +54,9 @@ pin, flatline emits a runtime warning instead of silently switching baselines.
 Real decompilation requires the native bridge -- a compiled C++ extension
 (`flatline._flatline_native`) that links against the Ghidra decompiler library.
 Without it the Python API is fully importable, but every `decompile_function`
-call returns an `internal_error` result and `list_language_compilers` returns
-an empty list.
+call returns a `configuration_error` result.  `list_language_compilers` still
+returns runtime-data pairs discovered from the installed `ghidra-sleigh`
+package.
 
 The build has three modes, controlled by the `native_bridge` Meson option:
 

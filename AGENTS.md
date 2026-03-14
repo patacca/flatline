@@ -123,18 +123,19 @@
 - **Build wheel:** `python -m build`
 - **Footprint report:** `python -m flatline._footprint`
 - **Artifact audit:** `python -m flatline._artifacts dist`
-- **All checks:** `tox` (envs: `py313`, `py314`, `lint`)
+- **All checks:** `tox` (envs: `py313`, `py314`, `dev`, `lint`)
 - **Tests only:** `tox -e py313,py314`
+- **Dev-only tests:** `tox -e dev` (compliance, footprint, release workflow, artifact audit — runs against source tree, not wheel)
 - **Lint only:** `tox -e lint`
 - **Native tests:** `tox -e py313,py314 -- -m requires_native`
 - **Single category:** `tox -e py313,py314 -- -m unit` (also: `contract`, `integration`, `regression`, `negative`)
 - **Single file:** `tox -e py313,py314 -- tests/unit/test_models.py`
 - **Single test:** `tox -e py313,py314 -- tests/unit/test_models.py::test_name -v`
-- Tox: `py313`/`py314` build and install `flatline[test]` wheels in `.tox`; `lint` skips package install and runs `ruff` directly. `skip_missing_interpreters = true`.
+- Tox: `py313`/`py314` build and install `flatline[test]` wheels in `.tox`; `dev` skips package install and uses `PYTHONPATH=src` to test dev-only modules against the source tree; `lint` skips package install and runs `ruff` directly. `skip_missing_interpreters = true`.
 - `ghidra-sleigh` source-build details live in its own repo; use its documented Meson options there, not from this workspace.
 
 # Tests
-- `tox`: `py314` passes 67 tests and skips 4 dev-only files (34 unit + 6 contract + 10 integration + 12 regression + 5 negative passed; 9 dev-only unit tests across 4 files skip because their modules are excluded from wheels) against the installed wheel artifact; `py313` skips when `python3.13` is absent. Full 76-test suite (43 unit including 9 dev-only) runs only from an editable install.
+- `tox`: `py314` passes 67 tests and skips 4 dev-only files against the installed wheel artifact; `dev` passes the 9 dev-only unit tests against the source tree via `PYTHONPATH=src`; `py313` skips when `python3.13` is absent. Combined `py314` + `dev` covers the full 76-test suite.
 - Native tests expect compiled `.sla` data from the installed `ghidra-sleigh` runtime dependency, currently covering DATA, x86, AARCH64, RISCV, and MIPS.
 - Native tox runs still resolve runtime data from `ghidra_sleigh.get_runtime_data_dir()` explicitly; public `DecompilerSession` startup now auto-discovers that default path when `runtime_data_dir` is omitted, and `DecompileRequest` / `DecompilerSession` coerce path-like `runtime_data_dir` inputs to strings.
 - `tests/conftest.py` — auto-applies category markers from directory names.
