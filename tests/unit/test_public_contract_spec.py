@@ -162,7 +162,7 @@ def test_u003_result_metadata_required_keys():
     required_keys = {"decompiler_version", "language_id", "compiler_spec", "diagnostics"}
 
     metadata = {
-        "decompiler_version": "0.1.0-dev",
+        "decompiler_version": "0.1.0.dev0",
         "language_id": "x86:LE:64:default",
         "compiler_spec": "gcc",
         "diagnostics": {},
@@ -185,7 +185,7 @@ def test_u003_result_metadata_required_keys():
 
     # Error-path result also carries metadata
     error_metadata = {
-        "decompiler_version": "0.1.0-dev",
+        "decompiler_version": "0.1.0.dev0",
         "language_id": "x86:LE:64:default",
         "compiler_spec": "gcc",
         "diagnostics": {},

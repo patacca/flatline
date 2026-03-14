@@ -40,7 +40,7 @@ class _FakeBridgeSession:
                 retryable=False,
             ),
             metadata={
-                "decompiler_version": "0.1.0-dev",
+                "decompiler_version": "0.1.0.dev0",
                 "language_id": request.language_id,
                 "compiler_spec": request.compiler_spec or "",
                 "diagnostics": {},
