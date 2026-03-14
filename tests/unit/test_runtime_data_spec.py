@@ -62,7 +62,8 @@ def test_runtime_data_enumeration_skips_malformed_ldefs_when_valid_pairs_exist(
 
     assert pairs == [LanguageCompilerPair(language_id="x86:LE:64:default", compiler_spec="gcc")]
     assert len(warning_records) == 1
-    assert "bad.ldefs" in str(warning_records[0].message)
+    warning_message = str(warning_records[0].message)
+    assert str(runtime_dir / "languages" / "bad.ldefs") in warning_message
 
 
 def test_runtime_data_enumeration_raises_when_only_malformed_ldefs_exist(
@@ -78,9 +79,10 @@ def test_runtime_data_enumeration_raises_when_only_malformed_ldefs_exist(
     with pytest.raises(InternalError) as exc_info:
         enumerate_runtime_data_language_compilers(str(runtime_dir))
 
-    assert "No valid language/compiler pairs found" in exc_info.value.message
-    assert "bad1.ldefs" in exc_info.value.message
-    assert "bad2.ldefs" in exc_info.value.message
+    error_message = exc_info.value.message
+    assert "No valid language/compiler pairs found" in error_message
+    assert str(runtime_dir / "languages" / "bad1.ldefs") in error_message
+    assert str(runtime_dir / "languages" / "bad2.ldefs") in error_message
 
 
 def test_runtime_data_enumeration_returns_empty_list_for_none_runtime_dir() -> None:
@@ -95,7 +97,9 @@ def test_runtime_data_enumeration_rejects_missing_runtime_dir(tmp_path: Path) ->
     with pytest.raises(InternalError) as exc_info:
         enumerate_runtime_data_language_compilers(str(missing_runtime_dir))
 
-    assert "runtime_data_dir does not exist" in exc_info.value.message
+    error_message = exc_info.value.message
+    assert "runtime_data_dir does not exist" in error_message
+    assert str(missing_runtime_dir) in error_message
 
 
 def test_runtime_data_resolution_uses_compatible_ghidra_sleigh_default(

@@ -100,7 +100,7 @@ class _NativeSessionFailureDouble:
         return [("x86:LE:64:default", "gcc")]
 
     def decompile_function(self, request_payload: dict[str, Any]) -> dict[str, Any]:
-        raise RuntimeError("native bridge failure")
+        raise RuntimeError("native bridge failure at /tmp/native/session.log")
 
     def close(self) -> None:
         return None
@@ -383,6 +383,7 @@ def test_u012_bridge_session_normalizes_native_exceptions(monkeypatch: pytest.Mo
     assert result.error is not None
     assert result.error.category == "internal_error"
     assert "native bridge failure" in result.error.message
+    assert "/tmp/native/session.log" in result.error.message
     assert result.function_info is None
     assert result.c_code is None
     assert result.metadata["language_id"] == request.language_id
@@ -451,4 +452,6 @@ def test_u014_bridge_rejects_missing_runtime_data_dir(
     with pytest.raises(InternalError) as exc_info:
         bridge_module.create_bridge_session(runtime_data_dir=str(missing_dir))
 
-    assert "runtime_data_dir does not exist" in exc_info.value.message
+    error_message = exc_info.value.message
+    assert "runtime_data_dir does not exist" in error_message
+    assert str(missing_dir) in error_message

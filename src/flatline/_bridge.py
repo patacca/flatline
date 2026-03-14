@@ -112,7 +112,9 @@ class _NativeBridgeSession:
                 return native_pairs
             return list(self._runtime_data_pairs)
         except Exception as exc:  # pragma: no cover - exercised with bridge doubles
-            raise InternalError(f"native list_language_compilers failed: {exc}") from exc
+            raise InternalError(
+                f"native list_language_compilers failed: {exc}"
+            ) from exc
 
     def decompile_function(self, request: DecompileRequest) -> DecompileResult:
         request_payload = _request_to_native_payload(request)
@@ -123,7 +125,10 @@ class _NativeBridgeSession:
             raw_result = self._native_session.decompile_function(request_payload)
             return _coerce_decompile_result(raw_result, request)
         except Exception as exc:
-            return _internal_error_result(request, f"native decompile failed: {exc}")
+            return _internal_error_result(
+                request,
+                f"native decompile failed: {exc}",
+            )
 
     def _validate_target_selection(self, request: DecompileRequest) -> DecompileResult | None:
         known_pairs = self.list_language_compilers()
@@ -602,7 +607,9 @@ def create_bridge_session(runtime_data_dir: str | None = None) -> BridgeSession:
     try:
         native_session = native_bridge.create_session(normalized_runtime_data_dir)
     except Exception as exc:
-        raise InternalError(f"native bridge session startup failed: {exc}") from exc
+        raise InternalError(
+            f"native bridge session startup failed: {exc}"
+        ) from exc
     return _NativeBridgeSession(
         native_session,
         runtime_data_pairs=runtime_data_pairs,

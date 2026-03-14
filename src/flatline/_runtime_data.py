@@ -94,13 +94,13 @@ def enumerate_runtime_data_language_compilers(
         return []
 
     pair_tuples: set[tuple[str, str]] = set()
-    parse_failures: list[tuple[Path, str]] = []
+    parse_failures: list[str] = []
     ldefs_paths = sorted(runtime_path.rglob("*.ldefs"))
     for ldefs_path in ldefs_paths:
         file_pairs, parse_error = _pairs_from_ldefs_tolerant(ldefs_path)
         pair_tuples.update(file_pairs)
         if parse_error is not None:
-            parse_failures.append((ldefs_path, parse_error))
+            parse_failures.append(parse_error)
 
     if parse_failures and pair_tuples:
         warnings.warn(
@@ -133,9 +133,13 @@ def _validate_runtime_data_dir(runtime_data_dir: str | Path | None) -> Path | No
         return None
     runtime_path = Path(runtime_data_dir)
     if not runtime_path.exists():
-        raise InternalError(f"runtime_data_dir does not exist: {runtime_data_dir!r}")
+        raise InternalError(
+            f"runtime_data_dir does not exist: {runtime_data_dir}"
+        )
     if not runtime_path.is_dir():
-        raise InternalError(f"runtime_data_dir is not a directory: {runtime_data_dir!r}")
+        raise InternalError(
+            f"runtime_data_dir is not a directory: {runtime_data_dir}"
+        )
     return runtime_path
 
 
@@ -169,9 +173,9 @@ def _pairs_from_ldefs(ldefs_path: Path) -> set[tuple[str, str]]:
     return pair_tuples
 
 
-def _format_parse_failure_summary(parse_failures: list[tuple[Path, str]]) -> str:
+def _format_parse_failure_summary(parse_failures: list[str]) -> str:
     preview_failures = parse_failures[:_MAX_PARSE_FAILURE_PREVIEW]
-    parts = [f"{path}: {message}" for path, message in preview_failures]
+    parts = list(preview_failures)
     remaining_count = len(parse_failures) - len(preview_failures)
     if remaining_count > 0:
         parts.append(f"... and {remaining_count} more")

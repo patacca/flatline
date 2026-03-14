@@ -201,12 +201,12 @@ mechanisms.
 
 `WarningItem` fields:
 - `code: str` — stable warning code using hierarchical namespace (`<phase>.<code>`, e.g., `analyze.W001`); stable across patch/minor releases; initial code enumeration deferred to P2 implementation
-- `message: str` — human-readable warning text (informative, not exact-match stable)
+- `message: str` — human-readable warning text (informative, not exact-match stable); may include full filesystem paths for debuggability
 - `phase: str` — phase that produced the warning (`init`, `analyze`, `emit`)
 
 `ErrorItem` fields:
 - `category: str` — stable error category (`invalid_argument`, `unsupported_target`, `invalid_address`, `decompile_failed`, `internal_error`)
-- `message: str` — human-readable error text (informative, not exact-match stable)
+- `message: str` — human-readable error text (informative, not exact-match stable); may include full filesystem paths for debuggability
 - `retryable: bool` — whether the operation may succeed on retry with the same inputs
 
 `VersionInfo` fields:
@@ -238,6 +238,7 @@ Rules:
 - Omitting `runtime_data_dir` when the `ghidra-sleigh` dependency is unavailable is a hard startup error. Error category: `internal_error`.
 - Calling session operations after `DecompilerSession.close()` is a hard error. Error category: `invalid_argument`.
 - Error categories are contract-stable; text may change but remains human-readable.
+- Public warning/error text may include full filesystem paths for debuggability; raw memory-image bytes must never be emitted in diagnostics.
 - Warning-only outcomes must still return successful operation status when C output is valid.
 - When `error` is set, `function_info` is always `None` and `c_code` is always `None`.
 - When decompilation succeeds, `function_info` is always populated (never `None`).
@@ -529,8 +530,11 @@ Security boundaries:
   a compatible cancellation mechanism.
 
 Logging and diagnostics:
-- Structured log events by phase (`startup`, `resolve`, `analyze`, `emit`).
-- Redaction policy for filesystem paths configurable by user.
+- P2 does not expose a general-purpose structured logging sink or user-configurable redaction controls.
+- Public diagnostics are emitted only through startup/runtime-data `RuntimeWarning` messages and structured `WarningItem` / `ErrorItem` payloads.
+- `WarningItem.phase` remains the public phase enum (`init`, `analyze`, `emit`); startup/runtime-data discovery warnings stay outside that enum because they are emitted before result construction.
+- Diagnostic text may include stable identifiers (warning code, error category, phase, language/compiler ids, upstream tag/commit), aggregate counts, filenames, and full filesystem paths.
+- Raw request bytes and memory-image contents are never emitted in diagnostics.
 
 Configuration:
 - Explicit runtime data dir override.
@@ -580,6 +584,7 @@ Resolved:
 - ~~Should the runtime data package bundle all Ghidra-supported ISA assets or only the priority set (x86, ARM, RISC-V, MIPS), with an extension mechanism for others?~~ **Resolved (ADR-010):** `ghidra-sleigh` defaults to shipping compiled runtime data for all Ghidra processor families and also supports a lighter major-ISA build via `all_processors=false`. ADR-004 now defines flatline's default policy as depending on the full install while leaving lighter builds as explicit overrides.
 - ~~Should ISA-specific Sleigh compilation (`.sla` files) happen at build time or install time?~~ **Resolved (ADR-010):** Build time. `ghidra-sleigh` builds `sleighc` from Ghidra C++ sources and ships the compiled `.sla` outputs as package data.
 - ~~Should analysis-budget defaults vary by platform or target ISA, or remain globally fixed?~~ **Resolved (ADR-005):** P2 uses a single fixed default, `AnalysisBudget(max_instructions=100000)`, across the Linux MVP matrix. Callers may override `max_instructions` per request; wall-clock timeout remains out of scope until the upstream callable surface exposes a compatible cancellation mechanism.
+- ~~Which diagnostic fields are emitted and redacted by default?~~ **Resolved (ADR-006):** P2 emits diagnostics only through startup/runtime-data `RuntimeWarning` messages plus structured `WarningItem` / `ErrorItem` results. Diagnostic text may include full filesystem paths for debuggability; raw memory-image bytes are never emitted. No path redaction is applied because flatline is a library running in the caller's own process, and its target personas (reverse engineers, security engineers, CI operators) benefit from full paths for troubleshooting.
 
 Open:
 - Should warning codes be globally namespaced now to prevent future collisions? (Initial codes will be defined during P2 implementation.)

@@ -18,10 +18,10 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 | U-009 | Validate session-to-bridge delegation | None | Use a bridge test double and call list/decompile through session | Session forwards calls and request payload unchanged | Delegation oracle | Bridge call shape is stable |
 | U-010 | Validate missing native-module fallback | None | Simulate native extension import failure when creating bridge session | Deterministic fallback bridge is selected | Runtime-selection oracle | Missing native extension does not crash import path |
 | U-011 | Validate native bridge payload adaptation | None | Feed tuple/dict-shaped native payloads through bridge adapter | Public API receives `LanguageCompilerPair` and `DecompileResult` objects with expected values | Boundary-shape oracle | Bridge enforces stable Python value types at the boundary |
-| U-012 | Validate native exception normalization | None | Simulate native exception during decompile | Returns structured `internal_error` result (no leaked native exception) | Error-envelope oracle | Native bridge failures are deterministic and contract-shaped |
+| U-012 | Validate native exception normalization | None | Simulate native exception during decompile | Returns structured `internal_error` result (no leaked native exception) and redacts absolute filesystem paths from the public message | Error-envelope oracle | Native bridge failures are deterministic and contract-shaped |
 | U-013 | Validate runtime-data-backed language/compiler enumeration fallback | Synthetic runtime-data fixture (`.ldefs` + `.cspec`) | Enumerate pairs through bridge when native enumeration is unavailable/empty | Returns only valid `(language_id, compiler_spec)` pairs with existing backing spec files; native decompile validation uses the fallback pair set | Runtime-data enumeration oracle | Pair selection is deterministic and excludes entries with missing backing assets |
-| U-014 | Validate startup rejection for missing runtime_data_dir | None | Start bridge session with a non-existent `runtime_data_dir` | Deterministic startup failure with structured `internal_error` exception | Startup-path oracle | Missing runtime-data path never degrades to an empty/implicit default |
-| U-015 | Validate tolerant malformed `.ldefs` behavior | Synthetic runtime-data fixture (valid + malformed `.ldefs`) | Enumerate pairs from a runtime-data root containing both valid and malformed `.ldefs` files | Returns valid pairs, emits one warning for skipped malformed files; raises deterministic startup failure only when all `.ldefs` files are malformed | Runtime-data parse-tolerance oracle | Pair ordering deterministic; malformed-file observability stable |
+| U-014 | Validate startup rejection for missing runtime_data_dir | None | Start bridge session with a non-existent `runtime_data_dir` | Deterministic startup failure with structured `internal_error` exception and a redacted path placeholder | Startup-path oracle | Missing runtime-data path never degrades to an empty/implicit default |
+| U-015 | Validate tolerant malformed `.ldefs` behavior | Synthetic runtime-data fixture (valid + malformed `.ldefs`) | Enumerate pairs from a runtime-data root containing both valid and malformed `.ldefs` files | Returns valid pairs, emits one warning for skipped malformed files with redacted paths; raises deterministic startup failure only when all `.ldefs` files are malformed | Runtime-data parse-tolerance oracle | Pair ordering deterministic; malformed-file observability stable |
 | U-016 | Validate dependency-backed default runtime-data discovery | Installed `ghidra-sleigh` package or module double | Start a public session with omitted `runtime_data_dir`; also exercise explicit overrides and advertised upstream-pin drift | Auto-discovers `ghidra_sleigh.get_runtime_data_dir()` for the default path, preserves explicit overrides, warns on auto-discovered pin mismatch, and fails deterministically only when the dependency is unavailable | Default-runtime resolution oracle | Default runtime-data discovery is deterministic and pin drift is never silent |
 
 ## 2. Contract Tests
@@ -96,6 +96,7 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 | §3.4 Empty memory → hard error | `invalid_argument` | U-001, N-005 |
 | §3.4 Invalid `analysis_budget` input | Unsupported fields/non-positive limits are `invalid_argument` | U-006 |
 | §3.4 Missing default runtime dependency / auto-discovered pin drift | Missing dependency is a startup error; pin mismatch is warning-observable | U-016 |
+| §3.4 Diagnostic redaction policy | Absolute filesystem paths are redacted from public diagnostics; raw memory bytes never emitted | U-012, U-014, U-015 |
 | §3.4 Error categories stable | Category names invariant across minor/patch | C-002 |
 | §3.4 Warning-only → successful status | c_code valid, error None, function_info populated | I-007 |
 | §3.4 Error set → function_info=None, c_code=None | Error model invariant | N-001, N-002, N-003, N-005 |
@@ -116,6 +117,7 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 - Post-decompile structured data (FunctionInfo, prototype, symbols, types): `notes/api/decompiler_inventory.md` §§1-7.
 - Public contract, runtime-data policy, and error semantics: `docs/specs.md`.
 - Structured result object definitions: `docs/specs.md` §3.3.
+- Diagnostic redaction policy and public warning/error surfaces: `docs/specs.md` §3.4 and §7.
 - Milestones and release gates for deterministic behavior: `docs/roadmap.md`.
 - Startup/minimal-load, known-function, invalid-address, and jump-table expectations are consolidated into this catalog from baseline experiment findings.
 - Error category definitions and stability rules: `docs/specs.md` §3.4.
