@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Protocol
 from flatline._errors import ERROR_CATEGORIES, InternalError
 from flatline._models import (
     VALID_WARNING_PHASES,
+    AnalysisBudget,
     CallSiteInfo,
     DecompileResult,
     DiagnosticFlags,
@@ -163,7 +164,17 @@ def _request_to_native_payload(request: DecompileRequest) -> dict[str, Any]:
         "compiler_spec": request.compiler_spec,
         "runtime_data_dir": request.runtime_data_dir,
         "function_size_hint": request.function_size_hint,
-        "analysis_budget": request.analysis_budget,
+        "analysis_budget": _analysis_budget_to_native_payload(request.analysis_budget),
+    }
+
+
+def _analysis_budget_to_native_payload(
+    budget: AnalysisBudget | None,
+) -> dict[str, int] | None:
+    if budget is None:
+        return None
+    return {
+        "max_instructions": budget.max_instructions,
     }
 
 

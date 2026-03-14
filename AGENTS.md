@@ -12,10 +12,11 @@
 - Fixture sources now live beside the artifacts under `tests/fixtures/sources/`, with regeneration scripted in `tests/fixtures/generate_hex_fixtures.py`.
 - Tox now tests the installed package artifact: `py313`/`py314` build `flatline[test]` wheels inside `.tox`, while `lint` remains package-skip + `ruff`.
 - Public sessions now auto-discover `ghidra_sleigh.get_runtime_data_dir()` when `runtime_data_dir` is omitted; explicit `runtime_data_dir` values still override the default, and auto-discovered Ghidra pin drift is surfaced as a runtime warning.
+- ADR-005 is now resolved: `AnalysisBudget` is a public frozen value type, omitted requests default to `max_instructions=100000`, mapping inputs are coerced/validated in `DecompileRequest`, and the native bridge applies the resolved cap to `Architecture::max_instructions`. Unsupported budget keys or non-positive limits fail as `invalid_argument`; wall-clock timeout remains out of scope for P2.
 - Native regression baselines now include fixture-backed warm-session p95 budgets for `fx_add_elf64`, `fx_add_elf32`, `fx_add_arm64`, `fx_add_riscv64`, `fx_add_mips32`, and `fx_switch_elf64`; the switch regression also asserts recovered switch site `0x1009` plus its 9 target addresses.
 - `docs/roadmap.md` M2 wording now explicitly distinguishes per-ISA known-function fixtures from the single committed x86_64 jump-table fixture, and tracks the switch fixture's latency budget separately from the priority-ISA perf budgets.
 - `CHANGELOG.md` exists at the repo root, follows Keep a Changelog, and must be updated for every release.
-- **Next:** resolve the remaining end-of-P2 policy/spec gaps, starting with ADR-005 analysis-budget defaults (and likely ADR-006 logging/redaction policy).
+- **Next:** resolve the remaining end-of-P2 policy/spec gaps, starting with ADR-006 logging/redaction policy.
 - Not a general Ghidra automation framework; decompiler surface only. No UI, no project DB.
 
 # Architecture (3-layer adapter)
@@ -44,9 +45,10 @@
 - **ADR-002 (Bridge Surface): nanobind C++ extension.** Public API stable; bridge internal.
 - **ADR-003 (Determinism Oracle): Normalized token/structure comparison**, not canonical text.
 - **ADR-004 (Runtime Asset Policy):** Flatline depends on `ghidra-sleigh` for its default runtime-data UX, auto-discovers the installed package when `runtime_data_dir` is omitted, expects the full multi-ISA install by default, and keeps lighter/custom runtime-data roots behind explicit `runtime_data_dir` overrides. No second flatline-side size gate in P2; auto-discovered upstream pin drift emits a warning instead of silently switching baselines.
+- **ADR-005 (Analysis Budget Defaults):** Flatline applies a fixed per-request `AnalysisBudget(max_instructions=100000)` default across the Linux MVP matrix, callers may override `max_instructions` explicitly, and the native bridge wires the resolved value into `Architecture::max_instructions`. No wall-clock timeout is exposed in P2 because the pinned Ghidra callable surface does not provide a compatible cancellation hook.
 - **ADR-009 (ISA Variant Scope):** x86 32+64; ARM64, RISC-V 64, MIPS32; others best-effort.
 - **ADR-010 (Runtime Data Packaging):** Separate `ghidra-sleigh` pip package (repo `patacca/ghidra-sleigh`, import `ghidra_sleigh`). Builds `sleighc` at package build time, ships compiled `.sla` files as package data, and exposes `ghidra_sleigh.get_runtime_data_dir()`. Flatline now layers ADR-004's dependency-backed default policy on top of this mechanism.
-- ADR-005 through ADR-008: unresolved (`docs/roadmap.md`).
+- ADR-006 through ADR-008: unresolved (`docs/roadmap.md`).
 
 # Source of truth
 - `docs/specs.md` — SDD: API contract, data models, error taxonomy, cross-cutting requirements.
@@ -96,7 +98,7 @@
 - `ghidra-sleigh` source-build details live in its own repo; use its documented Meson options there, not from this workspace.
 
 # Tests
-- `tox`: `py314` passes all 62 tests (29 unit, 6 contract, 10 integration, 12 regression, 5 negative) against the installed wheel artifact; `py313` skips when `python3.13` is absent.
+- `tox`: `py314` passes all 64 tests (31 unit, 6 contract, 10 integration, 12 regression, 5 negative) against the installed wheel artifact; `py313` skips when `python3.13` is absent.
 - Native tests expect compiled `.sla` data from the installed `ghidra-sleigh` runtime dependency, currently covering DATA, x86, AARCH64, RISCV, and MIPS.
 - Native tox runs still resolve runtime data from `ghidra_sleigh.get_runtime_data_dir()` explicitly; public `DecompilerSession` startup now auto-discovers that default path when `runtime_data_dir` is omitted, and `DecompileRequest` / `DecompilerSession` coerce path-like `runtime_data_dir` inputs to strings.
 - `tests/conftest.py` — auto-applies category markers from directory names.
@@ -104,6 +106,7 @@
 - `tests/specs/fixtures.md` — 10 fixtures, oracle strategy, determinism rules.
 - `tests/unit/test_native_bridge_runtime_spec.py` — native smoke test uses committed x86_64 add fixture and the real Ghidra runtime-data root.
 - `tests/unit/test_runtime_data_spec.py` — `.ldefs` tolerance, dependency-backed default runtime-data discovery, and deterministic failure tests.
+- `tests/unit/test_public_contract_spec.py` and `tests/unit/test_bridge_adapter_spec.py` now lock the ADR-005 contract: default `AnalysisBudget(max_instructions=100000)`, mapping coercion/validation, and stable native payload serialization.
 - `tests/regression/test_regression_spec.py` — R-002 now asserts the committed switch-site baseline for `fx_switch_elf64`; R-003 now parameterizes warm-session p95 budgets across the priority-ISA add fixtures plus `fx_switch_elf64`.
 - `tests/integration/test_integration_spec.py`, `tests/regression/test_regression_spec.py`, and `tests/negative/test_negative_spec.py` now assert against committed native fixtures instead of spec-only skips.
 
@@ -114,6 +117,7 @@
 
 # Key data models (from specs.md)
 - `DecompileRequest` — `memory_image`, `base_address`, `function_address`, `language_id`, `compiler_spec`, `runtime_data_dir`, `function_size_hint`, `analysis_budget`.
+- `AnalysisBudget` — `max_instructions` (stable P2 field; default `100000` when omitted).
 - `DecompileResult` — decompiled C, structured `FunctionInfo`, warnings, error, metadata.
 - `FunctionInfo` — name, entry_address, size, is_complete, prototype, local_variables, call_sites, jump_tables, diagnostics, varnode_count.
 - `FunctionPrototype` — calling_convention, parameters, return_type, is_noreturn, has_this_pointer, recovery flags.

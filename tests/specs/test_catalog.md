@@ -12,7 +12,7 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 | U-003 | Validate metadata envelope shape | None | Build synthetic result object from adapter stub | Required metadata keys present | Key-presence oracle | Required keys invariant across releases |
 | U-004 | Validate function_size_hint passthrough | None | Build request with and without function_size_hint | Hint value is available to bridge layer; omission does not error | Presence/absence oracle | Advisory field; never causes hard error when omitted |
 | U-005 | Validate FunctionInfo fields from stub | None | Build synthetic FunctionInfo from adapter stub with known values | All required fields present with correct types; DiagnosticFlags aggregation correct | Field-presence + type oracle | Required fields invariant across releases |
-| U-006 | Validate analysis_budget passthrough | None | Build request with and without analysis_budget | Budget value is available to bridge layer; omission does not error | Presence/absence oracle | Advisory field; never causes hard error when omitted |
+| U-006 | Validate analysis_budget defaulting and validation | None | Build request with omitted, object, and mapping-based `analysis_budget` values; also try unsupported keys and invalid limits | Omitted requests default to the pinned instruction cap, supported inputs coerce to `AnalysisBudget`, and unsupported keys/non-positive limits fail with `invalid_argument` | Value-normalization + error-category oracle | Default budget is deterministic; unsupported fields never silently degrade |
 | U-007 | Validate session lifecycle semantics | None | Open/close a DecompilerSession via context manager and explicit close | Session closes deterministically and close() is idempotent | Lifecycle-state oracle | Closed state transitions are deterministic |
 | U-008 | Validate closed-session rejection behavior | None | Close session, then call list/decompile methods | Calls fail with `invalid_argument` | Error-category oracle | Closed session never performs bridge operations |
 | U-009 | Validate session-to-bridge delegation | None | Use a bridge test double and call list/decompile through session | Session forwards calls and request payload unchanged | Delegation oracle | Bridge call shape is stable |
@@ -79,7 +79,8 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 | §3.3 DecompileRequest `compiler_spec` validation | Unknown compiler → hard error | U-002, N-003 |
 | §3.3 DecompileRequest `runtime_data_dir` | Omission uses dependency-backed default; explicit values remain overrides | U-016 |
 | §3.3 DecompileRequest `function_size_hint` | Advisory; omission not an error | U-004 |
-| §3.3 DecompileRequest `analysis_budget` | Advisory; omission not an error | U-006 |
+| §3.3 DecompileRequest `analysis_budget` | Omission resolves to the pinned default budget; supported inputs normalize deterministically | U-006, U-011 |
+| §3.3 `AnalysisBudget` | `max_instructions` is the stable budget field for P2 | U-006, C-004 |
 | §3.3 DecompileResult metadata keys | Required top-level keys always present | U-003, C-001 |
 | §3.3 FunctionInfo fields + types | Required fields present, correct types, diagnostics consistent | U-005, I-005, C-004 |
 | §3.3 FunctionPrototype fields | Calling convention, parameters, return type, flags | C-004, I-005 |
@@ -93,6 +94,7 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 | §3.4 Unknown language → hard error | No fallback substitution | N-002 |
 | §3.4 Invalid address → hard error | Not warning-only | N-001 |
 | §3.4 Empty memory → hard error | `invalid_argument` | U-001, N-005 |
+| §3.4 Invalid `analysis_budget` input | Unsupported fields/non-positive limits are `invalid_argument` | U-006 |
 | §3.4 Missing default runtime dependency / auto-discovered pin drift | Missing dependency is a startup error; pin mismatch is warning-observable | U-016 |
 | §3.4 Error categories stable | Category names invariant across minor/patch | C-002 |
 | §3.4 Warning-only → successful status | c_code valid, error None, function_info populated | I-007 |

@@ -14,6 +14,7 @@ from flatline import (
     ERROR_CATEGORIES,
     VALID_METATYPES,
     VALID_WARNING_PHASES,
+    AnalysisBudget,
     CallSiteInfo,
     DecompileFailedError,
     DecompileResult,
@@ -176,6 +177,9 @@ def test_c004_structured_result_schema_stability():
         "has_bad_data", "has_no_code",
     }
 
+    budget_fields = {f.name for f in dataclasses.fields(AnalysisBudget)}
+    assert budget_fields == {"max_instructions"}
+
     # LanguageCompilerPair fields
     pair_fields = {f.name for f in dataclasses.fields(LanguageCompilerPair)}
     assert pair_fields == {"language_id", "compiler_spec"}
@@ -192,6 +196,7 @@ def test_c004_structured_result_schema_stability():
 
     # All structured result types are frozen dataclasses
     frozen_types = [
+        AnalysisBudget,
         StorageInfo, TypeInfo, ParameterInfo, VariableInfo, CallSiteInfo,
         JumpTableInfo, DiagnosticFlags, FunctionPrototype, FunctionInfo,
         WarningItem, ErrorItem, VersionInfo, LanguageCompilerPair,

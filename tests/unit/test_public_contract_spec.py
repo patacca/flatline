@@ -12,6 +12,7 @@ import pytest
 
 from flatline import (
     VALID_METATYPES,
+    AnalysisBudget,
     CallSiteInfo,
     DecompileRequest,
     DecompileResult,
@@ -124,7 +125,7 @@ def test_u001_request_schema_required_fields():
     assert req.compiler_spec is None
     assert req.runtime_data_dir is None
     assert req.function_size_hint is None
-    assert req.analysis_budget is None
+    assert req.analysis_budget == AnalysisBudget()
 
 
 # ---------------------------------------------------------------------------
@@ -342,11 +343,11 @@ def test_u005_function_info_fields_from_stub():
 
 
 # ---------------------------------------------------------------------------
-# U-006: analysis_budget passthrough
+# U-006: analysis_budget defaults and validation
 # ---------------------------------------------------------------------------
 
 def test_u006_analysis_budget_passthrough():
-    """U-006: analysis_budget is accepted and passed through; omission does not error."""
+    """U-006: analysis_budget defaults deterministically and coerces supported inputs."""
     base_kwargs: dict[str, object] = {
         "memory_image": b"\xcc\xc3",
         "base_address": 0x1000,
@@ -354,11 +355,48 @@ def test_u006_analysis_budget_passthrough():
         "language_id": "x86:LE:64:default",
     }
 
-    # Without budget -- defaults to None, no error
+    # Without budget -- defaults to the pinned instruction cap
     req_no_budget = DecompileRequest(**base_kwargs)
-    assert req_no_budget.analysis_budget is None
+    assert req_no_budget.analysis_budget == AnalysisBudget(max_instructions=100000)
 
-    # With budget dict -- value preserved
-    budget = {"max_instructions": 50000, "timeout_ms": 5000}
+    # With budget object -- value preserved
+    budget = AnalysisBudget(max_instructions=50000)
     req_with_budget = DecompileRequest(**base_kwargs, analysis_budget=budget)
     assert req_with_budget.analysis_budget == budget
+
+    # With budget mapping -- value coerced to AnalysisBudget
+    req_with_mapping = DecompileRequest(
+        **base_kwargs,
+        analysis_budget={"max_instructions": 4096},
+    )
+    assert req_with_mapping.analysis_budget == AnalysisBudget(max_instructions=4096)
+
+    # Empty mapping still resolves to the default budget
+    req_with_empty_mapping = DecompileRequest(**base_kwargs, analysis_budget={})
+    assert req_with_empty_mapping.analysis_budget == AnalysisBudget()
+
+
+def test_u006_analysis_budget_rejects_unsupported_fields_and_values():
+    """U-006: analysis_budget rejects unsupported keys and invalid instruction limits."""
+    base_kwargs: dict[str, object] = {
+        "memory_image": b"\xcc\xc3",
+        "base_address": 0x1000,
+        "function_address": 0x1000,
+        "language_id": "x86:LE:64:default",
+    }
+
+    with pytest.raises(InvalidArgumentError) as exc_info:
+        DecompileRequest(**base_kwargs, analysis_budget={"timeout_ms": 5000})
+    assert exc_info.value.category == "invalid_argument"
+
+    with pytest.raises(InvalidArgumentError) as exc_info:
+        DecompileRequest(**base_kwargs, analysis_budget={"max_instructions": 0})
+    assert exc_info.value.category == "invalid_argument"
+
+    with pytest.raises(InvalidArgumentError) as exc_info:
+        DecompileRequest(**base_kwargs, analysis_budget={"max_instructions": True})
+    assert exc_info.value.category == "invalid_argument"
+
+    with pytest.raises(InvalidArgumentError) as exc_info:
+        DecompileRequest(**base_kwargs, analysis_budget=object())
+    assert exc_info.value.category == "invalid_argument"

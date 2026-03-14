@@ -47,7 +47,10 @@ struct NativeRequest {
     std::uint64_t function_address;
     std::string language_id;
     std::optional<std::string> compiler_spec;
+    std::uint32_t max_instructions;
 };
+
+constexpr std::uint32_t kDefaultMaxInstructions = 100000;
 
 static std::string to_lower_ascii(std::string value) {
     for (char &ch : value) {
@@ -108,6 +111,57 @@ static std::optional<std::string> optional_string_field(const nb::dict &request,
     return value;
 }
 
+static std::uint32_t require_positive_u32_value(nb::handle value, const char *field_name) {
+    std::int64_t parsed_value = nb::cast<std::int64_t>(value);
+    if (parsed_value <= 0) {
+        throw std::invalid_argument(std::string(field_name) + " must be positive");
+    }
+    if (parsed_value > static_cast<std::int64_t>(std::numeric_limits<std::uint32_t>::max())) {
+        throw std::invalid_argument(std::string(field_name) + " exceeds supported range");
+    }
+    return static_cast<std::uint32_t>(parsed_value);
+}
+
+static std::uint32_t parse_max_instructions(const nb::dict &request) {
+    if (!request.contains("analysis_budget")) {
+        return kDefaultMaxInstructions;
+    }
+
+    nb::object raw_budget = request["analysis_budget"];
+    if (raw_budget.is_none()) {
+        return kDefaultMaxInstructions;
+    }
+
+    nb::dict budget = nb::cast<nb::dict>(raw_budget);
+    std::set<std::string> unsupported_keys;
+    for (const auto &item : budget) {
+        const std::string key = nb::cast<std::string>(item.first);
+        if (key != "max_instructions") {
+            unsupported_keys.insert(key);
+        }
+    }
+    if (!unsupported_keys.empty()) {
+        std::string joined;
+        for (const auto &key : unsupported_keys) {
+            if (!joined.empty()) {
+                joined += ", ";
+            }
+            joined += key;
+        }
+        throw std::invalid_argument(
+            "analysis_budget contains unsupported fields: " + joined
+        );
+    }
+
+    if (!budget.contains("max_instructions")) {
+        return kDefaultMaxInstructions;
+    }
+    return require_positive_u32_value(
+        budget["max_instructions"],
+        "analysis_budget.max_instructions"
+    );
+}
+
 static NativeRequest parse_request(const nb::dict &request) {
     NativeRequest parsed{};
 
@@ -127,6 +181,7 @@ static NativeRequest parse_request(const nb::dict &request) {
         throw std::invalid_argument("language_id must not be empty");
     }
     parsed.compiler_spec = optional_string_field(request, "compiler_spec");
+    parsed.max_instructions = parse_max_instructions(request);
     return parsed;
 }
 
@@ -702,6 +757,7 @@ public:
 
             ghidra::DocumentStorage store;
             architecture.init(store);
+            architecture.max_instructions = native_request.max_instructions;
             architecture.setPrintLanguage("c-language");
 
             ghidra::Scope *global_scope = architecture.symboltab->getGlobalScope();

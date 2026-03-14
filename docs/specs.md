@@ -76,6 +76,7 @@ Secondary (Next):
 | `DiagnosticFlags` | Aggregated boolean diagnostic flags from the decompiler: completion, unreachable blocks, unimplemented instructions, bad data, no code. |
 | `StorageInfo` | Variable/parameter storage location: address space name, byte offset, byte size. |
 | `LanguageCompilerPair` | One valid `language_id` + `compiler_spec` entry known to current runtime data directory. |
+| `AnalysisBudget` | Deterministic per-request resource limits. MVP/P2 exposes only `max_instructions`. |
 | `FlatlineError` | Stable Python exception hierarchy mapped from status/error categories. |
 
 Derived from:
@@ -104,7 +105,7 @@ Module-level operation functions are convenience wrappers for single-call workfl
 - `compiler_spec` (optional, explicit validation required)
 - `runtime_data_dir` (optional explicit override over the dependency-provided default runtime-data root)
 - `function_size_hint` (optional advisory)
-- `analysis_budget` (optional deterministic budget object)
+- `analysis_budget` (optional `AnalysisBudget`; omitted requests default to `AnalysisBudget(max_instructions=100000)`)
 
 Input model resolved by ADR-001 (Option A: memory + architecture + function-level).
 The caller provides a memory image covering the relevant address space. The library
@@ -190,6 +191,14 @@ Unmapped internal metatypes (not surfaced through the public API): `TYPE_PTRREL`
 - `language_id: str` — language identifier (from `LanguageDescription::getId()`)
 - `compiler_spec: str` — compiler specification name (from `CompilerTag::getName()`)
 
+`AnalysisBudget` fields:
+- `max_instructions: int` — positive per-request instruction cap applied to `Architecture::max_instructions`; default `100000`
+
+P2 scope exposes only the instruction-count budget because the pinned upstream
+callable surface has no wall-clock timeout or cancellation hook. Time-based
+limits remain a future extension requiring explicit upstream-compatible
+mechanisms.
+
 `WarningItem` fields:
 - `code: str` — stable warning code using hierarchical namespace (`<phase>.<code>`, e.g., `analyze.W001`); stable across patch/minor releases; initial code enumeration deferred to P2 implementation
 - `message: str` — human-readable warning text (informative, not exact-match stable)
@@ -225,6 +234,7 @@ Rules:
 - Unknown/unsupported language ids are hard errors. Error category: `unsupported_target`.
 - Invalid/unmapped addresses are hard errors, not warning-only degraded output. Error category: `invalid_address`.
 - Empty or zero-length memory images are hard errors. Error category: `invalid_argument`.
+- Unsupported `analysis_budget` fields or non-positive `analysis_budget.max_instructions` values are hard errors. Error category: `invalid_argument`.
 - Omitting `runtime_data_dir` when the `ghidra-sleigh` dependency is unavailable is a hard startup error. Error category: `internal_error`.
 - Calling session operations after `DecompilerSession.close()` is a hard error. Error category: `invalid_argument`.
 - Error categories are contract-stable; text may change but remains human-readable.
@@ -468,9 +478,11 @@ Consequences:
 3. Define determinism profile level:
    - Recommended: normalize metadata and warning codes only.
    - Alternative: enforce stronger canonical C formatting guarantees.
-4. Choose default analysis budget behavior:
-   - Recommended: bounded defaults with explicit override.
-   - Alternative: unbounded analysis unless caller sets a budget.
+4. **(ADR-005, decided)** Default analysis budget behavior:
+   - Fixed bounded default: `AnalysisBudget(max_instructions=100000)` on every request.
+   - Explicit override: callers may raise or lower `max_instructions` per request.
+   - Out of scope for P2: wall-clock timeout, because the pinned upstream callable surface
+     exposes only instruction-count limiting (`Architecture::max_instructions`).
 
 ## 6. Stable Python API over Unstable Upstream Strategy
 
@@ -511,7 +523,10 @@ Performance budgets (planning targets):
 Security boundaries:
 - Untrusted memory images are treated as untrusted input.
 - No implicit execution of external tools in request path.
-- Resource budgets (time/memory) are part of operational contract.
+- Resource budgets are part of the operational contract.
+- P2 enforces only the per-request instruction budget (`AnalysisBudget.max_instructions`);
+  wall-clock timeout support is deferred until the upstream callable surface provides
+  a compatible cancellation mechanism.
 
 Logging and diagnostics:
 - Structured log events by phase (`startup`, `resolve`, `analyze`, `emit`).
@@ -519,7 +534,7 @@ Logging and diagnostics:
 
 Configuration:
 - Explicit runtime data dir override.
-- Explicit analysis budget and warning policy controls.
+- Explicit analysis budget control via `AnalysisBudget.max_instructions`.
 - Deterministic defaults when options are omitted.
 
 Extensibility:
@@ -564,10 +579,10 @@ Resolved:
 - ~~How should flatline pin or validate compatible `ghidra-sleigh` versions so runtime data matches flatline's pinned Ghidra upstream revision?~~ **Resolved (ADR-004):** Flatline auto-discovers the installed `ghidra_sleigh` runtime-data root by default, warns when the companion package advertises a different upstream tag/commit than flatline's pin, and still allows explicit `runtime_data_dir` overrides for user-managed custom assets.
 - ~~Should the runtime data package bundle all Ghidra-supported ISA assets or only the priority set (x86, ARM, RISC-V, MIPS), with an extension mechanism for others?~~ **Resolved (ADR-010):** `ghidra-sleigh` defaults to shipping compiled runtime data for all Ghidra processor families and also supports a lighter major-ISA build via `all_processors=false`. ADR-004 now defines flatline's default policy as depending on the full install while leaving lighter builds as explicit overrides.
 - ~~Should ISA-specific Sleigh compilation (`.sla` files) happen at build time or install time?~~ **Resolved (ADR-010):** Build time. `ghidra-sleigh` builds `sleighc` from Ghidra C++ sources and ships the compiled `.sla` outputs as package data.
+- ~~Should analysis-budget defaults vary by platform or target ISA, or remain globally fixed?~~ **Resolved (ADR-005):** P2 uses a single fixed default, `AnalysisBudget(max_instructions=100000)`, across the Linux MVP matrix. Callers may override `max_instructions` per request; wall-clock timeout remains out of scope until the upstream callable surface exposes a compatible cancellation mechanism.
 
 Open:
 - Should warning codes be globally namespaced now to prevent future collisions? (Initial codes will be defined during P2 implementation.)
-- Should analysis-budget defaults vary by platform or target ISA, or remain globally fixed?
 - Should session-level failure categories (startup, initialization) be defined explicitly in the `FlatlineError` hierarchy, or is the current `ErrorItem` taxonomy sufficient?
 - ~~Should `TypeInfo` expose sub-type details (struct fields, array element type, pointer target) in MVP, or is the flat `name`/`size`/`metatype` sufficient?~~ **Resolved:** Flat `name`/`size`/`metatype` for MVP. Sub-type details (struct fields, pointer target, array element) deferred to post-MVP.
 - Should `CallSiteInfo` include a `callee_name` field when the target is a known function symbol? (Affects bridge scope.)

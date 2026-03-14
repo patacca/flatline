@@ -7,14 +7,12 @@ No native pointers or references survive past the bridge boundary.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from os import fspath
-from typing import TYPE_CHECKING
+from typing import Any
 
 from flatline._errors import InvalidArgumentError, UnsupportedTargetError
-
-if TYPE_CHECKING:
-    from typing import Any
 
 # --- Stable enumerations (specs.md section 3.3) ---
 
@@ -24,6 +22,8 @@ VALID_METATYPES: frozenset[str] = frozenset({
 })
 
 VALID_WARNING_PHASES: frozenset[str] = frozenset({"init", "analyze", "emit"})
+
+DEFAULT_MAX_INSTRUCTIONS = 100000
 
 
 # --- Leaf value types ---
@@ -164,6 +164,19 @@ class VersionInfo:
     runtime_data_revision: str
 
 
+@dataclass(frozen=True)
+class AnalysisBudget:
+    """Deterministic per-request resource limits."""
+
+    max_instructions: int = DEFAULT_MAX_INSTRUCTIONS
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.max_instructions, int) or isinstance(self.max_instructions, bool):
+            raise InvalidArgumentError("analysis_budget.max_instructions must be an integer")
+        if self.max_instructions <= 0:
+            raise InvalidArgumentError("analysis_budget.max_instructions must be positive")
+
+
 # --- Request/Result ---
 
 @dataclass(frozen=True)
@@ -177,7 +190,7 @@ class DecompileRequest:
     compiler_spec: str | None = None
     runtime_data_dir: str | None = None
     function_size_hint: int | None = None
-    analysis_budget: Any | None = None
+    analysis_budget: AnalysisBudget | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.memory_image, (bytes, bytearray)):
@@ -188,6 +201,7 @@ class DecompileRequest:
             raise InvalidArgumentError("language_id must be a non-empty string")
         if self.runtime_data_dir is not None:
             object.__setattr__(self, "runtime_data_dir", fspath(self.runtime_data_dir))
+        object.__setattr__(self, "analysis_budget", _coerce_analysis_budget(self.analysis_budget))
 
 
 @dataclass(frozen=True)
@@ -213,3 +227,26 @@ def _validate_compiler_spec(compiler_spec: str, known_specs: frozenset[str]) -> 
         raise UnsupportedTargetError(
             f"Unknown compiler specification: {compiler_spec!r}"
         )
+
+
+def _coerce_analysis_budget(raw_budget: Any) -> AnalysisBudget:
+    if raw_budget is None:
+        return AnalysisBudget()
+    if isinstance(raw_budget, AnalysisBudget):
+        return raw_budget
+    if not isinstance(raw_budget, Mapping):
+        raise InvalidArgumentError(
+            "analysis_budget must be an AnalysisBudget or mapping"
+        )
+
+    unknown_fields = sorted(set(raw_budget) - {"max_instructions"})
+    if unknown_fields:
+        raise InvalidArgumentError(
+            "analysis_budget contains unsupported fields: "
+            + ", ".join(repr(field) for field in unknown_fields)
+        )
+
+    if "max_instructions" not in raw_budget:
+        return AnalysisBudget()
+
+    return AnalysisBudget(max_instructions=raw_budget["max_instructions"])

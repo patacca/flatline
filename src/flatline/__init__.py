@@ -15,6 +15,7 @@ from flatline._errors import (
 from flatline._models import (
     VALID_METATYPES,
     VALID_WARNING_PHASES,
+    AnalysisBudget,
     CallSiteInfo,
     DecompileRequest,
     DecompileResult,
@@ -55,6 +56,7 @@ __all__ = [
     "ERROR_CATEGORIES",
     "VALID_METATYPES",
     "VALID_WARNING_PHASES",
+    "AnalysisBudget",
     "CallSiteInfo",
     "DecompileFailedError",
     "DecompileRequest",
