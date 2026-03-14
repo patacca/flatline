@@ -33,3 +33,4 @@ def test_u020_initial_public_release_notes_cover_p5_requirements() -> None:
 
     assert "docs/release_notes.md" in readme
     assert "P5 initial public release preparation" in readme
+    assert "call returns a `configuration_error` result" in readme

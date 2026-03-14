@@ -74,7 +74,8 @@ Product policy:
 - `docs/release_notes.md` summarizing contract guarantees, support tiers /
   known-variant limits, and upgrade policy for the first public release
 - `docs/release_review.md` capturing the public artifact-review checklist and
-  the expected evidence for final human sign-off
+  the expected evidence for final human sign-off, including the reviewed git
+  commit, built artifact filenames, and deterministic command outcomes
 - `docs/release_workflow.md` capturing the initial public release procedure and
   the `0.1.0` SemVer recommendation for the current `0.1.0.dev0` branch
 - built-artifact audit evidence from `python -m flatline._artifacts`

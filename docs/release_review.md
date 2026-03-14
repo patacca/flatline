@@ -4,9 +4,15 @@ This checklist is the source-controlled human gate for the initial public
 release. Run it after the deterministic release helpers have passed and before
 creating `git tag v0.1.0`.
 
+## Release Candidate Record
+
+- Git commit under review:
+- Flatline version under review: `0.1.0.dev0`
+- Planned public tag: `0.1.0`
+- Built artifact filenames:
+
 ## Preconditions
 
-- Current development version is `0.1.0.dev0`; planned public tag is `0.1.0`.
 - The repo worktree is clean before building so Meson cannot omit local edits
   from the sdist.
 - The documented readiness commands have all passed from the repo venv:
@@ -38,10 +44,20 @@ creating `git tag v0.1.0`.
   the published support tiers, upgrade policy, and per-version delta remain
   aligned with the audited artifacts.
 
+## Command Outcomes
+
+- `python -m flatline._release`:
+- `tox`:
+- `python -m flatline._compliance`:
+- `python -m flatline._footprint`:
+- `python -m build`:
+- `python -m flatline._artifacts dist`:
+
 ## Approval Record
 
 - Reviewer:
 - Date:
+- Reviewed git commit:
 - Reviewed artifact filenames:
-- Outcome:
+- Outcome: approved | blocked | follow-up required
 - Follow-up notes:

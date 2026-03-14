@@ -27,7 +27,7 @@
 - `CHANGELOG.md` exists at the repo root, follows Keep a Changelog, and must be updated for every release.
 - `docs/release_notes.md` now captures the initial public release-facing contract guarantees, support tiers, known-variant limits, and upgrade policy; `README.md` links it and now tracks P5 as the current focus.
 - `docs/release_workflow.md` now records the initial public release procedure and the first-release SemVer recommendation: finalize `0.1.0.dev0` as `0.1.0`; `python -m flatline._release` audits version/doc alignment and rejects dirty git worktrees before tagging because Meson sdists omit uncommitted changes.
-- `docs/release_review.md` now captures the source-controlled public artifact-review checklist and approval record template for the final human P5 sign-off; `python -m flatline._release` now requires that review doc alongside the release notes/workflow links.
+- `docs/release_review.md` now captures the source-controlled public artifact-review checklist plus a release-candidate record template (reviewed git commit, artifact filenames, deterministic command outcomes, approval status) for the final human P5 sign-off; `python -m flatline._release` now requires that stronger review doc alongside the release notes/workflow links.
 - `python -m flatline._artifacts dist` now audits built wheel/sdist artifacts for shipped `LICENSE` / `NOTICE`, current version metadata, and the pinned `ghidra-sleigh == 12.0.4` dependency before the human public-artifact review sign-off.
 - `pip install -e ".[dev]"` now installs `build >= 1.2`, so the documented `python -m build` release step works from the standard repo venv without extra manual tooling setup.
 - **Next:** once `docs/release_review.md` is completed and approved, run the documented initial public release workflow, bump to `0.1.0`, and create tag `v0.1.0`.
@@ -135,7 +135,7 @@
 - `ghidra-sleigh` source-build details live in its own repo; use its documented Meson options there, not from this workspace.
 
 # Tests
-- `tox`: `py314` passes 67 tests and skips 4 dev-only files against the installed wheel artifact; `dev` passes the 9 dev-only unit tests against the source tree via `PYTHONPATH=src`; `py313` skips when `python3.13` is absent. Combined `py314` + `dev` covers the full 76-test suite.
+- `tox`: `py314` passes 67 tests and skips 4 dev-only files against the installed wheel artifact; `dev` passes the 10 dev-only unit tests against the source tree via `PYTHONPATH=src`; `py313` skips when `python3.13` is absent. Combined `py314` + `dev` covers the full 77-test suite.
 - Native tests expect compiled `.sla` data from the installed `ghidra-sleigh` runtime dependency, currently covering DATA, x86, AARCH64, RISCV, and MIPS.
 - Native tox runs still resolve runtime data from `ghidra_sleigh.get_runtime_data_dir()` explicitly; public `DecompilerSession` startup now auto-discovers that default path when `runtime_data_dir` is omitted, and `DecompileRequest` / `DecompilerSession` coerce path-like `runtime_data_dir` inputs to strings.
 - `tests/conftest.py` — auto-applies category markers from directory names.

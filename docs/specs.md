@@ -576,7 +576,9 @@ Packaging and compliance:
   `docs/release_review.md`; it must stay source-controlled and tie the human
   sign-off to the deterministic evidence from `python -m flatline._release`,
   `tox`, `python -m flatline._compliance`, `python -m flatline._footprint`,
-  `python -m build`, and `python -m flatline._artifacts dist`.
+  `python -m build`, and `python -m flatline._artifacts dist`. The review
+  record must also capture the reviewed git commit, built artifact filenames,
+  and the recorded outcome of those deterministic commands.
 - Default-install footprint is measured with `python -m flatline._footprint`,
   using shipped payload files only (excluding interpreter-generated
   `__pycache__` / `.pyc` entries). `docs/footprint.md` records the current
@@ -597,7 +599,8 @@ Release-facing policy:
   the caller-managed compatibility risk of custom `runtime_data_dir` roots.
 - The initial public release must also keep the human artifact-review checklist
   in `docs/release_review.md` aligned with the release workflow, changelog, and
-  release notes so the final sign-off criteria are explicit.
+  release notes so the final sign-off criteria are explicit, including the
+  reviewed commit/artifact identifiers and the recorded command outcomes.
 - The initial public release workflow and its `0.1.0` version recommendation
   are source-controlled in `docs/release_workflow.md` and audited by
   `python -m flatline._release` before the release tag is created.

@@ -57,13 +57,16 @@ sdist.
 11. Audit the built sdist/wheel with `python -m flatline._artifacts dist`
     so the current version, dependency pin, and shipped `LICENSE` / `NOTICE`
     files are verified from the actual release artifacts
-12. Complete `docs/release_review.md` for the final human artifact review
+12. Complete `docs/release_review.md` for the final human artifact review by
+    recording the reviewed git commit, built artifact filenames, and the
+    outcomes of the deterministic release commands
 13. Create the release tag with `git tag v0.1.0`
 
 ## Hold Point
 
 Do not run `git tag v0.1.0` until the public artifact review is explicitly
 approved. `python -m flatline._artifacts dist` provides deterministic artifact
-evidence for that review, and `docs/release_review.md` records the checklist
-used for the final human sign-off. This workflow is only the source-controlled
-procedure that prepares the repo for that final sign-off.
+evidence for that review, and `docs/release_review.md` records the checklist,
+candidate metadata, and command outcomes used for the final human sign-off.
+This workflow is only the source-controlled procedure that prepares the repo
+for that final sign-off.

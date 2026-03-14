@@ -83,9 +83,13 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
             [
                 "# Public Artifact Review Checklist",
                 "",
-                "## Preconditions",
-                "- Current development version: `0.1.0.dev0`",
+                "## Release Candidate Record",
+                "- Git commit under review:",
+                "- Flatline version under review: `0.1.0.dev0`",
                 "- Planned public tag: `0.1.0`",
+                "- Built artifact filenames:",
+                "",
+                "## Preconditions",
                 "- Run `python -m flatline._release`",
                 "- Run `tox`",
                 "- Run `python -m flatline._compliance`",
@@ -98,8 +102,17 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
                 "- Review `docs/release_notes.md` and `CHANGELOG.md`.",
                 "- Confirm `ghidra-sleigh == 12.0.4`.",
                 "",
+                "## Command Outcomes",
+                "- `python -m flatline._release`:",
+                "- `tox`:",
+                "- `python -m flatline._compliance`:",
+                "- `python -m flatline._footprint`:",
+                "- `python -m build`:",
+                "- `python -m flatline._artifacts dist`:",
+                "",
                 "## Approval Record",
                 "- Reviewer:",
+                "- Outcome: approved | blocked | follow-up required",
                 "",
             ]
         ),
@@ -242,3 +255,44 @@ def test_u021_release_readiness_audit_rejects_missing_workflow_and_version_drift
     assert "git_worktree_dirty" in issue_codes
     assert "release_workflow_missing" in issue_codes
     assert "version_mismatch" in issue_codes
+
+
+def test_u021_release_readiness_audit_rejects_incomplete_review_record(
+    tmp_path: Path,
+) -> None:
+    """U-021: The readiness audit requires the stronger review-record template."""
+    _write_minimal_release_ready_repo(tmp_path)
+    _init_git_repo(tmp_path)
+
+    (tmp_path / "docs" / "release_review.md").write_text(
+        "\n".join(
+            [
+                "# Public Artifact Review Checklist",
+                "",
+                "## Preconditions",
+                "- Run `python -m flatline._release`",
+                "- Run `tox`",
+                "- Run `python -m flatline._compliance`",
+                "- Run `python -m flatline._footprint`",
+                "- Run `python -m build`",
+                "- Run `python -m flatline._artifacts dist`",
+                "",
+                "## Review Evidence",
+                "- Verify `LICENSE` and `NOTICE` in the artifacts.",
+                "- Review `docs/release_notes.md` and `CHANGELOG.md`.",
+                "- Confirm `ghidra-sleigh == 12.0.4`.",
+                "",
+                "## Approval Record",
+                "- Reviewer:",
+                "",
+            ]
+        ),
+        encoding="ascii",
+    )
+
+    report = audit_initial_public_release_readiness(tmp_path)
+
+    assert not report.is_ready
+    issue_codes = {issue.code for issue in report.issues}
+    assert "git_worktree_dirty" in issue_codes
+    assert "release_review_missing_reference" in issue_codes

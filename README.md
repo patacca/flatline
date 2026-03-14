@@ -64,7 +64,7 @@ The build has three modes, controlled by the `native_bridge` Meson option:
 |------|------------|-----------|
 | `auto` (default) | omit the flag | Builds the extension when a C++20 compiler and Ninja are found; silently falls back to the pure-Python stub otherwise. |
 | `enabled` | `-Dnative_bridge=enabled` | Forces the native build; fails at install time if prerequisites are missing. Use this to validate the full decompilation stack. |
-| `disabled` | `-Dnative_bridge=disabled` | Skips the native build entirely. All decompilation calls return `internal_error`. |
+| `disabled` | `-Dnative_bridge=disabled` | Skips the native build entirely. All decompilation calls return `configuration_error`. |
 
 Force the native build explicitly (requires a C++20 compiler and Ninja):
 
