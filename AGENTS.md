@@ -137,5 +137,5 @@
 - `LanguageCompilerPair` — `language_id`, `compiler_spec`.
 - `WarningItem` — `code`, `message`, `phase`.
 - `ErrorItem` — `category`, `message`, `retryable`.
-- `VersionInfo` — `flatline_version`, `upstream_tag`, `upstream_commit`, `runtime_data_revision`.
+- `VersionInfo` — `flatline_version`, `upstream_tag`, `upstream_commit`.
 - `FlatlineError` — 6 categories: `invalid_argument`, `unsupported_target`, `invalid_address`, `decompile_failed`, `configuration_error`, `internal_error`.

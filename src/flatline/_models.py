@@ -161,7 +161,6 @@ class VersionInfo:
     flatline_version: str
     upstream_tag: str
     upstream_commit: str
-    runtime_data_revision: str
 
 
 @dataclass(frozen=True)

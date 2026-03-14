@@ -214,7 +214,6 @@ mechanisms.
 - `flatline_version: str`
 - `upstream_tag: str`
 - `upstream_commit: str`
-- `runtime_data_revision: str`
 
 All structured result objects (`FunctionInfo`, `FunctionPrototype`, `ParameterInfo`, `VariableInfo`, `TypeInfo`, `CallSiteInfo`, `JumpTableInfo`, `DiagnosticFlags`, `StorageInfo`, `LanguageCompilerPair`, `WarningItem`, `ErrorItem`, `VersionInfo`) are pure Python frozen value types. Data is extracted at the bridge boundary; no native pointers or references survive past the bridge call.
 

@@ -90,7 +90,7 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 | §3.3 DiagnosticFlags | Aggregated boolean flags | U-005, I-005 |
 | §3.3 LanguageCompilerPair | language_id + compiler_spec fields | I-002 |
 | §3.3 WarningItem structure | code, message, phase fields | I-007 |
-| §3.3 VersionInfo fields | flatline_version, upstream_tag, upstream_commit, runtime_data_revision | C-003 |
+| §3.3 VersionInfo fields | flatline_version, upstream_tag, upstream_commit | C-003 |
 | §3.4 Unknown compiler → hard error | No implicit fallback | U-002, N-003 |
 | §3.4 Unknown language → hard error | No fallback substitution | N-002 |
 | §3.4 Invalid address → hard error | Not warning-only | N-001 |
