@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Native C++ decompiler bridge via nanobind (session lifecycle, target selection, decompile pipeline)
+- Native C++ decompiler bridge via nanobind (session lifecycle, target selection,
+  decompile pipeline)
 - End-to-end decompilation verified: x86_64 produces correct structured C output
 - Ghidra decompiler library compilation and native startup/pair enumeration
 - Runtime-data bridge enumeration with fallback for malformed `.ldefs`
@@ -16,8 +17,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `.sla` assets compiled for priority ISAs (DATA, x86, AARCH64, RISCV, MIPS)
 - Meson build system with C++20, nanobind, debug/release/debugoptimized build types
 - Python data models and `FlatlineError` error hierarchy
-- Contract test harness with 28 passing tests (22 unit, 6 contract)
-- Tox configuration for multi-version Python testing (py313, py314, lint)
+- `AnalysisBudget` frozen value type with per-request `max_instructions` default
+  of 100,000 instructions (ADR-005)
+- Structured `WarningItem` / `ErrorItem` diagnostics with full filesystem paths
+  for debuggability (ADR-006)
+- `configuration_error` category for user-fixable install, startup, and
+  runtime-data failures (ADR-011)
+- Compliance process: `LICENSE` + `NOTICE` shipped in wheels/sdists, pinned-source
+  manifest in `docs/compliance.md`, and `python tools/compliance.py` audit (ADR-007)
+- Auto-discovery of `ghidra-sleigh` runtime data when `runtime_data_dir` is omitted,
+  with a runtime warning on upstream pin drift (ADR-004)
+- Default-install footprint measurement via `python tools/footprint.py` with
+  baseline recorded in `docs/footprint.md`
+- Built artifact audit for wheel/sdist validation via `python tools/artifacts.py`
+- Committed native memory fixtures for x86_64, x86_32, AArch64, RISC-V 64, and
+  MIPS32 under `tests/fixtures/*.hex`
+- Fixture source snippets and regeneration script under `tests/fixtures/sources/`
+- Warm-session p95 regression budgets across priority-ISA add fixtures and
+  the switch fixture
+- Switch-site regression baseline asserting recovered site `0x1009` and 9 targets
+- GitHub Actions CI with lint/build on `ubuntu-latest`, test/regression lanes
+  pinned to `ubuntu-24.04`, and Python 3.13/3.14 matrix
+- Tox configuration for multi-version Python testing (py313, py314, dev, lint)
 - Code style guide enforcing ASCII-only source files via ruff
 - ADR-009 decided: ISA variant scope (x86 32+64, ARM64, RISC-V 64, MIPS32)
 - ADR-010 decided: separate `ghidra-sleigh` pip package for runtime data
@@ -28,11 +49,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial public release workflow documentation and a release-readiness audit
   that keeps the `0.1.0` first-public-tag recommendation explicit
 
-### Fixed
-- Size-aware `std::string` construction for `nb::bytes` to preserve embedded null bytes
-- Editable native rebuild nanobind paths
-- Tolerance for malformed `.ldefs` during runtime-data enumeration
-
 ### Changed
 - Renamed project from ghidralib to flatline repo-wide
 - Repository agent instructions now live in `AGENTS.md` / `CLAUDE.md`
+- Upstream pin bumped to `Ghidra_12.0.4_build` (`e40ed13014`)
+- `third_party/ghidra` tracked as a git submodule instead of a plain checkout
+- Tox `py313`/`py314` envs now build and test installed wheel artifacts
+  instead of the source tree
+- Dev-only release helpers moved from `src/flatline` to `tools/flatline_dev/`,
+  excluded from wheel and sdist distribution artifacts
+- Version strings normalized to PEP 440 form `0.1.0.dev0`
+
+### Fixed
+- Size-aware `std::string` construction for `nb::bytes` to preserve embedded
+  null bytes
+- Editable native rebuild nanobind paths
+- Tolerance for malformed `.ldefs` during runtime-data enumeration
+- Dist script reference guarded for sdist-to-wheel builds
