@@ -6,9 +6,9 @@ from pathlib import Path, PurePosixPath
 
 import pytest
 
-pytest.importorskip("flatline._footprint", reason="dev-only module not shipped in wheel")
-from flatline._compliance import expected_ghidra_sleigh_version
-from flatline._footprint import (
+pytest.importorskip("flatline_dev.footprint", reason="dev-only module not shipped in wheel")
+from flatline_dev.compliance import expected_ghidra_sleigh_version
+from flatline_dev.footprint import (
     format_default_install_footprint,
     measure_default_install_footprint,
 )
@@ -96,7 +96,7 @@ def test_u018_footprint_doc_records_current_policy() -> None:
     repo_root = Path(__file__).resolve().parents[2]
     footprint_doc = (repo_root / "docs" / "footprint.md").read_text(encoding="utf-8")
 
-    assert "python -m flatline._footprint" in footprint_doc
+    assert "python tools/footprint.py" in footprint_doc
     assert "payload files only" in footprint_doc
     assert f"ghidra-sleigh == {expected_ghidra_sleigh_version()}" in footprint_doc
     assert "all_processors=false" in footprint_doc

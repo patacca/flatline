@@ -6,7 +6,7 @@ ADR-007 is resolved for flatline P3 packaging/compliance hardening.
 
 Mandatory release-time checks for redistribution:
 
-1. `python -m flatline._compliance` must pass from the repo root.
+1. `python tools/compliance.py` must pass from the repo root.
 2. Release artifacts must ship the root `LICENSE` and `NOTICE` files, with
    `pyproject.toml` declaring both through `license-files`.
 3. `NOTICE` must record the pinned native-source baseline
@@ -22,7 +22,7 @@ Mandatory release-time checks for redistribution:
 
 This decision resolves the redistribution-check process only. Default-install
 footprint remains a separate P3 tracking item, now recorded through
-`python -m flatline._footprint` and `docs/footprint.md`.
+`python tools/footprint.py` and `docs/footprint.md`.
 
 ## Artifact Manifest
 
@@ -40,16 +40,16 @@ footprint remains a separate P3 tracking item, now recorded through
 ## Release Checklist
 
 1. Activate the repo venv: `source .venv/bin/activate`
-2. Run the compliance audit: `python -m flatline._compliance`
+2. Run the compliance audit: `python tools/compliance.py`
 3. Verify the audit still reports the pinned Ghidra baseline
    `Ghidra_12.0.4_build` / `e40ed13014025f82488b1f8f7bca566894ac376b`
    and the dependency pin `ghidra-sleigh == 12.0.4`
 4. Preserve the root `LICENSE` and `NOTICE` files in release artifacts
 5. Preserve the `tests/fixtures/README.md` redistribution note
 6. Refresh `docs/footprint.md` from an installed-wheel environment with
-   `python -m flatline._footprint`
+   `python tools/footprint.py`
 7. Re-run `tox` before tagging a release
-8. After `python -m build`, run `python -m flatline._artifacts dist` so the
+8. After `python -m build`, run `python tools/artifacts.py dist` so the
    built wheel and sdist are checked for the expected `LICENSE` / `NOTICE`
    files plus the current version and dependency metadata
 
@@ -59,3 +59,6 @@ footprint remains a separate P3 tracking item, now recorded through
   baseline above.
 - The compliance audit is intentionally small and deterministic; it validates
   artifact presence and pinned references, not broader legal interpretation.
+- The compliance, footprint, release, and artifact-audit helpers live under
+  `tools/` as repo-only scripts and are intentionally absent from wheel and
+  sdist artifacts.

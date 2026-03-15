@@ -193,7 +193,7 @@ def audit_release_compliance(repo_root: str | Path) -> ComplianceReport:
                 "ADR-007",
                 "Artifact Manifest",
                 "Release Checklist",
-                "python -m flatline._compliance",
+                "python tools/compliance.py",
                 "NOTICE",
                 UPSTREAM_TAG,
                 UPSTREAM_COMMIT,
@@ -234,7 +234,7 @@ def audit_release_compliance(repo_root: str | Path) -> ComplianceReport:
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the compliance audit as a small release-time CLI."""
     parser = argparse.ArgumentParser(
-        prog="python -m flatline._compliance",
+        prog="python tools/compliance.py",
         description="Audit the flatline repo's release-compliance artifacts.",
     )
     parser.add_argument(

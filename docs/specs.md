@@ -559,27 +559,24 @@ Packaging and compliance:
 - Release artifacts must ship the root `LICENSE` and `NOTICE` files; `pyproject.toml` declares both through `license-files`.
 - Wheels and sdists ship only the public runtime modules (`__init__`, `_bridge`,
   `_errors`, `_models`, `_runtime_data`, `_session`, `_version`) plus the
-  optional native extension.  Dev-only release tools (`_compliance.py`,
-  `_footprint.py`, `_release.py`, `_artifacts.py`) are excluded from all
-  distribution artifacts: `meson.build` omits them from `py.install_sources()`,
-  and `tools/prune_dist.py` prunes them from Meson sdists.  The
-  `python -m flatline._xxx` invocations are repo-level release commands that
-  require a repo checkout with an editable install; they are not end-user
-  entry points.
-- Redistribution review passes only when `python -m flatline._compliance` succeeds from the repo root.
+  optional native extension. Repo-only release tools now live under
+  `tools/flatline_dev/` with thin `tools/*.py` wrappers; `tools/prune_dist.py`
+  prunes that entire tree from Meson sdists, and the wheel never installs it.
+  These repo-only commands are not end-user entry points.
+- Redistribution review passes only when `python tools/compliance.py` succeeds from the repo root.
 - The compliance audit verifies the pinned Ghidra native-source attribution (`Ghidra_12.0.4_build` / `e40ed13014025f82488b1f8f7bca566894ac376b`), the default runtime dependency pin `ghidra-sleigh == 12.0.4`, and the synthetic-fixture redistribution note in `tests/fixtures/README.md`.
-- Built wheel and sdist artifacts are audited with `python -m flatline._artifacts`
+- Built wheel and sdist artifacts are audited with `python tools/artifacts.py`
   before tagging so release review can verify the current version metadata, the
   `ghidra-sleigh == 12.0.4` dependency pin, and the shipped `LICENSE` / `NOTICE`
   files from the actual artifacts rather than by repo contents alone.
 - The final public-artifact review gate is documented in
   `docs/release_review.md`; it must stay source-controlled and tie the human
-  sign-off to the deterministic evidence from `python -m flatline._release`,
-  `tox`, `python -m flatline._compliance`, `python -m flatline._footprint`,
-  `python -m build`, and `python -m flatline._artifacts dist`. The review
+  sign-off to the deterministic evidence from `python tools/release.py`,
+  `tox`, `python tools/compliance.py`, `python tools/footprint.py`,
+  `python -m build`, and `python tools/artifacts.py dist`. The review
   record must also capture the reviewed git commit, built artifact filenames,
   and the recorded outcome of those deterministic commands.
-- Default-install footprint is measured with `python -m flatline._footprint`,
+- Default-install footprint is measured with `python tools/footprint.py`,
   using shipped payload files only (excluding interpreter-generated
   `__pycache__` / `.pyc` entries). `docs/footprint.md` records the current
   reference baseline and any explicit product-policy decision about keeping or
@@ -603,7 +600,7 @@ Release-facing policy:
   reviewed commit/artifact identifiers and the recorded command outcomes.
 - The initial public release workflow and its `0.1.0` version recommendation
   are source-controlled in `docs/release_workflow.md` and audited by
-  `python -m flatline._release` before the release tag is created.
+  `python tools/release.py` before the release tag is created.
 
 Extensibility:
 - Additive extension points via optional request fields and metadata keys.
@@ -659,7 +656,7 @@ Resolved:
 - ~~Should ISA-specific Sleigh compilation (`.sla` files) happen at build time or install time?~~ **Resolved (ADR-010):** Build time. `ghidra-sleigh` builds `sleighc` from Ghidra C++ sources and ships the compiled `.sla` outputs as package data.
 - ~~Should analysis-budget defaults vary by platform or target ISA, or remain globally fixed?~~ **Resolved (ADR-005):** P2 uses a single fixed default, `AnalysisBudget(max_instructions=100000)`, across the Linux MVP matrix. Callers may override `max_instructions` per request; wall-clock timeout remains out of scope until the upstream callable surface exposes a compatible cancellation mechanism.
 - ~~Which diagnostic fields are emitted and redacted by default?~~ **Resolved (ADR-006):** P2 emits diagnostics only through startup/runtime-data `RuntimeWarning` messages plus structured `WarningItem` / `ErrorItem` results. Diagnostic text may include full filesystem paths for debuggability; raw memory-image bytes are never emitted. No path redaction is applied because flatline is a library running in the caller's own process, and its target personas (reverse engineers, security engineers, tooling engineers) benefit from full paths for troubleshooting.
-- ~~What release-time checks are mandatory for redistribution?~~ **Resolved (ADR-007):** Releases must ship root `LICENSE` and `NOTICE`, record the pinned Ghidra source attribution and `ghidra-sleigh == 12.0.4` dependency pin in `docs/compliance.md`, and pass `python -m flatline._compliance` from the repo root before tagging.
+- ~~What release-time checks are mandatory for redistribution?~~ **Resolved (ADR-007):** Releases must ship root `LICENSE` and `NOTICE`, record the pinned Ghidra source attribution and `ghidra-sleigh == 12.0.4` dependency pin in `docs/compliance.md`, and pass `python tools/compliance.py` from the repo root before tagging.
 - ~~Should warning codes be globally namespaced now to prevent future collisions?~~ **Resolved:** Yes, within flatline's public surface. Warning codes use the stable hierarchical namespace `<phase>.Wxxx` (for example `analyze.W001`), and new codes are added only additively.
 - ~~Should session-level failure categories (startup, initialization) be defined explicitly in the `FlatlineError` hierarchy, or is the current `ErrorItem` taxonomy sufficient?~~ **Resolved (ADR-011):** User-fixable install/startup/runtime-data failures use `configuration_error`, while unexpected flatline/bridge/native bugs remain `internal_error`.
 

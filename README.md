@@ -122,6 +122,8 @@ tox -e py313,py314 -- -m requires_native
 
 `tox` test envs build and install `flatline[test]` wheels inside `.tox/`, so
 the suite exercises the packaged artifact rather than `PYTHONPATH=src`.
+Repo-only release and diagnostic helpers live under `tools/` and are
+intentionally absent from wheel and sdist artifacts.
 
 ## Release Notes
 

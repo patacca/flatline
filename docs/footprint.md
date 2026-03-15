@@ -15,7 +15,7 @@ Measurement policy:
   explicit user-managed overrides, not as silent default ISA pruning.
 
 Reference command:
-- `python -m flatline._footprint`
+- `python tools/footprint.py`
 
 Reference environment for the committed baseline:
 - Date: `2026-03-14`
@@ -25,7 +25,7 @@ Reference environment for the committed baseline:
 
 ## Current Baseline
 
-Captured from `.tox/py314/bin/python -m flatline._footprint`:
+Captured from `.tox/py314/bin/python tools/footprint.py`:
 
 | Component | Bytes | MiB | Files | Notes |
 | --- | ---: | ---: | ---: | --- |
@@ -51,6 +51,6 @@ Runtime-data share of combined footprint: `80.3%`.
 
 1. Install flatline into an environment that reflects the release artifact
    shape.
-2. Run `python -m flatline._footprint`.
+2. Run `python tools/footprint.py`.
 3. Update this document when the measured values change because of packaging,
    native-binary, or runtime-data changes.

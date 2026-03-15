@@ -12,9 +12,12 @@ from dataclasses import dataclass
 from email.parser import Parser
 from pathlib import Path, PurePosixPath
 
-from flatline._compliance import expected_ghidra_sleigh_version
+from .compliance import expected_ghidra_sleigh_version
 
 REQUIRED_ARTIFACT_KINDS = ("wheel", "sdist")
+_LEGACY_DEV_TOOL_FILES = frozenset(
+    {"_artifacts.py", "_compliance.py", "_footprint.py", "_release.py"}
+)
 
 
 @dataclass(frozen=True)
@@ -148,6 +151,43 @@ def _has_named_member(member_names: Sequence[str], required_name: str) -> bool:
     return any(PurePosixPath(member_name).name == required_name for member_name in member_names)
 
 
+def _contains_dev_only_content(
+    member_names: Sequence[str],
+    *,
+    artifact_label: str,
+    issues: list[BuiltArtifactIssue],
+    strip_archive_root: bool = False,
+) -> None:
+    leaked_members: list[str] = []
+    for member_name in member_names:
+        member_path = PurePosixPath(member_name)
+        parts = member_path.parts
+        if strip_archive_root and parts:
+            parts = parts[1:]
+        if not parts:
+            continue
+
+        relative_path = PurePosixPath(*parts)
+        if parts[0] == "tools":
+            leaked_members.append(relative_path.as_posix())
+            continue
+        if "flatline_dev" in parts:
+            leaked_members.append(relative_path.as_posix())
+            continue
+        if parts[0] == "flatline" and relative_path.name in _LEGACY_DEV_TOOL_FILES:
+            leaked_members.append(relative_path.as_posix())
+
+    if leaked_members:
+        _append_issue(
+            issues,
+            f"{artifact_label}_dev_only_content_present",
+            (
+                f"{artifact_label} artifact contains repo-only dev tooling: "
+                + ", ".join(sorted(leaked_members))
+            ),
+        )
+
+
 def _audit_wheel(
     path: Path,
     *,
@@ -158,6 +198,11 @@ def _audit_wheel(
     try:
         with zipfile.ZipFile(path) as wheel_file:
             member_names = wheel_file.namelist()
+            _contains_dev_only_content(
+                member_names,
+                artifact_label="wheel",
+                issues=issues,
+            )
             if not _has_named_member(member_names, "LICENSE"):
                 _append_issue(
                     issues,
@@ -213,6 +258,12 @@ def _audit_sdist(
         with tarfile.open(path, mode="r:*") as sdist_file:
             members = [member for member in sdist_file.getmembers() if member.isfile()]
             member_names = [member.name for member in members]
+            _contains_dev_only_content(
+                member_names,
+                artifact_label="sdist",
+                issues=issues,
+                strip_archive_root=True,
+            )
             if not _has_named_member(member_names, "LICENSE"):
                 _append_issue(
                     issues,
@@ -333,7 +384,7 @@ def audit_built_release_artifacts(
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the built-artifact audit as a small release-time CLI."""
     parser = argparse.ArgumentParser(
-        prog="python -m flatline._artifacts",
+        prog="python tools/artifacts.py",
         description="Audit built flatline wheel and sdist artifacts.",
     )
     parser.add_argument(

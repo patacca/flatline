@@ -5,13 +5,14 @@ from __future__ import annotations
 import io
 import tarfile
 import zipfile
+from collections.abc import Sequence
 from pathlib import Path
 
 import pytest
 
-pytest.importorskip("flatline._artifacts", reason="dev-only module not shipped in wheel")
-from flatline._artifacts import audit_built_release_artifacts
-from flatline._compliance import expected_ghidra_sleigh_version
+pytest.importorskip("flatline_dev.artifacts", reason="dev-only module not shipped in wheel")
+from flatline_dev.artifacts import audit_built_release_artifacts
+from flatline_dev.compliance import expected_ghidra_sleigh_version
 
 
 def _write_repo_version(repo_root: Path, version: str = "0.1.0.dev0") -> None:
@@ -35,6 +36,7 @@ def _write_wheel(
     dependency_version: str | None = None,
     include_license: bool = True,
     include_notice: bool = True,
+    extra_members: Sequence[tuple[str, str]] = (),
 ) -> Path:
     if dependency_version is None:
         dependency_version = expected_ghidra_sleigh_version()
@@ -57,6 +59,8 @@ def _write_wheel(
             wheel_file.writestr(f"{dist_info_dir}/licenses/LICENSE", "Apache-2.0\n")
         if include_notice:
             wheel_file.writestr(f"{dist_info_dir}/licenses/NOTICE", "flatline notice\n")
+        for member_name, contents in extra_members:
+            wheel_file.writestr(member_name, contents)
 
     return wheel_path
 
@@ -68,6 +72,7 @@ def _write_sdist(
     dependency_version: str | None = None,
     include_license: bool = True,
     include_notice: bool = True,
+    extra_members: Sequence[tuple[str, str]] = (),
 ) -> Path:
     if dependency_version is None:
         dependency_version = expected_ghidra_sleigh_version()
@@ -90,6 +95,8 @@ def _write_sdist(
             _add_tar_text_file(sdist_file, f"{archive_root}/LICENSE", "Apache-2.0\n")
         if include_notice:
             _add_tar_text_file(sdist_file, f"{archive_root}/NOTICE", "flatline notice\n")
+        for member_name, contents in extra_members:
+            _add_tar_text_file(sdist_file, f"{archive_root}/{member_name}", contents)
 
     return sdist_path
 
@@ -155,3 +162,34 @@ def test_u022_built_release_artifact_audit_rejects_missing_dist_dir(
     assert not report.is_valid
     issue_codes = {issue.code for issue in report.issues}
     assert "dist_dir_missing" in issue_codes
+
+
+def test_u022_built_release_artifact_audit_rejects_dev_only_content_leaks(
+    tmp_path: Path,
+) -> None:
+    """U-022: Built artifacts fail when repo-only dev tooling leaks into releases."""
+    repo_root = tmp_path / "repo"
+    dist_dir = repo_root / "dist"
+    dist_dir.mkdir(parents=True)
+    _write_repo_version(repo_root)
+    _write_wheel(
+        dist_dir,
+        extra_members=(
+            ("flatline/_release.py", "legacy dev tool\n"),
+            ("flatline_dev/release.py", "repo-only dev package\n"),
+        ),
+    )
+    _write_sdist(
+        dist_dir,
+        extra_members=(
+            ("tools/release.py", "repo wrapper\n"),
+            ("tools/flatline_dev/release.py", "repo-only dev package\n"),
+        ),
+    )
+
+    report = audit_built_release_artifacts(repo_root)
+
+    assert not report.is_valid
+    issue_codes = {issue.code for issue in report.issues}
+    assert "wheel_dev_only_content_present" in issue_codes
+    assert "sdist_dev_only_content_present" in issue_codes

@@ -1,11 +1,11 @@
 """Prune the sdist to ship only what source-builders need.
 
-Meson dist includes the full tracked repo tree.  The sdist only needs the
+Meson dist includes the full tracked repo tree. The sdist only needs the
 build system files, the flatline source package, the upstream C++ sources,
 and the top-level license/notice artifacts.
 
 This script runs as a meson.add_dist_script() hook and removes everything
-else (tests, docs, CI config, AI agent prompts, dev notes, etc.).
+else, including repo-only development tooling under `tools/`.
 """
 
 import os
@@ -36,14 +36,6 @@ _REMOVE_DOCS_FILES = {
     "roadmap.md",
 }
 
-# Python source files in src/flatline/ that are dev-only CLI tools.
-_REMOVE_SRC_FILES = {
-    "_artifacts.py",
-    "_compliance.py",
-    "_footprint.py",
-    "_release.py",
-}
-
 
 def _remove_path(path: str) -> None:
     """Remove a file or directory tree if it exists."""
@@ -65,12 +57,6 @@ def prune(dist_root: str) -> None:
             _remove_path(os.path.join(docs_dir, subdir))
         for filename in _REMOVE_DOCS_FILES:
             _remove_path(os.path.join(docs_dir, filename))
-
-    # --- src/flatline/ dev-only modules ---
-    src_dir = os.path.join(dist_root, "src", "flatline")
-    if os.path.isdir(src_dir):
-        for filename in _REMOVE_SRC_FILES:
-            _remove_path(os.path.join(src_dir, filename))
 
     # --- third_party/ghidra: keep only decompiler C++ and license files ---
     ghidra_root = os.path.join(dist_root, "third_party", "ghidra")

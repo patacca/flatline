@@ -192,7 +192,7 @@ def _format_measurement(measurement: FootprintMeasurement) -> str:
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the default-install footprint report as a small CLI."""
     parser = argparse.ArgumentParser(
-        prog="python -m flatline._footprint",
+        prog="python tools/footprint.py",
         description="Measure the default-install payload footprint for flatline.",
     )
     parser.parse_args(argv)

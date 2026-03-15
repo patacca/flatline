@@ -25,27 +25,28 @@ Activate the repo venv first, then verify the documented release state:
 
 ```bash
 source .venv/bin/activate
-python -m flatline._release
+python tools/release.py
 tox
-python -m flatline._compliance
-python -m flatline._footprint
+python tools/compliance.py
+python tools/footprint.py
 ```
 
-`python -m flatline._release` is the source-controlled readiness audit for the
+`python tools/release.py` is the source-controlled readiness audit for the
 initial public release gate. It checks the current version state, the expected
 `0.1.0` recommendation, the presence of the required release documents, and a
 clean git worktree so Meson cannot silently drop uncommitted changes from the
-sdist.
+sdist. The release/diagnostic helpers live under `tools/` and are repo-only;
+they are not part of the wheel or sdist payload.
 
 ## Release Steps
 
 1. Activate the repo venv: `source .venv/bin/activate`
 2. Confirm the worktree is clean with `git status --short` before building;
    Meson sdists omit uncommitted changes from the archive
-3. Run `python -m flatline._release`
+3. Run `python tools/release.py`
 4. Run `tox`
-5. Run `python -m flatline._compliance`
-6. Run `python -m flatline._footprint` and refresh `docs/footprint.md` if the
+5. Run `python tools/compliance.py`
+6. Run `python tools/footprint.py` and refresh `docs/footprint.md` if the
    installed-wheel baseline changed
 7. Update `CHANGELOG.md` by moving the release-ready entries from
    `## [Unreleased]` into a dated `## [0.1.0]` section
@@ -54,7 +55,7 @@ sdist.
 9. Bump `pyproject.toml`, `meson.build`, and `src/flatline/_version.py` from
    `0.1.0.dev0` to `0.1.0`
 10. Build artifacts with `python -m build`
-11. Audit the built sdist/wheel with `python -m flatline._artifacts dist`
+11. Audit the built sdist/wheel with `python tools/artifacts.py dist`
     so the current version, dependency pin, and shipped `LICENSE` / `NOTICE`
     files are verified from the actual release artifacts
 12. Complete `docs/release_review.md` for the final human artifact review by
@@ -65,7 +66,7 @@ sdist.
 ## Hold Point
 
 Do not run `git tag v0.1.0` until the public artifact review is explicitly
-approved. `python -m flatline._artifacts dist` provides deterministic artifact
+approved. `python tools/artifacts.py dist` provides deterministic artifact
 evidence for that review, and `docs/release_review.md` records the checklist,
 candidate metadata, and command outcomes used for the final human sign-off.
 This workflow is only the source-controlled procedure that prepares the repo

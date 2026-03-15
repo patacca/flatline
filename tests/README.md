@@ -17,10 +17,12 @@ exercise the installed artifact instead of `PYTHONPATH=src`.
 
 ### Dev-only tests
 
-Four test files exercise dev-only modules (`_compliance`, `_footprint`, `_release`, `_artifacts`)
-that are excluded from wheel and sdist artifacts. The `dev` tox env runs them against the source
-tree via `PYTHONPATH=src` (no wheel build). Under `py313`/`py314` these tests skip gracefully
-because `pytest.importorskip` cannot find the modules in the installed wheel.
+Four test files exercise repo-only dev modules in `tools/flatline_dev/`
+(`compliance`, `footprint`, `release`, `artifacts`). They are excluded from
+wheel and sdist artifacts. The `dev` tox env runs them against the repo tree
+via `PYTHONPATH=src:tools` (no wheel build). Under `py313`/`py314` these tests
+skip gracefully because `pytest.importorskip` cannot find the modules in the
+installed wheel.
 
 ## Layout
 

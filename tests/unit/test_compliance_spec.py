@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("flatline._compliance", reason="dev-only module not shipped in wheel")
-from flatline._compliance import audit_release_compliance, expected_ghidra_sleigh_version
+pytest.importorskip("flatline_dev.compliance", reason="dev-only module not shipped in wheel")
 from flatline._version import UPSTREAM_COMMIT, UPSTREAM_TAG
+from flatline_dev.compliance import audit_release_compliance, expected_ghidra_sleigh_version
 
 
 def _write_minimal_compliant_repo(repo_root: Path) -> None:
@@ -63,7 +63,7 @@ def _write_minimal_compliant_repo(repo_root: Path) -> None:
                 "- Root notice file: NOTICE",
                 "",
                 "## Release Checklist",
-                "- Run `python -m flatline._compliance` before release.",
+                "- Run `python tools/compliance.py` before release.",
                 "",
             ]
         ),

@@ -330,7 +330,7 @@ def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseRead
     if compliance_doc_text is not None:
         _require_fragments(
             text=compliance_doc_text,
-            fragments=("python -m flatline._compliance",),
+            fragments=("python tools/compliance.py",),
             code="compliance_doc_missing_reference",
             label="docs/compliance.md",
             issues=issues,
@@ -362,12 +362,12 @@ def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseRead
                 "Built artifact filenames",
                 current_version,
                 f"`{INITIAL_PUBLIC_RELEASE_VERSION}`",
-                "python -m flatline._release",
+                "python tools/release.py",
                 "tox",
-                "python -m flatline._compliance",
-                "python -m flatline._footprint",
+                "python tools/compliance.py",
+                "python tools/footprint.py",
                 "python -m build",
-                "python -m flatline._artifacts dist",
+                "python tools/artifacts.py dist",
                 "Outcome: approved | blocked | follow-up required",
                 "LICENSE",
                 "NOTICE",
@@ -389,12 +389,12 @@ def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseRead
                 current_version,
                 f"`{INITIAL_PUBLIC_RELEASE_VERSION}`",
                 "git status --short",
-                "python -m flatline._release",
-                "python -m flatline._compliance",
-                "python -m flatline._footprint",
+                "python tools/release.py",
+                "python tools/compliance.py",
+                "python tools/footprint.py",
                 "tox",
                 "python -m build",
-                "python -m flatline._artifacts",
+                "python tools/artifacts.py",
                 "docs/release_review.md",
                 "CHANGELOG.md",
                 f"git tag v{INITIAL_PUBLIC_RELEASE_VERSION}",
@@ -416,7 +416,7 @@ def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseRead
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the initial-public-release readiness audit as a small CLI."""
     parser = argparse.ArgumentParser(
-        prog="python -m flatline._release",
+        prog="python tools/release.py",
         description=(
             "Audit the repo's initial public release workflow and SemVer recommendation."
         ),

@@ -16,27 +16,27 @@ creating `git tag v0.1.0`.
 - The repo worktree is clean before building so Meson cannot omit local edits
   from the sdist.
 - The documented readiness commands have all passed from the repo venv:
-  - `python -m flatline._release`
+  - `python tools/release.py`
   - `tox`
-  - `python -m flatline._compliance`
-  - `python -m flatline._footprint`
+  - `python tools/compliance.py`
+  - `python tools/footprint.py`
   - `python -m build`
-  - `python -m flatline._artifacts dist`
+  - `python tools/artifacts.py dist`
 
 ## Review Evidence
 
-- Confirm `python -m flatline._release` still reports the expected `0.1.0`
+- Confirm `python tools/release.py` still reports the expected `0.1.0`
   recommendation from the `0.1.0.dev0` branch state.
 - Confirm `tox` passed on the release matrix and no release-facing docs drifted
   while fixing the branch for release.
-- Confirm `python -m flatline._compliance` passed and still reports the pinned
+- Confirm `python tools/compliance.py` passed and still reports the pinned
   `ghidra-sleigh == 12.0.4` dependency plus the expected native-source
   attribution references.
-- Confirm `python -m flatline._footprint` matches `docs/footprint.md`, or the
+- Confirm `python tools/footprint.py` matches `docs/footprint.md`, or the
   footprint baseline was intentionally refreshed in the same review.
 - Confirm `python -m build` produced exactly the current release artifacts that
   are under review.
-- Confirm `python -m flatline._artifacts dist` passed against the built wheel
+- Confirm `python tools/artifacts.py dist` passed against the built wheel
   and sdist for the current version.
 - Inspect the reviewed artifacts and verify `LICENSE` and `NOTICE` are shipped
   in both the wheel and the sdist.
@@ -46,12 +46,12 @@ creating `git tag v0.1.0`.
 
 ## Command Outcomes
 
-- `python -m flatline._release`:
+- `python tools/release.py`:
 - `tox`:
-- `python -m flatline._compliance`:
-- `python -m flatline._footprint`:
+- `python tools/compliance.py`:
+- `python tools/footprint.py`:
 - `python -m build`:
-- `python -m flatline._artifacts dist`:
+- `python tools/artifacts.py dist`:
 
 ## Approval Record
 

@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("flatline._release", reason="dev-only module not shipped in wheel")
-from flatline._release import audit_initial_public_release_readiness
+pytest.importorskip("flatline_dev.release", reason="dev-only module not shipped in wheel")
+from flatline_dev.release import audit_initial_public_release_readiness
 
 
 def _write_minimal_release_ready_repo(repo_root: Path) -> None:
@@ -71,7 +71,7 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
         encoding="ascii",
     )
     (repo_root / "docs" / "compliance.md").write_text(
-        "# Compliance\n\npython -m flatline._compliance\n",
+        "# Compliance\n\npython tools/compliance.py\n",
         encoding="ascii",
     )
     (repo_root / "docs" / "release_notes.md").write_text(
@@ -90,12 +90,12 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
                 "- Built artifact filenames:",
                 "",
                 "## Preconditions",
-                "- Run `python -m flatline._release`",
+                "- Run `python tools/release.py`",
                 "- Run `tox`",
-                "- Run `python -m flatline._compliance`",
-                "- Run `python -m flatline._footprint`",
+                "- Run `python tools/compliance.py`",
+                "- Run `python tools/footprint.py`",
                 "- Run `python -m build`",
-                "- Run `python -m flatline._artifacts dist`",
+                "- Run `python tools/artifacts.py dist`",
                 "",
                 "## Review Evidence",
                 "- Verify `LICENSE` and `NOTICE` in the artifacts.",
@@ -103,12 +103,12 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
                 "- Confirm `ghidra-sleigh == 12.0.4`.",
                 "",
                 "## Command Outcomes",
-                "- `python -m flatline._release`:",
+                "- `python tools/release.py`:",
                 "- `tox`:",
-                "- `python -m flatline._compliance`:",
-                "- `python -m flatline._footprint`:",
+                "- `python tools/compliance.py`:",
+                "- `python tools/footprint.py`:",
                 "- `python -m build`:",
-                "- `python -m flatline._artifacts dist`:",
+                "- `python tools/artifacts.py dist`:",
                 "",
                 "## Approval Record",
                 "- Reviewer:",
@@ -126,12 +126,12 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
                 "- Current development version: `0.1.0.dev0`",
                 "- Recommended first public version: `0.1.0`",
                 "- Run `git status --short`",
-                "- Run `python -m flatline._release`",
-                "- Run `python -m flatline._compliance`",
-                "- Run `python -m flatline._footprint`",
+                "- Run `python tools/release.py`",
+                "- Run `python tools/compliance.py`",
+                "- Run `python tools/footprint.py`",
                 "- Run `tox`",
                 "- Run `python -m build`",
-                "- Run `python -m flatline._artifacts dist`",
+                "- Run `python tools/artifacts.py dist`",
                 "- Review `docs/release_review.md`",
                 "- Update `CHANGELOG.md`",
                 "- Create `git tag v0.1.0`",
@@ -208,12 +208,12 @@ def test_u021_initial_public_release_workflow_is_source_controlled(tmp_path: Pat
         "0.1.0.dev0",
         "`0.1.0`",
         "git status --short",
-        "python -m flatline._release",
-        "python -m flatline._compliance",
-        "python -m flatline._footprint",
+        "python tools/release.py",
+        "python tools/compliance.py",
+        "python tools/footprint.py",
         "tox",
         "python -m build",
-        "python -m flatline._artifacts",
+        "python tools/artifacts.py",
         "docs/release_review.md",
         "CHANGELOG.md",
         "git tag v0.1.0",
@@ -270,12 +270,12 @@ def test_u021_release_readiness_audit_rejects_incomplete_review_record(
                 "# Public Artifact Review Checklist",
                 "",
                 "## Preconditions",
-                "- Run `python -m flatline._release`",
+                "- Run `python tools/release.py`",
                 "- Run `tox`",
-                "- Run `python -m flatline._compliance`",
-                "- Run `python -m flatline._footprint`",
+                "- Run `python tools/compliance.py`",
+                "- Run `python tools/footprint.py`",
                 "- Run `python -m build`",
-                "- Run `python -m flatline._artifacts dist`",
+                "- Run `python tools/artifacts.py dist`",
                 "",
                 "## Review Evidence",
                 "- Verify `LICENSE` and `NOTICE` in the artifacts.",

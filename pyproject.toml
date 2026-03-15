@@ -44,7 +44,7 @@ addopts = "-ra"
 [tool.ruff]
 target-version = "py313"
 line-length = 99
-src = ["src", "tests"]
+src = ["src", "tests", "tools"]
 
 [tool.ruff.lint]
 select = [
@@ -61,7 +61,7 @@ select = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["flatline"]
+known-first-party = ["flatline", "flatline_dev"]
 
 # -- tox -------------------------------------------------------------------
 [tool.tox]
@@ -83,7 +83,7 @@ extras = []
 # Mirrors [project.optional-dependencies].test; duplicated because
 # package = "skip" prevents using extras.
 deps = ["pytest >= 8.0"]
-set_env = {PYTHONPATH = "{toxinidir}/src"}
+set_env = {PYTHONPATH = "{toxinidir}/src:{toxinidir}/tools"}
 commands = [
     ["pytest",
      "tests/unit/test_compliance_spec.py",
@@ -99,7 +99,7 @@ extras = []
 # Mirrors [project.optional-dependencies].lint; duplicated because
 # package = "skip" prevents using extras.
 deps = ["ruff >= 0.9"]
-commands = [["ruff", "check", "src/", "tests/"]]
+commands = [["ruff", "check", "src/", "tests/", "tools/"]]
 
 [tool.tox.env.py313]
 base_python = "python3.13"
