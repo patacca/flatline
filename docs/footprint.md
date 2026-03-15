@@ -18,7 +18,7 @@ Reference command:
 - `python tools/footprint.py`
 
 Reference environment for the committed baseline:
-- Date: `2026-03-14`
+- Date: `2026-03-15`
 - Host: Linux x86_64
 - Python: `3.14.3`
 - Install shape: installed wheel in `.tox/py314`
@@ -29,17 +29,17 @@ Captured from `.tox/py314/bin/python tools/footprint.py`:
 
 | Component | Bytes | MiB | Files | Notes |
 | --- | ---: | ---: | ---: | --- |
-| `flatline` distribution | `5,947,759` | `5.67` | `18` | Python package + native extension + dist-info payload |
+| `flatline` distribution | `5,931,943` | `5.66` | `16` | Python package + native extension + dist-info payload |
 | `ghidra-sleigh` distribution | `24,810,933` | `23.66` | `848` | Companion runtime-data package payload |
 | `ghidra-sleigh` runtime data | `24,688,937` | `23.55` | `841` | Runtime-data subset inside the package |
-| Combined default install | `30,758,692` | `29.33` | `866` | `flatline` + `ghidra-sleigh` payloads |
+| Combined default install | `30,742,876` | `29.32` | `864` | `flatline` + `ghidra-sleigh` payloads |
 
 Runtime-data share of combined footprint: `80.3%`.
 
 ## Product Interpretation
 
 - The default one-package UX remains acceptable at the current pinned baseline:
-  combined payload is about `29.33 MiB`, and the bundled runtime data accounts
+  combined payload is about `29.32 MiB`, and the bundled runtime data accounts
   for most of it.
 - The current baseline does not justify changing the default asset profile.
 - If future footprint growth makes the default unacceptable, any move to a
