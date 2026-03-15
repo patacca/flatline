@@ -83,11 +83,10 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
             [
                 "# Public Artifact Review Checklist",
                 "",
-                "## Release Candidate Record",
-                "- Git commit under review:",
-                "- Flatline version under review: `0.1.0.dev0`",
-                "- Planned public tag: `0.1.0`",
-                "- Built artifact filenames:",
+                (
+                    "This checklist is the manual human gate for the initial public "
+                    "release of `0.1.0`."
+                ),
                 "",
                 "## Preconditions",
                 "- Run `python tools/release.py`",
@@ -102,17 +101,10 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
                 "- Review `docs/release_notes.md` and `CHANGELOG.md`.",
                 "- Confirm `ghidra-sleigh == 12.0.4`.",
                 "",
-                "## Command Outcomes",
-                "- `python tools/release.py`:",
-                "- `tox`:",
-                "- `python tools/compliance.py`:",
-                "- `python tools/footprint.py`:",
-                "- `python -m build`:",
-                "- `python tools/artifacts.py dist`:",
-                "",
-                "## Approval Record",
-                "- Reviewer:",
-                "- Outcome: approved | blocked | follow-up required",
+                "## Approval Signal",
+                "- Do not create `git tag v0.1.0` until the checklist passes.",
+                "- Keep any manual review notes outside the repo; do not commit them.",
+                "- Proceed only after the reviewer explicitly approves the release.",
                 "",
             ]
         ),
@@ -132,7 +124,8 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
                 "- Run `tox`",
                 "- Run `python -m build`",
                 "- Run `python tools/artifacts.py dist`",
-                "- Review `docs/release_review.md`",
+                "- Run the manual checklist in `docs/release_review.md`",
+                "- Do not commit review notes",
                 "- Update `CHANGELOG.md`",
                 "- Create `git tag v0.1.0`",
                 "",
@@ -215,6 +208,7 @@ def test_u021_initial_public_release_workflow_is_source_controlled(tmp_path: Pat
         "python -m build",
         "python tools/artifacts.py",
         "docs/release_review.md",
+        "Do not commit review notes",
         "CHANGELOG.md",
         "git tag v0.1.0",
     )
@@ -260,7 +254,7 @@ def test_u021_release_readiness_audit_rejects_missing_workflow_and_version_drift
 def test_u021_release_readiness_audit_rejects_incomplete_review_record(
     tmp_path: Path,
 ) -> None:
-    """U-021: The readiness audit requires the stronger review-record template."""
+    """U-021: The readiness audit requires the documented manual checklist."""
     _write_minimal_release_ready_repo(tmp_path)
     _init_git_repo(tmp_path)
 
@@ -272,18 +266,9 @@ def test_u021_release_readiness_audit_rejects_incomplete_review_record(
                 "## Preconditions",
                 "- Run `python tools/release.py`",
                 "- Run `tox`",
-                "- Run `python tools/compliance.py`",
-                "- Run `python tools/footprint.py`",
-                "- Run `python -m build`",
-                "- Run `python tools/artifacts.py dist`",
                 "",
-                "## Review Evidence",
-                "- Verify `LICENSE` and `NOTICE` in the artifacts.",
-                "- Review `docs/release_notes.md` and `CHANGELOG.md`.",
-                "- Confirm `ghidra-sleigh == 12.0.4`.",
-                "",
-                "## Approval Record",
-                "- Reviewer:",
+                "## Approval Signal",
+                "- Release is approved.",
                 "",
             ]
         ),

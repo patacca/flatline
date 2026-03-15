@@ -14,6 +14,7 @@ from flatline import (
     DecompileResult,
     FunctionInfo,
     LanguageCompilerPair,
+    __version__,
 )
 from flatline import _bridge as bridge_module
 
@@ -85,7 +86,7 @@ class _NativeSessionSuccessDouble:
             ],
             "error": None,
             "metadata": {
-                "decompiler_version": "0.1.0.dev0",
+                "decompiler_version": __version__,
                 "language_id": request_payload["language_id"],
                 "compiler_spec": request_payload["compiler_spec"],
                 "diagnostics": {},
@@ -119,7 +120,7 @@ class _NativeSessionInvalidSuccessShapeDouble:
             "warnings": [],
             "error": None,
             "metadata": {
-                "decompiler_version": "0.1.0.dev0",
+                "decompiler_version": __version__,
                 "language_id": request_payload["language_id"],
                 "compiler_spec": request_payload["compiler_spec"] or "",
                 "diagnostics": {},
@@ -154,7 +155,7 @@ class _NativeSessionEmptyEnumerationDouble:
                 "retryable": False,
             },
             "metadata": {
-                "decompiler_version": "0.1.0.dev0",
+                "decompiler_version": __version__,
                 "language_id": request_payload["language_id"],
                 "compiler_spec": request_payload["compiler_spec"] or "",
                 "diagnostics": {},

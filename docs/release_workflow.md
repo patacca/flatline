@@ -1,18 +1,20 @@
 # Initial Public Release Workflow
 
-This document records the remaining P5 release decision and the exact repo-side
-workflow to execute once the public artifact review is approved. The source-
-controlled checklist for that human gate lives in `docs/release_review.md`.
+This document records the repo-side procedure that finalized flatline's initial
+public release and the SemVer decision behind it. The source-controlled manual
+checklist for the human gate lives in `docs/release_review.md`; any per-run
+review notes stay outside the repo.
 
 ## SemVer Decision
 
-- Current development version: `0.1.0.dev0`
-- Recommended first public version: `0.1.0`
+- Current development version before release: `0.1.0.dev0`
+- Released public version: `0.1.0`
 - SemVer classification: `initial_public_release`
 
 Rationale:
-- The repo already names the pending public line as `0.1.0.dev0` in
-  `pyproject.toml`, `meson.build`, and `src/flatline/_version.py`.
+- Before the release bump, the repo named the pending public line as
+  `0.1.0.dev0` in `pyproject.toml`, `meson.build`, and
+  `src/flatline/_version.py`.
 - No earlier public flatline release line exists, so this step establishes the
   initial public SemVer baseline instead of incrementing an existing release.
 - Future release classification then follows the normal `MAJOR` / `MINOR` /
@@ -58,16 +60,15 @@ they are not part of the wheel or sdist payload.
 11. Audit the built sdist/wheel with `python tools/artifacts.py dist`
     so the current version, dependency pin, and shipped `LICENSE` / `NOTICE`
     files are verified from the actual release artifacts
-12. Complete `docs/release_review.md` for the final human artifact review by
-    recording the reviewed git commit, built artifact filenames, and the
-    outcomes of the deterministic release commands
+12. Run the manual checklist in `docs/release_review.md`; keep reviewed
+    commit/artifact notes outside the repo and wait for explicit approval.
+    Do not commit review notes.
 13. Create the release tag with `git tag v0.1.0`
 
 ## Hold Point
 
 Do not run `git tag v0.1.0` until the public artifact review is explicitly
 approved. `python tools/artifacts.py dist` provides deterministic artifact
-evidence for that review, and `docs/release_review.md` records the checklist,
-candidate metadata, and command outcomes used for the final human sign-off.
-This workflow is only the source-controlled procedure that prepares the repo
-for that final sign-off.
+evidence for that review, and `docs/release_review.md` records the checklist
+criteria used for the final human sign-off. The operator reports approval
+out-of-band. Do not commit review notes to this repo.

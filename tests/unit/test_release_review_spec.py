@@ -14,28 +14,23 @@ def test_u023_public_artifact_review_checklist_is_source_controlled() -> None:
 
     required_review_fragments = (
         "# Public Artifact Review Checklist",
-        "## Release Candidate Record",
         "## Preconditions",
         "## Review Evidence",
-        "## Command Outcomes",
-        "## Approval Record",
-        "0.1.0.dev0",
+        "## Approval Signal",
         "`0.1.0`",
-        "Git commit under review",
-        "Flatline version under review",
-        "Built artifact filenames",
         "python tools/release.py",
         "tox",
         "python tools/compliance.py",
         "python tools/footprint.py",
         "python -m build",
         "python tools/artifacts.py dist",
-        "Outcome: approved | blocked | follow-up required",
         "LICENSE",
         "NOTICE",
         "docs/release_notes.md",
         "CHANGELOG.md",
         "ghidra-sleigh == 12.0.4",
+        "do not commit",
+        "explicitly approves the release",
     )
 
     for fragment in required_review_fragments:

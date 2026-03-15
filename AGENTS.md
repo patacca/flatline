@@ -3,10 +3,10 @@
 
 # Overview
 - Pip-installable Python wrapper around the Ghidra C++ decompiler, consuming packaged runtime assets from `ghidra-sleigh`. Multi-ISA.
-- **Phase P5 (Initial public release) — in progress.** P0-P4 deliverables are committed locally; initial public release notes/support policy now live in `docs/release_notes.md`.
+- **Phase P5 (Initial public release) — complete.** Flatline is now versioned as `0.1.0`; the published release-facing contract and support policy live in `docs/release_notes.md`.
 - `.sla` runtime data now comes from the `ghidra-sleigh` runtime dependency (pip name) / `ghidra_sleigh` (import); default build ships all processor families, lighter build uses `all_processors=false`.
 - `pyproject.toml` now pins `ghidra-sleigh == 12.0.4` to match the vendored `Ghidra_12.0.4_build` native baseline.
-- Flatline version strings are now normalized to the PEP 440 form `0.1.0.dev0` across `pyproject.toml`, `meson.build`, and `src/flatline/_version.py`.
+- Flatline version strings are now `0.1.0` across `pyproject.toml`, `meson.build`, and `src/flatline/_version.py`.
 - `third_party/ghidra` is now tracked by the top-level repo as a git submodule pinned to `Ghidra_12.0.4_build` / `e40ed13014025f82488b1f8f7bca566894ac376b`; `third_party/r2ghidra` remains a local read-only reference checkout ignored by the parent repo.
 - End-to-end decompilation verified: x86_64 `add(a,b)` produces correct C output with full structured data.
 - Priority-ISA native memory fixtures are now committed as `tests/fixtures/*.hex`: x86_64, x86_32, AArch64, RISC-V 64, MIPS32, plus x86_64 switch and warning fixtures.
@@ -25,12 +25,12 @@
 - `docs/roadmap.md` M2 wording now explicitly distinguishes per-ISA known-function fixtures from the single committed x86_64 jump-table fixture, and tracks the switch fixture's latency budget separately from the priority-ISA perf budgets.
 - `pyproject.toml` now declares `license-files = ["LICENSE", "NOTICE"]`, and `README.md` now points redistribution guidance at those artifacts while matching the actual fixture-backed confidence matrix (x86 32/64, ARM64, RISC-V 64, MIPS32; others best-effort).
 - `CHANGELOG.md` exists at the repo root, follows Keep a Changelog, and must be updated for every release.
-- `docs/release_notes.md` now captures the initial public release-facing contract guarantees, support tiers, known-variant limits, and upgrade policy; `README.md` links it and now tracks P5 as the current focus.
-- `docs/release_workflow.md` now records the initial public release procedure and the first-release SemVer recommendation: finalize `0.1.0.dev0` as `0.1.0`; `python tools/release.py` audits version/doc alignment and rejects dirty git worktrees before tagging because Meson sdists omit uncommitted changes.
-- `docs/release_review.md` now captures the source-controlled public artifact-review checklist plus a release-candidate record template (reviewed git commit, artifact filenames, deterministic command outcomes, approval status) for the final human P5 sign-off; `python tools/release.py` now requires that stronger review doc alongside the release notes/workflow links.
+- `docs/release_notes.md` now captures the `0.1.0` release-facing contract guarantees, support tiers, known-variant limits, and upgrade policy; `README.md` links it and now tracks P5 as complete.
+- `docs/release_workflow.md` now records the initial public release procedure and the historical SemVer decision that finalized `0.1.0.dev0` as `0.1.0`; `python tools/release.py` audits version/doc alignment and rejects dirty git worktrees before tagging because Meson sdists omit uncommitted changes.
+- `docs/release_review.md` now captures the source-controlled public artifact-review checklist for the final human P5 sign-off, while per-run review notes stay outside the repo; `python tools/release.py` requires that checklist alongside the release notes/workflow links.
 - `python tools/artifacts.py dist` now audits built wheel/sdist artifacts for shipped `LICENSE` / `NOTICE`, current version metadata, the pinned `ghidra-sleigh == 12.0.4` dependency, and accidental dev-tool leakage before the human public-artifact review sign-off.
 - `pip install -e ".[dev]"` now installs `build >= 1.2`, so the documented `python -m build` release step works from the standard repo venv without extra manual tooling setup.
-- **Next:** once `docs/release_review.md` is completed and approved, run the documented initial public release workflow, bump to `0.1.0`, and create tag `v0.1.0`.
+- **Next:** start P6 cross-platform expansion feasibility work (macOS/Windows host validation) while P7 enriched-output design remains deferred behind ADR-012.
 - Post-MVP P7 will expose pcode ops and varnode graphs as frozen Python value types for downstream analysis (BSim-style similarity, binary diffing, data flow/taint). Design tracked in ADR-012.
 - Not a general Ghidra automation framework; decompiler surface only. No UI, no project DB.
 
@@ -84,7 +84,7 @@
 - `docs/compliance.md` — ADR-007 compliance manifest + redistribution checklist.
 - `docs/footprint.md` — default-install footprint baseline and size-policy note.
 - `docs/release_notes.md` — initial public release notes: contract guarantees, support tiers, known-variant limits, and upgrade policy.
-- `docs/release_review.md` — public artifact-review checklist and approval record template for the initial public release gate.
+- `docs/release_review.md` — public artifact-review checklist and external approval hold point for the initial public release gate.
 
 # Repo structure (non-vendored)
 - `pyproject.toml` — metadata, tool settings. Build backend: `meson-python`.
@@ -100,7 +100,7 @@
 - `docs/` — specs, roadmap, project documentation.
 - `docs/ai/` — agent prompts, planning artifacts, workflow templates.
 - `docs/release_notes.md` — initial public release notes and support-policy summary.
-- `docs/release_review.md` — public artifact-review checklist and approval record template.
+- `docs/release_review.md` — public artifact-review checklist and external approval hold point.
 - `docs/release_workflow.md` — initial public release workflow, hold point, and `0.1.0` SemVer recommendation.
 - `notes/api/decompiler_inventory.md` — 18 required callable symbols with I/O, init order, thread-safety.
 - `notes/r2ghidra/integration_map.md` — 5-section integration analysis (reusable/reimplement/skip). Reference only.
@@ -136,6 +136,7 @@
 
 # Tests
 - Latest dev-tool separation verification: with `MESONPY_EDITABLE_SKIP=/home/patacca/patacca_git/flatline/build/cp314` and `PYTHONPATH=src:tools`, 14 focused unit tests passed, `ruff check src/ tests/ tools/` passed, `python -m build --outdir /tmp/flatline-dist-check` succeeded, and `python tools/artifacts.py /tmp/flatline-dist-check --repo-root .` passed.
+- Latest full `tox` run on the `0.1.0` release snapshot: `py314` passed (68 tests), `dev` passed (11 tests), `lint` passed, and `py313` skipped because `python3.13` is not installed.
 - Native tests expect compiled `.sla` data from the installed `ghidra-sleigh` runtime dependency, currently covering DATA, x86, AARCH64, RISCV, and MIPS.
 - Native tox runs still resolve runtime data from `ghidra_sleigh.get_runtime_data_dir()` explicitly; public `DecompilerSession` startup now auto-discovers that default path when `runtime_data_dir` is omitted, and `DecompileRequest` / `DecompilerSession` coerce path-like `runtime_data_dir` inputs to strings.
 - `tests/conftest.py` — auto-applies category markers from directory names.
@@ -146,8 +147,8 @@
 - `tests/unit/test_runtime_data_spec.py` — `.ldefs` tolerance, dependency-backed default runtime-data discovery, and deterministic failure tests.
 - `tests/unit/test_compliance_spec.py` — ADR-007 compliance audit for required notice files, pinned-source references, and dependency-pin drift. Skips under tox (dev-only module).
 - `tests/unit/test_footprint_spec.py` — default-install footprint measurement excludes `__pycache__` noise and keeps `docs/footprint.md` pinned to the current workflow/policy. Skips under tox (dev-only module).
-- `tests/unit/test_release_notes_spec.py` — locks the initial public release notes doc and README against the P5 gate: contract guarantees, support tiers, known-variant limits, upgrade policy, and current-phase messaging.
-- `tests/unit/test_release_review_spec.py` — locks the source-controlled public artifact-review checklist against the P5 gate: required readiness commands, artifact evidence, notices, release-doc references, and approval-record fields.
+- `tests/unit/test_release_notes_spec.py` — locks the initial public release notes doc and README against the P5 gate: contract guarantees, support tiers, known-variant limits, upgrade policy, and released-`0.1.0` status messaging.
+- `tests/unit/test_release_review_spec.py` — locks the source-controlled public artifact-review checklist against the P5 gate: required readiness commands, artifact evidence, notices, release-doc references, and the explicit out-of-band approval hold point.
 - `tests/unit/test_release_workflow_spec.py` — locks the initial public release workflow and SemVer recommendation: `0.1.0.dev0` finalizes to `0.1.0`, README links the workflow doc, and missing workflow docs or version drift fail deterministically. Skips under tox (dev-only module).
 - `tests/unit/test_artifact_audit_spec.py` — built wheel/sdist audit for shipped notices plus current version and dependency metadata. Skips under tox (dev-only module).
 - `tests/unit/test_devtool_layout_spec.py` — locks the repo-only dev-tool layout: `tools/flatline_dev` plus `tools/*.py` wrappers exist, and `src/flatline` contains no dev-only release helpers.

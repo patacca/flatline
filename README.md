@@ -132,7 +132,7 @@ release using the Keep a Changelog structure already in the file.
 The release-facing contract guarantees, support tiers, known-variant limits,
 and upgrade policy for the first public release live in
 [docs/release_notes.md](docs/release_notes.md).
-The public artifact review checklist and approval record template live in
+The public artifact review checklist and manual approval hold point live in
 [docs/release_review.md](docs/release_review.md).
 The initial public release workflow and the `0.1.0` SemVer recommendation live
 in [docs/release_workflow.md](docs/release_workflow.md).
@@ -142,12 +142,14 @@ baseline and size-policy note live in [docs/footprint.md](docs/footprint.md).
 
 ## Project status
 
-P4 is complete. The current focus is P5 initial public release preparation,
+The `0.1.0` MVP release is available. P5 initial public release is complete,
 with release-facing guarantees and support-policy notes captured in
 [docs/release_notes.md](docs/release_notes.md) and the release/tag procedure
-captured in [docs/release_workflow.md](docs/release_workflow.md). The remaining
-human gate uses [docs/release_review.md](docs/release_review.md). See
-[docs/roadmap.md](docs/roadmap.md) for the phase plan.
+recorded in [docs/release_workflow.md](docs/release_workflow.md). The manual
+artifact-review gate remains documented in [docs/release_review.md](docs/release_review.md)
+for future reference, while the next roadmap focus is P6 cross-platform
+expansion feasibility. See [docs/roadmap.md](docs/roadmap.md) for the phase
+plan.
 
 ## License
 

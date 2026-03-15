@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-03-15
+
 ### Added
 - Native C++ decompiler bridge via nanobind (session lifecycle, target selection,
   decompile pipeline)
@@ -59,6 +61,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dev-only release helpers moved from `src/flatline` to `tools/flatline_dev/`,
   excluded from wheel and sdist distribution artifacts
 - Version strings normalized to PEP 440 form `0.1.0.dev0`
+- Initial public release workflow now keeps the manual artifact checklist
+  source-controlled while the review notes stay outside the repo
 
 ### Fixed
 - Size-aware `std::string` construction for `nb::bytes` to preserve embedded

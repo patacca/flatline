@@ -74,17 +74,18 @@ Product policy:
 - `docs/release_notes.md` summarizing contract guarantees, support tiers /
   known-variant limits, and upgrade policy for the first public release
 - `docs/release_review.md` capturing the public artifact-review checklist and
-  the expected evidence for final human sign-off, including the reviewed git
-  commit, built artifact filenames, and deterministic command outcomes
+  the explicit external approval hold point for final human sign-off
 - `docs/release_workflow.md` capturing the initial public release procedure and
-  the `0.1.0` SemVer recommendation for the current `0.1.0.dev0` branch
+  the `0.1.0` SemVer recommendation that finalized the prior `0.1.0.dev0`
+  branch state
 - built-artifact audit evidence from `python tools/artifacts.py`
 - Exit checks:
 - SemVer classification approved
 - contract tests green on release matrix
 - release-facing support matrix and known-variant limits are ready
 - public artifact-review criteria are source-controlled and tied to the
-  deterministic readiness evidence
+  deterministic readiness evidence, while final human approval is reported
+  outside the repo
 - built wheel and sdist pass artifact audit for version/dependency metadata and
   shipped `LICENSE` / `NOTICE`
 - dev-only release tools are not present in the built wheel or sdist (audit tools are repo-level commands run from editable installs)
@@ -146,8 +147,8 @@ and release activities require distinct checkpoints.
 Release stream model:
 - One active stream per latest upstream decompiler pin.
 - Upstream bump replaces prior pin; no parallel support matrix across upstream versions.
-- The current P5 branch is the pre-release `0.1.0.dev0` line; once artifact
-  review passes, the initial public tag for this stream is `0.1.0`.
+- The initial public release for this stream is `0.1.0`, finalized from the
+  earlier `0.1.0.dev0` release-candidate line.
 
 Versioning rules:
 - `MAJOR`: breaking Python API contract change.

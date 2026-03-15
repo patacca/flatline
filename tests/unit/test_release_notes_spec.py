@@ -26,11 +26,12 @@ def test_u020_initial_public_release_notes_cover_p5_requirements() -> None:
         "one minor release",
         "runtime_data_dir",
         "CHANGELOG.md",
+        "`0.1.0`",
     )
 
     for fragment in required_release_fragments:
         assert fragment in release_notes
 
     assert "docs/release_notes.md" in readme
-    assert "P5 initial public release preparation" in readme
+    assert "The `0.1.0` MVP release is available." in readme
     assert "call returns a `configuration_error` result" in readme

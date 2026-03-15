@@ -573,9 +573,9 @@ Packaging and compliance:
   `docs/release_review.md`; it must stay source-controlled and tie the human
   sign-off to the deterministic evidence from `python tools/release.py`,
   `tox`, `python tools/compliance.py`, `python tools/footprint.py`,
-  `python -m build`, and `python tools/artifacts.py dist`. The review
-  record must also capture the reviewed git commit, built artifact filenames,
-  and the recorded outcome of those deterministic commands.
+  `python -m build`, and `python tools/artifacts.py dist`. The checklist stays
+  in the repo, but the per-run approval notes and reviewed artifact identifiers
+  are kept outside git and reported out-of-band.
 - Default-install footprint is measured with `python tools/footprint.py`,
   using shipped payload files only (excluding interpreter-generated
   `__pycache__` / `.pyc` entries). `docs/footprint.md` records the current
@@ -596,8 +596,8 @@ Release-facing policy:
   the caller-managed compatibility risk of custom `runtime_data_dir` roots.
 - The initial public release must also keep the human artifact-review checklist
   in `docs/release_review.md` aligned with the release workflow, changelog, and
-  release notes so the final sign-off criteria are explicit, including the
-  reviewed commit/artifact identifiers and the recorded command outcomes.
+  release notes so the final sign-off criteria are explicit, with an external
+  approval hold point before tagging and no requirement to commit review notes.
 - The initial public release workflow and its `0.1.0` version recommendation
   are source-controlled in `docs/release_workflow.md` and audited by
   `python tools/release.py` before the release tag is created.
