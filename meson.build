@@ -11,4 +11,7 @@ py = import('python').find_installation(pure: false)
 
 subdir('src/flatline')
 
-meson.add_dist_script(py, files('tools/prune_dist.py'))
+fs = import('fs')
+if fs.exists('tools/prune_dist.py')
+  meson.add_dist_script(py, files('tools/prune_dist.py'))
+endif
