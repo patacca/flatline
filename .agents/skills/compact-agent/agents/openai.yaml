@@ -1,0 +1,4 @@
+interface:
+  display_name: "Compact Agent"
+  short_description: "Compress AGENTS.md without losing repo facts"
+  default_prompt: "Use $compact-agent to rewrite AGENTS.md into a minimal-token bullet version while preserving repo-operational facts."

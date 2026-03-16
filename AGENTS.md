@@ -78,7 +78,7 @@
 - `docs/roadmap.md` — 8 phases (P0-P7), 7 milestones (M0-M6), risk register, ADR backlog.
 - `docs/code_style.md` — naming, formatting, imports, annotations, test conventions.
 - `CHANGELOG.md` — release history; update on every release.
-- `docs/ai/compact_agent.md` — compact prompt template for lossless AGENTS.md compression.
+- `.agents/skills/compact-agent/SKILL.md` — canonical source for lossless `AGENTS.md` compaction rules.
 - `docs/ai/planning.md` — original brief/requirements.
 - `docs/ai/preplanning.md` — discovery constraints and experiment plan (completed).
 - `docs/ai/refine_plan.md` — plan refinement checklist and cross-file consistency guide.
@@ -137,6 +137,7 @@
 - `ghidra-sleigh` source-build details live in its own repo; use its documented Meson options there, not from this workspace.
 
 # Tests
+- Repo `.venv` now has `PyYAML`, so `python /home/patacca/.codex/skills/.system/skill-creator/scripts/quick_validate.py .agents/skills/compact-agent` passes.
 - Latest dev-tool separation verification: with `MESONPY_EDITABLE_SKIP=/home/patacca/patacca_git/flatline/build/cp314` and `PYTHONPATH=src:tools`, 14 focused unit tests passed, `ruff check src/ tests/ tools/` passed, `python -m build --outdir /tmp/flatline-dist-check` succeeded, and `python tools/artifacts.py /tmp/flatline-dist-check --repo-root .` passed.
 - Latest full `tox` run on the `0.1.0` release snapshot: `py314` passed (68 tests), `dev` passed (11 tests), `lint` passed, and `py313` skipped because `python3.13` is not installed.
 - Native tests expect compiled `.sla` data from the installed `ghidra-sleigh` runtime dependency, currently covering DATA, x86, AARCH64, RISCV, and MIPS.
