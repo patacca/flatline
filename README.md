@@ -45,9 +45,7 @@ pip install -e ".[dev]"
 `flatline` depends on `ghidra-sleigh` for its default runtime-data path, so
 `DecompilerSession` and the one-shot wrappers auto-discover runtime data when
 `runtime_data_dir` is omitted. `runtime_data_dir` remains available as an
-explicit override for custom or reduced runtime-data roots. If the installed
-`ghidra-sleigh` package advertises a different Ghidra tag/commit than flatline's
-pin, flatline emits a runtime warning instead of silently switching baselines.
+explicit override for custom or reduced runtime-data roots.
 
 ### Native bridge
 

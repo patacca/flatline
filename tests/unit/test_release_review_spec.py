@@ -28,7 +28,7 @@ def test_u023_public_artifact_review_checklist_is_source_controlled() -> None:
         "NOTICE",
         "docs/release_notes.md",
         "CHANGELOG.md",
-        "ghidra-sleigh == 12.0.4",
+        "ghidra-sleigh",
         "do not commit",
         "explicitly approves the release",
     )

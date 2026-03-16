@@ -2,9 +2,7 @@
 
 ## 0. Baseline and Policy
 
-Pinned baseline for this roadmap:
-- Ghidra tag: `Ghidra_12.0.4_build`
-- Commit: `e40ed13014025f82488b1f8f7bca566894ac376b` (2026-03-03)
+Vendored decompiler source: `third_party/ghidra` git submodule.
 
 Product policy:
 - Linux host MVP first; multi-ISA target from day one.

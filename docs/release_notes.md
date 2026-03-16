@@ -19,10 +19,10 @@ project remains on the Linux MVP track. This document accompanies version
   fall back to a different language or compiler.
 - Native failures are normalized into structured public results. No native
   exception is part of the supported user contract.
-- The default runtime-data path comes from the pinned `ghidra-sleigh`
-  dependency. Callers may still pass an explicit `runtime_data_dir`, but that
-  override is caller-managed. Auto-discovered upstream pin drift is surfaced as
-  a warning instead of silently switching baselines.
+- The default runtime-data path comes from the `ghidra-sleigh` dependency.
+  Callers may still pass an explicit `runtime_data_dir`, but that override is
+  caller-managed. Any installed `ghidra-sleigh` version is accepted for default
+  runtime data.
 - Deterministic regression coverage is committed on Linux x86_64 for the
   fixture-backed confidence matrix: x86 (32/64), ARM64, RISC-V 64, and MIPS32.
 - Release history and per-version deltas belong in `CHANGELOG.md`. The
@@ -63,8 +63,8 @@ Support-tier interpretation:
 ## Upgrade Policy
 
 - Flatline follows a latest-upstream-only policy: each flatline release line
-  supports exactly one pinned Ghidra decompiler revision and one matching
-  `ghidra-sleigh` runtime-data dependency line.
+  ships one vendored Ghidra decompiler revision. Any compatible `ghidra-sleigh`
+  version provides the default runtime data.
 - SemVer classification rules are:
   - `MAJOR`: breaking public Python API or contract changes.
   - `MINOR`: backward-compatible features, additive metadata/warnings, or an
@@ -72,8 +72,8 @@ Support-tier interpretation:
   - `PATCH`: bug fixes and determinism/perf fixes with unchanged contract shape.
 - Public API removals require at least one minor release of deprecation notice
   before removal, except for emergency security or compliance removals.
-- Default installs should take the pinned flatline and `ghidra-sleigh`
-  versions together. Custom `runtime_data_dir` roots are caller-managed and may
+- Default installs should take flatline and `ghidra-sleigh` together.
+  Custom `runtime_data_dir` roots are caller-managed and may
   need extra validation after upgrades.
 - Before upgrading a deployed workflow, review `CHANGELOG.md`, check these
   release notes for support-tier changes, and rerun `tox` or equivalent

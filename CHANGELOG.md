@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- `VersionInfo` now exposes `decompiler_version` (Ghidra engine version) instead
+  of `upstream_tag` and `upstream_commit`
+- `ghidra-sleigh` dependency is no longer pinned to an exact version
+- Compliance attribution references the vendored decompiler source via the
+  `third_party/ghidra` git submodule instead of hardcoded tag/commit constants
+- `metadata["decompiler_version"]` in `DecompileResult` now always reflects the
+  Ghidra decompiler engine version, not the flatline package version
+
+### Removed
+- `UPSTREAM_TAG` and `UPSTREAM_COMMIT` constants from `flatline._version`
+- Runtime pin-drift warning when `ghidra-sleigh` version differs from a
+  hardcoded baseline
+
 ## [0.1.0] - 2026-03-15
 
 ### Added

@@ -99,7 +99,7 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
                 "## Review Evidence",
                 "- Verify `LICENSE` and `NOTICE` in the artifacts.",
                 "- Review `docs/release_notes.md` and `CHANGELOG.md`.",
-                "- Confirm `ghidra-sleigh == 12.0.4`.",
+                "- Confirm `ghidra-sleigh` dependency is declared.",
                 "",
                 "## Approval Signal",
                 "- Do not create `git tag v0.1.0` until the checklist passes.",

@@ -2,10 +2,8 @@
 
 ## 0. Scope and Sources
 
-Pinned upstream baseline:
-- Ghidra tag: `Ghidra_12.0.4_build`
-- Commit: `e40ed13014025f82488b1f8f7bca566894ac376b`
-- Commit date: `2026-03-03`
+Vendored decompiler source: `third_party/ghidra` git submodule (exact commit
+tracked by the submodule pointer).
 
 Primary sources used for this spec:
 - `notes/api/decompiler_inventory.md` (decompiler-facing callable contract)
@@ -100,7 +98,7 @@ Derived from:
 | `DecompilerSession.decompile_function(request)` | Decompile one function | Returns `DecompileResult`; no native exceptions leak across public boundary. |
 | `flatline.list_language_compilers(runtime_data_dir=None)` | One-shot convenience wrapper for pair enumeration | Creates a short-lived `DecompilerSession`, auto-discovers the installed `ghidra_sleigh` runtime-data root when `runtime_data_dir` is omitted, runs enumeration, and closes the session deterministically. |
 | `flatline.decompile_function(request)` | One-shot convenience wrapper for decompilation | Creates a short-lived `DecompilerSession`, auto-discovers the installed `ghidra_sleigh` runtime-data root when `request.runtime_data_dir` is omitted, runs decompilation, and closes the session deterministically. |
-| `get_version_info()` | Report runtime versions | Includes flatline version, pinned upstream commit/tag, and runtime data revision id. |
+| `get_version_info()` | Report runtime versions | Includes flatline version and decompiler engine version. |
 
 `DecompilerSession` is the canonical surface for repeated calls in one process.
 Module-level operation functions are convenience wrappers for single-call workflows.
@@ -129,7 +127,7 @@ are planned extensions (see §8.3).
 - `warnings: list[WarningItem]`
 - `error: ErrorItem | None`
 - `metadata: dict[str, Any]` with stable top-level keys:
-  - `metadata["decompiler_version"]`
+  - `metadata["decompiler_version"]` — version of the underlying Ghidra decompiler engine, not of flatline itself
   - `metadata["language_id"]`
   - `metadata["compiler_spec"]`
   - `metadata["diagnostics"]` — legacy key; superseded by `function_info.diagnostics` when `function_info` is present
@@ -221,8 +219,7 @@ mechanisms.
 
 `VersionInfo` fields:
 - `flatline_version: str`
-- `upstream_tag: str`
-- `upstream_commit: str`
+- `decompiler_version: str` — version of the underlying Ghidra decompiler engine, not of flatline itself
 
 All structured result objects (`FunctionInfo`, `FunctionPrototype`, `ParameterInfo`, `VariableInfo`, `TypeInfo`, `CallSiteInfo`, `JumpTableInfo`, `DiagnosticFlags`, `StorageInfo`, `LanguageCompilerPair`, `WarningItem`, `ErrorItem`, `VersionInfo`) are pure Python frozen value types. Data is extracted at the bridge boundary; no native pointers or references survive past the bridge call.
 
@@ -564,10 +561,10 @@ Packaging and compliance:
   prunes that entire tree from Meson sdists, and the wheel never installs it.
   These repo-only commands are not end-user entry points.
 - Redistribution review passes only when `python tools/compliance.py` succeeds from the repo root.
-- The compliance audit verifies the pinned Ghidra native-source attribution (`Ghidra_12.0.4_build` / `e40ed13014025f82488b1f8f7bca566894ac376b`), the default runtime dependency pin `ghidra-sleigh == 12.0.4`, and the synthetic-fixture redistribution note in `tests/fixtures/README.md`.
+- The compliance audit verifies the vendored decompiler source attribution via the `third_party/ghidra` submodule, the `ghidra-sleigh` runtime dependency declaration, and the synthetic-fixture redistribution note in `tests/fixtures/README.md`.
 - Built wheel and sdist artifacts are audited with `python tools/artifacts.py`
   before tagging so release review can verify the current version metadata, the
-  `ghidra-sleigh == 12.0.4` dependency pin, and the shipped `LICENSE` / `NOTICE`
+  `ghidra-sleigh` dependency, and the shipped `LICENSE` / `NOTICE`
   files from the actual artifacts rather than by repo contents alone.
 - `.github/workflows/release.yml` is the source-controlled publish pipeline for
   release artifacts. It runs only on GitHub `release.published` or
@@ -662,7 +659,7 @@ Resolved:
 - ~~Should ISA-specific Sleigh compilation (`.sla` files) happen at build time or install time?~~ **Resolved (ADR-010):** Build time. `ghidra-sleigh` builds `sleighc` from Ghidra C++ sources and ships the compiled `.sla` outputs as package data.
 - ~~Should analysis-budget defaults vary by platform or target ISA, or remain globally fixed?~~ **Resolved (ADR-005):** P2 uses a single fixed default, `AnalysisBudget(max_instructions=100000)`, across the Linux MVP matrix. Callers may override `max_instructions` per request; wall-clock timeout remains out of scope until the upstream callable surface exposes a compatible cancellation mechanism.
 - ~~Which diagnostic fields are emitted and redacted by default?~~ **Resolved (ADR-006):** P2 emits diagnostics only through startup/runtime-data `RuntimeWarning` messages plus structured `WarningItem` / `ErrorItem` results. Diagnostic text may include full filesystem paths for debuggability; raw memory-image bytes are never emitted. No path redaction is applied because flatline is a library running in the caller's own process, and its target personas (reverse engineers, security engineers, tooling engineers) benefit from full paths for troubleshooting.
-- ~~What release-time checks are mandatory for redistribution?~~ **Resolved (ADR-007):** Releases must ship root `LICENSE` and `NOTICE`, record the pinned Ghidra source attribution and `ghidra-sleigh == 12.0.4` dependency pin in `docs/compliance.md`, and pass `python tools/compliance.py` from the repo root before tagging.
+- ~~What release-time checks are mandatory for redistribution?~~ **Resolved (ADR-007):** Releases must ship root `LICENSE` and `NOTICE`, record the vendored decompiler source attribution and `ghidra-sleigh` dependency in `docs/compliance.md`, and pass `python tools/compliance.py` from the repo root before tagging.
 - ~~Should warning codes be globally namespaced now to prevent future collisions?~~ **Resolved:** Yes, within flatline's public surface. Warning codes use the stable hierarchical namespace `<phase>.Wxxx` (for example `analyze.W001`), and new codes are added only additively.
 - ~~Should session-level failure categories (startup, initialization) be defined explicitly in the `FlatlineError` hierarchy, or is the current `ErrorItem` taxonomy sufficient?~~ **Resolved (ADR-011):** User-fixable install/startup/runtime-data failures use `configuration_error`, while unexpected flatline/bridge/native bugs remain `internal_error`.
 

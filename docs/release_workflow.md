@@ -58,7 +58,7 @@ they are not part of the wheel or sdist payload.
    `0.1.0.dev0` to `0.1.0`
 10. Build artifacts with `python -m build`
 11. Audit the built sdist/wheel with `python tools/artifacts.py dist`
-    so the current version, dependency pin, and shipped `LICENSE` / `NOTICE`
+    so the current version, dependency metadata, and shipped `LICENSE` / `NOTICE`
     files are verified from the actual release artifacts
 12. Run the manual checklist in `docs/release_review.md`; keep reviewed
     commit/artifact notes outside the repo and wait for explicit approval.
