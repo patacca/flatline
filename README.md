@@ -136,6 +136,9 @@ The public artifact review checklist and manual approval hold point live in
 [docs/release_review.md](docs/release_review.md).
 The initial public release workflow and the `0.1.0` SemVer recommendation live
 in [docs/release_workflow.md](docs/release_workflow.md).
+GitHub Actions release publishing lives in
+[.github/workflows/release.yml](.github/workflows/release.yml): published
+GitHub releases go to PyPI, while manual dispatch uploads to TestPyPI.
 Redistribution/compliance guidance lives in [NOTICE](NOTICE) and
 [docs/compliance.md](docs/compliance.md). The current default-install footprint
 baseline and size-policy note live in [docs/footprint.md](docs/footprint.md).

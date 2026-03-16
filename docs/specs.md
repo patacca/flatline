@@ -569,6 +569,12 @@ Packaging and compliance:
   before tagging so release review can verify the current version metadata, the
   `ghidra-sleigh == 12.0.4` dependency pin, and the shipped `LICENSE` / `NOTICE`
   files from the actual artifacts rather than by repo contents alone.
+- `.github/workflows/release.yml` is the source-controlled publish pipeline for
+  release artifacts. It runs only on GitHub `release.published` or
+  `workflow_dispatch`, builds both wheel and sdist artifacts, validates them
+  with `twine check dist/*` plus `python tools/artifacts.py dist --repo-root .`,
+  and trusted-publishes manual dispatches to TestPyPI while release-triggered
+  publishes target PyPI.
 - The final public-artifact review gate is documented in
   `docs/release_review.md`; it must stay source-controlled and tie the human
   sign-off to the deterministic evidence from `python tools/release.py`,

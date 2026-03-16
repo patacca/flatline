@@ -72,3 +72,14 @@ approved. `python tools/artifacts.py dist` provides deterministic artifact
 evidence for that review, and `docs/release_review.md` records the checklist
 criteria used for the final human sign-off. The operator reports approval
 out-of-band. Do not commit review notes to this repo.
+
+## GitHub Actions Release Automation
+
+- `.github/workflows/release.yml` is the release publish pipeline.
+- `release.published` builds the wheel and sdist, validates them with
+  `twine check dist/*` plus `python tools/artifacts.py dist --repo-root .`,
+  then trusted-publishes to PyPI.
+- `workflow_dispatch` runs the same build and validation flow, but publishes to
+  TestPyPI instead of PyPI.
+- The manual review gate in this document and `docs/release_review.md` still
+  happens before creating the tag/release that triggers the production publish.

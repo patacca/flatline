@@ -14,6 +14,7 @@
 - Tox now tests the installed package artifact: `py313`/`py314` build `flatline[test]` wheels inside `.tox`, while `lint` remains package-skip + `ruff`.
 - Wheels and sdists ship only the public runtime modules and optional native extension. Repo-only release tools now live under `tools/flatline_dev/` with `tools/*.py` wrappers; `tools/prune_dist.py` removes that tree from sdists, wheels never install it, and dev-tool tests still skip gracefully under tox wheel installs via `pytest.importorskip`.
 - GitHub Actions CI uses `ubuntu-latest` for lint/build and pins `ubuntu-24.04` for perf-sensitive test/regression lanes; the general test lane runs non-regression tox envs across Python 3.13/3.14 and a dedicated `py314` regression lane enforces the committed normalized-output and warm-session p95 budgets.
+- GitHub Actions release publishing now lives in `.github/workflows/release.yml`: GitHub `release.published` builds/audits wheel+sdist artifacts and trusted-publishes to PyPI, while `workflow_dispatch` runs the same flow against TestPyPI with `skip-existing` enabled for manual reruns.
 - Public sessions now auto-discover `ghidra_sleigh.get_runtime_data_dir()` when `runtime_data_dir` is omitted; explicit `runtime_data_dir` values still override the default, and auto-discovered Ghidra pin drift is surfaced as a runtime warning.
 - ADR-005 is now resolved: `AnalysisBudget` is a public frozen value type, omitted requests default to `max_instructions=100000`, mapping inputs are coerced/validated in `DecompileRequest`, and the native bridge applies the resolved cap to `Architecture::max_instructions`. Unsupported budget keys or non-positive limits fail as `invalid_argument`; wall-clock timeout remains out of scope for P2.
 - ADR-006 is now resolved: P2 emits diagnostics only through startup/runtime-data `RuntimeWarning` messages and structured `WarningItem` / `ErrorItem` payloads; diagnostic text includes full filesystem paths for debuggability, raw memory-image bytes are never emitted, and P2 exposes no public logging sink.
@@ -88,6 +89,7 @@
 
 # Repo structure (non-vendored)
 - `pyproject.toml` — metadata, tool settings. Build backend: `meson-python`.
+- `.github/workflows/release.yml` — release publish pipeline for PyPI/TestPyPI.
 - `meson.build` (root) + `src/flatline/meson.build` — build definitions.
 - `meson_options.txt` — feature flags (`native_bridge`).
 - `src/flatline/` — installable package (src layout).
@@ -143,6 +145,7 @@
 - `tests/specs/test_catalog.md` — 44 definitions, 5 categories, contract traceability matrix.
 - `tests/specs/fixtures.md` — 10 fixtures, oracle strategy, determinism rules.
 - `tests/unit/test_ci_workflow_spec.py` — locks the pinned GitHub Actions regression gate (runner pin, py313/py314 non-regression matrix, dedicated `py314` regression lane).
+- `tests/unit/test_release_ci_workflow_spec.py` — locks the GitHub Actions release publish workflow (release/manual triggers, wheel+sdist validation, PyPI vs TestPyPI routing).
 - `tests/unit/test_native_bridge_runtime_spec.py` — native smoke test uses committed x86_64 add fixture and the real Ghidra runtime-data root.
 - `tests/unit/test_runtime_data_spec.py` — `.ldefs` tolerance, dependency-backed default runtime-data discovery, and deterministic failure tests.
 - `tests/unit/test_compliance_spec.py` — ADR-007 compliance audit for required notice files, pinned-source references, and dependency-pin drift. Skips under tox (dev-only module).
