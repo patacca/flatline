@@ -3,5 +3,7 @@
 from __future__ import annotations
 
 __version__ = "0.1.0"
-UPSTREAM_TAG = "Ghidra_12.0.4_build"
-UPSTREAM_COMMIT = "e40ed13014025f82488b1f8f7bca566894ac376b"
+
+# Ghidra decompiler engine version for the pinned upstream snapshot.
+# Must match the native decompiler_version_string() output (ghidra-{major}.{minor}).
+DECOMPILER_VERSION = "ghidra-6.1"

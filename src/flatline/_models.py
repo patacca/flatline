@@ -159,8 +159,7 @@ class VersionInfo:
     """Runtime version information."""
 
     flatline_version: str
-    upstream_tag: str
-    upstream_commit: str
+    decompiler_version: str
 
 
 @dataclass(frozen=True)

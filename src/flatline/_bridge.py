@@ -32,7 +32,7 @@ from flatline._models import (
     WarningItem,
 )
 from flatline._runtime_data import enumerate_runtime_data_language_compilers
-from flatline._version import __version__
+from flatline._version import DECOMPILER_VERSION
 
 if TYPE_CHECKING:
     from typing import Any
@@ -291,7 +291,7 @@ def _coerce_metadata(raw_metadata: Any, request: DecompileRequest) -> dict[str, 
 
     decompiler_version = metadata.get("decompiler_version")
     if decompiler_version is None:
-        decompiler_version = __version__
+        decompiler_version = DECOMPILER_VERSION
     language_id = metadata.get("language_id")
     if language_id is None:
         language_id = request.language_id
@@ -563,7 +563,7 @@ def _error_result(
 
 def _default_error_metadata(request: DecompileRequest) -> dict[str, Any]:
     return {
-        "decompiler_version": __version__,
+        "decompiler_version": DECOMPILER_VERSION,
         "language_id": request.language_id,
         "compiler_spec": request.compiler_spec or "",
         "diagnostics": {},

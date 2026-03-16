@@ -35,8 +35,7 @@ from flatline._models import (
 )
 from flatline._session import DecompilerSession, decompile_function, list_language_compilers
 from flatline._version import (
-    UPSTREAM_COMMIT,
-    UPSTREAM_TAG,
+    DECOMPILER_VERSION,
     __version__,
 )
 
@@ -45,13 +44,13 @@ def get_version_info() -> VersionInfo:
     """Report runtime version information."""
     return VersionInfo(
         flatline_version=__version__,
-        upstream_tag=UPSTREAM_TAG,
-        upstream_commit=UPSTREAM_COMMIT,
+        decompiler_version=DECOMPILER_VERSION,
     )
 
 
 __all__ = [
     "CATEGORY_TO_EXCEPTION",
+    "DECOMPILER_VERSION",
     "ERROR_CATEGORIES",
     "VALID_METATYPES",
     "VALID_WARNING_PHASES",
