@@ -11,9 +11,9 @@ from flatline import (
     ErrorItem,
     InvalidArgumentError,
     LanguageCompilerPair,
-    __version__,
 )
 from flatline import _session as session_module
+from flatline._version import DECOMPILER_VERSION
 
 
 class _FakeBridgeSession:
@@ -41,7 +41,7 @@ class _FakeBridgeSession:
                 retryable=False,
             ),
             metadata={
-                "decompiler_version": __version__,
+                "decompiler_version": DECOMPILER_VERSION,
                 "language_id": request.language_id,
                 "compiler_spec": request.compiler_spec or "",
                 "diagnostics": {},

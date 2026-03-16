@@ -111,24 +111,22 @@ def test_c002_error_taxonomy_stability():
 # C-003: Version reporting contract
 # ---------------------------------------------------------------------------
 
-def test_c003_version_reporting_contains_upstream_pin():
-    """C-003: Version endpoint includes flatline and upstream pin information."""
+def test_c003_version_reporting_contains_decompiler_version():
+    """C-003: Version endpoint includes flatline and decompiler version information."""
     info = get_version_info()
 
     assert isinstance(info, VersionInfo)
 
     # All required fields populated (specs.md section 3.3 VersionInfo)
     assert isinstance(info.flatline_version, str) and info.flatline_version
-    assert isinstance(info.upstream_tag, str) and info.upstream_tag
-    assert isinstance(info.upstream_commit, str) and info.upstream_commit
-    # Pin matches known baseline (docs/roadmap.md section 0)
-    assert info.upstream_tag == "Ghidra_12.0.4_build"
-    assert info.upstream_commit == "e40ed13014025f82488b1f8f7bca566894ac376b"
+    assert isinstance(info.decompiler_version, str) and info.decompiler_version
+    # Decompiler version reflects the Ghidra engine, not flatline
+    assert info.decompiler_version.startswith("ghidra-")
 
     # VersionInfo fields match spec
     version_fields = {f.name for f in dataclasses.fields(VersionInfo)}
     assert version_fields == {
-        "flatline_version", "upstream_tag", "upstream_commit",
+        "flatline_version", "decompiler_version",
     }
 
 

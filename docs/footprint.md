@@ -10,7 +10,7 @@ Measurement policy:
 - Exclude interpreter-generated `__pycache__` / `.pyc` files so the baseline
   stays stable across Python micro-version differences.
 - Measure the default install as `flatline` plus its pinned runtime dependency
-  `ghidra-sleigh == 12.0.4`.
+  `ghidra-sleigh`.
 - Treat lighter runtime-data profiles such as `all_processors=false` as
   explicit user-managed overrides, not as silent default ISA pruning.
 

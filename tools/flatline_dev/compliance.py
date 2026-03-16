@@ -9,8 +9,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from flatline._version import UPSTREAM_COMMIT, UPSTREAM_TAG
-
 REQUIRED_ARTIFACTS = (
     "LICENSE",
     "NOTICE",
@@ -40,15 +38,6 @@ class ComplianceReport:
     def is_compliant(self) -> bool:
         """Return True when no compliance issues were found."""
         return not self.issues
-
-
-def expected_ghidra_sleigh_version() -> str:
-    """Derive the companion runtime-data version from the pinned upstream tag."""
-    prefix = "Ghidra_"
-    suffix = "_build"
-    if not UPSTREAM_TAG.startswith(prefix) or not UPSTREAM_TAG.endswith(suffix):
-        raise ValueError(f"Unsupported upstream tag format: {UPSTREAM_TAG}")
-    return UPSTREAM_TAG[len(prefix) : -len(suffix)]
 
 
 def _append_issue(issues: list[ComplianceIssue], code: str, message: str) -> None:
@@ -134,13 +123,15 @@ def _audit_pyproject(project_table: dict[str, Any], issues: list[ComplianceIssue
             'pyproject.toml must declare `license-files = ["LICENSE", "NOTICE"]`.',
         )
 
-    expected_dependency = f"ghidra-sleigh == {expected_ghidra_sleigh_version()}"
     dependencies = project_table.get("dependencies")
-    if not isinstance(dependencies, list) or expected_dependency not in dependencies:
+    if not isinstance(dependencies, list) or not any(
+        isinstance(dep, str) and dep.startswith("ghidra-sleigh")
+        for dep in dependencies
+    ):
         _append_issue(
             issues,
-            "dependency_pin_mismatch",
-            f"pyproject.toml must pin `{expected_dependency}`.",
+            "dependency_missing",
+            "pyproject.toml must declare `ghidra-sleigh` as a dependency.",
         )
 
 
@@ -173,11 +164,8 @@ def audit_release_compliance(repo_root: str | Path) -> ComplianceReport:
         _require_fragments(
             text=notice_text,
             fragments=(
-                UPSTREAM_TAG,
-                UPSTREAM_COMMIT,
                 "third_party/ghidra/LICENSE",
                 "third_party/ghidra/NOTICE",
-                f"ghidra-sleigh == {expected_ghidra_sleigh_version()}",
                 "tests/fixtures/README.md",
             ),
             code="notice_missing_reference",
@@ -195,9 +183,6 @@ def audit_release_compliance(repo_root: str | Path) -> ComplianceReport:
                 "Release Checklist",
                 "python tools/compliance.py",
                 "NOTICE",
-                UPSTREAM_TAG,
-                UPSTREAM_COMMIT,
-                f"ghidra-sleigh == {expected_ghidra_sleigh_version()}",
             ),
             code="compliance_doc_missing_reference",
             label="docs/compliance.md",

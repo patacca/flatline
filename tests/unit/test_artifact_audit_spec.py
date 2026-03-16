@@ -12,7 +12,6 @@ import pytest
 
 pytest.importorskip("flatline_dev.artifacts", reason="dev-only module not shipped in wheel")
 from flatline_dev.artifacts import audit_built_release_artifacts
-from flatline_dev.compliance import expected_ghidra_sleigh_version
 
 
 def _write_repo_version(repo_root: Path, version: str = "0.1.0.dev0") -> None:
@@ -33,25 +32,22 @@ def _write_wheel(
     dist_dir: Path,
     *,
     version: str = "0.1.0.dev0",
-    dependency_version: str | None = None,
+    include_dependency: bool = True,
     include_license: bool = True,
     include_notice: bool = True,
     extra_members: Sequence[tuple[str, str]] = (),
 ) -> Path:
-    if dependency_version is None:
-        dependency_version = expected_ghidra_sleigh_version()
-
     wheel_path = dist_dir / f"flatline-{version}-py3-none-any.whl"
     dist_info_dir = f"flatline-{version}.dist-info"
-    metadata = "\n".join(
-        [
-            "Metadata-Version: 2.4",
-            "Name: flatline",
-            f"Version: {version}",
-            f"Requires-Dist: ghidra-sleigh == {dependency_version}",
-            "",
-        ]
-    )
+    metadata_lines = [
+        "Metadata-Version: 2.4",
+        "Name: flatline",
+        f"Version: {version}",
+    ]
+    if include_dependency:
+        metadata_lines.append("Requires-Dist: ghidra-sleigh")
+    metadata_lines.append("")
+    metadata = "\n".join(metadata_lines)
 
     with zipfile.ZipFile(wheel_path, mode="w") as wheel_file:
         wheel_file.writestr(f"{dist_info_dir}/METADATA", metadata)
@@ -69,25 +65,22 @@ def _write_sdist(
     dist_dir: Path,
     *,
     version: str = "0.1.0.dev0",
-    dependency_version: str | None = None,
+    include_dependency: bool = True,
     include_license: bool = True,
     include_notice: bool = True,
     extra_members: Sequence[tuple[str, str]] = (),
 ) -> Path:
-    if dependency_version is None:
-        dependency_version = expected_ghidra_sleigh_version()
-
     sdist_path = dist_dir / f"flatline-{version}.tar.gz"
     archive_root = f"flatline-{version}"
-    metadata = "\n".join(
-        [
-            "Metadata-Version: 2.4",
-            "Name: flatline",
-            f"Version: {version}",
-            f"Requires-Dist: ghidra-sleigh == {dependency_version}",
-            "",
-        ]
-    )
+    metadata_lines = [
+        "Metadata-Version: 2.4",
+        "Name: flatline",
+        f"Version: {version}",
+    ]
+    if include_dependency:
+        metadata_lines.append("Requires-Dist: ghidra-sleigh")
+    metadata_lines.append("")
+    metadata = "\n".join(metadata_lines)
 
     with tarfile.open(sdist_path, mode="w:gz") as sdist_file:
         _add_tar_text_file(sdist_file, f"{archive_root}/PKG-INFO", metadata)
@@ -123,7 +116,7 @@ def test_u022_built_release_artifact_audit_accepts_expected_wheel_and_sdist(
 
     assert report.is_valid
     assert report.expected_version == "0.1.0.dev0"
-    assert report.expected_dependency_pin == "ghidra-sleigh == 12.0.4"
+    assert report.expected_dependency == "ghidra-sleigh"
     assert report.required_artifact_kinds == ("wheel", "sdist")
     assert report.wheel_artifacts == (str(wheel_path.resolve()),)
     assert report.sdist_artifacts == (str(sdist_path.resolve()),)
@@ -133,13 +126,13 @@ def test_u022_built_release_artifact_audit_accepts_expected_wheel_and_sdist(
 def test_u022_built_release_artifact_audit_rejects_notice_loss_and_metadata_drift(
     tmp_path: Path,
 ) -> None:
-    """U-022: Missing notices and stale artifact metadata fail deterministically."""
+    """U-022: Missing notices and missing dependency fail deterministically."""
     repo_root = tmp_path / "repo"
     dist_dir = repo_root / "dist"
     dist_dir.mkdir(parents=True)
     _write_repo_version(repo_root)
     _write_wheel(dist_dir, include_notice=False)
-    _write_sdist(dist_dir, version="0.2.0.dev0", dependency_version="12.0.3")
+    _write_sdist(dist_dir, version="0.2.0.dev0", include_dependency=False)
 
     report = audit_built_release_artifacts(repo_root)
 
@@ -147,7 +140,7 @@ def test_u022_built_release_artifact_audit_rejects_notice_loss_and_metadata_drif
     issue_codes = {issue.code for issue in report.issues}
     assert "wheel_notice_missing" in issue_codes
     assert "sdist_version_mismatch" in issue_codes
-    assert "sdist_dependency_pin_missing" in issue_codes
+    assert "sdist_dependency_missing" in issue_codes
 
 
 def test_u022_built_release_artifact_audit_rejects_missing_dist_dir(

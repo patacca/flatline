@@ -12,21 +12,12 @@ from flatline._runtime_data import (
     enumerate_runtime_data_language_compilers,
     resolve_session_runtime_data_dir,
 )
-from flatline._version import UPSTREAM_COMMIT, UPSTREAM_TAG
 
 
 class _GhidraSleighModuleDouble:
     """Minimal ghidra-sleigh package double for default-runtime resolution tests."""
 
-    def __init__(
-        self,
-        runtime_dir: Path,
-        *,
-        ghidra_tag: str = UPSTREAM_TAG,
-        ghidra_commit: str = UPSTREAM_COMMIT,
-    ) -> None:
-        self.GHIDRA_TAG = ghidra_tag
-        self.GHIDRA_COMMIT = ghidra_commit
+    def __init__(self, runtime_dir: Path) -> None:
         self._runtime_dir = runtime_dir
 
     def get_runtime_data_dir(self) -> Path:
@@ -117,30 +108,6 @@ def test_u016_default_discovery_uses_compatible_ghidra_sleigh(
     )
 
     assert resolve_session_runtime_data_dir(None) == str(runtime_dir)
-
-
-def test_u016_default_discovery_warns_on_pin_mismatch(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    """U-016: Auto-discovered defaults stay usable but warn on upstream-pin drift."""
-    runtime_dir = tmp_path / "runtime_data"
-    runtime_dir.mkdir()
-    ghidra_sleigh_module = _GhidraSleighModuleDouble(
-        runtime_dir,
-        ghidra_tag="Ghidra_12.0.3_build",
-        ghidra_commit="09f14c92d3da6e5d5f6b7dea115409719db3cce1",
-    )
-    monkeypatch.setattr(
-        runtime_data_module.importlib,
-        "import_module",
-        lambda _: ghidra_sleigh_module,
-    )
-
-    with pytest.warns(RuntimeWarning, match="does not match flatline's pinned Ghidra"):
-        resolved_runtime_dir = resolve_session_runtime_data_dir(None)
-
-    assert resolved_runtime_dir == str(runtime_dir)
 
 
 def test_u016_default_discovery_rejects_missing_dependency(

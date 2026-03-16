@@ -24,9 +24,9 @@ source-controlled, but the results do not.
   recommendation for the initial public release workflow.
 - Confirm `tox` passed on the release matrix and no release-facing docs drifted
   while fixing the branch for release.
-- Confirm `python tools/compliance.py` passed and still reports the pinned
-  `ghidra-sleigh == 12.0.4` dependency plus the expected native-source
-  attribution references.
+- Confirm `python tools/compliance.py` passed and still reports the
+  `ghidra-sleigh` dependency plus the expected native-source attribution
+  references.
 - Confirm `python tools/footprint.py` matches `docs/footprint.md`, or the
   footprint baseline was intentionally refreshed in the same review.
 - Confirm `python -m build` produced exactly the current release artifacts that

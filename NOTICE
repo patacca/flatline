@@ -2,17 +2,14 @@ flatline redistribution notice
 
 flatline itself is licensed under Apache-2.0. See LICENSE.
 
-This repo builds against a pinned upstream Ghidra native-source baseline:
-- Upstream tag: Ghidra_12.0.4_build
-- Upstream commit: e40ed13014025f82488b1f8f7bca566894ac376b
-- Vendored source path: third_party/ghidra
-- Upstream license file: third_party/ghidra/LICENSE
-- Upstream notice file: third_party/ghidra/NOTICE
+This package compiles and links against the Ghidra decompiler engine. The
+decompiler source is vendored under third_party/ghidra as a git submodule
+from the NSA/ghidra repository. The upstream Ghidra project is licensed
+under Apache-2.0; see third_party/ghidra/LICENSE and third_party/ghidra/NOTICE
+for upstream attribution.
 
-Default runtime data is provided by the separate dependency ghidra-sleigh == 12.0.4.
-It is not bundled as a flatline repo artifact, but each flatline release review must
-verify that the pinned companion package still carries the matching Ghidra attribution
-for the same upstream baseline.
+Default runtime data is provided by the separate ghidra-sleigh dependency.
 
-Test-fixture redistribution note: tests/fixtures/README.md documents that the committed
-fixture bytes are synthetic machine code authored in-repo and are redistributable.
+Test-fixture redistribution note: tests/fixtures/README.md documents that the
+committed fixture bytes are synthetic machine code authored in-repo and are
+redistributable.

@@ -12,8 +12,6 @@ from dataclasses import dataclass
 from email.parser import Parser
 from pathlib import Path, PurePosixPath
 
-from .compliance import expected_ghidra_sleigh_version
-
 REQUIRED_ARTIFACT_KINDS = ("wheel", "sdist")
 _LEGACY_DEV_TOOL_FILES = frozenset(
     {"_artifacts.py", "_compliance.py", "_footprint.py", "_release.py"}
@@ -33,7 +31,7 @@ class BuiltArtifactAuditReport:
     """Audit result for built wheel and sdist artifacts."""
 
     expected_version: str
-    expected_dependency_pin: str
+    expected_dependency: str
     required_artifact_kinds: tuple[str, ...]
     wheel_artifacts: tuple[str, ...]
     sdist_artifacts: tuple[str, ...]
@@ -117,7 +115,7 @@ def _audit_metadata(
     *,
     metadata_text: str,
     expected_version: str,
-    expected_dependency_pin: str,
+    expected_dependency: str,
     artifact_label: str,
     artifact_path: Path,
     issues: list[BuiltArtifactIssue],
@@ -135,14 +133,17 @@ def _audit_metadata(
         )
 
     requires_dist = metadata.get_all("Requires-Dist", failobj=[]) or []
-    normalized_requires = {_normalize_requirement(value) for value in requires_dist}
-    if _normalize_requirement(expected_dependency_pin) not in normalized_requires:
+    normalized_expected = _normalize_requirement(expected_dependency)
+    if not any(
+        _normalize_requirement(value).startswith(normalized_expected)
+        for value in requires_dist
+    ):
         _append_issue(
             issues,
-            f"{artifact_label}_dependency_pin_missing",
+            f"{artifact_label}_dependency_missing",
             (
-                f"{artifact_path} does not declare the expected dependency pin "
-                f"{expected_dependency_pin!r}."
+                f"{artifact_path} does not declare the expected dependency "
+                f"{expected_dependency!r}."
             ),
         )
 
@@ -192,7 +193,7 @@ def _audit_wheel(
     path: Path,
     *,
     expected_version: str,
-    expected_dependency_pin: str,
+    expected_dependency: str,
     issues: list[BuiltArtifactIssue],
 ) -> None:
     try:
@@ -240,7 +241,7 @@ def _audit_wheel(
     _audit_metadata(
         metadata_text=metadata_text,
         expected_version=expected_version,
-        expected_dependency_pin=expected_dependency_pin,
+        expected_dependency=expected_dependency,
         artifact_label="wheel",
         artifact_path=path,
         issues=issues,
@@ -251,7 +252,7 @@ def _audit_sdist(
     path: Path,
     *,
     expected_version: str,
-    expected_dependency_pin: str,
+    expected_dependency: str,
     issues: list[BuiltArtifactIssue],
 ) -> None:
     try:
@@ -306,7 +307,7 @@ def _audit_sdist(
     _audit_metadata(
         metadata_text=metadata_text,
         expected_version=expected_version,
-        expected_dependency_pin=expected_dependency_pin,
+        expected_dependency=expected_dependency,
         artifact_label="sdist",
         artifact_path=path,
         issues=issues,
@@ -326,7 +327,7 @@ def audit_built_release_artifacts(
 
     issues: list[BuiltArtifactIssue] = []
     expected_version = _load_repo_version(root, issues)
-    expected_dependency_pin = f"ghidra-sleigh == {expected_ghidra_sleigh_version()}"
+    expected_dependency = "ghidra-sleigh"
 
     wheel_paths: tuple[str, ...] = ()
     sdist_paths: tuple[str, ...] = ()
@@ -360,20 +361,20 @@ def audit_built_release_artifacts(
             _audit_wheel(
                 wheel_path,
                 expected_version=expected_version,
-                expected_dependency_pin=expected_dependency_pin,
+                expected_dependency=expected_dependency,
                 issues=issues,
             )
         for sdist_path in sdists:
             _audit_sdist(
                 sdist_path,
                 expected_version=expected_version,
-                expected_dependency_pin=expected_dependency_pin,
+                expected_dependency=expected_dependency,
                 issues=issues,
             )
 
     return BuiltArtifactAuditReport(
         expected_version=expected_version,
-        expected_dependency_pin=expected_dependency_pin,
+        expected_dependency=expected_dependency,
         required_artifact_kinds=REQUIRED_ARTIFACT_KINDS,
         wheel_artifacts=wheel_paths,
         sdist_artifacts=sdist_paths,
@@ -409,7 +410,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if report.is_valid:
         print(f"Built artifact audit passed: {audited_dist_dir}")
         print(f"- Expected version: {report.expected_version}")
-        print(f"- Expected dependency pin: {report.expected_dependency_pin}")
+        print(f"- Expected dependency: {report.expected_dependency}")
         for wheel_path in report.wheel_artifacts:
             print(f"- Wheel: {wheel_path}")
         for sdist_path in report.sdist_artifacts:
@@ -418,7 +419,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     print(f"Built artifact audit failed: {audited_dist_dir}")
     print(f"- Expected version: {report.expected_version}")
-    print(f"- Expected dependency pin: {report.expected_dependency_pin}")
+    print(f"- Expected dependency: {report.expected_dependency}")
     for issue in report.issues:
         print(f"- {issue.code}: {issue.message}")
     return 1

@@ -366,7 +366,7 @@ def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseRead
                 "NOTICE",
                 "docs/release_notes.md",
                 "CHANGELOG.md",
-                "ghidra-sleigh == 12.0.4",
+                "ghidra-sleigh",
                 "do not commit",
                 "explicitly approves the release",
             ),
