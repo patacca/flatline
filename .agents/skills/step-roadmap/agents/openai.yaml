@@ -1,0 +1,4 @@
+interface:
+  display_name: "Step Roadmap"
+  short_description: "Advance the next roadmap milestone"
+  default_prompt: "Use $step-roadmap to advance the next roadmap item for this repo with tests first and aligned docs."
