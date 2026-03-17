@@ -9,6 +9,9 @@ py.install_sources(
   subdir: 'flatline',
 )
 
+cpp = meson.get_compiler('cpp')
+cpp_argument_syntax = cpp.get_argument_syntax()
+
 native_bridge_opt = get_option('native_bridge')
 nanobind_available = false
 nanobind_include_dir = ''
@@ -57,6 +60,34 @@ if not native_bridge_opt.disabled()
 endif
 
 if nanobind_available
+  ghidra_cpp_args = []
+  nanobind_include_args = []
+  native_bridge_cpp_args = [
+    '-DNB_COMPACT_ASSERTIONS',
+  ]
+
+  if cpp_argument_syntax == 'msvc'
+    ghidra_cpp_args += ['/w']
+    nanobind_include_args += [
+      '/I' + nanobind_include_dir,
+      '/I' + nanobind_source_dir,
+      '/I' + nanobind_robin_map_include_dir,
+    ]
+  else
+    ghidra_cpp_args += ['-w']
+    nanobind_include_args += [
+      '-I' + nanobind_include_dir,
+      '-I' + nanobind_source_dir,
+      '-I' + nanobind_robin_map_include_dir,
+    ]
+    native_bridge_cpp_args += [
+      '-fvisibility=hidden',
+      '-fno-strict-aliasing',
+    ]
+  endif
+
+  native_bridge_cpp_args += nanobind_include_args
+
   # --- Ghidra decompiler static library ---
   # Source files derived from upstream Makefile LIBDECOMP target:
   #   CORE + DECCORE + SLEIGH + selected EXTRA (libdecomp, sleigh_arch, inject_sleigh).
@@ -163,7 +194,7 @@ if nanobind_available
     ghidra_sources,
     include_directories: ghidra_inc,
     dependencies: zlib_dep,
-    cpp_args: ['-w'],
+    cpp_args: ghidra_cpp_args,
   )
 
   # --- nanobind extension module ---
@@ -173,14 +204,7 @@ if nanobind_available
       '_flatline_native.cpp',
       nanobind_source_dir / 'nb_combined.cpp',
     ],
-    cpp_args: [
-      '-fvisibility=hidden',
-      '-fno-strict-aliasing',
-      '-DNB_COMPACT_ASSERTIONS',
-      '-I' + nanobind_include_dir,
-      '-I' + nanobind_source_dir,
-      '-I' + nanobind_robin_map_include_dir,
-    ],
+    cpp_args: native_bridge_cpp_args,
     include_directories: ghidra_inc,
     link_with: ghidra_decompiler_lib,
     dependencies: zlib_dep,

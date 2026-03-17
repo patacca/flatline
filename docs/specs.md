@@ -605,6 +605,17 @@ Release-facing policy:
   are source-controlled in `docs/release_workflow.md` and audited by
   `python tools/release.py` before the release tag is created.
 
+Cross-platform feasibility policy:
+- Post-MVP host expansion proceeds macOS first and Windows second (ADR-008).
+- Until a host reaches equivalent contract coverage, release-facing support
+  notes continue to list Linux x86_64 as the only supported host platform.
+- Shared Meson/native-build paths must select compiler-argument syntax through
+  Meson rather than hardcoding GCC-only flags in a way that prevents MSVC-family
+  feasibility work from starting.
+- `docs/host_feasibility.md` records the current platform audit, the ordered
+  host-expansion rationale, and the concrete evidence required before a new host
+  can move from feasibility to supported status.
+
 Extensibility:
 - Additive extension points via optional request fields and metadata keys.
 - Future backends or advanced modes must preserve baseline contract semantics.
@@ -660,6 +671,7 @@ Resolved:
 - ~~Should analysis-budget defaults vary by platform or target ISA, or remain globally fixed?~~ **Resolved (ADR-005):** P2 uses a single fixed default, `AnalysisBudget(max_instructions=100000)`, across the Linux MVP matrix. Callers may override `max_instructions` per request; wall-clock timeout remains out of scope until the upstream callable surface exposes a compatible cancellation mechanism.
 - ~~Which diagnostic fields are emitted and redacted by default?~~ **Resolved (ADR-006):** P2 emits diagnostics only through startup/runtime-data `RuntimeWarning` messages plus structured `WarningItem` / `ErrorItem` results. Diagnostic text may include full filesystem paths for debuggability; raw memory-image bytes are never emitted. No path redaction is applied because flatline is a library running in the caller's own process, and its target personas (reverse engineers, security engineers, tooling engineers) benefit from full paths for troubleshooting.
 - ~~What release-time checks are mandatory for redistribution?~~ **Resolved (ADR-007):** Releases must ship root `LICENSE` and `NOTICE`, record the vendored decompiler source attribution and `ghidra-sleigh` dependency in `docs/compliance.md`, and pass `python tools/compliance.py` from the repo root before tagging.
+- ~~Should macOS or Windows be the first post-MVP host-expansion target?~~ **Resolved (ADR-008):** macOS first, then Windows. P6 starts by removing shared build-configuration assumptions and proving equivalent contract coverage on macOS before taking on the remaining Windows-specific blockers.
 - ~~Should warning codes be globally namespaced now to prevent future collisions?~~ **Resolved:** Yes, within flatline's public surface. Warning codes use the stable hierarchical namespace `<phase>.Wxxx` (for example `analyze.W001`), and new codes are added only additively.
 - ~~Should session-level failure categories (startup, initialization) be defined explicitly in the `FlatlineError` hierarchy, or is the current `ErrorItem` taxonomy sufficient?~~ **Resolved (ADR-011):** User-fixable install/startup/runtime-data failures use `configuration_error`, while unexpected flatline/bridge/native bugs remain `internal_error`.
 

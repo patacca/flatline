@@ -1,0 +1,56 @@
+# Host Feasibility
+
+This document records the first P6 deliverable: a source-controlled audit of
+the post-`0.1.0` host-expansion path. It does not change the public release
+contract for `0.1.0`; Linux x86_64 remains the only supported host until a new
+host reaches equivalent contract coverage.
+
+## Current Audit
+
+| Surface | Status | Notes |
+| --- | --- | --- |
+| `src/flatline/_session.py`, `src/flatline/_bridge.py`, `src/flatline/_runtime_data.py` | OK | Pure-Python request/session/runtime-data paths already use `Path`/`fspath` and do not depend on Linux-only APIs. |
+| `src/flatline/meson.build` | Partial | Shared native-build settings previously hardcoded GCC-style include, warning, and visibility flags. P6 hardening starts by selecting compiler-argument syntax through Meson so MSVC-family feasibility work can start without rewriting the build. |
+| `src/flatline/_flatline_native.cpp` | Unclear | The adapter is standard C++20 plus zlib-backed upstream sources, but native compilation still needs empirical validation on Apple Clang and on a Windows toolchain. |
+| `.github/workflows/ci.yml` | Missing | CI currently proves Linux only. P6 needs host-specific smoke/build lanes before support notes can change. |
+| `tests/fixtures/*.hex` and native regression fixtures | OK | Committed runtime fixtures are host-neutral test inputs. Their generation recipes use Linux-target cross toolchains, but that is maintainer-only fixture production rather than an end-user runtime dependency. |
+| `ghidra-sleigh` dependency path | Unclear | The dependency-backed runtime-data contract is host-neutral in flatline, but the companion package still needs the same host-by-host feasibility evidence as the native bridge. |
+
+## ADR-008 Decision
+
+Decision: macOS first, Windows second.
+
+Rationale:
+
+1. The current native stack is Meson + nanobind + Ghidra C++ sources + zlib.
+   Apple Clang and macOS keep the same general POSIX/process model and
+   GCC-like compiler-argument syntax as the Linux MVP host, so they are the
+   shortest path to the first non-Linux feasibility proof.
+2. Windows adds a second layer of work: MSVC-style argument syntax, ABI
+   validation, and runner/toolchain variance that the roadmap already tracks as
+   a separate risk.
+3. P6 should remove shared blockers once, then validate equivalent behavior on
+   the closest host before taking on the Windows-specific tail work.
+
+## Equivalent Contract Coverage
+
+A host is not considered feasible enough to promote into release-facing support
+notes until it has equivalent contract coverage:
+
+- source and wheel install paths complete with the native bridge enabled
+- `DecompilerSession` startup, pair enumeration, and native decompile behavior
+  match the existing public contract
+- the committed fixture-backed matrix and negative tests run on that host
+- CI contains a pinned host lane proving the behavior continuously
+- release notes and support messaging are updated in the same change set
+
+## Immediate P6 Steps
+
+1. Keep `src/flatline/meson.build` host-aware so shared native-build paths do
+   not fail before host-specific feasibility work even begins.
+2. Add a macOS smoke/build lane to `.github/workflows/ci.yml`, then promote it
+   to the existing contract matrix once the native bridge is stable there.
+3. Audit the `ghidra-sleigh` companion package on macOS with the same
+   dependency/runtime-data expectations used on Linux.
+4. Open a Windows-specific feasibility spike only after macOS closes the shared
+   Meson/build assumptions and demonstrates the first non-Linux native pass.

@@ -140,6 +140,8 @@ GitHub releases go to PyPI, while manual dispatch uploads to TestPyPI.
 Redistribution/compliance guidance lives in [NOTICE](NOTICE) and
 [docs/compliance.md](docs/compliance.md). The current default-install footprint
 baseline and size-policy note live in [docs/footprint.md](docs/footprint.md).
+The current P6 host-expansion feasibility record lives in
+[docs/host_feasibility.md](docs/host_feasibility.md).
 
 ## Project status
 
