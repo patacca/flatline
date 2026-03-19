@@ -244,7 +244,7 @@ if nanobind_available
     ],
     cpp_args: native_bridge_cpp_args,
     include_directories: [ghidra_inc, nanobind_inc],
-    link_with: ghidra_decompiler_lib,
+    link_whole: ghidra_decompiler_lib,
     dependencies: zlib_dep,
     install: true,
     subdir: 'flatline',
