@@ -2,9 +2,11 @@
 
 These notes define the release-facing contract for flatline's first public
 release line. They summarize what users can rely on, which targets are
-fixture-backed versus best-effort, and how upgrades are handled while the
-project remains on the Linux MVP track. This document accompanies version
-`0.1.0`, which finalized the earlier `0.1.0.dev0` release-candidate line.
+fixture-backed versus best-effort, how published wheel availability maps to
+runtime support, and how upgrades are handled while the project remains on the
+Linux MVP track. This document accompanies version `0.1.0`, which finalized
+the earlier `0.1.0.dev0` release-candidate line, plus the current Tier-1
+wheel-publish workflow for that same release line.
 
 ## Contract Guarantees
 
@@ -32,7 +34,8 @@ project remains on the Linux MVP track. This document accompanies version
 
 | Surface | Tier | Notes |
 | --- | --- | --- |
-| Host platform | Supported | Linux x86_64 only for the initial public release |
+| Host platform | Supported | Linux x86_64 only for the runtime contract in this release line |
+| Wheel install availability | Published | `pip install flatline` publishes wheels for Linux x86_64, Linux aarch64, Windows x86_64, macOS x86_64, and macOS arm64, so those installs work without a local compiler |
 | Target ISA variants | Fixture-backed | x86 (32/64), ARM64, RISC-V 64, and MIPS32 |
 | Other bundled ISAs and variants | best-effort | Enumerated and loadable when runtime data ships them, but without dedicated fixture-backed output or perf guarantees |
 | Custom runtime-data roots | Caller-managed | Explicit `runtime_data_dir` overrides stay supported, but compatibility is validated at runtime rather than guaranteed by the default release matrix |
@@ -41,10 +44,14 @@ Support-tier interpretation:
 - `list_language_compilers()` may enumerate more pairs than the fixture-backed
   matrix. Enumeration means the runtime data contains loadable assets, not that
   flatline promises fixture-backed output quality for that pair.
+- Wheel publication and supported-host status can differ. Wheel publication
+  means the packaged install path and wheel smoke checks are green for that
+  target, not that the host has reached equivalent contract coverage.
 - CI regression gates and warm-session budgets are source-controlled only for
   the fixture-backed matrix above.
-- macOS and Windows remain planned post-MVP host targets and are not supported
-  in the initial public release.
+- Linux aarch64, macOS, and Windows wheel targets remain installable through
+  the published wheel matrix, but Linux x86_64 is still the only supported host
+  until additional hosts clear the equivalent contract coverage bar.
 
 ## Known Variant Limits
 

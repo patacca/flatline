@@ -93,6 +93,159 @@ def _require_fragments(
         )
 
 
+def _markdown_section(markdown_text: str, heading: str) -> str:
+    lines = markdown_text.splitlines()
+    marker = f"## {heading}"
+    try:
+        start = lines.index(marker) + 1
+    except ValueError as exc:
+        raise ValueError(f"missing markdown heading {marker!r}") from exc
+
+    end = len(lines)
+    for index in range(start, len(lines)):
+        if lines[index].startswith("## "):
+            end = index
+            break
+
+    return "\n".join(lines[start:end]).strip()
+
+
+def _parse_markdown_table(section_text: str) -> tuple[dict[str, str], ...]:
+    table_lines = [
+        line.strip()
+        for line in section_text.splitlines()
+        if line.strip().startswith("|") and line.strip().endswith("|")
+    ]
+    if len(table_lines) < 3:
+        raise ValueError("expected a markdown table with a header and at least one row")
+
+    headers = [cell.strip() for cell in table_lines[0].strip("|").split("|")]
+    rows: list[dict[str, str]] = []
+    for line in table_lines[2:]:
+        values = [cell.strip() for cell in line.strip("|").split("|")]
+        if len(values) != len(headers):
+            raise ValueError("markdown table row width does not match header width")
+        rows.append(dict(zip(headers, values, strict=True)))
+    return tuple(rows)
+
+
+def _normalize_whitespace(text: str) -> str:
+    return " ".join(text.split())
+
+
+def _audit_release_support_notes(
+    *,
+    release_notes_text: str,
+    readme_text: str,
+    issues: list[ReleaseReadinessIssue],
+) -> None:
+    try:
+        support_section = _markdown_section(release_notes_text, "Support Tiers")
+        support_rows = {
+            row["Surface"]: row for row in _parse_markdown_table(support_section)
+        }
+    except (KeyError, ValueError) as exc:
+        _append_issue(
+            issues,
+            "release_notes_support_tiers_invalid",
+            f"docs/release_notes.md must keep a parseable Support Tiers table: {exc}",
+        )
+        support_rows = {}
+        support_section = ""
+
+    host_row = support_rows.get("Host platform")
+    if host_row is None or "Linux x86_64" not in host_row.get("Notes", ""):
+        _append_issue(
+            issues,
+            "release_notes_host_support_missing",
+            "docs/release_notes.md must keep the supported host contract explicit.",
+        )
+
+    wheel_row = support_rows.get("Wheel install availability")
+    required_wheel_fragments = (
+        "Linux x86_64",
+        "Linux aarch64",
+        "Windows x86_64",
+        "macOS x86_64",
+        "macOS arm64",
+        "without a local compiler",
+    )
+    if wheel_row is None or any(
+        fragment not in wheel_row.get("Notes", "") for fragment in required_wheel_fragments
+    ):
+        _append_issue(
+            issues,
+            "release_notes_wheel_publish_missing",
+            (
+                "docs/release_notes.md must distinguish published wheel availability "
+                "from the supported host contract."
+            ),
+        )
+
+    normalized_support_section = _normalize_whitespace(support_section)
+    if (
+        "Wheel publication and supported-host status can differ"
+        not in normalized_support_section
+        or "equivalent contract coverage" not in normalized_support_section
+    ):
+        _append_issue(
+            issues,
+            "release_notes_support_interpretation_missing",
+            (
+                "docs/release_notes.md must explain that wheel publication does not "
+                "promote a host into the supported tier."
+            ),
+        )
+
+    try:
+        requirements_section = _normalize_whitespace(
+            _markdown_section(readme_text, "Requirements")
+        )
+    except ValueError as exc:
+        _append_issue(
+            issues,
+            "readme_requirements_missing",
+            f"README.md must keep a Requirements section: {exc}",
+        )
+    else:
+        required_requirements = (
+            "Supported runtime host contract: Linux x86_64",
+            "Published wheels: Linux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64",
+        )
+        if any(fragment not in requirements_section for fragment in required_requirements):
+            _append_issue(
+                issues,
+                "readme_wheel_requirements_missing",
+                (
+                    "README.md must list the supported host contract and the published "
+                    "wheel matrix separately."
+                ),
+            )
+
+    try:
+        project_status = _normalize_whitespace(_markdown_section(readme_text, "Project status"))
+    except ValueError as exc:
+        _append_issue(
+            issues,
+            "readme_project_status_missing",
+            f"README.md must keep a Project status section: {exc}",
+        )
+    else:
+        required_status_fragments = (
+            "P6.5 wheel distribution matrix",
+            "docs/wheel_matrix.md",
+        )
+        if any(fragment not in project_status for fragment in required_status_fragments):
+            _append_issue(
+                issues,
+                "readme_wheel_status_missing",
+                (
+                    "README.md must point readers at the active P6.5 wheel-matrix "
+                    "status and source of truth."
+                ),
+            )
+
+
 def _load_pyproject_version(
     repo_root: Path,
     issues: list[ReleaseReadinessIssue],
@@ -345,6 +498,12 @@ def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseRead
             label="docs/release_notes.md",
             issues=issues,
         )
+        if readme_text is not None:
+            _audit_release_support_notes(
+                release_notes_text=release_notes_text,
+                readme_text=readme_text,
+                issues=issues,
+            )
 
     release_review_text = artifact_texts["docs/release_review.md"]
     if release_review_text is not None:

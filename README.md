@@ -24,15 +24,21 @@ metaphor for decompilation: extracting meaning from dead code.
 ## Requirements
 
 - Python 3.13+
-- Linux x86_64 (macOS/Windows planned)
-- C++20 compiler (for source builds with native bridge)
-- Ninja
+- Supported runtime host contract: Linux x86_64
+- Published wheels: Linux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64
+- C++20 compiler (for source builds or forced native builds)
+- Ninja (for source builds or forced native builds)
 
 ## Installation
 
 ```bash
 pip install flatline
 ```
+
+`pip install flatline` uses pre-built wheels on Linux x86_64/aarch64, Windows
+x86_64, and macOS x86_64/arm64, so those installs work without a local
+compiler. Platforms outside that wheel matrix fall back to source builds and
+therefore need a C++20 compiler plus Ninja.
 
 For development:
 
@@ -150,9 +156,11 @@ with release-facing guarantees and support-policy notes captured in
 [docs/release_notes.md](docs/release_notes.md) and the release/tag procedure
 recorded in [docs/release_workflow.md](docs/release_workflow.md). The manual
 artifact-review gate remains documented in [docs/release_review.md](docs/release_review.md)
-for future reference, while the next roadmap focus is P6 cross-platform
-expansion feasibility. See [docs/roadmap.md](docs/roadmap.md) for the phase
-plan.
+for future reference. The current roadmap focus is the P6.5 wheel distribution
+matrix, with the locked Tier-1 wheel set recorded in
+[docs/wheel_matrix.md](docs/wheel_matrix.md) while host-promotion evidence
+continues in [docs/host_feasibility.md](docs/host_feasibility.md). See
+[docs/roadmap.md](docs/roadmap.md) for the phase plan.
 
 ## License
 

@@ -62,6 +62,19 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
             [
                 "# flatline",
                 "",
+                "## Requirements",
+                "",
+                "- Supported runtime host contract: Linux x86_64",
+                (
+                    "- Published wheels: Linux x86_64/aarch64, Windows x86_64, "
+                    "macOS x86_64/arm64"
+                ),
+                "",
+                "## Project status",
+                "",
+                "The current roadmap focus is the P6.5 wheel distribution matrix.",
+                "[docs/wheel_matrix.md](docs/wheel_matrix.md)",
+                "",
                 "[docs/release_notes.md](docs/release_notes.md)",
                 "[docs/release_review.md](docs/release_review.md)",
                 "[docs/release_workflow.md](docs/release_workflow.md)",
@@ -75,7 +88,36 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
         encoding="ascii",
     )
     (repo_root / "docs" / "release_notes.md").write_text(
-        "# Initial Public Release Notes\n",
+        "\n".join(
+            [
+                "# Initial Public Release Notes",
+                "",
+                "## Support Tiers",
+                "",
+                "| Surface | Tier | Notes |",
+                "| --- | --- | --- |",
+                (
+                    "| Host platform | Supported | Linux x86_64 only for the "
+                    "runtime contract in this release line |"
+                ),
+                (
+                    "| Wheel install availability | Published | `pip install "
+                    "flatline` publishes wheels for Linux x86_64, Linux "
+                    "aarch64, Windows x86_64, macOS x86_64, and macOS arm64, "
+                    "so those installs work without a local compiler |"
+                ),
+                "",
+                "Support-tier interpretation:",
+                "- Wheel publication and supported-host status can differ.",
+                "- Hosts reach support only after equivalent contract coverage.",
+                "",
+            ]
+        )
+        + "\n",
+        encoding="ascii",
+    )
+    (repo_root / "docs" / "wheel_matrix.md").write_text(
+        "# Platform/Architecture Wheel Matrix\n",
         encoding="ascii",
     )
     (repo_root / "docs" / "release_review.md").write_text(

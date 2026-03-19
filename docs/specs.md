@@ -601,6 +601,10 @@ Release-facing policy:
   summarizes the contract guarantees users can rely on, the support tiers for
   the supported host and target matrix, the known ISA-variant limits, and the
   upgrade policy for that release line.
+- When the published wheel-install matrix is broader than the supported host
+  contract, release-facing notes must list wheel availability separately and
+  say that published wheels mean `pip install flatline` succeeds without a
+  local compiler on those targets, not that the host-support tier changed.
 - Release-facing support notes must distinguish the Linux x86_64
   fixture-backed confidence matrix (x86 32/64, ARM64, RISC-V 64, MIPS32) from
   bundled best-effort ISAs or variants that are covered only by enumeration
