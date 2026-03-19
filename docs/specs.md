@@ -505,6 +505,9 @@ Contract-test strategy:
 - API contract tests validate field presence/types/error categories.
 - Behavior tests validate deterministic outcomes for pinned fixtures.
 - Negative tests ensure structured errors for unsupported language/compiler/addresses.
+- Build/workflow config tests are smoke checks over contract-critical behavior;
+  they should avoid pinning incidental YAML/TOML structure, step names, cache
+  settings, or exact shell formatting when equivalent behavior is preserved.
 
 Change-detection process for upstream bump:
 1. Rebuild decompiler inventory diff from pinned upstream callable symbols.
@@ -611,8 +614,10 @@ Cross-platform feasibility policy:
   notes continue to list Linux x86_64 as the only supported host platform.
 - Shared Meson/native-build paths must select compiler-argument syntax through
   Meson rather than hardcoding GCC-only flags in a way that prevents MSVC-family
-  feasibility work from starting.
-- P6 feasibility now keeps a pinned `macos-15` CI lane on the installed-wheel
+  feasibility work from starting, and staged third-party header roots must flow
+  through Meson include directories instead of compiler-specific `-I` / `/I`
+  arguments.
+- P6 feasibility now keeps a dedicated macOS CI lane on the installed-wheel
   non-regression tox matrix, using a native-forced tox env so
   `native_bridge=enabled` cannot silently fall back to the Python bridge, and
   macOS builds must not require callers to inject manual compiler/linker flags

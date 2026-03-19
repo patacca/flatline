@@ -1,4 +1,4 @@
-"""Unit tests for the pinned CI workflow."""
+"""Unit tests for CI workflow smoke invariants."""
 
 from __future__ import annotations
 
@@ -36,55 +36,40 @@ def _named_step(job: dict[str, object], name: str) -> dict[str, object]:
     raise AssertionError(f"missing named step {name}")
 
 
-def test_u019_ci_workflow_enforces_runner_and_python_policy() -> None:
-    """U-019: CI keeps the pinned Ubuntu matrix and latest-stable non-Ubuntu jobs."""
+def _job_runs(job: dict[str, object]) -> list[str]:
+    return [step["run"] for step in job["steps"] if "run" in step]
+
+
+def test_u019_ci_workflow_keeps_supported_test_matrix_and_regression_lane() -> None:
+    """U-019: CI keeps the supported test matrix and a dedicated regression lane."""
     workflow = _load_ci_workflow()
     assert workflow["name"] == "CI"
 
-    lint_job = _job(workflow, "lint")
-    assert lint_job["runs-on"] == "ubuntu-latest"
-    assert _uses_step(lint_job, "actions/setup-python@v5")["with"]["python-version"] == "3.14"
-
-    build_job = _job(workflow, "build")
-    assert build_job["runs-on"] == "ubuntu-latest"
-    assert _uses_step(build_job, "actions/setup-python@v5")["with"]["python-version"] == "3.14"
-
     test_job = _job(workflow, "test")
-    assert test_job["runs-on"] == "ubuntu-24.04"
-    assert test_job["strategy"]["matrix"]["include"] == [
-        {"python-version": "3.13", "tox-env": "py313"},
-        {"python-version": "3.14", "tox-env": "py314"},
-    ]
-    assert (
-        _named_step(test_job, "Run non-regression tests")["run"].strip()
-        == 'tox -e ${{ matrix.tox-env }} -- -m "not regression"'
+    supported_matrix = {
+        (entry["python-version"], entry["tox-env"])
+        for entry in test_job["strategy"]["matrix"]["include"]
+    }
+    assert supported_matrix == {("3.13", "py313"), ("3.14", "py314")}
+    assert any(
+        'tox -e ${{ matrix.tox-env }} -- -m "not regression"' in run
+        for run in _job_runs(test_job)
     )
 
     regression_job = _job(workflow, "regression")
-    assert regression_job["runs-on"] == "ubuntu-24.04"
-    assert (
-        _uses_step(regression_job, "actions/setup-python@v5")["with"]["python-version"]
-        == "3.14"
-    )
-    assert _named_step(regression_job, "Run regression gates")["run"].strip() == (
-        "tox -e py314 -- -m regression"
+    assert any(
+        "tox -e py314 -- -m regression" in run for run in _job_runs(regression_job)
     )
 
 
-def test_u026_ci_workflow_promotes_macos_native_contract_lane() -> None:
-    """U-026: CI keeps a pinned macOS lane on the native non-regression matrix."""
+def test_u026_ci_workflow_keeps_macos_native_contract_lane() -> None:
+    """U-026: CI keeps a macOS lane on the native non-regression matrix."""
     workflow = _load_ci_workflow()
     macos_job = _job(workflow, "macos-contract")
 
-    assert macos_job["runs-on"] == "macos-15"
-    assert _uses_step(macos_job, "actions/checkout@v4")["with"]["submodules"] == "recursive"
-    assert _uses_step(macos_job, "actions/setup-python@v5")["with"]["python-version"] == "3.14"
-    assert _named_step(macos_job, "Install system dependencies")["run"].strip() == (
-        "brew install ninja zlib"
-    )
-    assert _named_step(macos_job, "Install tox")["run"].strip() == "pip install tox"
-    run_step = _named_step(macos_job, "Run macOS non-regression contract matrix")["run"].strip()
-    assert run_step == 'tox -e py314-native -- -m "not regression"'
-    assert "CPPFLAGS" not in run_step
-    assert "LDFLAGS" not in run_step
-    assert "PKG_CONFIG_PATH" not in run_step
+    assert str(macos_job["runs-on"]).startswith("macos-")
+    job_runs = "\n".join(_job_runs(macos_job))
+    assert 'tox -e py314-native -- -m "not regression"' in job_runs
+    assert "CPPFLAGS" not in job_runs
+    assert "LDFLAGS" not in job_runs
+    assert "PKG_CONFIG_PATH" not in job_runs

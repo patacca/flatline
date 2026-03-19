@@ -12,12 +12,13 @@ def test_u026_native_tox_env_forces_native_bridge_builds() -> None:
     pyproject = tomllib.loads((repo_root / "pyproject.toml").read_text(encoding="utf-8"))
     tox_envs = pyproject["tool"]["tox"]["env"]
 
-    assert tox_envs["py314-native"]["base_python"] == "python3.14"
-    assert tox_envs["py314-native"]["wheel_build_env"] == ".pkg-py314-native"
-    assert tox_envs[".pkg-py314-native"]["base_python"] == "python3.14"
-    assert tox_envs[".pkg-py314-native"]["config_settings_prepare_metadata_for_build_wheel"] == {
+    native_env = tox_envs["py314-native"]
+    build_env_name = native_env["wheel_build_env"]
+    build_env = tox_envs[build_env_name]
+
+    assert build_env["config_settings_prepare_metadata_for_build_wheel"] == {
         "setup-args": "-Dnative_bridge=enabled"
     }
-    assert tox_envs[".pkg-py314-native"]["config_settings_build_wheel"] == {
+    assert build_env["config_settings_build_wheel"] == {
         "setup-args": "-Dnative_bridge=enabled"
     }

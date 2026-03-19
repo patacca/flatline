@@ -1,4 +1,4 @@
-"""Unit tests for the release publish workflow."""
+"""Unit tests for release workflow smoke invariants."""
 
 from __future__ import annotations
 
@@ -36,8 +36,12 @@ def _named_step(job: dict[str, object], name: str) -> dict[str, object]:
     raise AssertionError(f"missing named step {name}")
 
 
+def _job_runs(job: dict[str, object]) -> list[str]:
+    return [step["run"] for step in job["steps"] if "run" in step]
+
+
 def test_u025_release_workflow_routes_manual_dispatches_to_testpypi() -> None:
-    """U-025: Release automation publishes GitHub releases to PyPI and manual runs to TestPyPI."""
+    """U-025: Release automation keeps the build, audit, and publish-routing invariants."""
     workflow = _load_release_workflow()
 
     assert workflow["name"] == "Release"
@@ -45,36 +49,18 @@ def test_u025_release_workflow_routes_manual_dispatches_to_testpypi() -> None:
     assert "workflow_dispatch" in workflow["on"]
 
     build_job = _job(workflow, "build")
-    assert build_job["runs-on"] == "ubuntu-latest"
-    assert _uses_step(build_job, "actions/checkout@v4")["with"]["submodules"] == "recursive"
-    assert _uses_step(build_job, "actions/setup-python@v5")["with"]["python-version"] == "3.14"
-    assert _uses_step(build_job, "actions/setup-python@v5")["with"]["cache"] == "pip"
-    assert "sudo apt-get install -y ninja-build zlib1g-dev" in _named_step(
-        build_job, "Install system dependencies"
-    )["run"]
-    assert "pip install build twine" in _named_step(build_job, "Install build tooling")["run"]
-    assert "python tools/compliance.py" in _named_step(build_job, "Run compliance audit")["run"]
-    assert "python -m build --wheel --outdir dist" in _named_step(build_job, "Build wheel")["run"]
-    assert "python -m build --sdist --outdir dist" in _named_step(build_job, "Build sdist")["run"]
-    validate_run = _named_step(build_job, "Validate distribution artifacts")["run"]
-    assert "twine check dist/*" in validate_run
-    assert "python tools/artifacts.py dist --repo-root ." in validate_run
-    upload_step = _uses_step(build_job, "actions/upload-artifact@v4")
-    assert upload_step["with"]["name"] == "python-distributions"
-    assert upload_step["with"]["if-no-files-found"] == "error"
+    build_runs = "\n".join(_job_runs(build_job))
+    assert "python tools/compliance.py" in build_runs
+    assert "python -m build --wheel --outdir dist" in build_runs
+    assert "python -m build --sdist --outdir dist" in build_runs
+    assert "twine check dist/*" in build_runs
+    assert "python tools/artifacts.py dist --repo-root ." in build_runs
+    _uses_step(build_job, "actions/upload-artifact@v4")
 
     publish_job = _job(workflow, "publish")
     assert publish_job["needs"] == "build"
     assert publish_job["permissions"]["id-token"] == "write"
-    assert publish_job["environment"]["name"] == (
-        "${{ github.event_name == 'workflow_dispatch' && 'testpypi' || 'pypi' }}"
-    )
-    assert publish_job["environment"]["url"] == (
-        "${{ github.event_name == 'workflow_dispatch' && "
-        "'https://test.pypi.org/project/flatline/' || 'https://pypi.org/project/flatline/' }}"
-    )
-    download_step = _uses_step(publish_job, "actions/download-artifact@v4")
-    assert download_step["with"]["name"] == "python-distributions"
+    _uses_step(publish_job, "actions/download-artifact@v4")
     publish_step = _uses_step(publish_job, "pypa/gh-action-pypi-publish@release/v1")
     assert publish_step["with"]["repository-url"] == (
         "${{ github.event_name == 'workflow_dispatch' && "

@@ -61,32 +61,23 @@ endif
 
 if nanobind_available
   ghidra_cpp_args = []
-  nanobind_include_args = []
   native_bridge_cpp_args = [
     '-DNB_COMPACT_ASSERTIONS',
   ]
-
   if cpp_argument_syntax == 'msvc'
     ghidra_cpp_args += ['/w']
-    nanobind_include_args += [
-      '/I' + nanobind_include_dir,
-      '/I' + nanobind_source_dir,
-      '/I' + nanobind_robin_map_include_dir,
-    ]
   else
     ghidra_cpp_args += ['-w']
-    nanobind_include_args += [
-      '-I' + nanobind_include_dir,
-      '-I' + nanobind_source_dir,
-      '-I' + nanobind_robin_map_include_dir,
-    ]
     native_bridge_cpp_args += [
       '-fvisibility=hidden',
       '-fno-strict-aliasing',
     ]
   endif
-
-  native_bridge_cpp_args += nanobind_include_args
+  nanobind_inc = include_directories(
+    'nanobind_staged/include',
+    'nanobind_staged/src',
+    'nanobind_staged/robin_map_include',
+  )
 
   # --- Ghidra decompiler static library ---
   # Source files derived from upstream Makefile LIBDECOMP target:
@@ -228,7 +219,7 @@ if nanobind_available
       nanobind_source_dir / 'nb_combined.cpp',
     ],
     cpp_args: native_bridge_cpp_args,
-    include_directories: ghidra_inc,
+    include_directories: [ghidra_inc, nanobind_inc],
     link_with: ghidra_decompiler_lib,
     dependencies: zlib_dep,
     install: true,
