@@ -612,10 +612,12 @@ Cross-platform feasibility policy:
 - Shared Meson/native-build paths must select compiler-argument syntax through
   Meson rather than hardcoding GCC-only flags in a way that prevents MSVC-family
   feasibility work from starting.
-- P6 feasibility starts with a pinned macOS smoke/build CI lane that forces
-  `native_bridge=enabled`, builds a wheel, installs it, and imports
-  `flatline._flatline_native`; full contract-matrix coverage remains the bar
-  for changing release-facing support notes.
+- P6 feasibility now keeps a pinned `macos-15` CI lane on the installed-wheel
+  non-regression tox matrix, using a native-forced tox env so
+  `native_bridge=enabled` cannot silently fall back to the Python bridge, and
+  macOS builds must not require callers to inject manual compiler/linker flags
+  for zlib discovery; full contract-matrix coverage remains the bar for
+  changing release-facing support notes.
 - `docs/host_feasibility.md` records the current platform audit, the ordered
   host-expansion rationale, and the concrete evidence required before a new host
   can move from feasibility to supported status.

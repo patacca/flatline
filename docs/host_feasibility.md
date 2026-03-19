@@ -1,8 +1,9 @@
 # Host Feasibility
 
 This document records the active P6 deliverables: a source-controlled audit of
-the post-`0.1.0` host-expansion path and the first pinned macOS CI smoke/build
-proof. It does not change the public release contract for `0.1.0`; Linux
+the post-`0.1.0` host-expansion path and the pinned macOS CI lane that now
+forces the native bridge and runs the existing non-regression tox matrix. It
+does not change the public release contract for `0.1.0`; Linux
 x86_64 remains the only supported host until a new host reaches equivalent
 contract coverage.
 
@@ -11,11 +12,11 @@ contract coverage.
 | Surface | Status | Notes |
 | --- | --- | --- |
 | `src/flatline/_session.py`, `src/flatline/_bridge.py`, `src/flatline/_runtime_data.py` | OK | Pure-Python request/session/runtime-data paths already use `Path`/`fspath` and do not depend on Linux-only APIs. |
-| `src/flatline/meson.build` | Partial | Shared native-build settings previously hardcoded GCC-style include, warning, and visibility flags. P6 hardening starts by selecting compiler-argument syntax through Meson so MSVC-family feasibility work can start without rewriting the build. |
+| `src/flatline/meson.build` | Partial | Shared native-build settings now select compiler-argument syntax through Meson and auto-discover Homebrew `zlib` on macOS without manual `CPPFLAGS` / `LDFLAGS` / `PKG_CONFIG_PATH` exports. Windows/MSVC feasibility still needs empirical validation. |
 | `src/flatline/_flatline_native.cpp` | Unclear | The adapter is standard C++20 plus zlib-backed upstream sources, but native compilation still needs empirical validation on Apple Clang and on a Windows toolchain. |
-| `.github/workflows/ci.yml` | Partial | CI now includes a pinned `macos-15` smoke/build lane that forces `native_bridge=enabled`, builds a wheel, installs it, and imports `flatline._flatline_native`. Full macOS contract-matrix coverage is still pending before support notes can change. |
+| `.github/workflows/ci.yml` | OK | CI now includes a pinned `macos-15` contract lane on Python `3.14` that runs `tox -e py314-native -- -m "not regression"` with `native_bridge=enabled`, so the installed-wheel contract matrix exercises the real native bridge on macOS without manual compiler/linker flag exports. |
 | `tests/fixtures/*.hex` and native regression fixtures | OK | Committed runtime fixtures are host-neutral test inputs. Their generation recipes use Linux-target cross toolchains, but that is maintainer-only fixture production rather than an end-user runtime dependency. |
-| `ghidra-sleigh` dependency path | Unclear | The dependency-backed runtime-data contract is host-neutral in flatline, but the companion package still needs the same host-by-host feasibility evidence as the native bridge. |
+| `ghidra-sleigh` dependency path | OK | The companion package currently publishes `ghidra-sleigh 12.0.4` as a `py3-none-any` wheel, so the macOS feasibility lane can install runtime data without introducing a host-specific packaging branch in flatline. |
 
 ## ADR-008 Decision
 
@@ -47,12 +48,12 @@ notes until it has equivalent contract coverage:
 
 ## Immediate P6 Steps
 
-1. Keep `src/flatline/meson.build` host-aware so shared native-build paths do
-   not fail before host-specific feasibility work even begins.
-2. Promote the pinned `macos-15` smoke/build lane in `.github/workflows/ci.yml`
-   from build/import proof to the existing contract matrix once the native
-   bridge is stable there.
-3. Audit the `ghidra-sleigh` companion package on macOS with the same
-   dependency/runtime-data expectations used on Linux.
-4. Open a Windows-specific feasibility spike only after macOS closes the shared
-   Meson/build assumptions and demonstrates the first non-Linux native pass.
+1. Keep `src/flatline/meson.build` and the native-forced tox env host-aware so
+   shared native-build paths do not fail before host-specific feasibility work
+   even begins, and keep low-level compiler/linker flag plumbing out of the
+   user-facing install path.
+2. Keep the pinned `macos-15` contract lane green long enough to treat it as
+   the standing non-Linux feasibility signal before updating support notes.
+3. Open a Windows-specific feasibility spike only after macOS closes the shared
+   Meson/build assumptions and sustains the first non-Linux native contract
+   pass.

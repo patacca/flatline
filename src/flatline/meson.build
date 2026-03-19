@@ -187,7 +187,30 @@ if nanobind_available
 
   ghidra_inc = include_directories(ghidra_src)
 
-  zlib_dep = dependency('zlib')
+  zlib_dep = dependency('zlib', required: false)
+
+  if not zlib_dep.found() and host_machine.system() == 'darwin'
+    brew = find_program('brew', required: false)
+    if brew.found()
+      brew_zlib_prefix = run_command(brew, '--prefix', 'zlib', check: false)
+      if brew_zlib_prefix.returncode() == 0
+        zlib_prefix = brew_zlib_prefix.stdout().strip()
+        if zlib_prefix != ''
+          zlib_lib = cpp.find_library('z', dirs: [zlib_prefix + '/lib'], required: false)
+          if zlib_lib.found()
+            zlib_dep = declare_dependency(
+              dependencies: [zlib_lib],
+              include_directories: include_directories(zlib_prefix + '/include'),
+            )
+          endif
+        endif
+      endif
+    endif
+  endif
+
+  if not zlib_dep.found()
+    error('zlib not found. Install the platform zlib development package; on macOS, `brew install zlib` is sufficient and no manual compiler flags are required.')
+  endif
 
   ghidra_decompiler_lib = static_library(
     'ghidra_decompiler',

@@ -13,6 +13,7 @@ exercise the installed artifact instead of `PYTHONPATH=src`.
 - `source .venv/bin/activate && tox -e py313,py314`: tests only (against installed wheel; dev-only tests skip).
 - `source .venv/bin/activate && tox -e dev`: dev-only tests (compliance, footprint, release workflow, artifact audit).
 - `source .venv/bin/activate && tox -e py313,py314 -- -m requires_native`: native-only coverage against the installed wheel artifact.
+- `source .venv/bin/activate && tox -e py314-native -- -m requires_native`: native-only coverage while forcing `native_bridge=enabled` during tox packaging.
 - `source .venv/bin/activate && tox -e lint`: Ruff only.
 
 ### Dev-only tests

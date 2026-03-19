@@ -2,56 +2,84 @@
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
+import yaml
 
-def _job_block(workflow: str, job_id: str) -> str:
-    pattern = rf"^  {re.escape(job_id)}:\n(?P<body>(?:(?:    .*|)\n?)*)"
-    match = re.search(pattern, workflow, flags=re.MULTILINE)
-    assert match is not None, f"missing release job {job_id}"
-    return match.group("body")
+
+def _load_release_workflow() -> dict[str, object]:
+    repo_root = Path(__file__).resolve().parents[2]
+    workflow_text = (repo_root / ".github" / "workflows" / "release.yml").read_text(
+        encoding="utf-8"
+    )
+    return yaml.load(workflow_text, Loader=yaml.BaseLoader)
+
+
+def _job(workflow: dict[str, object], job_id: str) -> dict[str, object]:
+    try:
+        return workflow["jobs"][job_id]
+    except KeyError as exc:
+        raise AssertionError(f"missing release job {job_id}") from exc
+
+
+def _uses_step(job: dict[str, object], action: str) -> dict[str, object]:
+    for step in job["steps"]:
+        if step.get("uses") == action:
+            return step
+    raise AssertionError(f"missing step using {action}")
+
+
+def _named_step(job: dict[str, object], name: str) -> dict[str, object]:
+    for step in job["steps"]:
+        if step.get("name") == name:
+            return step
+    raise AssertionError(f"missing named step {name}")
 
 
 def test_u025_release_workflow_routes_manual_dispatches_to_testpypi() -> None:
     """U-025: Release automation publishes GitHub releases to PyPI and manual runs to TestPyPI."""
-    repo_root = Path(__file__).resolve().parents[2]
-    workflow = (repo_root / ".github" / "workflows" / "release.yml").read_text(
-        encoding="ascii"
+    workflow = _load_release_workflow()
+
+    assert workflow["name"] == "Release"
+    assert workflow["on"]["release"]["types"] == ["published"]
+    assert "workflow_dispatch" in workflow["on"]
+
+    build_job = _job(workflow, "build")
+    assert build_job["runs-on"] == "ubuntu-latest"
+    assert _uses_step(build_job, "actions/checkout@v4")["with"]["submodules"] == "recursive"
+    assert _uses_step(build_job, "actions/setup-python@v5")["with"]["python-version"] == "3.14"
+    assert _uses_step(build_job, "actions/setup-python@v5")["with"]["cache"] == "pip"
+    assert "sudo apt-get install -y ninja-build zlib1g-dev" in _named_step(
+        build_job, "Install system dependencies"
+    )["run"]
+    assert "pip install build twine" in _named_step(build_job, "Install build tooling")["run"]
+    assert "python tools/compliance.py" in _named_step(build_job, "Run compliance audit")["run"]
+    assert "python -m build --wheel --outdir dist" in _named_step(build_job, "Build wheel")["run"]
+    assert "python -m build --sdist --outdir dist" in _named_step(build_job, "Build sdist")["run"]
+    validate_run = _named_step(build_job, "Validate distribution artifacts")["run"]
+    assert "twine check dist/*" in validate_run
+    assert "python tools/artifacts.py dist --repo-root ." in validate_run
+    upload_step = _uses_step(build_job, "actions/upload-artifact@v4")
+    assert upload_step["with"]["name"] == "python-distributions"
+    assert upload_step["with"]["if-no-files-found"] == "error"
+
+    publish_job = _job(workflow, "publish")
+    assert publish_job["needs"] == "build"
+    assert publish_job["permissions"]["id-token"] == "write"
+    assert publish_job["environment"]["name"] == (
+        "${{ github.event_name == 'workflow_dispatch' && 'testpypi' || 'pypi' }}"
     )
-
-    assert "name: Release" in workflow
-    assert "release:" in workflow
-    assert "types: [published]" in workflow
-    assert "workflow_dispatch:" in workflow
-
-    build_job = _job_block(workflow, "build")
-    assert "runs-on: ubuntu-latest" in build_job
-    assert "submodules: recursive" in build_job
-    assert 'python-version: "3.13"' in build_job
-    assert "cache: pip" in build_job
-    assert "sudo apt-get install -y ninja-build zlib1g-dev" in build_job
-    assert "pip install build twine" in build_job
-    assert "python tools/compliance.py" in build_job
-    assert "python -m build --wheel --outdir dist" in build_job
-    assert "python -m build --sdist --outdir dist" in build_job
-    assert "twine check dist/*" in build_job
-    assert "python tools/artifacts.py dist --repo-root ." in build_job
-    assert "name: python-distributions" in build_job
-    assert "if-no-files-found: error" in build_job
-
-    publish_job = _job_block(workflow, "publish")
-    assert "needs: build" in publish_job
-    assert "id-token: write" in publish_job
-    assert "github.event_name == 'workflow_dispatch' && 'testpypi' || 'pypi'" in publish_job
-    assert (
-        "github.event_name == 'workflow_dispatch' && "
-        "'https://test.pypi.org/project/flatline/' || 'https://pypi.org/project/flatline/'"
-    ) in publish_job
-    assert "name: python-distributions" in publish_job
-    assert "uses: pypa/gh-action-pypi-publish@release/v1" in publish_job
-    assert (
-        "github.event_name == 'workflow_dispatch' && "
-        "'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/'"
-    ) in publish_job
-    assert "skip-existing: ${{ github.event_name == 'workflow_dispatch' }}" in publish_job
+    assert publish_job["environment"]["url"] == (
+        "${{ github.event_name == 'workflow_dispatch' && "
+        "'https://test.pypi.org/project/flatline/' || 'https://pypi.org/project/flatline/' }}"
+    )
+    download_step = _uses_step(publish_job, "actions/download-artifact@v4")
+    assert download_step["with"]["name"] == "python-distributions"
+    publish_step = _uses_step(publish_job, "pypa/gh-action-pypi-publish@release/v1")
+    assert publish_step["with"]["repository-url"] == (
+        "${{ github.event_name == 'workflow_dispatch' && "
+        "'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}"
+    )
+    assert publish_step["with"]["skip-existing"] == (
+        "${{ github.event_name == 'workflow_dispatch' }}"
+    )

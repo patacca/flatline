@@ -16,6 +16,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest >= 8.0",
+    "PyYAML >= 6.0",
 ]
 lint = [
     "ruff >= 0.9",
@@ -82,7 +83,7 @@ package = "skip"
 extras = []
 # Mirrors [project.optional-dependencies].test; duplicated because
 # package = "skip" prevents using extras.
-deps = ["pytest >= 8.0"]
+deps = ["pytest >= 8.0", "PyYAML >= 6.0"]
 set_env = {PYTHONPATH = "{toxinidir}/src:{toxinidir}/tools"}
 commands = [
     ["pytest",
@@ -106,3 +107,13 @@ base_python = "python3.13"
 
 [tool.tox.env.py314]
 base_python = "python3.14"
+
+# Host-feasibility lanes must fail hard if the native bridge does not build.
+[tool.tox.env.py314-native]
+base_python = "python3.14"
+wheel_build_env = ".pkg-py314-native"
+
+[tool.tox.env.".pkg-py314-native"]
+base_python = "python3.14"
+config_settings_prepare_metadata_for_build_wheel = {"setup-args" = "-Dnative_bridge=enabled"}
+config_settings_build_wheel = {"setup-args" = "-Dnative_bridge=enabled"}
