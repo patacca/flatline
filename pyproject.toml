@@ -128,7 +128,12 @@ extras = []
 # Mirrors [project.optional-dependencies].lint; duplicated because
 # package = "skip" prevents using extras.
 deps = ["ruff >= 0.9"]
-commands = [["ruff", "check", "src/", "tests/", "tools/"]]
+commands = [
+    ["ruff", "check", "src/", "tests/", "tools/"],
+    ["ruff", "format", "--check", "src/", "tests/", "tools/"],
+    ["clang-format", "--dry-run", "-Werror", "src/flatline/_flatline_native.cpp"],
+]
+allowlist_externals = ["clang-format"]
 
 [tool.tox.env.py313]
 base_python = "python3.13"
