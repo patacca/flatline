@@ -156,7 +156,6 @@ jobs:
         with:
           packages-dir: dist/
           repository-url: ${{ github.event_name == 'workflow_dispatch' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
-          skip-existing: ${{ github.event_name == 'workflow_dispatch' }}
 
   smoke-published:
     name: Smoke published wheels (${{ matrix.os }}, py${{ matrix.python-version }}, ${{ matrix.cibw-archs }})

@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `third_party/ghidra` git submodule instead of hardcoded tag/commit constants
 - `metadata["decompiler_version"]` in `DecompileResult` now always reflects the
   Ghidra decompiler engine version, not the flatline package version
+- Manual TestPyPI release dispatches now require a unique package version
+  instead of silently skipping duplicate uploads
 
 ### Removed
 - `UPSTREAM_TAG` and `UPSTREAM_COMMIT` constants from `flatline._version`

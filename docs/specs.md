@@ -577,7 +577,8 @@ Packaging and compliance:
   `x86_64` / `arm64` for CPython 3.13 and 3.14) plus the sdist, validates them with
   `twine check dist/*` plus `python tools/artifacts.py dist --repo-root .`,
   and trusted-publishes manual dispatches to TestPyPI while release-triggered
-  publishes target PyPI.
+  publishes target PyPI. Manual TestPyPI dispatches must use a unique version;
+  duplicate uploads are a hard failure, not a skipped publish.
 - The Tier-1 wheel builds must run an installed-wheel smoke check through
   `cibuildwheel` before publish, exercising the public API with omitted
   `runtime_data_dir` so transitive `ghidra-sleigh` installation, default

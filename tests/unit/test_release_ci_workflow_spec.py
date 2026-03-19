@@ -109,9 +109,7 @@ def test_u025_release_workflow_routes_manual_dispatches_to_testpypi() -> None:
         "${{ github.event_name == 'workflow_dispatch' && "
         "'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}"
     )
-    assert publish_step["with"]["skip-existing"] == (
-        "${{ github.event_name == 'workflow_dispatch' }}"
-    )
+    assert "skip-existing" not in publish_step["with"]
     cibuildwheel = pyproject["tool"]["cibuildwheel"]
     assert cibuildwheel["build"] == "cp313-* cp314-*"
     assert cibuildwheel["skip"] == "*-win32 *-win_arm64 *-musllinux_*"

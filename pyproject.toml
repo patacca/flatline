@@ -4,7 +4,7 @@ build-backend = "mesonpy"
 
 [project]
 name = "flatline"
-version = "0.1.0"
+version = "0.1.1.dev0"
 description = "Python wrapper around the Ghidra decompiler"
 requires-python = ">= 3.13"
 license = "Apache-2.0"

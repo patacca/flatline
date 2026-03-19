@@ -151,6 +151,8 @@ in [docs/release_workflow.md](docs/release_workflow.md).
 GitHub Actions release publishing lives in
 [.github/workflows/release.yml](.github/workflows/release.yml): published
 GitHub releases go to PyPI, while manual dispatch uploads to TestPyPI.
+Manual TestPyPI dispatches require a unique version and now fail on duplicate
+uploads instead of reusing an older TestPyPI artifact.
 Redistribution/compliance guidance lives in [NOTICE](NOTICE) and
 [docs/compliance.md](docs/compliance.md). The current default-install footprint
 baseline and size-policy note live in [docs/footprint.md](docs/footprint.md).

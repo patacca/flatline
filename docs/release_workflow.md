@@ -87,6 +87,8 @@ out-of-band. Do not commit review notes to this repo.
   runs `python tools/artifacts.py dist --repo-root .`.
 - `workflow_dispatch` runs the same build, smoke, and validation flow, but
   publishes the full wheel set plus sdist to TestPyPI instead of PyPI.
+  Manual TestPyPI dispatches must use a unique version because duplicate
+  uploads now fail instead of being skipped.
 - After publish, a runner matrix installs the exact tagged version back from
   TestPyPI or PyPI with `--only-binary=:all:` and runs
   `tools/flatline_dev/published_wheel_smoke.py` on every Tier-1
