@@ -4,7 +4,7 @@
 # Overview
 - `flatline`: pip-installable Python wrapper around Ghidra C++ decompiler; decompiler surface only, no UI/project DB.
 - Version `0.1.0`; aligned in `pyproject.toml`, `meson.build`, `src/flatline/_version.py`; P5 complete.
-- Next: P6.5 wheel matrix in progress (ADR-013); P6 host-feasibility macOS-first (ADR-008); P7 deferred behind ADR-012.
+- Next: P6.5 release workflow now includes published-wheel smoke across the Tier-1 matrix; P6 host-feasibility remains macOS-first (ADR-008); P7 design is unblocked by resolved ADR-012.
 - 64-bit wheel matrix locked in `docs/wheel_matrix.md`: manylinux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64.
 - Runtime data: dependency `ghidra-sleigh` (import `ghidra_sleigh`); omitted `runtime_data_dir` auto-discovers via `ghidra_sleigh.get_runtime_data_dir()`; explicit overrides; full multi-ISA default.
 - `pyproject.toml`: unpinned `ghidra-sleigh`, `license-files = ["LICENSE", "NOTICE"]`, `cibuildwheel` config, global Meson `setup = ["--vsenv"]` under `[tool.meson-python.args]`.
@@ -13,7 +13,7 @@
 - Tox envs: `py313`/`py314` build wheels in `.tox`; `py314-native` forces `native_bridge=enabled`; Meson `--vsenv` comes from `[tool.meson-python.args]` rather than tox `config_settings_*`; `.pkg-py314-native` must `pass_env = ["VCPKG_INSTALLATION_ROOT"]` so Windows zlib fallback can see vcpkg; `lint` = `ruff`; dev tools in `tools/flatline_dev/` excluded from wheels by `tools/prune_dist.py`.
 - Build hardening: `src/flatline/meson.build` handles compiler flags, Meson include dirs for nanobind, auto-discovers Homebrew/vcpkg `zlib`; `pyproject.toml` globally adds Meson `--vsenv` so isolated Windows package builds can self-bootstrap MSVC; do not pre-activate MSVC in outer workflows because Meson skips `--vsenv` when `cl.exe`/`VSINSTALLDIR` is already present; no raw compiler/linker env flags needed.
 - CI (`ci.yml`): Python `3.14` for non-Ubuntu jobs; Ubuntu full matrix (`py313`+`py314`); regression `py314`; host-feasibility lanes use `tox -e py314-native -- -m "not regression"`; Windows lane must not use `ilammy/msvc-dev-cmd`.
-- Release (`release.yml`): `cibuildwheel` + `manylinux_2_28`; Windows bootstraps vcpkg zlib but must not pre-activate MSVC; wheel smoke via `tools/flatline_dev/wheel_smoke.py`; sdist with compliance audit; `twine check` + `python tools/artifacts.py`; PyPI on `release.published`, TestPyPI on `workflow_dispatch`.
+- Release (`release.yml`): `cibuildwheel` + `manylinux_2_28`; Windows bootstraps vcpkg zlib but must not pre-activate MSVC; pre-publish wheel smoke via `tools/flatline_dev/wheel_smoke.py`; post-publish index smoke via `tools/flatline_dev/published_wheel_smoke.py`; sdist with compliance audit; `twine check` + `python tools/artifacts.py`; PyPI on `release.published`, TestPyPI on `workflow_dispatch`.
 - Release tooling: `python tools/release.py` audits version/doc alignment, rejects dirty worktrees; `python tools/artifacts.py dist` audits metadata/LICENSE/NOTICE/leaked dev tools/native extensions.
 - Compliance: root `LICENSE` + `NOTICE`, `docs/compliance.md`, `python tools/compliance.py`; footprint `30,742,876` bytes (`29.32 MiB`), `ghidra-sleigh` data `80.3%`.
 - Support messaging: fixture-backed ISAs vs best-effort bundled; docs distinguish published wheel availability from supported host status.
@@ -56,7 +56,7 @@
 - ADR-009: x86 32+64, ARM64, RISC-V 64, MIPS32; others best-effort.
 - ADR-010: `ghidra-sleigh` (repo `patacca/ghidra-sleigh`, import `ghidra_sleigh`); builds `sleighc`, ships `.sla`, exposes `get_runtime_data_dir()`.
 - ADR-011: `configuration_error` = user-fixable; `internal_error` = flatline bugs.
-- ADR-012: unresolved; pcode/varnode frozen types for P7.
+- ADR-012: decided; P7 enriched output is opt-in, extracted post-`Action::perform()`, and exposed as a dedicated `DecompileResult` companion with ID-based pcode/varnode graph edges.
 - ADR-013: CPython `>= 3.13`, `cibuildwheel`; 64-bit: manylinux x86_64 + aarch64, Windows x86_64, macOS x86_64 + arm64; `manylinux_2_28`; macOS target `11.0`; 32-bit/musllinux/Windows ARM64 deferred; `docs/wheel_matrix.md`.
 
 # Source of truth

@@ -87,5 +87,11 @@ out-of-band. Do not commit review notes to this repo.
   runs `python tools/artifacts.py dist --repo-root .`.
 - `workflow_dispatch` runs the same build, smoke, and validation flow, but
   publishes the full wheel set plus sdist to TestPyPI instead of PyPI.
+- After publish, a runner matrix installs the exact tagged version back from
+  TestPyPI or PyPI with `--only-binary=:all:` and runs
+  `tools/flatline_dev/published_wheel_smoke.py` on every Tier-1
+  platform/arch/Python combination so the published wheel path, transitive
+  `ghidra-sleigh` dependency, and omitted-`runtime_data_dir` UX are all
+  exercised from the package index rather than only from local build artifacts.
 - The manual review gate in this document and `docs/release_review.md` still
   happens before creating the tag/release that triggers the production publish.

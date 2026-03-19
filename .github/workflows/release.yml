@@ -140,3 +140,53 @@ jobs:
           packages-dir: dist/
           repository-url: ${{ github.event_name == 'workflow_dispatch' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
           skip-existing: ${{ github.event_name == 'workflow_dispatch' }}
+
+  smoke-published:
+    name: Smoke published wheels (${{ matrix.os }}, py${{ matrix.python-version }}, ${{ matrix.cibw-archs }})
+    runs-on: ${{ matrix.os }}
+    needs: publish
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            cibw-archs: x86_64
+            python-version: "3.13"
+          - os: ubuntu-latest
+            cibw-archs: x86_64
+            python-version: "3.14"
+          - os: ubuntu-24.04-arm
+            cibw-archs: aarch64
+            python-version: "3.13"
+          - os: ubuntu-24.04-arm
+            cibw-archs: aarch64
+            python-version: "3.14"
+          - os: windows-latest
+            cibw-archs: AMD64
+            python-version: "3.13"
+          - os: windows-latest
+            cibw-archs: AMD64
+            python-version: "3.14"
+          - os: macos-15
+            cibw-archs: arm64
+            python-version: "3.13"
+          - os: macos-15
+            cibw-archs: arm64
+            python-version: "3.14"
+          - os: macos-15-intel
+            cibw-archs: x86_64
+            python-version: "3.13"
+          - os: macos-15-intel
+            cibw-archs: x86_64
+            python-version: "3.14"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Smoke published wheel install
+        run: python tools/flatline_dev/published_wheel_smoke.py --repository ${{ github.event_name == 'workflow_dispatch' && 'testpypi' || 'pypi' }}

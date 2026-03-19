@@ -583,6 +583,11 @@ Packaging and compliance:
   `runtime_data_dir` so transitive `ghidra-sleigh` installation, default
   runtime-data discovery, and the x86_64 `add(a,b)` fixture decompile are all
   validated together.
+- After publish, the release workflow must install the exact released version
+  back from TestPyPI or PyPI on every Tier-1 platform/arch/Python combination,
+  using binary-only install mode so the smoke path proves `pip install
+  flatline` succeeds without a local compiler and still auto-discovers the
+  transitive `ghidra-sleigh` runtime-data dependency.
 - The final public-artifact review gate is documented in
   `docs/release_review.md`; it must stay source-controlled and tie the human
   sign-off to the deterministic evidence from `python tools/release.py`,
@@ -674,15 +679,19 @@ Extensibility:
 - Cross-platform host parity (macOS/Windows).
 - Extended fixture coverage for non-priority Ghidra-supported ISAs beyond the MVP set.
 - Enriched structured output: expose pcode operations and varnode data flow graphs
-  as frozen Python value types within `FunctionInfo`, enabling custom analysis
-  without direct access to Ghidra C++ internals. Pcode is a documented Ghidra IR
-  with a stable opcode table and formal Sleigh-specification semantics, not an
-  unstable internal. Varnodes are extracted as frozen data (space, offset, size,
-  opcode linkage) at the bridge boundary, not as live C++ object handles.
-  Target use cases include: BSim-style binary similarity with user-defined
-  hyperparameters/feature vectors, binary diffing via normalized function
-  fingerprints, data flow and taint analysis over use-def chains, and semantic
-  understanding pipelines. Design requires ADR-012.
+  as frozen Python value types in a dedicated `DecompileResult` companion,
+  requested explicitly so the baseline P2 `FunctionInfo` contract stays small
+  for callers that only need decompiled C and recovered symbols. Pcode is a
+  documented Ghidra IR with a stable opcode table and formal
+  Sleigh-specification semantics, not an unstable internal. Varnodes are
+  exported as frozen data (space, offset, size, flags, defining-op ID, use-op
+  IDs) at the bridge boundary, not as live C++ object handles. The extraction
+  point is the post-`Action::perform()` `Funcdata` state so callers see the same
+  simplified IR the C printer uses. Target use cases include: BSim-style binary
+  similarity with user-defined hyperparameters/feature vectors, binary diffing
+  via normalized function fingerprints, data flow and taint analysis over
+  use-def chains, and semantic understanding pipelines. ADR-012 now fixes this
+  representation/placement strategy; implementation remains post-MVP.
 
 ## 9. Open Questions
 
@@ -698,6 +707,7 @@ Resolved:
 - ~~What release-time checks are mandatory for redistribution?~~ **Resolved (ADR-007):** Releases must ship root `LICENSE` and `NOTICE`, record the vendored decompiler source attribution and `ghidra-sleigh` dependency in `docs/compliance.md`, and pass `python tools/compliance.py` from the repo root before tagging.
 - ~~Should macOS or Windows be the first post-MVP host-expansion target?~~ **Resolved (ADR-008):** macOS first, then Windows. P6 starts by removing shared build-configuration assumptions and proving equivalent contract coverage on macOS before taking on the remaining Windows-specific blockers.
 - ~~Which pre-built wheel matrix should flatline ship for P6.5?~~ **Resolved (ADR-013):** `cibuildwheel` builds CPython 3.13 and 3.14 wheels for manylinux `x86_64`, manylinux `aarch64`, Windows `AMD64`, macOS `x86_64`, and macOS `arm64`, using native GitHub-hosted runners where available; `manylinux_2_28` remains the Linux policy and macOS deployment target stays `11.0`. 32-bit and Windows ARM64 wheels stay deferred.
+- ~~How should enriched structured output be surfaced once P7 starts: inside `FunctionInfo` or as a separate payload, and at what extraction point?~~ **Resolved (ADR-012):** P7 keeps `FunctionInfo` focused on the existing decompilation contract and adds an opt-in companion value type under `DecompileResult` for pcode ops plus varnode graph data. Extraction happens after `Action::perform()` from the post-simplification `Funcdata`, and graph relationships are encoded with stable integer IDs plus string opcode / address-space names so no native handles cross the ABI.
 - ~~Should warning codes be globally namespaced now to prevent future collisions?~~ **Resolved:** Yes, within flatline's public surface. Warning codes use the stable hierarchical namespace `<phase>.Wxxx` (for example `analyze.W001`), and new codes are added only additively.
 - ~~Should session-level failure categories (startup, initialization) be defined explicitly in the `FlatlineError` hierarchy, or is the current `ErrorItem` taxonomy sufficient?~~ **Resolved (ADR-011):** User-fixable install/startup/runtime-data failures use `configuration_error`, while unexpected flatline/bridge/native bugs remain `internal_error`.
 

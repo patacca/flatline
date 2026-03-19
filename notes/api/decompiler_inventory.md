@@ -109,6 +109,10 @@ After `Action::perform(Funcdata&)` returns successfully (return value >= 0), the
 - Structured block types: `BlockIf`, `BlockWhileDo` (with `getInitializeOp()`, `getIterateOp()`), `BlockDoWhile`, `BlockSwitch`, `BlockInfLoop`, `BlockGoto` (with `getGotoTarget()`). Access sub-blocks via `BlockGraph::getBlock(i)`.
 - `BlockBasic` has `beginOp()` / `endOp()` for iterating its `PcodeOp` list, plus `getEntryAddr()`, `contains(Address)`.
 - `OpCode` enum is defined in `opcodes.hh`: `CPUI_COPY`, `CPUI_LOAD`, `CPUI_STORE`, `CPUI_BRANCH`, `CPUI_CBRANCH`, `CPUI_CALL`, `CPUI_RETURN`, `CPUI_INT_ADD`, `CPUI_MULTIEQUAL`, `CPUI_INDIRECT`, etc.
+- P7 extraction plan (ADR-012): use `Funcdata::beginOpAll()` order for stable
+  PcodeOp IDs, export opcode/address/SeqNum fields from each `PcodeOp`, and use
+  `getIn()` / `getOut()` plus `Varnode::getDef()` / `beginDescend()` /
+  `endDescend()` to encode the varnode graph with ID-based edges only.
 
 ### 4) Symbols & Variables
 

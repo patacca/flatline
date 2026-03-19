@@ -120,3 +120,29 @@ def test_u025_release_workflow_routes_manual_dispatches_to_testpypi() -> None:
     assert cibuildwheel["macos"]["archs"] == "x86_64 arm64"
     assert cibuildwheel["macos"]["environment"]["MACOSX_DEPLOYMENT_TARGET"] == "11.0"
     assert (repo_root / "tools" / "flatline_dev" / "wheel_smoke.py").is_file()
+
+    # -- smoke-published: index-backed install smoke on each Tier-1 target --
+    smoke_published_job = _job(workflow, "smoke-published")
+    assert smoke_published_job["needs"] == "publish"
+    smoke_matrix = {
+        (entry["cibw-archs"], _runner_family(entry["os"]), entry["python-version"])
+        for entry in smoke_published_job["strategy"]["matrix"]["include"]
+    }
+    assert smoke_matrix == {
+        ("x86_64", "linux", "3.13"),
+        ("x86_64", "linux", "3.14"),
+        ("aarch64", "linux", "3.13"),
+        ("aarch64", "linux", "3.14"),
+        ("AMD64", "windows", "3.13"),
+        ("AMD64", "windows", "3.14"),
+        ("arm64", "macos", "3.13"),
+        ("arm64", "macos", "3.14"),
+        ("x86_64", "macos", "3.13"),
+        ("x86_64", "macos", "3.14"),
+    }
+    _uses_step(smoke_published_job, "actions/setup-python")
+    smoke_runs = "\n".join(_job_runs(smoke_published_job))
+    assert "python tools/flatline_dev/published_wheel_smoke.py" in smoke_runs
+    assert "--repository" in smoke_runs
+    assert "workflow_dispatch" in smoke_runs
+    assert (repo_root / "tools" / "flatline_dev" / "published_wheel_smoke.py").is_file()
