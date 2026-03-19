@@ -38,8 +38,8 @@ def _job_runs(job: dict[str, object]) -> list[str]:
     return [step["run"] for step in job["steps"] if "run" in step]
 
 
-def test_u019_ci_workflow_keeps_supported_test_matrix_and_regression_lane() -> None:
-    """U-019: CI keeps the supported test matrix and a dedicated regression lane."""
+def test_u019_ci_workflow_runs_full_suite_on_supported_matrix() -> None:
+    """U-019: CI runs the full test suite on each supported Python version."""
     workflow = _load_ci_workflow()
     assert workflow["name"] == "CI"
 
@@ -49,12 +49,10 @@ def test_u019_ci_workflow_keeps_supported_test_matrix_and_regression_lane() -> N
         for entry in test_job["strategy"]["matrix"]["include"]
     }
     assert supported_matrix == {("3.13", "py313"), ("3.14", "py314")}
+    test_runs = _job_runs(test_job)
     assert any(
-        'tox -e ${{ matrix.tox-env }} -- -m "not regression"' in run for run in _job_runs(test_job)
+        run.strip() == "tox -e ${{ matrix.tox-env }}" for run in test_runs
     )
-
-    regression_job = _job(workflow, "regression")
-    assert any("tox -e py314 -- -m regression" in run for run in _job_runs(regression_job))
 
 
 def test_u026_ci_workflow_keeps_macos_native_contract_lane() -> None:
