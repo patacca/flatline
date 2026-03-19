@@ -12,8 +12,7 @@ from flatline import DecompileRequest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FIXTURE_PATH = REPO_ROOT / "tests" / "fixtures" / "fx_add_elf64.hex"
 EXPECTED_NORMALIZED_C = (
-    "int4 func_1000 ( int4 param_1 , int4 param_2 ) "
-    "{ return param_1 + param_2 ; }"
+    "int4 func_1000 ( int4 param_1 , int4 param_2 ) { return param_1 + param_2 ; }"
 )
 _C_TOKEN_PATTERN = re.compile(
     r"0x[0-9a-fA-F]+|"

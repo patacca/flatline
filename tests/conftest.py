@@ -38,6 +38,7 @@ def _native_bridge_available() -> bool:
 # Auto-apply markers based on test directory
 # ---------------------------------------------------------------------------
 
+
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     """Automatically add category markers (unit, contract, ...) based on path."""
     marker_map: dict[str, str] = {
@@ -60,6 +61,7 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
 # ---------------------------------------------------------------------------
 # Fixture directory helper
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def fixtures_dir() -> pathlib.Path:

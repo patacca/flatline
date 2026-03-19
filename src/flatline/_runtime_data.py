@@ -16,17 +16,21 @@ from xml.etree import ElementTree
 from flatline._errors import ConfigurationError
 from flatline._models import LanguageCompilerPair
 
-_LANGUAGE_TAGS: frozenset[str] = frozenset({
-    "language",
-    "language_description",
-    "languagedescription",
-})
+_LANGUAGE_TAGS: frozenset[str] = frozenset(
+    {
+        "language",
+        "language_description",
+        "languagedescription",
+    }
+)
 
-_COMPILER_TAGS: frozenset[str] = frozenset({
-    "compiler",
-    "compiler_spec",
-    "compilerspec",
-})
+_COMPILER_TAGS: frozenset[str] = frozenset(
+    {
+        "compiler",
+        "compiler_spec",
+        "compilerspec",
+    }
+)
 
 _LANGUAGE_ID_ATTRS: tuple[str, ...] = (
     "id",
@@ -131,13 +135,9 @@ def _validate_runtime_data_dir(runtime_data_dir: str | Path | None) -> Path | No
         return None
     runtime_path = Path(runtime_data_dir)
     if not runtime_path.exists():
-        raise ConfigurationError(
-            f"runtime_data_dir does not exist: {runtime_data_dir}"
-        )
+        raise ConfigurationError(f"runtime_data_dir does not exist: {runtime_data_dir}")
     if not runtime_path.is_dir():
-        raise ConfigurationError(
-            f"runtime_data_dir is not a directory: {runtime_data_dir}"
-        )
+        raise ConfigurationError(f"runtime_data_dir is not a directory: {runtime_data_dir}")
     return runtime_path
 
 
@@ -248,4 +248,3 @@ def _load_runtime_data_package() -> object:
             "flatline requires ghidra-sleigh for default runtime data; "
             "reinstall flatline or pass runtime_data_dir explicitly"
         ) from exc
-

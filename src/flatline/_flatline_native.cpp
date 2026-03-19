@@ -34,7 +34,7 @@
 // Forward-declare library startup from libdecomp.cc to avoid including
 // libdecomp.hh (which drags in console/rulecompile headers not compiled here).
 namespace ghidra {
-extern void startDecompilerLibrary(const char *sleighhome);
+extern void startDecompilerLibrary(const char* sleighhome);
 }
 
 namespace nb = nanobind;
@@ -53,7 +53,7 @@ struct NativeRequest {
 constexpr std::uint32_t kDefaultMaxInstructions = 100000;
 
 static std::string to_lower_ascii(std::string value) {
-    for (char &ch : value) {
+    for (char& ch : value) {
         if (ch >= 'A' && ch <= 'Z') {
             ch = static_cast<char>(ch - 'A' + 'a');
         }
@@ -61,7 +61,7 @@ static std::string to_lower_ascii(std::string value) {
     return value;
 }
 
-static bool contains_case_insensitive(const std::string &haystack, const std::string &needle) {
+static bool contains_case_insensitive(const std::string& haystack, const std::string& needle) {
     if (needle.empty()) {
         return true;
     }
@@ -70,7 +70,7 @@ static bool contains_case_insensitive(const std::string &haystack, const std::st
     return lower_haystack.find(lower_needle) != std::string::npos;
 }
 
-static bool checked_add_u64(std::uint64_t left, std::uint64_t right, std::uint64_t *result) {
+static bool checked_add_u64(std::uint64_t left, std::uint64_t right, std::uint64_t* result) {
     if (right > (std::numeric_limits<std::uint64_t>::max() - left)) {
         return false;
     }
@@ -78,14 +78,14 @@ static bool checked_add_u64(std::uint64_t left, std::uint64_t right, std::uint64
     return true;
 }
 
-static std::string require_string_field(const nb::dict &request, const char *field_name) {
+static std::string require_string_field(const nb::dict& request, const char* field_name) {
     if (!request.contains(field_name)) {
         throw std::invalid_argument(std::string("missing required field: ") + field_name);
     }
     return nb::cast<std::string>(request[field_name]);
 }
 
-static std::uint64_t require_u64_field(const nb::dict &request, const char *field_name) {
+static std::uint64_t require_u64_field(const nb::dict& request, const char* field_name) {
     if (!request.contains(field_name)) {
         throw std::invalid_argument(std::string("missing required field: ") + field_name);
     }
@@ -96,7 +96,8 @@ static std::uint64_t require_u64_field(const nb::dict &request, const char *fiel
     return static_cast<std::uint64_t>(value);
 }
 
-static std::optional<std::string> optional_string_field(const nb::dict &request, const char *field_name) {
+static std::optional<std::string> optional_string_field(const nb::dict& request,
+                                                        const char* field_name) {
     if (!request.contains(field_name)) {
         return std::nullopt;
     }
@@ -111,7 +112,7 @@ static std::optional<std::string> optional_string_field(const nb::dict &request,
     return value;
 }
 
-static std::uint32_t require_positive_u32_value(nb::handle value, const char *field_name) {
+static std::uint32_t require_positive_u32_value(nb::handle value, const char* field_name) {
     std::int64_t parsed_value = nb::cast<std::int64_t>(value);
     if (parsed_value <= 0) {
         throw std::invalid_argument(std::string(field_name) + " must be positive");
@@ -122,7 +123,7 @@ static std::uint32_t require_positive_u32_value(nb::handle value, const char *fi
     return static_cast<std::uint32_t>(parsed_value);
 }
 
-static std::uint32_t parse_max_instructions(const nb::dict &request) {
+static std::uint32_t parse_max_instructions(const nb::dict& request) {
     if (!request.contains("analysis_budget")) {
         return kDefaultMaxInstructions;
     }
@@ -134,7 +135,7 @@ static std::uint32_t parse_max_instructions(const nb::dict &request) {
 
     nb::dict budget = nb::cast<nb::dict>(raw_budget);
     std::set<std::string> unsupported_keys;
-    for (const auto &item : budget) {
+    for (const auto& item : budget) {
         const std::string key = nb::cast<std::string>(item.first);
         if (key != "max_instructions") {
             unsupported_keys.insert(key);
@@ -142,27 +143,23 @@ static std::uint32_t parse_max_instructions(const nb::dict &request) {
     }
     if (!unsupported_keys.empty()) {
         std::string joined;
-        for (const auto &key : unsupported_keys) {
+        for (const auto& key : unsupported_keys) {
             if (!joined.empty()) {
                 joined += ", ";
             }
             joined += key;
         }
-        throw std::invalid_argument(
-            "analysis_budget contains unsupported fields: " + joined
-        );
+        throw std::invalid_argument("analysis_budget contains unsupported fields: " + joined);
     }
 
     if (!budget.contains("max_instructions")) {
         return kDefaultMaxInstructions;
     }
-    return require_positive_u32_value(
-        budget["max_instructions"],
-        "analysis_budget.max_instructions"
-    );
+    return require_positive_u32_value(budget["max_instructions"],
+                                      "analysis_budget.max_instructions");
 }
 
-static NativeRequest parse_request(const nb::dict &request) {
+static NativeRequest parse_request(const nb::dict& request) {
     NativeRequest parsed{};
 
     if (!request.contains("memory_image")) {
@@ -193,41 +190,41 @@ static std::string make_function_name(std::uint64_t address) {
 
 static std::string map_metatype_to_string(ghidra::type_metatype metatype) {
     switch (metatype) {
-    case ghidra::TYPE_VOID:
-        return "void";
-    case ghidra::TYPE_BOOL:
-        return "bool";
-    case ghidra::TYPE_INT:
-        return "int";
-    case ghidra::TYPE_UINT:
-        return "uint";
-    case ghidra::TYPE_FLOAT:
-        return "float";
-    case ghidra::TYPE_PTR:
-        return "pointer";
-    case ghidra::TYPE_ARRAY:
-        return "array";
-    case ghidra::TYPE_STRUCT:
-        return "struct";
-    case ghidra::TYPE_UNION:
-        return "union";
-    case ghidra::TYPE_CODE:
-        return "code";
-    case ghidra::TYPE_ENUM_INT:
-    case ghidra::TYPE_ENUM_UINT:
-        return "enum";
-    case ghidra::TYPE_UNKNOWN:
-    case ghidra::TYPE_PTRREL:
-    case ghidra::TYPE_SPACEBASE:
-    case ghidra::TYPE_PARTIALSTRUCT:
-    case ghidra::TYPE_PARTIALUNION:
-    case ghidra::TYPE_PARTIALENUM:
-    default:
-        return "unknown";
+        case ghidra::TYPE_VOID:
+            return "void";
+        case ghidra::TYPE_BOOL:
+            return "bool";
+        case ghidra::TYPE_INT:
+            return "int";
+        case ghidra::TYPE_UINT:
+            return "uint";
+        case ghidra::TYPE_FLOAT:
+            return "float";
+        case ghidra::TYPE_PTR:
+            return "pointer";
+        case ghidra::TYPE_ARRAY:
+            return "array";
+        case ghidra::TYPE_STRUCT:
+            return "struct";
+        case ghidra::TYPE_UNION:
+            return "union";
+        case ghidra::TYPE_CODE:
+            return "code";
+        case ghidra::TYPE_ENUM_INT:
+        case ghidra::TYPE_ENUM_UINT:
+            return "enum";
+        case ghidra::TYPE_UNKNOWN:
+        case ghidra::TYPE_PTRREL:
+        case ghidra::TYPE_SPACEBASE:
+        case ghidra::TYPE_PARTIALSTRUCT:
+        case ghidra::TYPE_PARTIALUNION:
+        case ghidra::TYPE_PARTIALENUM:
+        default:
+            return "unknown";
     }
 }
 
-static nb::dict type_info_to_dict(const ghidra::Datatype *datatype) {
+static nb::dict type_info_to_dict(const ghidra::Datatype* datatype) {
     nb::dict type_info;
     if (datatype == nullptr) {
         type_info["name"] = "unknown";
@@ -246,7 +243,7 @@ static nb::dict type_info_to_dict(const ghidra::Datatype *datatype) {
     return type_info;
 }
 
-static nb::object storage_info_from_address(const ghidra::Address &address, std::int64_t size) {
+static nb::object storage_info_from_address(const ghidra::Address& address, std::int64_t size) {
     if (address.isInvalid() || address.getSpace() == nullptr || size <= 0) {
         return nb::none();
     }
@@ -257,18 +254,18 @@ static nb::object storage_info_from_address(const ghidra::Address &address, std:
     return storage;
 }
 
-static nb::object storage_info_from_symbol(const ghidra::Symbol *symbol) {
+static nb::object storage_info_from_symbol(const ghidra::Symbol* symbol) {
     if (symbol == nullptr) {
         return nb::none();
     }
-    ghidra::SymbolEntry *entry = symbol->getFirstWholeMap();
+    ghidra::SymbolEntry* entry = symbol->getFirstWholeMap();
     if (entry == nullptr) {
         return nb::none();
     }
     return storage_info_from_address(entry->getAddr(), entry->getSize());
 }
 
-static nb::dict diagnostics_to_dict(const ghidra::Funcdata &function) {
+static nb::dict diagnostics_to_dict(const ghidra::Funcdata& function) {
     nb::dict diagnostics;
     diagnostics["is_complete"] = function.isProcComplete();
     diagnostics["has_unreachable_blocks"] = function.hasUnreachableBlocks();
@@ -278,20 +275,23 @@ static nb::dict diagnostics_to_dict(const ghidra::Funcdata &function) {
     return diagnostics;
 }
 
-static nb::list warnings_from_comment_database(const ghidra::Funcdata &function, const ghidra::Architecture &architecture) {
+static nb::list warnings_from_comment_database(const ghidra::Funcdata& function,
+                                               const ghidra::Architecture& architecture) {
     nb::list warnings;
     if (architecture.commentdb == nullptr) {
         return warnings;
     }
-    const ghidra::Address &function_address = function.getAddress();
-    ghidra::CommentSet::const_iterator iter = architecture.commentdb->beginComment(function_address);
+    const ghidra::Address& function_address = function.getAddress();
+    ghidra::CommentSet::const_iterator iter =
+        architecture.commentdb->beginComment(function_address);
     ghidra::CommentSet::const_iterator end = architecture.commentdb->endComment(function_address);
     for (; iter != end; ++iter) {
-        const ghidra::Comment *comment = *iter;
+        const ghidra::Comment* comment = *iter;
         if (comment == nullptr) {
             continue;
         }
-        if ((comment->getType() & (ghidra::Comment::warning | ghidra::Comment::warningheader)) == 0) {
+        if ((comment->getType() & (ghidra::Comment::warning | ghidra::Comment::warningheader)) ==
+            0) {
             continue;
         }
         nb::dict warning;
@@ -303,23 +303,25 @@ static nb::list warnings_from_comment_database(const ghidra::Funcdata &function,
     return warnings;
 }
 
-static nb::list call_sites_to_list(const ghidra::Funcdata &function) {
+static nb::list call_sites_to_list(const ghidra::Funcdata& function) {
     nb::list call_sites;
     const int call_count = function.numCalls();
     for (int index = 0; index < call_count; ++index) {
-        ghidra::FuncCallSpecs *call_spec = function.getCallSpecs(index);
+        ghidra::FuncCallSpecs* call_spec = function.getCallSpecs(index);
         if (call_spec == nullptr) {
             continue;
         }
         nb::dict call_site;
-        ghidra::PcodeOp *call_op = call_spec->getOp();
+        ghidra::PcodeOp* call_op = call_spec->getOp();
         if (call_op != nullptr && !call_op->getAddr().isInvalid()) {
-            call_site["instruction_address"] = static_cast<std::uint64_t>(call_op->getAddr().getOffset());
+            call_site["instruction_address"] =
+                static_cast<std::uint64_t>(call_op->getAddr().getOffset());
         } else {
-            call_site["instruction_address"] = static_cast<std::uint64_t>(function.getAddress().getOffset());
+            call_site["instruction_address"] =
+                static_cast<std::uint64_t>(function.getAddress().getOffset());
         }
 
-        const ghidra::Address &target = call_spec->getEntryAddress();
+        const ghidra::Address& target = call_spec->getEntryAddress();
         if (!target.isInvalid()) {
             call_site["target_address"] = static_cast<std::uint64_t>(target.getOffset());
         } else {
@@ -330,11 +332,11 @@ static nb::list call_sites_to_list(const ghidra::Funcdata &function) {
     return call_sites;
 }
 
-static nb::list jump_tables_to_list(ghidra::Funcdata &function) {
+static nb::list jump_tables_to_list(ghidra::Funcdata& function) {
     nb::list jump_tables;
     const int jump_table_count = function.numJumpTables();
     for (int index = 0; index < jump_table_count; ++index) {
-        ghidra::JumpTable *jump_table = function.getJumpTable(index);
+        ghidra::JumpTable* jump_table = function.getJumpTable(index);
         if (jump_table == nullptr) {
             continue;
         }
@@ -349,11 +351,13 @@ static nb::list jump_tables_to_list(ghidra::Funcdata &function) {
         }
 
         nb::dict jump_table_item;
-        const ghidra::Address &switch_address = jump_table->getOpAddress();
+        const ghidra::Address& switch_address = jump_table->getOpAddress();
         if (!switch_address.isInvalid()) {
-            jump_table_item["switch_address"] = static_cast<std::uint64_t>(switch_address.getOffset());
+            jump_table_item["switch_address"] =
+                static_cast<std::uint64_t>(switch_address.getOffset());
         } else {
-            jump_table_item["switch_address"] = static_cast<std::uint64_t>(function.getAddress().getOffset());
+            jump_table_item["switch_address"] =
+                static_cast<std::uint64_t>(function.getAddress().getOffset());
         }
         jump_table_item["target_count"] = static_cast<int>(target_addresses.size());
         jump_table_item["target_addresses"] = target_addresses;
@@ -362,20 +366,20 @@ static nb::list jump_tables_to_list(ghidra::Funcdata &function) {
     return jump_tables;
 }
 
-static nb::list local_variables_to_list(const ghidra::Funcdata &function) {
+static nb::list local_variables_to_list(const ghidra::Funcdata& function) {
     nb::list local_variables;
-    const ghidra::ScopeLocal *local_scope = function.getScopeLocal();
+    const ghidra::ScopeLocal* local_scope = function.getScopeLocal();
     if (local_scope == nullptr) {
         return local_variables;
     }
 
     std::set<std::uint64_t> seen_symbol_ids;
     for (ghidra::MapIterator iter = local_scope->begin(); iter != local_scope->end(); ++iter) {
-        const ghidra::SymbolEntry *entry = *iter;
+        const ghidra::SymbolEntry* entry = *iter;
         if (entry == nullptr) {
             continue;
         }
-        ghidra::Symbol *symbol = entry->getSymbol();
+        ghidra::Symbol* symbol = entry->getSymbol();
         if (symbol == nullptr) {
             continue;
         }
@@ -387,7 +391,7 @@ static nb::list local_variables_to_list(const ghidra::Funcdata &function) {
         if (symbol->getCategory() != ghidra::Symbol::no_category) {
             continue;
         }
-        if (dynamic_cast<ghidra::FunctionSymbol *>(symbol) != nullptr) {
+        if (dynamic_cast<ghidra::FunctionSymbol*>(symbol) != nullptr) {
             continue;
         }
 
@@ -404,14 +408,14 @@ static nb::list local_variables_to_list(const ghidra::Funcdata &function) {
     return local_variables;
 }
 
-static nb::dict prototype_to_dict(const ghidra::FuncProto &prototype) {
+static nb::dict prototype_to_dict(const ghidra::FuncProto& prototype) {
     nb::dict prototype_info;
     prototype_info["calling_convention"] = prototype.getModelName();
 
     nb::list parameters;
     const int parameter_count = prototype.numParams();
     for (int index = 0; index < parameter_count; ++index) {
-        ghidra::ProtoParameter *parameter = prototype.getParam(index);
+        ghidra::ProtoParameter* parameter = prototype.getParam(index);
         if (parameter == nullptr) {
             continue;
         }
@@ -424,7 +428,8 @@ static nb::dict prototype_to_dict(const ghidra::FuncProto &prototype) {
         parameter_item["name"] = parameter_name;
         parameter_item["type"] = type_info_to_dict(parameter->getType());
         parameter_item["index"] = index;
-        parameter_item["storage"] = storage_info_from_address(parameter->getAddress(), parameter->getSize());
+        parameter_item["storage"] =
+            storage_info_from_address(parameter->getAddress(), parameter->getSize());
         parameters.append(parameter_item);
     }
 
@@ -437,7 +442,7 @@ static nb::dict prototype_to_dict(const ghidra::FuncProto &prototype) {
     return prototype_info;
 }
 
-static nb::dict function_info_to_dict(ghidra::Funcdata &function) {
+static nb::dict function_info_to_dict(ghidra::Funcdata& function) {
     nb::dict function_info;
     function_info["name"] = function.getName();
     function_info["entry_address"] = static_cast<std::uint64_t>(function.getAddress().getOffset());
@@ -452,15 +457,15 @@ static nb::dict function_info_to_dict(ghidra::Funcdata &function) {
     return function_info;
 }
 
-static std::string classifier_for_lowlevel_error(const std::string &message) {
-    if (contains_case_insensitive(message, "no sleigh specification")
-        || contains_case_insensitive(message, "architecture string does not look like sleigh id")) {
+static std::string classifier_for_lowlevel_error(const std::string& message) {
+    if (contains_case_insensitive(message, "no sleigh specification") ||
+        contains_case_insensitive(message, "architecture string does not look like sleigh id")) {
         return "unsupported_target";
     }
-    if (contains_case_insensitive(message, "outside memory_image")
-        || contains_case_insensitive(message, "outside memory image")
-        || contains_case_insensitive(message, "no function at this offset")
-        || contains_case_insensitive(message, "no function in scope")) {
+    if (contains_case_insensitive(message, "outside memory_image") ||
+        contains_case_insensitive(message, "outside memory image") ||
+        contains_case_insensitive(message, "no function at this offset") ||
+        contains_case_insensitive(message, "no function in scope")) {
         return "invalid_address";
     }
     return "decompile_failed";
@@ -468,17 +473,14 @@ static std::string classifier_for_lowlevel_error(const std::string &message) {
 
 static std::string decompiler_version_string() {
     std::ostringstream stream;
-    stream << "ghidra-" << ghidra::ArchitectureCapability::getMajorVersion()
-           << "." << ghidra::ArchitectureCapability::getMinorVersion();
+    stream << "ghidra-" << ghidra::ArchitectureCapability::getMajorVersion() << "."
+           << ghidra::ArchitectureCapability::getMinorVersion();
     return stream.str();
 }
 
-static nb::dict metadata_dict(
-    const std::string &decompiler_version,
-    const std::string &language_id,
-    const std::string &compiler_spec,
-    const nb::dict &diagnostics
-) {
+static nb::dict metadata_dict(const std::string& decompiler_version,
+                              const std::string& language_id, const std::string& compiler_spec,
+                              const nb::dict& diagnostics) {
     nb::dict metadata;
     metadata["decompiler_version"] = decompiler_version;
     metadata["language_id"] = language_id;
@@ -487,13 +489,9 @@ static nb::dict metadata_dict(
     return metadata;
 }
 
-static nb::dict error_result(
-    const std::string &category,
-    const std::string &message,
-    const std::string &decompiler_version,
-    const std::string &language_id,
-    const std::string &compiler_spec
-) {
+static nb::dict error_result(const std::string& category, const std::string& message,
+                             const std::string& decompiler_version, const std::string& language_id,
+                             const std::string& compiler_spec) {
     nb::dict error;
     error["category"] = category;
     error["message"] = message;
@@ -504,52 +502,34 @@ static nb::dict error_result(
     result["function_info"] = nb::none();
     result["warnings"] = nb::list();
     result["error"] = error;
-    result["metadata"] = metadata_dict(
-        decompiler_version,
-        language_id,
-        compiler_spec,
-        nb::dict()
-    );
+    result["metadata"] = metadata_dict(decompiler_version, language_id, compiler_spec, nb::dict());
     return result;
 }
 
-static nb::dict success_result(
-    const std::string &c_code,
-    const nb::dict &function_info,
-    const nb::list &warnings,
-    const std::string &decompiler_version,
-    const std::string &language_id,
-    const std::string &compiler_spec,
-    const nb::dict &diagnostics
-) {
+static nb::dict success_result(const std::string& c_code, const nb::dict& function_info,
+                               const nb::list& warnings, const std::string& decompiler_version,
+                               const std::string& language_id, const std::string& compiler_spec,
+                               const nb::dict& diagnostics) {
     nb::dict result;
     result["c_code"] = c_code;
     result["function_info"] = function_info;
     result["warnings"] = warnings;
     result["error"] = nb::none();
-    result["metadata"] = metadata_dict(
-        decompiler_version,
-        language_id,
-        compiler_spec,
-        diagnostics
-    );
+    result["metadata"] =
+        metadata_dict(decompiler_version, language_id, compiler_spec, diagnostics);
     return result;
 }
 
 class FlatlineMemoryLoadImage : public ghidra::LoadImage {
-public:
-    FlatlineMemoryLoadImage(
-        std::string filename,
-        std::string arch_type,
-        std::uint64_t base_address,
-        std::string memory_image
-    )
+   public:
+    FlatlineMemoryLoadImage(std::string filename, std::string arch_type,
+                            std::uint64_t base_address, std::string memory_image)
         : ghidra::LoadImage(std::move(filename)),
           arch_type_(std::move(arch_type)),
           base_address_(base_address),
           memory_image_(std::move(memory_image)) {}
 
-    void loadFill(ghidra::uint1 *ptr, ghidra::int4 size, const ghidra::Address &address) override {
+    void loadFill(ghidra::uint1* ptr, ghidra::int4 size, const ghidra::Address& address) override {
         if (size < 0) {
             throw ghidra::DataUnavailError("negative load size is invalid");
         }
@@ -567,7 +547,8 @@ public:
         }
 
         std::uint64_t image_end = 0;
-        if (!checked_add_u64(base_address_, static_cast<std::uint64_t>(memory_image_.size()), &image_end)) {
+        if (!checked_add_u64(base_address_, static_cast<std::uint64_t>(memory_image_.size()),
+                             &image_end)) {
             throw ghidra::DataUnavailError("memory image bounds overflow");
         }
         if (requested_start < base_address_ || requested_end > image_end) {
@@ -578,9 +559,7 @@ public:
         std::memcpy(ptr, memory_image_.data() + offset, static_cast<std::size_t>(size));
     }
 
-    std::string getArchType() const override {
-        return arch_type_;
-    }
+    std::string getArchType() const override { return arch_type_; }
 
     void adjustVma(long adjust) override {
         if (adjust >= 0) {
@@ -590,39 +569,31 @@ public:
         base_address_ -= static_cast<std::uint64_t>(-adjust);
     }
 
-private:
+   private:
     std::string arch_type_;
     std::uint64_t base_address_;
     std::string memory_image_;
 };
 
 class FlatlineSleighArchitecture : public ghidra::SleighArchitecture {
-public:
-    FlatlineSleighArchitecture(
-        std::string target_id,
-        std::string language_id,
-        std::uint64_t base_address,
-        std::string memory_image,
-        std::ostream *error_stream
-    )
+   public:
+    FlatlineSleighArchitecture(std::string target_id, std::string language_id,
+                               std::uint64_t base_address, std::string memory_image,
+                               std::ostream* error_stream)
         : ghidra::SleighArchitecture("<flatline-memory>", std::move(target_id), error_stream),
           language_id_(std::move(language_id)),
           base_address_(base_address),
           memory_image_(std::move(memory_image)) {}
 
-protected:
-    void buildLoader(ghidra::DocumentStorage &store) override {
+   protected:
+    void buildLoader(ghidra::DocumentStorage& store) override {
         (void)store;
         ghidra::SleighArchitecture::collectSpecFiles(*errorstream);
-        loader = new FlatlineMemoryLoadImage(
-            "<flatline-memory>",
-            language_id_,
-            base_address_,
-            memory_image_
-        );
+        loader = new FlatlineMemoryLoadImage("<flatline-memory>", language_id_, base_address_,
+                                             memory_image_);
     }
 
-private:
+   private:
     std::string language_id_;
     std::uint64_t base_address_;
     std::string memory_image_;
@@ -634,7 +605,7 @@ private:
 
 static std::once_flag g_init_flag;
 
-static void ensure_library_initialized(const std::string &runtime_data_dir) {
+static void ensure_library_initialized(const std::string& runtime_data_dir) {
     std::call_once(g_init_flag, [&runtime_data_dir]() {
         if (runtime_data_dir.empty()) {
             ghidra::startDecompilerLibrary(nullptr);
@@ -647,13 +618,14 @@ static void ensure_library_initialized(const std::string &runtime_data_dir) {
 // -- MemoryLoadImageSkeleton (public helper kept for compatibility) ----------
 
 class MemoryLoadImageSkeleton {
-public:
+   public:
     MemoryLoadImageSkeleton(std::uint64_t base_address, nb::bytes memory_image)
         : base_address_(base_address), memory_image_(memory_image.c_str(), memory_image.size()) {}
 
     nb::bytes read(std::uint64_t address, std::size_t size) const {
         std::uint64_t end = 0;
-        if (!checked_add_u64(base_address_, static_cast<std::uint64_t>(memory_image_.size()), &end)) {
+        if (!checked_add_u64(base_address_, static_cast<std::uint64_t>(memory_image_.size()),
+                             &end)) {
             throw nb::value_error("memory_image bounds overflow");
         }
         std::uint64_t requested_end = 0;
@@ -668,7 +640,7 @@ public:
         return nb::bytes(memory_image_.data() + offset, size);
     }
 
-private:
+   private:
     std::uint64_t base_address_;
     std::string memory_image_;
 };
@@ -676,7 +648,7 @@ private:
 // -- NativeSession ------------------------------------------------------------
 
 class NativeSession {
-public:
+   public:
     explicit NativeSession(std::string runtime_data_dir)
         : runtime_data_dir_(std::move(runtime_data_dir)) {
         ensure_library_initialized(runtime_data_dir_);
@@ -685,22 +657,22 @@ public:
     std::vector<std::pair<std::string, std::string>> list_language_compilers() const {
         std::vector<std::pair<std::string, std::string>> pairs;
         try {
-            const auto &descriptions = ghidra::SleighArchitecture::getDescriptions();
-            for (const auto &language : descriptions) {
-                const std::string &language_id = language.getId();
+            const auto& descriptions = ghidra::SleighArchitecture::getDescriptions();
+            for (const auto& language : descriptions) {
+                const std::string& language_id = language.getId();
                 const int compiler_count = language.numCompilers();
                 for (int index = 0; index < compiler_count; ++index) {
                     pairs.emplace_back(language_id, language.getCompiler(index).getId());
                 }
             }
-        } catch (const ghidra::LowlevelError &) {
+        } catch (const ghidra::LowlevelError&) {
             // Bridge layer will fall back to runtime-data enumeration.
             return {};
         }
         return pairs;
     }
 
-    nb::dict decompile_function(const nb::dict &request) const {
+    nb::dict decompile_function(const nb::dict& request) const {
         const std::string fallback_decompiler_version = decompiler_version_string();
         std::string fallback_language_id;
         std::string fallback_compiler_spec;
@@ -710,7 +682,8 @@ public:
             fallback_language_id.clear();
         }
         try {
-            std::optional<std::string> compiler_spec = optional_string_field(request, "compiler_spec");
+            std::optional<std::string> compiler_spec =
+                optional_string_field(request, "compiler_spec");
             fallback_compiler_spec = compiler_spec.value_or("");
         } catch (...) {
             fallback_compiler_spec.clear();
@@ -721,96 +694,62 @@ public:
             const std::string selected_compiler = native_request.compiler_spec.value_or("default");
 
             std::uint64_t memory_end = 0;
-            if (!checked_add_u64(
-                    native_request.base_address,
-                    static_cast<std::uint64_t>(native_request.memory_image.size()),
-                    &memory_end
-                )) {
+            if (!checked_add_u64(native_request.base_address,
+                                 static_cast<std::uint64_t>(native_request.memory_image.size()),
+                                 &memory_end)) {
                 return error_result(
-                    "invalid_argument",
-                    "memory_image range overflows 64-bit address space",
-                    fallback_decompiler_version,
-                    native_request.language_id,
-                    selected_compiler
-                );
+                    "invalid_argument", "memory_image range overflows 64-bit address space",
+                    fallback_decompiler_version, native_request.language_id, selected_compiler);
             }
-            if (native_request.function_address < native_request.base_address
-                || native_request.function_address >= memory_end) {
+            if (native_request.function_address < native_request.base_address ||
+                native_request.function_address >= memory_end) {
                 return error_result(
-                    "invalid_address",
-                    "function_address is outside memory_image range",
-                    fallback_decompiler_version,
-                    native_request.language_id,
-                    selected_compiler
-                );
+                    "invalid_address", "function_address is outside memory_image range",
+                    fallback_decompiler_version, native_request.language_id, selected_compiler);
             }
 
             const std::string target_id = native_request.language_id + ":" + selected_compiler;
             std::ostringstream ghidra_errors;
             FlatlineSleighArchitecture architecture(
-                target_id,
-                native_request.language_id,
-                native_request.base_address,
-                std::move(native_request.memory_image),
-                &ghidra_errors
-            );
+                target_id, native_request.language_id, native_request.base_address,
+                std::move(native_request.memory_image), &ghidra_errors);
 
             ghidra::DocumentStorage store;
             architecture.init(store);
             architecture.max_instructions = native_request.max_instructions;
             architecture.setPrintLanguage("c-language");
 
-            ghidra::Scope *global_scope = architecture.symboltab->getGlobalScope();
+            ghidra::Scope* global_scope = architecture.symboltab->getGlobalScope();
             if (global_scope == nullptr) {
-                return error_result(
-                    "internal_error",
-                    "global scope is unavailable",
-                    fallback_decompiler_version,
-                    native_request.language_id,
-                    selected_compiler
-                );
+                return error_result("internal_error", "global scope is unavailable",
+                                    fallback_decompiler_version, native_request.language_id,
+                                    selected_compiler);
             }
 
-            const ghidra::Address function_entry(
-                architecture.getDefaultCodeSpace(),
-                native_request.function_address
-            );
-            ghidra::Funcdata *function = global_scope->findFunction(function_entry);
+            const ghidra::Address function_entry(architecture.getDefaultCodeSpace(),
+                                                 native_request.function_address);
+            ghidra::Funcdata* function = global_scope->findFunction(function_entry);
             if (function == nullptr) {
-                ghidra::FunctionSymbol *symbol = global_scope->addFunction(
-                    function_entry,
-                    make_function_name(native_request.function_address)
-                );
+                ghidra::FunctionSymbol* symbol = global_scope->addFunction(
+                    function_entry, make_function_name(native_request.function_address));
                 if (symbol == nullptr) {
-                    return error_result(
-                        "internal_error",
-                        "unable to create function symbol",
-                        fallback_decompiler_version,
-                        native_request.language_id,
-                        selected_compiler
-                    );
+                    return error_result("internal_error", "unable to create function symbol",
+                                        fallback_decompiler_version, native_request.language_id,
+                                        selected_compiler);
                 }
                 function = symbol->getFunction();
             }
             if (function == nullptr) {
-                return error_result(
-                    "internal_error",
-                    "function object is unavailable",
-                    fallback_decompiler_version,
-                    native_request.language_id,
-                    selected_compiler
-                );
+                return error_result("internal_error", "function object is unavailable",
+                                    fallback_decompiler_version, native_request.language_id,
+                                    selected_compiler);
             }
 
-            ghidra::Action *action = architecture.allacts.getCurrent();
+            ghidra::Action* action = architecture.allacts.getCurrent();
             if (action == nullptr) {
-                return error_result(
-                    "internal_error",
-                    "decompile action pipeline is unavailable",
-                    fallback_decompiler_version,
-                    native_request.language_id,
-                    selected_compiler
-                );
+                return error_result("internal_error", "decompile action pipeline is unavailable",
+                                    fallback_decompiler_version, native_request.language_id,
+                                    selected_compiler);
             }
 
             action->reset(*function);
@@ -832,77 +771,40 @@ public:
                 warnings.append(warning);
             }
 
-            return success_result(
-                output_stream.str(),
-                function_info,
-                warnings,
-                fallback_decompiler_version,
-                native_request.language_id,
-                selected_compiler,
-                diagnostics
-            );
-        } catch (const std::invalid_argument &error) {
+            return success_result(output_stream.str(), function_info, warnings,
+                                  fallback_decompiler_version, native_request.language_id,
+                                  selected_compiler, diagnostics);
+        } catch (const std::invalid_argument& error) {
+            return error_result("invalid_argument", error.what(), fallback_decompiler_version,
+                                fallback_language_id, fallback_compiler_spec);
+        } catch (const ghidra::DataUnavailError& error) {
+            return error_result("invalid_address", error.explain, fallback_decompiler_version,
+                                fallback_language_id, fallback_compiler_spec);
+        } catch (const ghidra::DecoderError& error) {
+            return error_result("decompile_failed", error.explain, fallback_decompiler_version,
+                                fallback_language_id, fallback_compiler_spec);
+        } catch (const ghidra::LowlevelError& error) {
+            return error_result(classifier_for_lowlevel_error(error.explain), error.explain,
+                                fallback_decompiler_version, fallback_language_id,
+                                fallback_compiler_spec);
+        } catch (const std::bad_cast& error) {
             return error_result(
-                "invalid_argument",
-                error.what(),
-                fallback_decompiler_version,
-                fallback_language_id,
-                fallback_compiler_spec
-            );
-        } catch (const ghidra::DataUnavailError &error) {
-            return error_result(
-                "invalid_address",
-                error.explain,
-                fallback_decompiler_version,
-                fallback_language_id,
-                fallback_compiler_spec
-            );
-        } catch (const ghidra::DecoderError &error) {
-            return error_result(
-                "decompile_failed",
-                error.explain,
-                fallback_decompiler_version,
-                fallback_language_id,
-                fallback_compiler_spec
-            );
-        } catch (const ghidra::LowlevelError &error) {
-            return error_result(
-                classifier_for_lowlevel_error(error.explain),
-                error.explain,
-                fallback_decompiler_version,
-                fallback_language_id,
-                fallback_compiler_spec
-            );
-        } catch (const std::bad_cast &error) {
-            return error_result(
-                "decompile_failed",
-                std::string("native decompile type error: ") + error.what(),
-                fallback_decompiler_version,
-                fallback_language_id,
-                fallback_compiler_spec
-            );
-        } catch (const std::exception &error) {
-            return error_result(
-                "internal_error",
-                std::string("native exception: ") + error.what(),
-                fallback_decompiler_version,
-                fallback_language_id,
-                fallback_compiler_spec
-            );
+                "decompile_failed", std::string("native decompile type error: ") + error.what(),
+                fallback_decompiler_version, fallback_language_id, fallback_compiler_spec);
+        } catch (const std::exception& error) {
+            return error_result("internal_error", std::string("native exception: ") + error.what(),
+                                fallback_decompiler_version, fallback_language_id,
+                                fallback_compiler_spec);
         } catch (...) {
-            return error_result(
-                "internal_error",
-                "native exception: unknown error",
-                fallback_decompiler_version,
-                fallback_language_id,
-                fallback_compiler_spec
-            );
+            return error_result("internal_error", "native exception: unknown error",
+                                fallback_decompiler_version, fallback_language_id,
+                                fallback_compiler_spec);
         }
     }
 
     void close() {}
 
-private:
+   private:
     std::string runtime_data_dir_;
 };
 
@@ -923,12 +825,11 @@ NB_MODULE(_flatline_native, m) {
 
     m.def(
         "create_session",
-        [](const nb::object &runtime_data_dir_obj) {
+        [](const nb::object& runtime_data_dir_obj) {
             if (runtime_data_dir_obj.is_none()) {
                 return NativeSession("");
             }
             return NativeSession(nb::cast<std::string>(runtime_data_dir_obj));
         },
-        nb::arg("runtime_data_dir") = nb::none()
-    );
+        nb::arg("runtime_data_dir") = nb::none());
 }

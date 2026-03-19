@@ -36,6 +36,7 @@ from flatline._version import DECOMPILER_VERSION
 # Helpers for building synthetic objects
 # ---------------------------------------------------------------------------
 
+
 def _stub_type(name: str = "int", size: int = 4, metatype: str = "int") -> TypeInfo:
     return TypeInfo(name=name, size=size, metatype=metatype)
 
@@ -90,6 +91,7 @@ def _stub_function_info(**overrides: object) -> FunctionInfo:
 # U-001: Request schema rejects missing required fields
 # ---------------------------------------------------------------------------
 
+
 def test_u001_request_schema_required_fields():
     """U-001: Missing required request fields map to structured invalid_argument errors."""
     base_kwargs: dict[str, object] = {
@@ -133,6 +135,7 @@ def test_u001_request_schema_required_fields():
 # U-002: Unknown compiler id handling
 # ---------------------------------------------------------------------------
 
+
 def test_u002_unknown_compiler_rejected_without_fallback():
     """U-002: Unknown compiler identifiers are hard failures, never implicit fallback."""
     known_specs = frozenset({"gcc", "default", "windows"})
@@ -157,6 +160,7 @@ def test_u002_unknown_compiler_rejected_without_fallback():
 # ---------------------------------------------------------------------------
 # U-003: Result metadata envelope shape
 # ---------------------------------------------------------------------------
+
 
 def test_u003_result_metadata_required_keys():
     """U-003: Result metadata always includes required top-level keys."""
@@ -205,6 +209,7 @@ def test_u003_result_metadata_required_keys():
 # U-004: function_size_hint passthrough
 # ---------------------------------------------------------------------------
 
+
 def test_u004_function_size_hint_passthrough():
     """U-004: function_size_hint is accepted and passed through; omission does not error."""
     base_kwargs: dict[str, object] = {
@@ -244,6 +249,7 @@ def test_request_accepts_pathlike_runtime_data_dir() -> None:
 # ---------------------------------------------------------------------------
 # U-005: FunctionInfo fields from stub
 # ---------------------------------------------------------------------------
+
 
 def test_u005_function_info_fields_from_stub():
     """U-005: FunctionInfo fields are populated from adapter stub with correct types.
@@ -346,6 +352,7 @@ def test_u005_function_info_fields_from_stub():
 # ---------------------------------------------------------------------------
 # U-006: analysis_budget defaults and validation
 # ---------------------------------------------------------------------------
+
 
 def test_u006_analysis_budget_passthrough():
     """U-006: analysis_budget defaults deterministically and coerces supported inputs."""

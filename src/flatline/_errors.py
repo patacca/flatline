@@ -7,14 +7,16 @@ Category names are contract-stable across minor/patch releases.
 from __future__ import annotations
 
 # --- Stable error categories (specs.md section 3.4) ---
-ERROR_CATEGORIES: frozenset[str] = frozenset({
-    "invalid_argument",
-    "unsupported_target",
-    "invalid_address",
-    "decompile_failed",
-    "configuration_error",
-    "internal_error",
-})
+ERROR_CATEGORIES: frozenset[str] = frozenset(
+    {
+        "invalid_argument",
+        "unsupported_target",
+        "invalid_address",
+        "decompile_failed",
+        "configuration_error",
+        "internal_error",
+    }
+)
 
 
 class FlatlineError(Exception):

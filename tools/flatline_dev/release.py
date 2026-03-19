@@ -141,9 +141,7 @@ def _audit_release_support_notes(
 ) -> None:
     try:
         support_section = _markdown_section(release_notes_text, "Support Tiers")
-        support_rows = {
-            row["Surface"]: row for row in _parse_markdown_table(support_section)
-        }
+        support_rows = {row["Surface"]: row for row in _parse_markdown_table(support_section)}
     except (KeyError, ValueError) as exc:
         _append_issue(
             issues,
@@ -184,8 +182,7 @@ def _audit_release_support_notes(
 
     normalized_support_section = _normalize_whitespace(support_section)
     if (
-        "Wheel publication and supported-host status can differ"
-        not in normalized_support_section
+        "Wheel publication and supported-host status can differ" not in normalized_support_section
         or "equivalent contract coverage" not in normalized_support_section
     ):
         _append_issue(

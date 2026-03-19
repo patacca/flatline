@@ -16,10 +16,22 @@ from flatline._errors import InvalidArgumentError, UnsupportedTargetError
 
 # --- Stable enumerations (specs.md section 3.3) ---
 
-VALID_METATYPES: frozenset[str] = frozenset({
-    "void", "bool", "int", "uint", "float", "pointer",
-    "array", "struct", "union", "code", "enum", "unknown",
-})
+VALID_METATYPES: frozenset[str] = frozenset(
+    {
+        "void",
+        "bool",
+        "int",
+        "uint",
+        "float",
+        "pointer",
+        "array",
+        "struct",
+        "union",
+        "code",
+        "enum",
+        "unknown",
+    }
+)
 
 VALID_WARNING_PHASES: frozenset[str] = frozenset({"init", "analyze", "emit"})
 
@@ -27,6 +39,7 @@ DEFAULT_MAX_INSTRUCTIONS = 100000
 
 
 # --- Leaf value types ---
+
 
 @dataclass(frozen=True)
 class StorageInfo:
@@ -95,6 +108,7 @@ class DiagnosticFlags:
 
 # --- Composite value types ---
 
+
 @dataclass(frozen=True)
 class FunctionPrototype:
     """Recovered function signature."""
@@ -126,6 +140,7 @@ class FunctionInfo:
 
 # --- Warning/Error items ---
 
+
 @dataclass(frozen=True)
 class WarningItem:
     """One decompiler warning."""
@@ -145,6 +160,7 @@ class ErrorItem:
 
 
 # --- Enumeration and version types ---
+
 
 @dataclass(frozen=True)
 class LanguageCompilerPair:
@@ -176,6 +192,7 @@ class AnalysisBudget:
 
 
 # --- Request/Result ---
+
 
 @dataclass(frozen=True)
 class DecompileRequest:
@@ -215,6 +232,7 @@ class DecompileResult:
 
 # --- Validation helpers (used by bridge, not user-facing) ---
 
+
 def _validate_compiler_spec(compiler_spec: str, known_specs: frozenset[str]) -> None:
     """Validate compiler_spec against a known set.
 
@@ -222,9 +240,7 @@ def _validate_compiler_spec(compiler_spec: str, known_specs: frozenset[str]) -> 
     to a default compiler (specs.md section 3.4, section 4.4).
     """
     if compiler_spec not in known_specs:
-        raise UnsupportedTargetError(
-            f"Unknown compiler specification: {compiler_spec!r}"
-        )
+        raise UnsupportedTargetError(f"Unknown compiler specification: {compiler_spec!r}")
 
 
 def _coerce_analysis_budget(raw_budget: Any) -> AnalysisBudget:
@@ -233,9 +249,7 @@ def _coerce_analysis_budget(raw_budget: Any) -> AnalysisBudget:
     if isinstance(raw_budget, AnalysisBudget):
         return raw_budget
     if not isinstance(raw_budget, Mapping):
-        raise InvalidArgumentError(
-            "analysis_budget must be an AnalysisBudget or mapping"
-        )
+        raise InvalidArgumentError("analysis_budget must be an AnalysisBudget or mapping")
 
     unknown_fields = sorted(set(raw_budget) - {"max_instructions"})
     if unknown_fields:

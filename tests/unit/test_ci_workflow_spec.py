@@ -9,9 +9,7 @@ import yaml
 
 def _load_ci_workflow() -> dict[str, object]:
     repo_root = Path(__file__).resolve().parents[2]
-    workflow_text = (repo_root / ".github" / "workflows" / "ci.yml").read_text(
-        encoding="utf-8"
-    )
+    workflow_text = (repo_root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     return yaml.load(workflow_text, Loader=yaml.BaseLoader)
 
 
@@ -52,14 +50,11 @@ def test_u019_ci_workflow_keeps_supported_test_matrix_and_regression_lane() -> N
     }
     assert supported_matrix == {("3.13", "py313"), ("3.14", "py314")}
     assert any(
-        'tox -e ${{ matrix.tox-env }} -- -m "not regression"' in run
-        for run in _job_runs(test_job)
+        'tox -e ${{ matrix.tox-env }} -- -m "not regression"' in run for run in _job_runs(test_job)
     )
 
     regression_job = _job(workflow, "regression")
-    assert any(
-        "tox -e py314 -- -m regression" in run for run in _job_runs(regression_job)
-    )
+    assert any("tox -e py314 -- -m regression" in run for run in _job_runs(regression_job))
 
 
 def test_u026_ci_workflow_keeps_macos_native_contract_lane() -> None:

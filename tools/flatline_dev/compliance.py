@@ -125,8 +125,7 @@ def _audit_pyproject(project_table: dict[str, Any], issues: list[ComplianceIssue
 
     dependencies = project_table.get("dependencies")
     if not isinstance(dependencies, list) or not any(
-        isinstance(dep, str) and dep.startswith("ghidra-sleigh")
-        for dep in dependencies
+        isinstance(dep, str) and dep.startswith("ghidra-sleigh") for dep in dependencies
     ):
         _append_issue(
             issues,

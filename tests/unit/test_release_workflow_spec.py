@@ -65,10 +65,7 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
                 "## Requirements",
                 "",
                 "- Supported runtime host contract: Linux x86_64",
-                (
-                    "- Published wheels: Linux x86_64/aarch64, Windows x86_64, "
-                    "macOS x86_64/arm64"
-                ),
+                ("- Published wheels: Linux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64"),
                 "",
                 "## Project status",
                 "",

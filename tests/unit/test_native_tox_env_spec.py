@@ -19,6 +19,4 @@ def test_u026_native_tox_env_forces_native_bridge_builds() -> None:
     assert build_env["config_settings_prepare_metadata_for_build_wheel"] == {
         "setup-args": "-Dnative_bridge=enabled"
     }
-    assert build_env["config_settings_build_wheel"] == {
-        "setup-args": "-Dnative_bridge=enabled"
-    }
+    assert build_env["config_settings_build_wheel"] == {"setup-args": "-Dnative_bridge=enabled"}

@@ -108,8 +108,7 @@ _FIXTURES: dict[str, NativeFixture] = {
         hex_filename="fx_add_elf64.hex",
         sha256="c256c0e67b4e9c9493982d00effc6ece20d1e296312034b675e35f72959b2ddb",
         normalized_c=(
-            "int4 func_1000 ( int4 param_1 , int4 param_2 ) "
-            "{ return param_1 + param_2 ; }"
+            "int4 func_1000 ( int4 param_1 , int4 param_2 ) { return param_1 + param_2 ; }"
         ),
         expected_function_size=4,
         expected_param_count=2,
@@ -126,8 +125,7 @@ _FIXTURES: dict[str, NativeFixture] = {
         hex_filename="fx_add_elf32.hex",
         sha256="d3d3e02046fef3b2cd6baab50c71b221996d84c2526a750cc15b4a33a79a8f24",
         normalized_c=(
-            "int4 func_1000 ( int4 param_1 , int4 param_2 ) "
-            "{ return param_1 + param_2 ; }"
+            "int4 func_1000 ( int4 param_1 , int4 param_2 ) { return param_1 + param_2 ; }"
         ),
         expected_function_size=9,
         expected_param_count=2,
@@ -144,8 +142,7 @@ _FIXTURES: dict[str, NativeFixture] = {
         hex_filename="fx_add_arm64.hex",
         sha256="9bfea10d7217396fb690a5727f3716948b218e9457c513a9c551642286e6d330",
         normalized_c=(
-            "int4 func_1000 ( int4 param_1 , int4 param_2 ) "
-            "{ return param_1 + param_2 ; }"
+            "int4 func_1000 ( int4 param_1 , int4 param_2 ) { return param_1 + param_2 ; }"
         ),
         expected_function_size=8,
         expected_param_count=2,
@@ -180,8 +177,7 @@ _FIXTURES: dict[str, NativeFixture] = {
         hex_filename="fx_add_mips32.hex",
         sha256="f312dbb7760a8c39a3582b09630b667d3999da7daa72a77ede41847397d1d14f",
         normalized_c=(
-            "int4 func_1000 ( int4 param_1 , int4 param_2 ) "
-            "{ return param_1 + param_2 ; }"
+            "int4 func_1000 ( int4 param_1 , int4 param_2 ) { return param_1 + param_2 ; }"
         ),
         expected_function_size=12,
         expected_param_count=2,

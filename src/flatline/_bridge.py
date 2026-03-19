@@ -115,9 +115,7 @@ class _NativeBridgeSession:
                 return native_pairs
             return list(self._runtime_data_pairs)
         except Exception as exc:  # pragma: no cover - exercised with bridge doubles
-            raise InternalError(
-                f"native list_language_compilers failed: {exc}"
-            ) from exc
+            raise InternalError(f"native list_language_compilers failed: {exc}") from exc
 
     def decompile_function(self, request: DecompileRequest) -> DecompileResult:
         request_payload = _request_to_native_payload(request)
@@ -476,8 +474,7 @@ def _coerce_jump_table(raw_jump_table: Any) -> JumpTableInfo:
     if not _is_sequence_like(raw_targets):
         raise InternalError("jump_table.target_addresses must be a sequence")
     target_addresses = [
-        _require_int(address, "jump_table.target_addresses[]")
-        for address in raw_targets
+        _require_int(address, "jump_table.target_addresses[]") for address in raw_targets
     ]
     return JumpTableInfo(
         switch_address=_require_int(
@@ -621,9 +618,7 @@ def create_bridge_session(runtime_data_dir: str | None = None) -> BridgeSession:
     except Exception as exc:
         if isinstance(exc, ConfigurationError):
             raise
-        raise InternalError(
-            f"native bridge session startup failed: {exc}"
-        ) from exc
+        raise InternalError(f"native bridge session startup failed: {exc}") from exc
     return _NativeBridgeSession(
         native_session,
         runtime_data_pairs=runtime_data_pairs,

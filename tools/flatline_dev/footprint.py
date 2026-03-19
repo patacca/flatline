@@ -40,12 +40,10 @@ class DefaultInstallFootprintReport:
         """Return the combined payload size of flatline + ghidra-sleigh."""
         return FootprintMeasurement(
             size_bytes=(
-                self.flatline_distribution.size_bytes
-                + self.ghidra_sleigh_distribution.size_bytes
+                self.flatline_distribution.size_bytes + self.ghidra_sleigh_distribution.size_bytes
             ),
             file_count=(
-                self.flatline_distribution.file_count
-                + self.ghidra_sleigh_distribution.file_count
+                self.flatline_distribution.file_count + self.ghidra_sleigh_distribution.file_count
             ),
         )
 
@@ -91,10 +89,7 @@ def format_default_install_footprint(report: DefaultInstallFootprintReport) -> s
     return "\n".join(
         (
             "Default install footprint (payload files only; excludes __pycache__)",
-            (
-                "- flatline distribution: "
-                f"{_format_measurement(report.flatline_distribution)}"
-            ),
+            (f"- flatline distribution: {_format_measurement(report.flatline_distribution)}"),
             (
                 "- ghidra-sleigh distribution: "
                 f"{_format_measurement(report.ghidra_sleigh_distribution)}"
@@ -118,9 +113,7 @@ def _measure_distribution_payload(distribution: object) -> FootprintMeasurement:
     files = getattr(distribution, "files", None)
     locate_file = getattr(distribution, "locate_file", None)
     if files is None:
-        raise ValueError(
-            f"Distribution metadata does not expose a file list: {distribution_name}"
-        )
+        raise ValueError(f"Distribution metadata does not expose a file list: {distribution_name}")
     if not callable(locate_file):
         raise TypeError(
             f"Distribution metadata does not expose locate_file(): {distribution_name}"

@@ -43,6 +43,7 @@ from flatline import (
 # C-001: Public result schema stability
 # ---------------------------------------------------------------------------
 
+
 def test_c001_result_schema_stability():
     """C-001: Required result keys/types remain stable across compatible releases."""
     # DecompileResult required fields (specs.md section 3.3)
@@ -52,8 +53,15 @@ def test_c001_result_schema_stability():
     # FunctionInfo required fields
     info_fields = {f.name for f in dataclasses.fields(FunctionInfo)}
     expected_info = {
-        "name", "entry_address", "size", "is_complete", "prototype",
-        "local_variables", "call_sites", "jump_tables", "diagnostics",
+        "name",
+        "entry_address",
+        "size",
+        "is_complete",
+        "prototype",
+        "local_variables",
+        "call_sites",
+        "jump_tables",
+        "diagnostics",
         "varnode_count",
     }
     assert info_fields == expected_info
@@ -70,6 +78,7 @@ def test_c001_result_schema_stability():
 # ---------------------------------------------------------------------------
 # C-002: Error taxonomy stability
 # ---------------------------------------------------------------------------
+
 
 def test_c002_error_taxonomy_stability():
     """C-002: Error categories are contract-stable identifiers."""
@@ -111,6 +120,7 @@ def test_c002_error_taxonomy_stability():
 # C-003: Version reporting contract
 # ---------------------------------------------------------------------------
 
+
 def test_c003_version_reporting_contains_decompiler_version():
     """C-003: Version endpoint includes flatline and decompiler version information."""
     info = get_version_info()
@@ -126,13 +136,15 @@ def test_c003_version_reporting_contains_decompiler_version():
     # VersionInfo fields match spec
     version_fields = {f.name for f in dataclasses.fields(VersionInfo)}
     assert version_fields == {
-        "flatline_version", "decompiler_version",
+        "flatline_version",
+        "decompiler_version",
     }
 
 
 # ---------------------------------------------------------------------------
 # C-004: Structured result object schema stability
 # ---------------------------------------------------------------------------
+
 
 def test_c004_structured_result_schema_stability():
     """C-004: Structured result objects (FunctionInfo, FunctionPrototype, TypeInfo)
@@ -141,8 +153,13 @@ def test_c004_structured_result_schema_stability():
     # FunctionPrototype fields (specs.md section 3.3)
     proto_fields = {f.name for f in dataclasses.fields(FunctionPrototype)}
     assert proto_fields == {
-        "calling_convention", "parameters", "return_type",
-        "is_noreturn", "has_this_pointer", "has_input_errors", "has_output_errors",
+        "calling_convention",
+        "parameters",
+        "return_type",
+        "is_noreturn",
+        "has_this_pointer",
+        "has_input_errors",
+        "has_output_errors",
     }
 
     # TypeInfo fields
@@ -172,8 +189,11 @@ def test_c004_structured_result_schema_stability():
     # DiagnosticFlags fields
     diag_fields = {f.name for f in dataclasses.fields(DiagnosticFlags)}
     assert diag_fields == {
-        "is_complete", "has_unreachable_blocks", "has_unimplemented",
-        "has_bad_data", "has_no_code",
+        "is_complete",
+        "has_unreachable_blocks",
+        "has_unimplemented",
+        "has_bad_data",
+        "has_no_code",
     }
 
     budget_fields = {f.name for f in dataclasses.fields(AnalysisBudget)}
@@ -185,8 +205,18 @@ def test_c004_structured_result_schema_stability():
 
     # Metatype strings are the stable enum values (specs.md section 3.3)
     expected_metatypes = {
-        "void", "bool", "int", "uint", "float", "pointer",
-        "array", "struct", "union", "code", "enum", "unknown",
+        "void",
+        "bool",
+        "int",
+        "uint",
+        "float",
+        "pointer",
+        "array",
+        "struct",
+        "union",
+        "code",
+        "enum",
+        "unknown",
     }
     assert expected_metatypes == VALID_METATYPES
 
@@ -196,9 +226,19 @@ def test_c004_structured_result_schema_stability():
     # All structured result types are frozen dataclasses
     frozen_types = [
         AnalysisBudget,
-        StorageInfo, TypeInfo, ParameterInfo, VariableInfo, CallSiteInfo,
-        JumpTableInfo, DiagnosticFlags, FunctionPrototype, FunctionInfo,
-        WarningItem, ErrorItem, VersionInfo, LanguageCompilerPair,
+        StorageInfo,
+        TypeInfo,
+        ParameterInfo,
+        VariableInfo,
+        CallSiteInfo,
+        JumpTableInfo,
+        DiagnosticFlags,
+        FunctionPrototype,
+        FunctionInfo,
+        WarningItem,
+        ErrorItem,
+        VersionInfo,
+        LanguageCompilerPair,
     ]
     for cls in frozen_types:
         assert dataclasses.is_dataclass(cls), f"{cls.__name__} must be a dataclass"

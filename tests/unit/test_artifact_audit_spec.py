@@ -221,9 +221,7 @@ def test_u022_built_release_artifact_audit_accepts_platform_wheel_with_native_ex
     _write_wheel(
         dist_dir,
         platform_tag="cp314-cp314-manylinux_2_28_x86_64",
-        extra_members=(
-            ("flatline/_flatline_native.cpython-314-x86_64-linux-gnu.so", ""),
-        ),
+        extra_members=(("flatline/_flatline_native.cpython-314-x86_64-linux-gnu.so", ""),),
     )
     _write_sdist(dist_dir)
 

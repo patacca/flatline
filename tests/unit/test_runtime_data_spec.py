@@ -31,8 +31,8 @@ def _make_valid_runtime_data(runtime_dir: Path) -> None:
     (languages_dir / "x86.ldefs").write_text(
         (
             "<language_definitions>\n"
-            "  <language id=\"x86:LE:64:default\">\n"
-            "    <compiler id=\"gcc\" spec=\"x86-gcc.cspec\"/>\n"
+            '  <language id="x86:LE:64:default">\n'
+            '    <compiler id="gcc" spec="x86-gcc.cspec"/>\n'
             "  </language>\n"
             "</language_definitions>\n"
         ),

@@ -192,9 +192,9 @@ def _make_runtime_data_fixture(tmp_path: Path) -> Path:
     (language_dir / "x86.ldefs").write_text(
         (
             "<language_definitions>\n"
-            "  <language id=\"x86:LE:64:default\">\n"
-            "    <compiler name=\"gcc\" spec=\"x86-gcc.cspec\"/>\n"
-            "    <compiler name=\"broken\" spec=\"missing.cspec\"/>\n"
+            '  <language id="x86:LE:64:default">\n'
+            '    <compiler name="gcc" spec="x86-gcc.cspec"/>\n'
+            '    <compiler name="broken" spec="missing.cspec"/>\n'
             "  </language>\n"
             "</language_definitions>\n"
         ),

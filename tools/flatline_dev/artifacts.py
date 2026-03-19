@@ -126,25 +126,18 @@ def _audit_metadata(
         _append_issue(
             issues,
             f"{artifact_label}_version_mismatch",
-            (
-                f"{artifact_path} records version {version!r}; "
-                f"expected {expected_version!r}."
-            ),
+            (f"{artifact_path} records version {version!r}; expected {expected_version!r}."),
         )
 
     requires_dist = metadata.get_all("Requires-Dist", failobj=[]) or []
     normalized_expected = _normalize_requirement(expected_dependency)
     if not any(
-        _normalize_requirement(value).startswith(normalized_expected)
-        for value in requires_dist
+        _normalize_requirement(value).startswith(normalized_expected) for value in requires_dist
     ):
         _append_issue(
             issues,
             f"{artifact_label}_dependency_missing",
-            (
-                f"{artifact_path} does not declare the expected dependency "
-                f"{expected_dependency!r}."
-            ),
+            (f"{artifact_path} does not declare the expected dependency {expected_dependency!r}."),
         )
 
 
