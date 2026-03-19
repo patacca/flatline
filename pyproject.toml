@@ -152,5 +152,6 @@ wheel_build_env = ".pkg-py314-native"
 
 [tool.tox.env.".pkg-py314-native"]
 base_python = "python3.14"
+pass_env = ["VCPKG_INSTALLATION_ROOT"]
 config_settings_prepare_metadata_for_build_wheel = {"setup-args" = "-Dnative_bridge=enabled"}
 config_settings_build_wheel = {"setup-args" = "-Dnative_bridge=enabled"}

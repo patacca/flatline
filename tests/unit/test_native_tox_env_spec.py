@@ -18,6 +18,7 @@ def test_u026_native_tox_env_forces_native_bridge_builds() -> None:
     build_env = tox_envs[build_env_name]
 
     assert meson_python["args"]["setup"] == ["--vsenv"]
+    assert "VCPKG_INSTALLATION_ROOT" in build_env["pass_env"]
     assert build_env["config_settings_prepare_metadata_for_build_wheel"] == {
         "setup-args": "-Dnative_bridge=enabled"
     }
