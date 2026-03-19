@@ -95,6 +95,8 @@ and release activities require distinct checkpoints.
 ### M5: Cross-platform readiness (post-MVP)
 - Inputs:
 - platform feasibility findings for macOS/Windows, recorded in `docs/host_feasibility.md`
+- pinned macOS smoke/build CI evidence that forces the native bridge path
+  before host-promotion work expands to the full contract matrix
 - Exit checks:
 - `docs/host_feasibility.md` records the current platform audit, the ADR-008 host order, and the equivalent contract-coverage bar for adding a supported host
 - macOS native build/install and the existing contract matrix are validated before Windows becomes the active expansion target

@@ -47,6 +47,33 @@ jobs:
           name: flatline-wheel
           path: dist/*.whl
 
+  macos-smoke:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install system dependencies
+        run: brew install ninja pkg-config zlib
+
+      - name: Build native wheel
+        run: |
+          export PKG_CONFIG_PATH="$(brew --prefix zlib)/lib/pkgconfig:${PKG_CONFIG_PATH}"
+          export LDFLAGS="-L$(brew --prefix zlib)/lib ${LDFLAGS}"
+          export CPPFLAGS="-I$(brew --prefix zlib)/include ${CPPFLAGS}"
+          pip install build
+          python -m build --wheel -Csetup-args=-Dnative_bridge=enabled
+
+      - name: Smoke import native wheel
+        run: |
+          pip install --no-deps dist/*.whl
+          python -c "import flatline; import flatline._flatline_native"
+
   test:
     runs-on: ubuntu-24.04
     strategy:

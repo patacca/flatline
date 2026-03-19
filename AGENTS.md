@@ -4,7 +4,7 @@
 # Overview
 - `flatline`: pip-installable Python wrapper around the Ghidra C++ decompiler; decompiler surface only, no UI/project DB.
 - Release state: P5 complete; version `0.1.0`; release-facing contract/support policy in `docs/release_notes.md`; `CHANGELOG.md` follows Keep a Changelog and updates on every release.
-- Next: P6 host-feasibility work is now macOS-first, Windows-second per ADR-008; `docs/host_feasibility.md` records the current audit and equivalent contract-coverage bar; P7 enriched output remains deferred behind ADR-012.
+- Next: P6 host-feasibility work is now macOS-first, Windows-second per ADR-008; `docs/host_feasibility.md` records the current audit, the pinned `macos-15` native smoke lane, and the equivalent contract-coverage bar; P7 enriched output remains deferred behind ADR-012.
 - Runtime data comes from runtime dependency `ghidra-sleigh` / import `ghidra_sleigh`; omitted `runtime_data_dir` auto-discovers `ghidra_sleigh.get_runtime_data_dir()`, explicit `runtime_data_dir` overrides it, any installed `ghidra-sleigh` is accepted for default runtime data.
 - Default asset profile expects full multi-ISA runtime data; lighter roots such as `all_processors=false` are explicit user-managed overrides.
 - Version `0.1.0` is aligned in `pyproject.toml`, `meson.build`, and `src/flatline/_version.py`; `pyproject.toml` declares unpinned runtime dependency `ghidra-sleigh` and `license-files = ["LICENSE", "NOTICE"]`.
@@ -14,7 +14,7 @@
 - End-to-end decompilation is verified for x86_64 `add(a,b)` with structured output.
 - Packaging/test shape: `py313`/`py314` tox envs build/install `flatline[test]` wheels inside `.tox`; `lint` is package-skip + `ruff`; repo-only compliance/footprint/release/artifact tools live in `tools/flatline_dev/` with `tools/*.py` wrappers and are excluded from wheels/sdists by `tools/prune_dist.py`.
 - P6 build hardening: `src/flatline/meson.build` now selects warning/include flag syntax through `cpp.get_argument_syntax()` so shared native-build paths no longer assume GCC-style flags before Windows feasibility work starts.
-- CI: `.github/workflows/ci.yml` uses `ubuntu-latest` for `lint`/`build`, `ubuntu-24.04` for `test`/`regression`; `test` runs non-regression `py313` + `py314`, `regression` runs `py314`.
+- CI: `.github/workflows/ci.yml` uses `ubuntu-latest` for `lint`/`build`, pinned `macos-15` for native smoke/build evidence, and `ubuntu-24.04` for `test`/`regression`; `test` runs non-regression `py313` + `py314`, `regression` runs `py314`.
 - Release publishing: `.github/workflows/release.yml` runs on GitHub `release.published` to PyPI and `workflow_dispatch` to TestPyPI with `skip-existing`.
 - Release tooling/docs: `docs/release_workflow.md` records the `0.1.0.dev0` -> `0.1.0` SemVer decision; `docs/release_review.md` is the source-controlled human artifact-review checklist/hold point; `python tools/release.py` audits version/doc alignment and rejects dirty git worktrees before tagging; `python tools/artifacts.py dist` audits built wheel/sdist version/dependency metadata, `LICENSE` / `NOTICE`, and leaked dev tools.
 - Redistribution/compliance: root `LICENSE` + `NOTICE`, `docs/compliance.md`, `python tools/compliance.py`; default-install footprint tracked by `python tools/footprint.py` in `docs/footprint.md` at `30,742,876` bytes (`29.32 MiB`) combined payload, `ghidra-sleigh` runtime data `80.3%`.

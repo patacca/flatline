@@ -1,9 +1,10 @@
 # Host Feasibility
 
-This document records the first P6 deliverable: a source-controlled audit of
-the post-`0.1.0` host-expansion path. It does not change the public release
-contract for `0.1.0`; Linux x86_64 remains the only supported host until a new
-host reaches equivalent contract coverage.
+This document records the active P6 deliverables: a source-controlled audit of
+the post-`0.1.0` host-expansion path and the first pinned macOS CI smoke/build
+proof. It does not change the public release contract for `0.1.0`; Linux
+x86_64 remains the only supported host until a new host reaches equivalent
+contract coverage.
 
 ## Current Audit
 
@@ -12,7 +13,7 @@ host reaches equivalent contract coverage.
 | `src/flatline/_session.py`, `src/flatline/_bridge.py`, `src/flatline/_runtime_data.py` | OK | Pure-Python request/session/runtime-data paths already use `Path`/`fspath` and do not depend on Linux-only APIs. |
 | `src/flatline/meson.build` | Partial | Shared native-build settings previously hardcoded GCC-style include, warning, and visibility flags. P6 hardening starts by selecting compiler-argument syntax through Meson so MSVC-family feasibility work can start without rewriting the build. |
 | `src/flatline/_flatline_native.cpp` | Unclear | The adapter is standard C++20 plus zlib-backed upstream sources, but native compilation still needs empirical validation on Apple Clang and on a Windows toolchain. |
-| `.github/workflows/ci.yml` | Missing | CI currently proves Linux only. P6 needs host-specific smoke/build lanes before support notes can change. |
+| `.github/workflows/ci.yml` | Partial | CI now includes a pinned `macos-15` smoke/build lane that forces `native_bridge=enabled`, builds a wheel, installs it, and imports `flatline._flatline_native`. Full macOS contract-matrix coverage is still pending before support notes can change. |
 | `tests/fixtures/*.hex` and native regression fixtures | OK | Committed runtime fixtures are host-neutral test inputs. Their generation recipes use Linux-target cross toolchains, but that is maintainer-only fixture production rather than an end-user runtime dependency. |
 | `ghidra-sleigh` dependency path | Unclear | The dependency-backed runtime-data contract is host-neutral in flatline, but the companion package still needs the same host-by-host feasibility evidence as the native bridge. |
 
@@ -48,8 +49,9 @@ notes until it has equivalent contract coverage:
 
 1. Keep `src/flatline/meson.build` host-aware so shared native-build paths do
    not fail before host-specific feasibility work even begins.
-2. Add a macOS smoke/build lane to `.github/workflows/ci.yml`, then promote it
-   to the existing contract matrix once the native bridge is stable there.
+2. Promote the pinned `macos-15` smoke/build lane in `.github/workflows/ci.yml`
+   from build/import proof to the existing contract matrix once the native
+   bridge is stable there.
 3. Audit the `ghidra-sleigh` companion package on macOS with the same
    dependency/runtime-data expectations used on Linux.
 4. Open a Windows-specific feasibility spike only after macOS closes the shared
