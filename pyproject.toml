@@ -64,6 +64,10 @@ select = [
 [tool.ruff.lint.isort]
 known-first-party = ["flatline", "flatline_dev"]
 
+# -- meson-python ----------------------------------------------------------
+[tool.meson-python.args]
+setup = ["--vsenv"]
+
 # -- cibuildwheel ----------------------------------------------------------
 [tool.cibuildwheel]
 build = "cp313-* cp314-*"

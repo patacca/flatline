@@ -7,11 +7,11 @@
 - Next: P6.5 wheel matrix in progress (ADR-013); P6 host-feasibility macOS-first (ADR-008); P7 deferred behind ADR-012.
 - 64-bit wheel matrix locked in `docs/wheel_matrix.md`: manylinux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64.
 - Runtime data: dependency `ghidra-sleigh` (import `ghidra_sleigh`); omitted `runtime_data_dir` auto-discovers via `ghidra_sleigh.get_runtime_data_dir()`; explicit overrides; full multi-ISA default.
-- `pyproject.toml`: unpinned `ghidra-sleigh`, `license-files = ["LICENSE", "NOTICE"]`, `cibuildwheel` config.
+- `pyproject.toml`: unpinned `ghidra-sleigh`, `license-files = ["LICENSE", "NOTICE"]`, `cibuildwheel` config, global Meson `setup = ["--vsenv"]` under `[tool.meson-python.args]`.
 - `third_party/ghidra` git submodule; `third_party/r2ghidra` local read-only, ignored.
 - Fixture-backed ISAs: x86_64, x86_32, AArch64, RISC-V 64, MIPS32; fixtures in `tests/fixtures/*.hex`, sources in `tests/fixtures/sources/`, regen via `tests/fixtures/generate_hex_fixtures.py`; additional x86_64 switch/warning fixtures; regression asserts switch site `0x1009` + 9 targets.
-- Tox envs: `py313`/`py314` build wheels in `.tox`; `py314-native` forces `native_bridge=enabled`; `lint` = `ruff`; dev tools in `tools/flatline_dev/` excluded from wheels by `tools/prune_dist.py`.
-- Build hardening: `src/flatline/meson.build` handles compiler flags, Meson include dirs for nanobind, auto-discovers Homebrew/vcpkg `zlib`; no raw compiler/linker env flags needed.
+- Tox envs: `py313`/`py314` build wheels in `.tox`; `py314-native` forces `native_bridge=enabled`; Meson `--vsenv` comes from `[tool.meson-python.args]` rather than tox `config_settings_*`; `lint` = `ruff`; dev tools in `tools/flatline_dev/` excluded from wheels by `tools/prune_dist.py`.
+- Build hardening: `src/flatline/meson.build` handles compiler flags, Meson include dirs for nanobind, auto-discovers Homebrew/vcpkg `zlib`; `pyproject.toml` globally adds Meson `--vsenv` so isolated Windows package builds can self-bootstrap MSVC; no raw compiler/linker env flags needed.
 - CI (`ci.yml`): Python `3.14` for non-Ubuntu jobs; Ubuntu full matrix (`py313`+`py314`); regression `py314`; host-feasibility lanes use `tox -e py314-native -- -m "not regression"`.
 - Release (`release.yml`): `cibuildwheel` + `manylinux_2_28`; Windows bootstraps vcpkg zlib; wheel smoke via `tools/flatline_dev/wheel_smoke.py`; sdist with compliance audit; `twine check` + `python tools/artifacts.py`; PyPI on `release.published`, TestPyPI on `workflow_dispatch`.
 - Release tooling: `python tools/release.py` audits version/doc alignment, rejects dirty worktrees; `python tools/artifacts.py dist` audits metadata/LICENSE/NOTICE/leaked dev tools/native extensions.
