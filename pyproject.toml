@@ -64,6 +64,30 @@ select = [
 [tool.ruff.lint.isort]
 known-first-party = ["flatline", "flatline_dev"]
 
+# -- cibuildwheel ----------------------------------------------------------
+[tool.cibuildwheel]
+build = "cp313-* cp314-*"
+skip = "*-win32 *-win_arm64 *-musllinux_*"
+build-frontend = "build"
+config-settings = {setup-args = "-Dnative_bridge=enabled"}
+test-command = "python {project}/tools/flatline_dev/wheel_smoke.py"
+
+[tool.cibuildwheel.linux]
+archs = "x86_64 aarch64"
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+before-all = "yum install -y zlib-devel"
+
+[tool.cibuildwheel.windows]
+archs = "AMD64"
+
+[tool.cibuildwheel.macos]
+archs = "x86_64 arm64"
+before-all = "brew install zlib"
+
+[tool.cibuildwheel.macos.environment]
+MACOSX_DEPLOYMENT_TARGET = "11.0"
+
 # -- tox -------------------------------------------------------------------
 [tool.tox]
 requires = ["tox >= 4.0"]

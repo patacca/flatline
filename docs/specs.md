@@ -569,12 +569,20 @@ Packaging and compliance:
   before tagging so release review can verify the current version metadata, the
   `ghidra-sleigh` dependency, and the shipped `LICENSE` / `NOTICE`
   files from the actual artifacts rather than by repo contents alone.
+  Platform-specific wheels must also carry the `_flatline_native` extension.
 - `.github/workflows/release.yml` is the source-controlled publish pipeline for
   release artifacts. It runs only on GitHub `release.published` or
-  `workflow_dispatch`, builds both wheel and sdist artifacts, validates them
-  with `twine check dist/*` plus `python tools/artifacts.py dist --repo-root .`,
+  `workflow_dispatch`, builds the ADR-013 Tier-1 wheel matrix via
+  `cibuildwheel` (manylinux `x86_64` / `aarch64`, Windows `AMD64`, and macOS
+  `x86_64` / `arm64` for CPython 3.13 and 3.14) plus the sdist, validates them with
+  `twine check dist/*` plus `python tools/artifacts.py dist --repo-root .`,
   and trusted-publishes manual dispatches to TestPyPI while release-triggered
   publishes target PyPI.
+- The Tier-1 wheel builds must run an installed-wheel smoke check through
+  `cibuildwheel` before publish, exercising the public API with omitted
+  `runtime_data_dir` so transitive `ghidra-sleigh` installation, default
+  runtime-data discovery, and the x86_64 `add(a,b)` fixture decompile are all
+  validated together.
 - The final public-artifact review gate is documented in
   `docs/release_review.md`; it must stay source-controlled and tie the human
   sign-off to the deterministic evidence from `python tools/release.py`,
@@ -621,8 +629,10 @@ Cross-platform feasibility policy:
   non-regression tox matrix, using a native-forced tox env so
   `native_bridge=enabled` cannot silently fall back to the Python bridge, and
   macOS builds must not require callers to inject manual compiler/linker flags
-  for zlib discovery; full contract-matrix coverage remains the bar for
-  changing release-facing support notes.
+  for zlib discovery. After that first non-Linux signal is established, the
+  Windows feasibility spike runs the same native-forced tox env to quantify the
+  remaining MSVC-specific blockers. Full contract-matrix coverage remains the
+  bar for changing release-facing support notes.
 - `docs/host_feasibility.md` records the current platform audit, the ordered
   host-expansion rationale, and the concrete evidence required before a new host
   can move from feasibility to supported status.
@@ -683,6 +693,7 @@ Resolved:
 - ~~Which diagnostic fields are emitted and redacted by default?~~ **Resolved (ADR-006):** P2 emits diagnostics only through startup/runtime-data `RuntimeWarning` messages plus structured `WarningItem` / `ErrorItem` results. Diagnostic text may include full filesystem paths for debuggability; raw memory-image bytes are never emitted. No path redaction is applied because flatline is a library running in the caller's own process, and its target personas (reverse engineers, security engineers, tooling engineers) benefit from full paths for troubleshooting.
 - ~~What release-time checks are mandatory for redistribution?~~ **Resolved (ADR-007):** Releases must ship root `LICENSE` and `NOTICE`, record the vendored decompiler source attribution and `ghidra-sleigh` dependency in `docs/compliance.md`, and pass `python tools/compliance.py` from the repo root before tagging.
 - ~~Should macOS or Windows be the first post-MVP host-expansion target?~~ **Resolved (ADR-008):** macOS first, then Windows. P6 starts by removing shared build-configuration assumptions and proving equivalent contract coverage on macOS before taking on the remaining Windows-specific blockers.
+- ~~Which pre-built wheel matrix should flatline ship for P6.5?~~ **Resolved (ADR-013):** `cibuildwheel` builds CPython 3.13 and 3.14 wheels for manylinux `x86_64`, manylinux `aarch64`, Windows `AMD64`, macOS `x86_64`, and macOS `arm64`, using native GitHub-hosted runners where available; `manylinux_2_28` remains the Linux policy and macOS deployment target stays `11.0`. 32-bit and Windows ARM64 wheels stay deferred.
 - ~~Should warning codes be globally namespaced now to prevent future collisions?~~ **Resolved:** Yes, within flatline's public surface. Warning codes use the stable hierarchical namespace `<phase>.Wxxx` (for example `analyze.W001`), and new codes are added only additively.
 - ~~Should session-level failure categories (startup, initialization) be defined explicitly in the `FlatlineError` hierarchy, or is the current `ErrorItem` taxonomy sufficient?~~ **Resolved (ADR-011):** User-fixable install/startup/runtime-data failures use `configuration_error`, while unexpected flatline/bridge/native bugs remain `internal_error`.
 

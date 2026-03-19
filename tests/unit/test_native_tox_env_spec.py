@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 def test_u026_native_tox_env_forces_native_bridge_builds() -> None:
-    """U-026: The macOS host-feasibility tox env forces `native_bridge=enabled`."""
+    """U-026: The host-feasibility tox env forces `native_bridge=enabled`."""
     repo_root = Path(__file__).resolve().parents[2]
     pyproject = tomllib.loads((repo_root / "pyproject.toml").read_text(encoding="utf-8"))
     tox_envs = pyproject["tool"]["tox"]["env"]

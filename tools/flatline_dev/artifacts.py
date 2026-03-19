@@ -189,6 +189,33 @@ def _contains_dev_only_content(
         )
 
 
+_NATIVE_EXTENSION_SUFFIXES = (".so", ".dylib", ".pyd")
+
+
+def _is_platform_specific_wheel(path: Path) -> bool:
+    """Return True if the wheel filename indicates a platform-specific build."""
+    stem = path.stem
+    parts = stem.rsplit("-", maxsplit=1)
+    if len(parts) < 2:
+        return False
+    platform_tag = parts[-1]
+    return platform_tag != "any"
+
+
+def _has_native_extension(member_names: Sequence[str]) -> bool:
+    """Return True if the wheel contains a flatline native extension."""
+    for member_name in member_names:
+        member_path = PurePosixPath(member_name)
+        if (
+            member_path.parts
+            and member_path.parts[0] == "flatline"
+            and member_path.name.startswith("_flatline_native")
+            and any(member_path.name.endswith(suffix) for suffix in _NATIVE_EXTENSION_SUFFIXES)
+        ):
+            return True
+    return False
+
+
 def _audit_wheel(
     path: Path,
     *,
@@ -215,6 +242,14 @@ def _audit_wheel(
                     issues,
                     "wheel_notice_missing",
                     f"{path} is missing NOTICE.",
+                )
+
+            if _is_platform_specific_wheel(path) and not _has_native_extension(member_names):
+                _append_issue(
+                    issues,
+                    "wheel_native_extension_missing",
+                    f"{path} is a platform-specific wheel but does not contain "
+                    f"the native extension (_flatline_native).",
                 )
 
             metadata_name = next(

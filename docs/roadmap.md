@@ -22,6 +22,7 @@ Product policy:
 | P4 | Stabilization and regression control | P3 complete | Determinism/perf regression gates enforced in CI for pinned matrix |
 | P5 | Initial public release | P4 complete | Release notes include contract guarantees, support tiers / known variant limits, and upgrade policy |
 | P6 | Cross-platform expansion | P5 complete | macOS and Windows feasibility validated with equivalent contract coverage |
+| P6.5 | Wheel distribution matrix | P6 macOS feasibility complete (equivalent contract coverage on macOS); Windows feasibility may still be in progress | Pre-built wheels published to PyPI for every Tier-1 platform/arch/Python combination; `pip install flatline` succeeds without a local compiler on all Tier-1 targets |
 | P7 | Enriched structured output | P5 complete | Pcode ops and varnode graphs exposed as frozen Python types; at least one downstream use case (similarity, diffing, or data flow) validated end-to-end |
 
 ## 2. Detailed Milestone Gates
@@ -103,6 +104,23 @@ and release activities require distinct checkpoints.
 - macOS native build/install and the existing contract matrix are validated before Windows becomes the active expansion target
 - platform-specific risk register entries are closed or accepted
 
+### M5.5: Wheel distribution readiness
+
+- Inputs:
+  - Platform/arch analysis document with tiered matrix recommendation
+  - `cibuildwheel` configuration validated per Tier-1 target
+  - Release workflow updated to build and publish multi-platform wheels
+- Exit checks:
+  - Platform/arch analysis reviewed and tier assignments locked
+  - `cibuildwheel` builds succeed for all Tier-1 targets in CI
+  - Built wheels pass `auditwheel`/`delocate`/`delvewheel` repair and `twine check`
+  - `tools/artifacts.py` validates every built wheel (LICENSE, NOTICE, version, deps)
+  - Release workflow publishes the full wheel set to TestPyPI via `workflow_dispatch`
+  - Smoke install test per Tier-1 target confirms `import flatline` and a
+    decompile of the x86_64 `add(a,b)` fixture succeed from the published wheel
+    with `ghidra-sleigh` pulled transitively (no local compiler required)
+  - Release notes and support tiers updated to reflect shipped wheel platforms
+
 ### M6: Enriched output readiness (post-MVP)
 - Inputs:
 - ADR-012 design decision on pcode/varnode representation and extraction strategy
@@ -127,6 +145,12 @@ and release activities require distinct checkpoints.
 | CI/toolchain variance causes flaky results | Medium | Medium | Stable build/test matrix and deterministic fixture harness | Flake rate trend in CI |
 | Windows portability blockers discovered late | Medium | High | ADR-008 resolves the host order to macOS first; complete a Windows-specific feasibility spike only after macOS closes the shared build/config blockers and equivalent contract coverage is defined | Start of P6 |
 | Security/resource exhaustion on malformed memory images | Medium | High | Bounded analysis budgets and defensive error taxonomy | Fuzz/negative test failures |
+| `cibuildwheel` manylinux container incompatible with Meson/C++20 toolchain | Medium | High | Pin `cibuildwheel` version and manylinux image; test in CI before release workflow migration | First `cibuildwheel` integration attempt |
+| macOS/Windows wheel includes wrong shared libraries or misses zlib | Medium | High | `delocate`/`delvewheel` repair step + artifact audit; smoke-install test on clean runner | Per-platform wheel build |
+| CI cost exceeds budget for full matrix (runners x platforms x Python versions) | Medium | Medium | Start with minimal Tier-1 set; use matrix-include to avoid combinatorial explosion; cache build artifacts | Monthly CI cost review |
+| ABI mismatch between build environment and target (e.g., glibc version) | Low | High | `cibuildwheel` manylinux containers enforce minimum glibc; pin container tags | `auditwheel` repair failures |
+| Free-threaded CPython ABI breaks nanobind assumptions | Medium | Medium | Defer free-threaded wheels until nanobind declares stable support | nanobind release notes |
+| macOS universal2 vs separate arch wheels trade-off | Low | Low | Defer to platform analysis; universal2 simplifies the matrix but doubles per-wheel size | Platform analysis deliverable |
 
 ## 4. ADR Backlog
 
@@ -141,6 +165,7 @@ and release activities require distinct checkpoints.
 | ADR-007 License Compliance Process | What release-time checks are mandatory for redistribution? **Decided:** releases must ship root `LICENSE` and `NOTICE`, keep the vendored Ghidra source attribution and declared `ghidra-sleigh` dependency recorded in `docs/compliance.md`, and pass `python tools/compliance.py` before tagging. The compliance, footprint, release-readiness, and artifact-audit helpers now live under `tools/flatline_dev` with `tools/*.py` wrappers as repo-only commands excluded from distribution artifacts (wheels and sdists). | End of P3 (decided) |
 | ADR-008 Cross-Platform Order | macOS-first or Windows-first after Linux host MVP? **Decided:** macOS first, then Windows. P6 starts by removing shared build-system assumptions (for example GCC-only Meson flags), documenting the feasibility findings in `docs/host_feasibility.md`, and keeping a dedicated macOS native contract lane green before taking on MSVC/Windows-specific blockers. | Start of P6 (decided) |
 | ADR-012 Enriched Output Design | What pcode/varnode representation do frozen Python types expose, and at which decompilation stage is data extracted? Covers opcode table mapping, varnode graph topology (inputs/outputs/def-use edges), extraction point in the action pipeline (pre- vs post-simplification), and whether enriched data lives inside `FunctionInfo` or a separate companion type. Target use cases: BSim-style similarity with custom hyperparameters, binary diffing, data flow / taint analysis, semantic understanding. | Start of P7 |
+| ADR-013 Wheel Distribution Strategy | Which Python interpreters, versions, and platform/arch targets get pre-built wheels, and what tooling produces them? **Decided:** CPython only; `>= 3.13`; `cibuildwheel`; 64-bit wheel matrix = manylinux x86_64 + manylinux aarch64 + Windows x86_64 + macOS x86_64 + macOS arm64; native GitHub-hosted runners where available; `manylinux_2_28` policy; macOS deployment target `11.0`. 32-bit targets, musllinux, and Windows ARM64 remain deferred. | P6.5 matrix lock (decided) |
 | ADR-009 ISA Variant Scope | Which ISA variants (e.g., Thumb/Thumb-2, microMIPS, RV32 vs RV64 extensions) are in-scope for priority fixture coverage vs best-effort? **Decided: x86 has both 32-bit and 64-bit fixture coverage; other ISA families have one representative variant each — ARM64 (AArch64), RISC-V 64, MIPS32 — for diverse bitwidth coverage.** Other variants (ARM32/Thumb, RV32, MIPS64, microMIPS) are best-effort with no dedicated fixtures. See `tests/specs/fixtures.md` §1. | End of P1 (decided) |
 | ADR-010 Runtime Data Packaging | How are compiled `.sla` and runtime data files packaged and distributed? **Decided: separate `ghidra-sleigh` pip package** (import `ghidra_sleigh`). It builds `sleighc` from Ghidra C++ sources at package build time, compiles `.sla` files ahead of use, ships them as package data, and exposes `ghidra_sleigh.get_runtime_data_dir()` for consumers. ADR-004 now defines flatline's default dependency-backed asset policy on top of this mechanism. See `patacca/ghidra-sleigh`. | Start of P2 (decided) |
 | ADR-011 Setup Failure Taxonomy | How should user-fixable install/startup/runtime-data failures be classified? **Decided:** expose `configuration_error` for missing/bad `runtime_data_dir`, unavailable default `ghidra-sleigh` runtime data, and other user-fixable setup failures; reserve `internal_error` for unexpected flatline/bridge/native bugs. | P3 (decided) |

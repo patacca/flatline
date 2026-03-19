@@ -76,10 +76,16 @@ out-of-band. Do not commit review notes to this repo.
 ## GitHub Actions Release Automation
 
 - `.github/workflows/release.yml` is the release publish pipeline.
-- `release.published` builds the wheel and sdist, validates them with
-  `twine check dist/*` plus `python tools/artifacts.py dist --repo-root .`,
-  then trusted-publishes to PyPI.
-- `workflow_dispatch` runs the same build and validation flow, but publishes to
-  TestPyPI instead of PyPI.
+- `release.published` builds the Tier-1 wheel set via `cibuildwheel`
+  (manylinux `x86_64` / `aarch64`, Windows `AMD64`, and macOS `x86_64` / `arm64`
+  for CPython 3.13 and 3.14) plus the sdist.
+- The wheel jobs run `tools/flatline_dev/wheel_smoke.py` through
+  `cibuildwheel`'s test hook, so the installed wheel must import,
+  auto-discover `ghidra-sleigh` runtime data, and decompile `fx_add_elf64`
+  before publish continues.
+- A validation job merges the built artifacts, runs `twine check dist/*`, and
+  runs `python tools/artifacts.py dist --repo-root .`.
+- `workflow_dispatch` runs the same build, smoke, and validation flow, but
+  publishes the full wheel set plus sdist to TestPyPI instead of PyPI.
 - The manual review gate in this document and `docs/release_review.md` still
   happens before creating the tag/release that triggers the production publish.

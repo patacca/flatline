@@ -199,8 +199,29 @@ if nanobind_available
     endif
   endif
 
+  if not zlib_dep.found() and host_machine.system() == 'windows'
+    vcpkg_root_probe = run_command(
+      py, '-c',
+      'import os; print(os.environ.get("VCPKG_INSTALLATION_ROOT", ""))',
+      check: false,
+    )
+    if vcpkg_root_probe.returncode() == 0
+      vcpkg_root = vcpkg_root_probe.stdout().strip()
+      if vcpkg_root != ''
+        vcpkg_prefix = vcpkg_root + '/installed/x64-windows'
+        zlib_lib = cpp.find_library('zlib', dirs: [vcpkg_prefix + '/lib'], required: false)
+        if zlib_lib.found()
+          zlib_dep = declare_dependency(
+            dependencies: [zlib_lib],
+            include_directories: include_directories(vcpkg_prefix + '/include'),
+          )
+        endif
+      endif
+    endif
+  endif
+
   if not zlib_dep.found()
-    error('zlib not found. Install the platform zlib development package; on macOS, `brew install zlib` is sufficient and no manual compiler flags are required.')
+    error('zlib not found. Install the platform zlib development package; on macOS, `brew install zlib`; on Windows, `vcpkg install zlib:x64-windows` with VCPKG_INSTALLATION_ROOT set.')
   endif
 
   ghidra_decompiler_lib = static_library(

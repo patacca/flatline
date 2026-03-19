@@ -32,12 +32,13 @@ def _write_wheel(
     dist_dir: Path,
     *,
     version: str = "0.1.0.dev0",
+    platform_tag: str = "py3-none-any",
     include_dependency: bool = True,
     include_license: bool = True,
     include_notice: bool = True,
     extra_members: Sequence[tuple[str, str]] = (),
 ) -> Path:
-    wheel_path = dist_dir / f"flatline-{version}-py3-none-any.whl"
+    wheel_path = dist_dir / f"flatline-{version}-{platform_tag}.whl"
     dist_info_dir = f"flatline-{version}.dist-info"
     metadata_lines = [
         "Metadata-Version: 2.4",
@@ -186,3 +187,46 @@ def test_u022_built_release_artifact_audit_rejects_dev_only_content_leaks(
     issue_codes = {issue.code for issue in report.issues}
     assert "wheel_dev_only_content_present" in issue_codes
     assert "sdist_dev_only_content_present" in issue_codes
+
+
+def test_u022_built_release_artifact_audit_rejects_platform_wheel_missing_native_extension(
+    tmp_path: Path,
+) -> None:
+    """U-022: Platform-specific wheel without a native extension fails the audit."""
+    repo_root = tmp_path / "repo"
+    dist_dir = repo_root / "dist"
+    dist_dir.mkdir(parents=True)
+    _write_repo_version(repo_root)
+    _write_wheel(
+        dist_dir,
+        platform_tag="cp314-cp314-manylinux_2_28_x86_64",
+    )
+    _write_sdist(dist_dir)
+
+    report = audit_built_release_artifacts(repo_root)
+
+    assert not report.is_valid
+    issue_codes = {issue.code for issue in report.issues}
+    assert "wheel_native_extension_missing" in issue_codes
+
+
+def test_u022_built_release_artifact_audit_accepts_platform_wheel_with_native_extension(
+    tmp_path: Path,
+) -> None:
+    """U-022: Platform-specific wheel with native extension passes."""
+    repo_root = tmp_path / "repo"
+    dist_dir = repo_root / "dist"
+    dist_dir.mkdir(parents=True)
+    _write_repo_version(repo_root)
+    _write_wheel(
+        dist_dir,
+        platform_tag="cp314-cp314-manylinux_2_28_x86_64",
+        extra_members=(
+            ("flatline/_flatline_native.cpython-314-x86_64-linux-gnu.so", ""),
+        ),
+    )
+    _write_sdist(dist_dir)
+
+    report = audit_built_release_artifacts(repo_root)
+
+    assert report.is_valid

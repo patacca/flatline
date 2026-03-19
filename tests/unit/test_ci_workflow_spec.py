@@ -73,3 +73,16 @@ def test_u026_ci_workflow_keeps_macos_native_contract_lane() -> None:
     assert "CPPFLAGS" not in job_runs
     assert "LDFLAGS" not in job_runs
     assert "PKG_CONFIG_PATH" not in job_runs
+
+
+def test_u027_ci_workflow_keeps_windows_native_contract_lane() -> None:
+    """U-027: CI keeps a Windows lane on the native non-regression matrix."""
+    workflow = _load_ci_workflow()
+    windows_job = _job(workflow, "windows-contract")
+
+    assert str(windows_job["runs-on"]).startswith("windows-")
+    job_runs = "\n".join(_job_runs(windows_job))
+    assert 'tox -e py314-native -- -m "not regression"' in job_runs
+    assert "CPPFLAGS" not in job_runs
+    assert "LDFLAGS" not in job_runs
+    assert "PKG_CONFIG_PATH" not in job_runs
