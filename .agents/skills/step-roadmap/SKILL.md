@@ -36,6 +36,7 @@ Advance the **next roadmap item** and reflect progress via **concrete repo chang
 - Error model: hard errors on invalid input; warnings on degraded success. No silent fallbacks.
 - When an ADR resolves only the mechanism, keep deferred policy/versioning questions open in the backlog.
 - Runtime-data packaging uses the external package `ghidra-sleigh` (import `ghidra_sleigh`).
+- Do not add or update tests for changes that do not affect software features: NFC refactors, CI/workflow edits, and documentation-only changes do not warrant new tests. Tests exist to verify software behavior.
 - Keep `CLAUDE.md` updated after meaningful repo changes (state, test counts, new files).
 - Always work inside the Python **venv** (`source .venv/bin/activate`).
 
