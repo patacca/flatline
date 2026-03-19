@@ -78,10 +78,16 @@ def test_u025_release_workflow_routes_manual_dispatches_to_testpypi() -> None:
         ("x86_64", "macos"),
     }
 
-    # -- build-sdist: compliance audit + sdist build --
+    # -- dev-checks: tox -e dev gates build jobs --
+    dev_checks_job = _job(workflow, "dev-checks")
+    dev_checks_runs = "\n".join(_job_runs(dev_checks_job))
+    assert "tox -e dev" in dev_checks_runs
+    assert "dev-checks" in build_wheels_job.get("needs", [])
+
+    # -- build-sdist: sdist build --
     build_sdist_job = _job(workflow, "build-sdist")
+    assert "dev-checks" in build_sdist_job.get("needs", [])
     sdist_runs = "\n".join(_job_runs(build_sdist_job))
-    assert "python tools/compliance.py" in sdist_runs
     assert "python -m build --sdist" in sdist_runs
 
     # -- validate: twine + artifact audit on all built artifacts --

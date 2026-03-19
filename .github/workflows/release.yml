@@ -9,9 +9,30 @@ permissions:
   contents: read
 
 jobs:
+  dev-checks:
+    name: Dev validation (compliance, footprint, workflow spec, artifact audit)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install tox
+        run: pip install tox
+
+      - name: Run dev checks
+        run: tox -e dev
+
   build-wheels:
     name: Build wheels (${{ matrix.os }}, ${{ matrix.cibw-archs }})
     runs-on: ${{ matrix.os }}
+    needs: dev-checks
     strategy:
       fail-fast: false
       matrix:
@@ -51,8 +72,7 @@ jobs:
   build-sdist:
     name: Build sdist
     runs-on: ubuntu-latest
-    env:
-      PYTHONPATH: src:tools
+    needs: dev-checks
     steps:
       - name: Checkout repository (with submodules)
         uses: actions/checkout@v4
@@ -67,9 +87,6 @@ jobs:
 
       - name: Install build tooling
         run: pip install build
-
-      - name: Run compliance audit
-        run: python tools/compliance.py
 
       - name: Build sdist
         run: python -m build --sdist --outdir dist
