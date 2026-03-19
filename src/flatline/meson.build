@@ -73,6 +73,9 @@ if nanobind_available
       '-fno-strict-aliasing',
     ]
   endif
+  if host_machine.system() == 'windows'
+    ghidra_cpp_args += ['-D_WINDOWS', '-DWINDOWS']
+  endif
   nanobind_inc = include_directories(
     'nanobind_staged/include',
     'nanobind_staged/src',
