@@ -205,7 +205,7 @@ if nanobind_available
   if not zlib_dep.found() and host_machine.system() == 'windows'
     vcpkg_root_probe = run_command(
       py, '-c',
-      'import os; print(os.environ.get("VCPKG_INSTALLATION_ROOT", ""))',
+      'import os, shutil; root = os.environ.get("VCPKG_INSTALLATION_ROOT", ""); exe = shutil.which("vcpkg") if not root else None; print(root or (os.path.dirname(os.path.realpath(exe)) if exe else ""))',
       check: false,
     )
     if vcpkg_root_probe.returncode() == 0

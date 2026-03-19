@@ -26,8 +26,16 @@ metaphor for decompilation: extracting meaning from dead code.
 - Python 3.13+
 - Supported runtime host contract: Linux x86_64
 - Published wheels: Linux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64
-- C++20 compiler (for source builds or forced native builds)
-- Ninja (for source builds or forced native builds)
+
+Building from source (platforms without pre-built wheels, or forced native
+builds) requires a C++20 compiler, Ninja, and zlib headers:
+
+| Platform | Install command |
+|----------|----------------|
+| Ubuntu/Debian | `sudo apt-get install g++ ninja-build zlib1g-dev` |
+| Fedora/RHEL | `sudo dnf install gcc-c++ ninja-build zlib-devel` |
+| macOS | `brew install ninja zlib` (Xcode provides the C++ compiler) |
+| Windows | Visual Studio with C++ workload; `pip install ninja`; `vcpkg install zlib:x64-windows` |
 
 ## Installation
 

@@ -34,14 +34,7 @@ jobs:
 
       - name: Install Windows zlib dependencies
         if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $vcpkgRoot = $env:VCPKG_INSTALLATION_ROOT
-          if (-not $vcpkgRoot) {
-            $vcpkgRoot = Split-Path (Get-Command vcpkg).Source
-          }
-          "VCPKG_INSTALLATION_ROOT=$vcpkgRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          & "$vcpkgRoot\vcpkg.exe" install zlib:x64-windows
+        run: vcpkg install zlib:x64-windows
 
       - name: Build wheels via cibuildwheel
         uses: pypa/cibuildwheel@v2.22

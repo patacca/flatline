@@ -79,24 +79,15 @@ jobs:
           python-version: "3.14"
 
       - name: Install system dependencies
-        shell: pwsh
         run: |
           pip install ninja
-          $vcpkgRoot = $env:VCPKG_INSTALLATION_ROOT
-          if (-not $vcpkgRoot) {
-            $vcpkgRoot = Split-Path (Get-Command vcpkg).Source
-          }
-          "VCPKG_INSTALLATION_ROOT=$vcpkgRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          & "$vcpkgRoot\vcpkg.exe" install zlib:x64-windows
+          vcpkg install zlib:x64-windows
 
       - name: Install tox
         run: pip install tox
 
       - name: Run Windows non-regression contract matrix
         run: tox -e py314-native -- -m "not regression"
-        env:
-          CC: cl
-          CXX: cl
 
   test:
     runs-on: ubuntu-24.04
