@@ -76,6 +76,7 @@ def test_u027_ci_workflow_keeps_windows_native_contract_lane() -> None:
     windows_job = _job(workflow, "windows-contract")
 
     assert str(windows_job["runs-on"]).startswith("windows-")
+    assert all(step.get("uses") != "ilammy/msvc-dev-cmd@v1" for step in windows_job["steps"])
     job_runs = "\n".join(_job_runs(windows_job))
     assert 'tox -e py314-native -- -m "not regression"' in job_runs
     assert "CPPFLAGS" not in job_runs

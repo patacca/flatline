@@ -64,6 +64,7 @@ def test_u025_release_workflow_routes_manual_dispatches_to_testpypi() -> None:
     assert any("cibuildwheel" in action for action in build_wheels_uses), (
         "build-wheels must use cibuildwheel"
     )
+    assert all(action != "ilammy/msvc-dev-cmd@v1" for action in build_wheels_uses)
     _uses_step(build_wheels_job, "actions/upload-artifact")
     matrix_entries = {
         (entry["cibw-archs"], _runner_family(entry["os"]))

@@ -78,9 +78,6 @@ jobs:
         with:
           python-version: "3.14"
 
-      - name: Activate MSVC developer environment
-        uses: ilammy/msvc-dev-cmd@v1
-
       - name: Install system dependencies
         shell: pwsh
         run: |
