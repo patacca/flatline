@@ -100,6 +100,9 @@ jobs:
 
       - name: Run Windows non-regression contract matrix
         run: tox -e py314-native -- -m "not regression"
+        env:
+          CC: cl
+          CXX: cl
 
   test:
     runs-on: ubuntu-24.04
