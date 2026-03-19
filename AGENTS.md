@@ -2,88 +2,85 @@
 - Update this file on every repo operation; keep only facts that save re-derivation time.
 
 # Overview
-- `flatline`: pip-installable Python wrapper around the Ghidra C++ decompiler; decompiler surface only, no UI/project DB.
-- Release state: P5 complete; version `0.1.0`; release-facing contract/support policy in `docs/release_notes.md`; `CHANGELOG.md` follows Keep a Changelog and updates on every release.
-- Next: P6.5 wheel distribution matrix in progress; ADR-013 decided (CPython only, `>= 3.13`, `cibuildwheel`); 64-bit matrix locked in `docs/wheel_matrix.md`: manylinux x86_64, manylinux aarch64, Windows x86_64, macOS x86_64, macOS arm64; `pyproject.toml` carries the `cibuildwheel` config and repo-only installed-wheel smoke script `tools/flatline_dev/wheel_smoke.py`; release workflow builds the multi-platform wheel set on native GitHub-hosted runners where available. P6 host-feasibility work remains macOS-first, Windows-second per ADR-008; `docs/host_feasibility.md` records the current audit; P7 enriched output remains deferred behind ADR-012.
-- Runtime data comes from runtime dependency `ghidra-sleigh` / import `ghidra_sleigh`; omitted `runtime_data_dir` auto-discovers `ghidra_sleigh.get_runtime_data_dir()`, explicit `runtime_data_dir` overrides it, any installed `ghidra-sleigh` is accepted for default runtime data.
-- Default asset profile expects full multi-ISA runtime data; lighter roots such as `all_processors=false` are explicit user-managed overrides.
-- Version `0.1.0` is aligned in `pyproject.toml`, `meson.build`, and `src/flatline/_version.py`; `pyproject.toml` declares unpinned runtime dependency `ghidra-sleigh` and `license-files = ["LICENSE", "NOTICE"]`.
-- `third_party/ghidra` is a git submodule; `third_party/r2ghidra` is a local read-only reference checkout ignored by the parent repo.
-- Fixture-backed confidence matrix: x86_64, x86_32, AArch64, RISC-V 64, MIPS32; committed memory fixtures live in `tests/fixtures/*.hex`, sources in `tests/fixtures/sources/`, regen via `tests/fixtures/generate_hex_fixtures.py`.
-- Additional committed native fixtures: x86_64 switch and warning cases; regression asserts switch site `0x1009` and 9 target addresses.
-- End-to-end decompilation is verified for x86_64 `add(a,b)` with structured output.
-- Packaging/test shape: `py313`/`py314` tox envs build/install `flatline[test]` wheels inside `.tox`; `py314-native` forces `native_bridge=enabled` during tox packaging for the macOS and Windows host-feasibility lanes; `lint` is package-skip + `ruff`; repo-only compliance/footprint/release/artifact tools live in `tools/flatline_dev/` with `tools/*.py` wrappers and are excluded from wheels/sdists by `tools/prune_dist.py`.
-- P6 build hardening: `src/flatline/meson.build` keeps compiler-family warning/visibility flags in Meson, uses Meson include directories for staged nanobind headers, auto-discovers Homebrew `zlib` on macOS and vcpkg `zlib` on Windows via `VCPKG_INSTALLATION_ROOT`, so shared native-build paths do not depend on raw compiler/linker flags on any host.
-- CI: `.github/workflows/ci.yml` uses latest stable Python `3.14` for non-Ubuntu jobs (`lint`, `build`, macOS and Windows native contract lanes, release workflow build); Ubuntu keeps the full supported matrix (`py313` + `py314`) for `test`, and `regression` runs `py314`; both host-feasibility lanes use `tox -e py314-native -- -m "not regression"` without manual compiler/linker env flags.
-- Release publishing: `.github/workflows/release.yml` uses `cibuildwheel` for the 64-bit matrix (manylinux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64) with `manylinux_2_28` policy on Linux; Windows jobs bootstrap `zlib:x64-windows` via vcpkg; the wheel jobs run `tools/flatline_dev/wheel_smoke.py` against the installed wheel with default runtime-data discovery; separate sdist build with compliance audit; artifact validation job runs `twine check` + `python tools/artifacts.py`; publishes to PyPI on `release.published` and TestPyPI on `workflow_dispatch` with `skip-existing`.
-- Release tooling/docs: `docs/release_workflow.md` records the `0.1.0.dev0` -> `0.1.0` SemVer decision and the Tier-1 wheel publish flow; `docs/release_review.md` is the source-controlled human artifact-review checklist/hold point; `python tools/release.py` audits version/doc alignment and rejects dirty git worktrees before tagging; `python tools/artifacts.py dist` audits built wheel/sdist version/dependency metadata, `LICENSE` / `NOTICE`, leaked dev tools, and native extension presence in platform-specific wheels.
-- Redistribution/compliance: root `LICENSE` + `NOTICE`, `docs/compliance.md`, `python tools/compliance.py`; default-install footprint tracked by `python tools/footprint.py` in `docs/footprint.md` at `30,742,876` bytes (`29.32 MiB`) combined payload, `ghidra-sleigh` runtime data `80.3%`.
-- Public support messaging distinguishes bundled-ISA enumeration from fixture-backed confidence: x86 32/64, ARM64, RISC-V 64, MIPS32 are fixture-backed; other bundled ISAs/variants are best-effort.
+- `flatline`: pip-installable Python wrapper around Ghidra C++ decompiler; decompiler surface only, no UI/project DB.
+- Version `0.1.0`; aligned in `pyproject.toml`, `meson.build`, `src/flatline/_version.py`; P5 complete.
+- Next: P6.5 wheel matrix in progress (ADR-013); P6 host-feasibility macOS-first (ADR-008); P7 deferred behind ADR-012.
+- 64-bit wheel matrix locked in `docs/wheel_matrix.md`: manylinux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64.
+- Runtime data: dependency `ghidra-sleigh` (import `ghidra_sleigh`); omitted `runtime_data_dir` auto-discovers via `ghidra_sleigh.get_runtime_data_dir()`; explicit overrides; full multi-ISA default.
+- `pyproject.toml`: unpinned `ghidra-sleigh`, `license-files = ["LICENSE", "NOTICE"]`, `cibuildwheel` config.
+- `third_party/ghidra` git submodule; `third_party/r2ghidra` local read-only, ignored.
+- Fixture-backed ISAs: x86_64, x86_32, AArch64, RISC-V 64, MIPS32; fixtures in `tests/fixtures/*.hex`, sources in `tests/fixtures/sources/`, regen via `tests/fixtures/generate_hex_fixtures.py`; additional x86_64 switch/warning fixtures; regression asserts switch site `0x1009` + 9 targets.
+- Tox envs: `py313`/`py314` build wheels in `.tox`; `py314-native` forces `native_bridge=enabled`; `lint` = `ruff`; dev tools in `tools/flatline_dev/` excluded from wheels by `tools/prune_dist.py`.
+- Build hardening: `src/flatline/meson.build` handles compiler flags, Meson include dirs for nanobind, auto-discovers Homebrew/vcpkg `zlib`; no raw compiler/linker env flags needed.
+- CI (`ci.yml`): Python `3.14` for non-Ubuntu jobs; Ubuntu full matrix (`py313`+`py314`); regression `py314`; host-feasibility lanes use `tox -e py314-native -- -m "not regression"`.
+- Release (`release.yml`): `cibuildwheel` + `manylinux_2_28`; Windows bootstraps vcpkg zlib; wheel smoke via `tools/flatline_dev/wheel_smoke.py`; sdist with compliance audit; `twine check` + `python tools/artifacts.py`; PyPI on `release.published`, TestPyPI on `workflow_dispatch`.
+- Release tooling: `python tools/release.py` audits version/doc alignment, rejects dirty worktrees; `python tools/artifacts.py dist` audits metadata/LICENSE/NOTICE/leaked dev tools/native extensions.
+- Compliance: root `LICENSE` + `NOTICE`, `docs/compliance.md`, `python tools/compliance.py`; footprint `30,742,876` bytes (`29.32 MiB`), `ghidra-sleigh` data `80.3%`.
+- Support messaging: fixture-backed ISAs vs best-effort bundled; docs distinguish published wheel availability from supported host status.
 
 # Design posture
-- User-centered library development; prefer the option that makes the caller's life easier.
+- User-centered library; prefer caller convenience.
+- Only test functional changes.
 
 # Architecture (3-layer adapter)
-- Public Contract: `DecompilerSession` lifecycle + one-shot wrappers in `src/flatline/_session.py`; request/result models and error taxonomy in `_models.py` / `_errors.py`.
-- Bridge Contract: nanobind extension `src/flatline/_flatline_native.cpp` plus Python fallback `src/flatline/_bridge.py`; pre-validates language/compiler pairs, uses `.ldefs` fallback enumeration when native listing is unavailable, translates public models <-> native calls; unstable internal.
-- Native layer: upstream adapter over Ghidra callable surface; 82 upstream C++ sources compiled via Meson into static `ghidra_decompiler` (zlib required); per request `SleighArchitecture` init -> custom `LoadImage` -> action reset/perform -> `docFunction` -> structured `FunctionInfo`.
+- Public: `DecompilerSession` + one-shot wrappers in `_session.py`; models in `_models.py`; errors in `_errors.py`.
+- Bridge: nanobind `_flatline_native.cpp` + Python fallback `_bridge.py`; pre-validates language/compiler, `.ldefs` fallback enumeration; unstable internal.
+- Native: 82 upstream C++ sources via Meson into static `ghidra_decompiler` (zlib required); `SleighArchitecture` init -> `LoadImage` -> action reset/perform -> `docFunction` -> `FunctionInfo`.
 
 # Conventions
-- File length: max about 700 lines; split when exceeded.
+- Max ~700 lines per file.
 - Spec-first / TDD.
-- Error model: hard errors on invalid input; warnings on degraded success; no silent fallbacks.
+- Hard errors on invalid input; warnings on degraded success; no silent fallbacks.
 - Frozen value copies; no native pointers cross ABI boundary.
-- Tests: do not add grep-style assertions over structured text/config files; parse the underlying format or exercise behavior directly.
-- Workflow/build config tests are smoke checks for critical behavior only; avoid pinning incidental YAML/TOML layout, step names, cache settings, or exact shell formatting when equivalent behavior is preserved.
-- Build UX: do not require users or CI to pass low-level compiler/linker env flags such as `CPPFLAGS`, `LDFLAGS`, or `PKG_CONFIG_PATH` for normal installs; hide platform-specific discovery inside the build/configuration layer.
-- C++20: `default_options: ['cpp_std=c++20']` in root `meson.build`; `-std=c++20` in `src/flatline/meson.build`.
-- Code style: `docs/code_style.md`.
-- ASCII only in `.py`, `.cpp`, `.h`, `meson.build`.
+- Tests: parse structured formats, not grep; no tests for NFC/CI/doc-only changes; workflow tests smoke-check critical behavior only.
+- Build UX: no user-facing `CPPFLAGS`/`LDFLAGS`/`PKG_CONFIG_PATH`; hide in build layer.
+- C++20: `default_options: ['cpp_std=c++20']` root, `-std=c++20` in `src/flatline/meson.build`.
+- Style: `docs/code_style.md`; ASCII only in `.py`, `.cpp`, `.h`, `meson.build`.
 
 # Baseline and policy
-- Vendored decompiler source: `third_party/ghidra` git submodule.
+- Vendored source: `third_party/ghidra` submodule.
 - MVP host: Linux x86_64, Python 3.13+, latest-upstream-only.
-- ISA policy: any Ghidra-supported target may enumerate; priority families x86, ARM, RISC-V, MIPS (32/64 each); release-facing fixture-backed variants are x86 32/64, ARM64, RISC-V 64, MIPS32.
-- Stable public Python API over unstable upstream internals.
-- Always work in a Python venv.
+- ISA: priority x86/ARM/RISC-V/MIPS 32+64; fixture-backed x86 32/64, ARM64, RISC-V 64, MIPS32; others best-effort.
+- Stable public API over unstable internals.
+- Always use Python venv.
 
 # ADR status
-- ADR-001 (Public Scope Model): Option A; users provide `memory_image` + `base_address`; convenience file-to-memory layer deferred post-MVP; rationale in `docs/specs.md` S5.5.
-- ADR-002 (Bridge Surface): nanobind C++ extension; public API stable, bridge internal.
-- ADR-003 (Determinism Oracle): normalized token/structure comparison, not canonical text.
-- ADR-004 (Runtime Asset Policy): default runtime UX depends on `ghidra-sleigh`; omitted `runtime_data_dir` auto-discovers dependency runtime data; full multi-ISA install is the default expectation; lighter/custom roots require explicit `runtime_data_dir`; no second flatline-side size gate in P2.
-- ADR-005 (Analysis Budget Defaults): default `AnalysisBudget(max_instructions=100000)`; callers may override `max_instructions`; bridge wires the resolved cap into `Architecture::max_instructions`; unsupported budget keys or non-positive limits fail as `invalid_argument`; no wall-clock timeout in P2.
-- ADR-006 (Logging and Diagnostics): P2 emits only startup/runtime-data `RuntimeWarning` messages and structured `WarningItem` / `ErrorItem`; diagnostic text may include full filesystem paths; raw memory-image bytes are never emitted; no public logging sink.
-- ADR-007 (License Compliance Process): releases ship root `LICENSE` + `NOTICE`, keep `docs/compliance.md`, pass `python tools/compliance.py`, refresh default-install footprint via `python tools/footprint.py` / `docs/footprint.md`; compliance/footprint/release/artifact helpers live under `tools/flatline_dev` with `tools/*.py` wrappers and are excluded from wheel/sdist artifacts.
-- ADR-008 (Cross-Platform Order): resolved to macOS first, then Windows; P6 starts with shared build-system hardening plus source-controlled feasibility findings in `docs/host_feasibility.md`.
-- ADR-009 (ISA Variant Scope): x86 32+64; ARM64, RISC-V 64, MIPS32; others best-effort.
-- ADR-010 (Runtime Data Packaging): separate `ghidra-sleigh` pip package (repo `patacca/ghidra-sleigh`, import `ghidra_sleigh`); builds `sleighc`, ships compiled `.sla` files as package data, exposes `ghidra_sleigh.get_runtime_data_dir()`; flatline layers ADR-004 on top.
-- ADR-011 (Setup Failure Taxonomy): `configuration_error` covers user-fixable install/startup/runtime-data failures; `internal_error` is reserved for unexpected flatline/bridge/native bugs.
-- ADR-012 (Enriched Output Design): unresolved; post-MVP pcode ops and varnode graphs as frozen Python types for similarity, diffing, and data flow; needed by P7.
-- ADR-013 (Wheel Distribution Strategy): decided; CPython only, `>= 3.13`, `cibuildwheel`; locked 64-bit matrix: manylinux x86_64 + manylinux aarch64 + Windows x86_64 + macOS x86_64 + macOS arm64; native GitHub-hosted runners where available; `manylinux_2_28` policy; macOS deployment target `11.0`; 32-bit, musllinux, and Windows ARM64 deferred; analysis in `docs/wheel_matrix.md`.
+- ADR-001: Option A; `memory_image` + `base_address`; file-to-memory deferred; `docs/specs.md` S5.5.
+- ADR-002: nanobind extension; public stable, bridge internal.
+- ADR-003: normalized token/structure comparison, not canonical text.
+- ADR-004: `ghidra-sleigh` auto-discovery; full multi-ISA default; explicit `runtime_data_dir` for custom roots; no flatline-side size gate.
+- ADR-005: default `AnalysisBudget(max_instructions=100000)`; unsupported keys / non-positive limits -> `invalid_argument`; no wall-clock timeout.
+- ADR-006: startup `RuntimeWarning` + structured `WarningItem`/`ErrorItem`; paths in diagnostics; no raw bytes; no public logging sink.
+- ADR-007: `LICENSE`+`NOTICE`, `docs/compliance.md`, `python tools/compliance.py`, footprint via `python tools/footprint.py`; dev tools excluded from artifacts.
+- ADR-008: macOS first, Windows second; shared build hardening + `docs/host_feasibility.md`.
+- ADR-009: x86 32+64, ARM64, RISC-V 64, MIPS32; others best-effort.
+- ADR-010: `ghidra-sleigh` (repo `patacca/ghidra-sleigh`, import `ghidra_sleigh`); builds `sleighc`, ships `.sla`, exposes `get_runtime_data_dir()`.
+- ADR-011: `configuration_error` = user-fixable; `internal_error` = flatline bugs.
+- ADR-012: unresolved; pcode/varnode frozen types for P7.
+- ADR-013: CPython `>= 3.13`, `cibuildwheel`; 64-bit: manylinux x86_64 + aarch64, Windows x86_64, macOS x86_64 + arm64; `manylinux_2_28`; macOS target `11.0`; 32-bit/musllinux/Windows ARM64 deferred; `docs/wheel_matrix.md`.
 
 # Source of truth
-- `docs/specs.md` — API contract, data models, error taxonomy, cross-cutting requirements.
-- `docs/roadmap.md` — phases `P0`-`P7` (including `P6.5`), milestones `M0`-`M6` (including `M5.5`), risk register, ADR backlog.
-- `docs/code_style.md` — naming, formatting, imports, annotations, test conventions.
+- `docs/specs.md` — API contract, models, errors.
+- `docs/roadmap.md` — P0-P7 (incl P6.5), M0-M6 (incl M5.5), risks, ADR backlog.
+- `docs/code_style.md` — naming, formatting, imports, annotations, tests.
 - `CHANGELOG.md` — release history; update on every release.
-- `docs/ai/planning.md` — original brief/requirements.
-- `docs/ai/preplanning.md` — discovery constraints and experiment plan.
-- `docs/ai/refine_plan.md` — refinement checklist and cross-file consistency guide.
-- `docs/compliance.md` — ADR-007 compliance manifest and redistribution checklist.
-- `docs/footprint.md` — default-install footprint baseline and size-policy note.
-- `docs/host_feasibility.md` — P6 platform audit, ADR-008 host order, and equivalent host-coverage bar.
-- `docs/release_notes.md` — `0.1.0` contract guarantees, support tiers, known-variant limits, upgrade policy.
-- `docs/release_review.md` — public artifact-review checklist and external approval hold point.
-- `docs/wheel_matrix.md` — P6.5 platform/arch analysis, tiered wheel matrix recommendation, manylinux policy.
+- `docs/ai/planning.md` — original brief.
+- `docs/ai/preplanning.md` — discovery constraints.
+- `docs/ai/refine_plan.md` — refinement checklist, cross-file consistency.
+- `docs/compliance.md` — compliance manifest.
+- `docs/footprint.md` — footprint baseline.
+- `docs/host_feasibility.md` — P6 platform audit.
+- `docs/release_notes.md` — `0.1.0` contract, support tiers, upgrade policy.
+- `docs/release_review.md` — artifact-review checklist.
+- `docs/wheel_matrix.md` — wheel matrix analysis, manylinux policy.
 
 # Repo structure (non-vendored)
-- Build/config: `pyproject.toml`, `.github/workflows/release.yml`, `meson.build`, `src/flatline/meson.build`, `meson_options.txt`.
-- Public package: `src/flatline/`; `src/flatline/_session.py`, `src/flatline/_bridge.py`, `src/flatline/_runtime_data.py`, `src/flatline/_flatline_native.cpp`.
+- Build: `pyproject.toml`, `.github/workflows/release.yml`, `meson.build`, `src/flatline/meson.build`, `meson_options.txt`.
+- Package: `src/flatline/`; `_session.py`, `_bridge.py`, `_runtime_data.py`, `_flatline_native.cpp`.
 - Dev tools: `tools/flatline_dev/`; wrappers `tools/compliance.py`, `tools/footprint.py`, `tools/release.py`, `tools/artifacts.py`.
-- Docs/notes: `docs/`, `docs/ai/`, `docs/host_feasibility.md`, `docs/release_notes.md`, `docs/release_review.md`, `docs/release_workflow.md`, `notes/api/decompiler_inventory.md`, `notes/r2ghidra/integration_map.md`.
-- Tests/fixtures: `tests/_native_fixtures.py`, `tests/`, `tests/fixtures/*.hex`, `tests/fixtures/sources/`, `tests/fixtures/generate_hex_fixtures.py`.
-- External companion package: `ghidra-sleigh` (GitHub `patacca/ghidra-sleigh`) provides compiled Sleigh runtime data and is not vendored in this repo.
+- Docs: `docs/`, `docs/ai/`; `notes/api/decompiler_inventory.md`, `notes/r2ghidra/integration_map.md`.
+- Tests: `tests/`, `tests/_native_fixtures.py`, `tests/fixtures/*.hex`, `tests/fixtures/sources/`, `tests/fixtures/generate_hex_fixtures.py`.
+- External: `ghidra-sleigh` (`patacca/ghidra-sleigh`), not vendored.
 
 # Build & development commands
 - Activate venv: `source .venv/bin/activate`
@@ -107,28 +104,27 @@
 - Single category: `tox -e py313,py314 -- -m unit` (also: `contract`, `integration`, `regression`, `negative`)
 - Single file: `tox -e py313,py314 -- tests/unit/test_models.py`
 - Single test: `tox -e py313,py314 -- tests/unit/test_models.py::test_name -v`
-- Tox behavior: `py313`/`py314` build/install `flatline[test]` wheels in `.tox`; `dev` skips package install and uses `PYTHONPATH=src:tools`; `lint` skips package install and runs `ruff` over `src/`, `tests/`, `tools/`; `skip_missing_interpreters = true`.
-- `ghidra-sleigh` source-build details live in its own repo; use its documented Meson options there, not from this workspace.
+- Tox: `py313`/`py314` build wheels; `dev` uses `PYTHONPATH=src:tools`; `lint` runs `ruff` on `src/`, `tests/`, `tools/`; `skip_missing_interpreters = true`.
+- `ghidra-sleigh` build details in its own repo.
 
 # Tests
-- Native tests expect compiled `.sla` data from installed `ghidra-sleigh`; current runtime coverage includes DATA, x86, AARCH64, RISCV, and MIPS.
-- Native tox runs still resolve runtime data from `ghidra_sleigh.get_runtime_data_dir()` explicitly; public `DecompilerSession` startup auto-discovers that path when `runtime_data_dir` is omitted; `DecompileRequest` and `DecompilerSession` coerce path-like `runtime_data_dir` inputs to strings.
+- Native tests need `.sla` data from `ghidra-sleigh`; coverage: DATA, x86, AARCH64, RISCV, MIPS.
+- Runtime data resolved via `ghidra_sleigh.get_runtime_data_dir()`; `DecompilerSession` auto-discovers; `DecompileRequest`/`DecompilerSession` coerce path-like inputs.
 - `tests/conftest.py` auto-applies category markers from directory names.
-- Specs: `tests/specs/test_catalog.md` (49 definitions, 5 categories, traceability matrix), `tests/specs/fixtures.md` (10 fixtures, oracle strategy, determinism rules).
-- Workflow/build specs: `tests/unit/test_ci_workflow_spec.py`, `tests/unit/test_native_tox_env_spec.py`, and `tests/unit/test_release_ci_workflow_spec.py` smoke-check critical CI/native-lane/publish invariants, including the locked Tier-1 wheel matrix and installed-wheel smoke path, without treating incidental workflow structure as a stable interface.
-- Runtime/contract specs: `tests/unit/test_native_bridge_runtime_spec.py`, `tests/unit/test_runtime_data_spec.py`, `tests/unit/test_public_contract_spec.py`, `tests/unit/test_bridge_adapter_spec.py` cover real runtime-data smoke, `.ldefs` tolerance/default discovery, ADR-005 budget contract, and ADR-006 full-path diagnostics.
-- Release/compliance/devtool specs: `tests/unit/test_compliance_spec.py`, `tests/unit/test_footprint_spec.py`, `tests/unit/test_release_notes_spec.py`, `tests/unit/test_release_review_spec.py`, `tests/unit/test_release_workflow_spec.py`, `tests/unit/test_artifact_audit_spec.py`, `tests/unit/test_devtool_layout_spec.py`; dev-tool module tests skip under tox wheel installs via `pytest.importorskip`.
-- Regression/integration/negative specs: `tests/regression/test_regression_spec.py` covers normalized-output switch-site baseline and warm-session p95 budgets across priority-ISA add fixtures plus `fx_switch_elf64`; `tests/integration/test_integration_spec.py` and `tests/negative/test_negative_spec.py` assert committed native fixtures, not spec-only skips.
+- Specs: `tests/specs/test_catalog.md` (49 defs, 5 categories), `tests/specs/fixtures.md` (10 fixtures, oracle strategy).
+- Workflow specs: `test_ci_workflow_spec.py`, `test_native_tox_env_spec.py`, `test_release_ci_workflow_spec.py` — smoke-check critical CI/publish invariants incl Tier-1 wheel matrix.
+- Runtime/contract specs: `test_native_bridge_runtime_spec.py`, `test_runtime_data_spec.py`, `test_public_contract_spec.py`, `test_bridge_adapter_spec.py` — runtime smoke, `.ldefs` tolerance, ADR-005 budget, ADR-006 diagnostics.
+- Release/devtool specs: `test_compliance_spec.py`, `test_footprint_spec.py`, `test_release_notes_spec.py`, `test_release_review_spec.py`, `test_release_workflow_spec.py`, `test_artifact_audit_spec.py`, `test_devtool_layout_spec.py`; dev-tool tests skip under tox wheel installs via `pytest.importorskip`.
+- Regression/integration/negative: `test_regression_spec.py` covers switch-site baseline + warm-session p95 budgets across priority ISAs; `test_integration_spec.py` and `test_negative_spec.py` assert committed native fixtures.
 
 # Vendored upstream
-- `third_party/ghidra` — upstream snapshot.
-- `third_party/r2ghidra` — reference integration.
-- `.gitmodules` tracks `third_party/ghidra` as the vendored native-source submodule; `third_party/r2ghidra/` stays ignored by the parent repo and read-only unless explicitly asked.
+- `third_party/ghidra` — submodule; `.gitmodules` tracks it.
+- `third_party/r2ghidra` — reference integration. Ignored, read-only unless explicitly asked.
 
 # Key data models (from specs.md)
 - `DecompileRequest` — `memory_image`, `base_address`, `function_address`, `language_id`, `compiler_spec`, `runtime_data_dir`, `function_size_hint`, `analysis_budget`.
-- `AnalysisBudget` — `max_instructions`; stable P2 field; default `100000` when omitted.
-- `DecompileResult` — decompiled C, structured `FunctionInfo`, warnings, error, metadata.
+- `AnalysisBudget` — `max_instructions`; default `100000`.
+- `DecompileResult` — decompiled C, `FunctionInfo`, warnings, error, metadata.
 - `FunctionInfo` — name, entry_address, size, is_complete, prototype, local_variables, call_sites, jump_tables, diagnostics, varnode_count.
 - `FunctionPrototype` — calling_convention, parameters, return_type, is_noreturn, has_this_pointer, recovery flags.
 - `TypeInfo` — name, size, metatype.
