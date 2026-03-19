@@ -50,9 +50,7 @@ def test_u019_ci_workflow_runs_full_suite_on_supported_matrix() -> None:
     }
     assert supported_matrix == {("3.13", "py313"), ("3.14", "py314")}
     test_runs = _job_runs(test_job)
-    assert any(
-        run.strip() == "tox -e ${{ matrix.tox-env }}" for run in test_runs
-    )
+    assert any(run.strip() == "tox -e ${{ matrix.tox-env }}" for run in test_runs)
 
 
 def test_u026_ci_workflow_keeps_macos_native_contract_lane() -> None:
