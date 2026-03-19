@@ -69,7 +69,7 @@ known-first-party = ["flatline", "flatline_dev"]
 build = "cp313-* cp314-*"
 skip = "*-win32 *-win_arm64 *-musllinux_*"
 build-frontend = "build"
-config-settings = {setup-args = "-Dnative_bridge=enabled"}
+config-settings = {setup-args = ["-Dnative_bridge=enabled", "--vsenv"]}
 test-command = "python {project}/tools/flatline_dev/wheel_smoke.py"
 
 [tool.cibuildwheel.linux]
@@ -87,7 +87,7 @@ CXX = "cl"
 
 [tool.cibuildwheel.macos]
 archs = "x86_64 arm64"
-before-all = "brew install zlib"
+before-all = "brew uninstall --ignore-dependencies llvm@18 2>/dev/null || true; brew install zlib"
 
 [tool.cibuildwheel.macos.environment]
 MACOSX_DEPLOYMENT_TARGET = "11.0"

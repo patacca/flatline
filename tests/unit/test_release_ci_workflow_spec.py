@@ -108,7 +108,7 @@ def test_u025_release_workflow_routes_manual_dispatches_to_testpypi() -> None:
     cibuildwheel = pyproject["tool"]["cibuildwheel"]
     assert cibuildwheel["build"] == "cp313-* cp314-*"
     assert cibuildwheel["skip"] == "*-win32 *-win_arm64 *-musllinux_*"
-    assert cibuildwheel["config-settings"] == {"setup-args": "-Dnative_bridge=enabled"}
+    assert cibuildwheel["config-settings"] == {"setup-args": ["-Dnative_bridge=enabled", "--vsenv"]}
     assert cibuildwheel["test-command"] == "python {project}/tools/flatline_dev/wheel_smoke.py"
     assert cibuildwheel["linux"]["archs"] == "x86_64 aarch64"
     assert cibuildwheel["linux"]["manylinux-x86_64-image"] == "manylinux_2_28"
