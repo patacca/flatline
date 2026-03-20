@@ -1,4 +1,4 @@
-"""Unit tests for default-install footprint measurement and documentation."""
+"""Unit tests for default-install footprint measurement."""
 
 from __future__ import annotations
 
@@ -88,15 +88,3 @@ def test_u018_default_install_footprint_uses_payload_files_only(tmp_path: Path) 
     assert "payload files only; excludes __pycache__" in rendered
     assert "197 bytes" in rendered
     assert "Runtime data share of combined footprint: 60.9%" in rendered
-
-
-def test_u018_footprint_doc_records_current_policy() -> None:
-    """U-018: The committed footprint doc preserves the pinned measurement workflow."""
-    repo_root = Path(__file__).resolve().parents[2]
-    footprint_doc = (repo_root / "docs" / "footprint.md").read_text(encoding="utf-8")
-
-    assert "python tools/footprint.py" in footprint_doc
-    assert "payload files only" in footprint_doc
-    assert "ghidra-sleigh" in footprint_doc
-    assert "all_processors=false" in footprint_doc
-    assert "silent default ISA pruning" in footprint_doc

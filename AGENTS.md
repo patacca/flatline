@@ -111,10 +111,10 @@
 - Native tests need `.sla` data from `ghidra-sleigh`; coverage: DATA, x86, AARCH64, RISCV, MIPS.
 - Runtime data resolved via `ghidra_sleigh.get_runtime_data_dir()`; `DecompilerSession` auto-discovers; `DecompileRequest`/`DecompilerSession` coerce path-like inputs.
 - `tests/conftest.py` auto-applies category markers from directory names.
-- Specs: `tests/specs/test_catalog.md` (49 defs, 5 categories), `tests/specs/fixtures.md` (10 fixtures, oracle strategy).
+- Specs: `tests/specs/test_catalog.md` (46 defs, 5 categories), `tests/specs/fixtures.md` (10 fixtures, oracle strategy).
 - Workflow specs: `test_ci_workflow_spec.py`, `test_native_tox_env_spec.py`, `test_release_ci_workflow_spec.py` — smoke-check critical CI/publish invariants incl Tier-1 wheel matrix.
 - Runtime/contract specs: `test_native_bridge_runtime_spec.py`, `test_runtime_data_spec.py`, `test_public_contract_spec.py`, `test_bridge_adapter_spec.py` — runtime smoke, `.ldefs` tolerance, ADR-005 budget, ADR-006 diagnostics.
-- Release/devtool specs: `test_compliance_spec.py`, `test_footprint_spec.py`, `test_release_notes_spec.py`, `test_release_review_spec.py`, `test_release_workflow_spec.py`, `test_artifact_audit_spec.py`, `test_devtool_layout_spec.py`; dev-tool tests skip under tox wheel installs via `pytest.importorskip`.
+- Release/devtool specs: `test_compliance_spec.py`, `test_footprint_spec.py`, `test_release_workflow_spec.py`, `test_artifact_audit_spec.py`; dev-tool tests skip under tox wheel installs via `pytest.importorskip`.
 - Regression/integration/negative: `test_regression_spec.py` covers switch-site baseline + warm-session p95 budgets across priority ISAs; `test_integration_spec.py` and `test_negative_spec.py` assert committed native fixtures.
 
 # Vendored upstream

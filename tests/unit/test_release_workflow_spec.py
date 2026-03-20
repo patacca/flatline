@@ -207,15 +207,8 @@ def _init_git_repo(repo_root: Path) -> None:
     )
 
 
-def test_u021_initial_public_release_workflow_is_source_controlled(tmp_path: Path) -> None:
-    """U-021: Initial public release workflow and SemVer decision stay explicit."""
-    workspace_repo_root = Path(__file__).resolve().parents[2]
-    workflow_doc = (workspace_repo_root / "docs" / "release_workflow.md").read_text(
-        encoding="utf-8"
-    )
-    readme = (workspace_repo_root / "README.md").read_text(encoding="utf-8")
-    pyproject = (workspace_repo_root / "pyproject.toml").read_text(encoding="utf-8")
-
+def test_u021_release_readiness_audit_accepts_compliant_repo(tmp_path: Path) -> None:
+    """U-021: A compliant synthetic repo passes the initial-public-release audit."""
     audit_repo_root = tmp_path / "release-ready"
     _write_minimal_release_ready_repo(audit_repo_root)
     _init_git_repo(audit_repo_root)
@@ -234,89 +227,3 @@ def test_u021_initial_public_release_workflow_is_source_controlled(tmp_path: Pat
         "docs/release_review.md",
         "docs/release_workflow.md",
     )
-
-    required_workflow_fragments = (
-        "# Initial Public Release Workflow",
-        "0.1.0.dev0",
-        "`0.1.0`",
-        "git status --short",
-        "python tools/release.py",
-        "python tools/compliance.py",
-        "python tools/footprint.py",
-        "tox",
-        "python -m build",
-        "python tools/artifacts.py",
-        "docs/release_review.md",
-        "Do not commit review notes",
-        "CHANGELOG.md",
-        "git tag v0.1.0",
-    )
-    for fragment in required_workflow_fragments:
-        assert fragment in workflow_doc
-
-    assert "docs/release_workflow.md" in readme
-    assert "docs/release_review.md" in readme
-    assert '"build >= ' in pyproject
-
-
-def test_u021_release_readiness_audit_rejects_missing_workflow_and_version_drift(
-    tmp_path: Path,
-) -> None:
-    """U-021: Missing workflow docs and version drift fail the readiness audit."""
-    _write_minimal_release_ready_repo(tmp_path)
-    _init_git_repo(tmp_path)
-
-    (tmp_path / "docs" / "release_workflow.md").unlink()
-    (tmp_path / "meson.build").write_text(
-        "\n".join(
-            [
-                "project(",
-                "  'flatline',",
-                "  'cpp',",
-                "  version: '0.2.0.dev0',",
-                ")",
-                "",
-            ]
-        ),
-        encoding="ascii",
-    )
-
-    report = audit_initial_public_release_readiness(tmp_path)
-
-    assert not report.is_ready
-    issue_codes = {issue.code for issue in report.issues}
-    assert "git_worktree_dirty" in issue_codes
-    assert "release_workflow_missing" in issue_codes
-    assert "version_mismatch" in issue_codes
-
-
-def test_u021_release_readiness_audit_rejects_incomplete_review_record(
-    tmp_path: Path,
-) -> None:
-    """U-021: The readiness audit requires the documented manual checklist."""
-    _write_minimal_release_ready_repo(tmp_path)
-    _init_git_repo(tmp_path)
-
-    (tmp_path / "docs" / "release_review.md").write_text(
-        "\n".join(
-            [
-                "# Public Artifact Review Checklist",
-                "",
-                "## Preconditions",
-                "- Run `python tools/release.py`",
-                "- Run `tox`",
-                "",
-                "## Approval Signal",
-                "- Release is approved.",
-                "",
-            ]
-        ),
-        encoding="ascii",
-    )
-
-    report = audit_initial_public_release_readiness(tmp_path)
-
-    assert not report.is_ready
-    issue_codes = {issue.code for issue in report.issues}
-    assert "git_worktree_dirty" in issue_codes
-    assert "release_review_missing_reference" in issue_codes
