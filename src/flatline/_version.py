@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__version__ = "0.1.1.dev0"
+__version__ = "0.1.1.dev1"
 
 # Ghidra decompiler engine version for the pinned upstream snapshot.
 # Must match the native decompiler_version_string() output (ghidra-{major}.{minor}).

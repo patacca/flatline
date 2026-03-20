@@ -65,6 +65,8 @@ def test_u025_release_workflow_routes_manual_dispatches_to_testpypi() -> None:
         "build-wheels must use cibuildwheel"
     )
     assert all(action != "ilammy/msvc-dev-cmd@v1" for action in build_wheels_uses)
+    cibuildwheel_step = _uses_step(build_wheels_job, "pypa/cibuildwheel")
+    assert cibuildwheel_step["uses"] == "pypa/cibuildwheel@v3.4.0"
     _uses_step(build_wheels_job, "actions/upload-artifact")
     matrix_entries = {
         (entry["cibw-archs"], _runner_family(entry["os"]))
@@ -121,6 +123,11 @@ def test_u025_release_workflow_routes_manual_dispatches_to_testpypi() -> None:
     assert cibuildwheel["linux"]["manylinux-x86_64-image"] == "manylinux_2_28"
     assert cibuildwheel["linux"]["manylinux-aarch64-image"] == "manylinux_2_28"
     assert cibuildwheel["windows"]["archs"] == "AMD64"
+    assert cibuildwheel["windows"]["before-build"] == "pip install delvewheel"
+    assert (
+        cibuildwheel["windows"]["repair-wheel-command"]
+        == "delvewheel repair -w {dest_dir} {wheel}"
+    )
     assert cibuildwheel["macos"]["archs"] == "x86_64 arm64"
     assert cibuildwheel["macos"]["environment"]["MACOSX_DEPLOYMENT_TARGET"] == "11.0"
     assert (repo_root / "tools" / "flatline_dev" / "wheel_smoke.py").is_file()
