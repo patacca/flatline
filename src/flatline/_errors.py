@@ -23,8 +23,8 @@ class FlatlineError(Exception):
     """Base exception for all flatline errors.
 
     All flatline exceptions inherit from this class.  Each subclass
-    corresponds to one entry in :data:`ERROR_CATEGORIES` and carries a
-    :attr:`category` class attribute with the matching category string.
+    corresponds to one entry in [`ERROR_CATEGORIES`][flatline.ERROR_CATEGORIES] and carries a
+    `category` class attribute with the matching category string.
     """
 
     category: str = ""
@@ -47,7 +47,7 @@ class InvalidArgumentError(FlatlineError):
 class UnsupportedTargetError(FlatlineError):
     """Raised when the ``language_id`` or ``compiler_spec`` is not recognized.
 
-    Check available targets with :func:`~flatline.list_language_compilers`.
+    Check available targets with [`list_language_compilers()`][flatline.list_language_compilers].
     """
 
     category = "unsupported_target"

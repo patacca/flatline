@@ -71,7 +71,7 @@ Post-MVP (Enriched Structured Output):
 
 | Concept | Contract |
 | --- | --- |
-| `DecompilerSession` | Long-lived object owning one native `Architecture` instance and immutable startup config. Session lifecycle maps to Architecture construction through destruction. |
+| `DecompilerSession` | Long-lived object owning one native bridge session and immutable startup config. Amortizes startup costs (library initialization, runtime data resolution, language/compiler enumeration) across calls. |
 | `DecompileRequest` | Input payload for one function decompilation: memory image, base address, function entry address, language, optional compiler and analysis options. |
 | `DecompileResult` | Output payload containing rendered C text, structured function info, warnings, structured error (if any), and metadata. |
 | `FunctionInfo` | Structured post-decompile data for one function: name, address, size, prototype, local variables, call sites, jump tables, diagnostics. Populated on success, `None` on error. |

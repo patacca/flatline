@@ -2,9 +2,10 @@
 
 ## Session API
 
-A `DecompilerSession` owns one native architecture instance and amortizes
-startup cost across multiple decompile calls. Use it as a context manager for
-deterministic cleanup, or manage the lifecycle manually with `close()`.
+A `DecompilerSession` owns one native bridge session and amortizes library
+initialization, runtime data resolution, and language/compiler enumeration
+across multiple calls. Use it as a context manager for deterministic cleanup,
+or manage the lifecycle manually with `close()`.
 
 ::: flatline.DecompilerSession
     options:

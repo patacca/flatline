@@ -39,11 +39,11 @@ The public layer validates inputs eagerly. If `memory_image` is empty or
 `DecompileRequest` construction, before anything touches the decompiler. This
 keeps errors close to their cause.
 
-`DecompilerSession` manages the lifecycle of one native architecture instance.
-Creating a session is not free — it initializes the Sleigh processor
-definition and sets up the action pipeline. If you are decompiling many
-functions for the same architecture, reusing a session avoids that startup
-cost on every call. The one-shot `decompile_function()` and
+`DecompilerSession` manages the lifecycle of one native bridge session.
+Creating a session is not free — it initializes the decompiler library,
+resolves the runtime data directory, and enumerates available
+language/compiler pairs. Reusing a session avoids repeating that startup
+work on every call. The one-shot `decompile_function()` and
 `list_language_compilers()` module-level functions create and close a session
 automatically for single-call use.
 

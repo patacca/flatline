@@ -137,6 +137,33 @@ the suite exercises the packaged artifact rather than `PYTHONPATH=src`.
 Repo-only release and diagnostic helpers live under `tools/` and are
 intentionally absent from wheel and sdist artifacts.
 
+## Documentation
+
+Install the docs dependencies:
+
+```bash
+pip install -e ".[docs]"
+```
+
+**Local preview:**
+
+```bash
+PYTHONPATH=src mkdocs serve
+```
+
+Then open http://127.0.0.1:8000.
+
+**Build static site:**
+
+```bash
+PYTHONPATH=src mkdocs build
+```
+
+Output goes to `site/`.
+
+`PYTHONPATH=src` lets mkdocstrings import the pure-Python modules for API
+reference generation without requiring a native build.
+
 ## Release Notes
 
 Project history lives in [CHANGELOG.md](CHANGELOG.md). Update it for every

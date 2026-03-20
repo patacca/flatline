@@ -19,11 +19,12 @@ if TYPE_CHECKING:
 
 
 class DecompilerSession:
-    """Long-lived decompiler session owning one native architecture instance.
+    """Long-lived decompiler session owning one native bridge session.
 
-    A session manages the lifecycle of a native Ghidra ``Architecture`` object.
-    Use it as a context manager for deterministic resource cleanup, or call
-    :meth:`close` explicitly when done.
+    A session amortizes startup costs (library initialization, runtime data
+    resolution, language/compiler enumeration) across calls.  Use it as a
+    context manager for deterministic resource cleanup, or call
+    [`close()`][flatline.DecompilerSession.close] explicitly when done.
 
     Args:
         runtime_data_dir: Path to the Ghidra runtime data directory containing
@@ -76,7 +77,7 @@ class DecompilerSession:
         all bundled ISAs including x86, ARM, RISC-V, MIPS, and others.
 
         Returns:
-            List of :class:`~flatline.LanguageCompilerPair` entries.
+            List of [`LanguageCompilerPair`][flatline.LanguageCompilerPair] entries.
 
         Raises:
             InvalidArgumentError: If the session has been closed.
@@ -88,13 +89,13 @@ class DecompilerSession:
         """Decompile a single function described by *request*.
 
         Args:
-            request: A :class:`~flatline.DecompileRequest` specifying the
+            request: A [`DecompileRequest`][flatline.DecompileRequest] specifying the
                 memory image, addresses, and target architecture.
 
         Returns:
-            A :class:`~flatline.DecompileResult` containing the decompiled C
-            code, structured :class:`~flatline.FunctionInfo`, warnings, and
-            any error information.
+            A [`DecompileResult`][flatline.DecompileResult] containing the decompiled C
+                code, structured [`FunctionInfo`][flatline.FunctionInfo], warnings,
+                and any error information.
 
         Raises:
             InvalidArgumentError: If the session has been closed or the
@@ -126,7 +127,7 @@ def list_language_compilers(
 ) -> list[LanguageCompilerPair]:
     """Enumerate valid language/compiler pairs (one-shot convenience wrapper).
 
-    Creates a short-lived :class:`DecompilerSession`, runs the enumeration,
+    Creates a short-lived [`DecompilerSession`][flatline.DecompilerSession], runs the enumeration,
     and closes the session deterministically.
 
     Args:
@@ -134,7 +135,7 @@ def list_language_compilers(
             When ``None``, auto-discovered from ``ghidra-sleigh``.
 
     Returns:
-        List of :class:`~flatline.LanguageCompilerPair` entries.
+        List of [`LanguageCompilerPair`][flatline.LanguageCompilerPair] entries.
     """
     with DecompilerSession(runtime_data_dir=runtime_data_dir) as session:
         return session.list_language_compilers()
@@ -143,15 +144,15 @@ def list_language_compilers(
 def decompile_function(request: DecompileRequest) -> DecompileResult:
     """Decompile a single function (one-shot convenience wrapper).
 
-    Creates a short-lived :class:`DecompilerSession`, runs the
+    Creates a short-lived [`DecompilerSession`][flatline.DecompilerSession], runs the
     decompilation, and closes the session deterministically.
 
     Args:
-        request: A :class:`~flatline.DecompileRequest` specifying the
+        request: A [`DecompileRequest`][flatline.DecompileRequest] specifying the
             memory image, addresses, and target architecture.
 
     Returns:
-        A :class:`~flatline.DecompileResult` with decompiled output.
+        A [`DecompileResult`][flatline.DecompileResult] with decompiled output.
 
     Raises:
         InvalidArgumentError: If the request contains invalid arguments.

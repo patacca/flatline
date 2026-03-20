@@ -212,6 +212,6 @@ with flatline.DecompilerSession() as session:
 
 !!! tip
     Prefer the session form whenever you are decompiling more than one
-    function. The native architecture object is initialized once per session,
-    so the per-call overhead is significantly lower than creating a new
-    one-shot session each time.
+    function. The session pays the decompiler library initialization and
+    runtime data discovery cost once, so batch calls avoid redundant
+    startup work compared to creating a new one-shot session each time.

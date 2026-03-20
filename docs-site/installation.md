@@ -60,6 +60,12 @@ print(info.flatline_version)    # e.g. "0.1.0"
 print(info.decompiler_version)  # e.g. "ghidra-6.1"
 ```
 
+!!! note
+    The `decompiler_version` (e.g. `"ghidra-6.1"`) refers to the Ghidra
+    **decompiler engine**, which is versioned independently from the main
+    Ghidra project.  It does **not** correspond to the Ghidra application
+    version (e.g. Ghidra 12.0.4).
+
 If the native extension built correctly, `flatline.decompile_function` will
 produce real decompiled output. Without the native extension the API is fully
 importable but every decompile call returns a `configuration_error` result

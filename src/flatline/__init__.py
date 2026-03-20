@@ -44,8 +44,8 @@ def get_version_info() -> VersionInfo:
     """Report runtime version information.
 
     Returns:
-        A :class:`VersionInfo` with the installed flatline package
-        version and the underlying Ghidra decompiler engine version.
+        The installed flatline package version and the underlying
+            Ghidra decompiler engine version.
     """
     return VersionInfo(
         flatline_version=__version__,

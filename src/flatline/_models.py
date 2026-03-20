@@ -65,7 +65,7 @@ class TypeInfo:
         name: Type name (e.g. ``"int"``, ``"undefined8"``).
         size: Type size in bytes.
         metatype: Stable metatype classification string.  One of
-            :data:`~flatline.VALID_METATYPES` (``"void"``, ``"int"``,
+            [`VALID_METATYPES`][flatline.VALID_METATYPES] (``"void"``, ``"int"``,
             ``"uint"``, ``"float"``, ``"pointer"``, ``"array"``,
             ``"struct"``, ``"union"``, ``"code"``, ``"enum"``,
             ``"bool"``, ``"unknown"``).
@@ -195,7 +195,7 @@ class FunctionInfo:
     """Structured post-decompile data for one function.
 
     Populated on successful decompilation.  Access via
-    :attr:`DecompileResult.function_info`.
+    [`DecompileResult.function_info`][flatline.DecompileResult].
 
     Attributes:
         name: Function name assigned by the decompiler.
@@ -233,7 +233,7 @@ class WarningItem:
         code: Warning identifier string.
         message: Human-readable warning message.
         phase: Decompiler phase that produced the warning.  One of
-            :data:`~flatline.VALID_WARNING_PHASES` (``"init"``,
+            [`VALID_WARNING_PHASES`][flatline.VALID_WARNING_PHASES] (``"init"``,
             ``"analyze"``, ``"emit"``).
     """
 
@@ -244,11 +244,11 @@ class WarningItem:
 
 @dataclass(frozen=True)
 class ErrorItem:
-    """Structured error descriptor returned in :attr:`DecompileResult.error`.
+    """Structured error descriptor returned in [`DecompileResult.error`][flatline.DecompileResult].
 
     Attributes:
         category: Error category string from
-            :data:`~flatline.ERROR_CATEGORIES`.
+            [`ERROR_CATEGORIES`][flatline.ERROR_CATEGORIES].
         message: Human-readable error message.
         retryable: ``True`` if the operation might succeed on retry.
     """
@@ -336,7 +336,7 @@ class DecompileRequest:
             decompile, within the memory image.
         language_id: Target architecture identifier (e.g.
             ``"x86:LE:64:default"``).  Use
-            :func:`~flatline.list_language_compilers` to discover valid
+            [`list_language_compilers()`][flatline.list_language_compilers] to discover valid
             values.
         compiler_spec: Compiler specification (e.g. ``"gcc"``).  When
             ``None``, the default compiler for the language is used.
@@ -346,7 +346,7 @@ class DecompileRequest:
         function_size_hint: Optional advisory size hint in bytes for the
             function body.
         analysis_budget: Resource limits for this decompilation.  Accepts
-            an :class:`AnalysisBudget` or a ``dict`` with a
+            an [`AnalysisBudget`][flatline.AnalysisBudget] or a ``dict`` with a
             ``"max_instructions"`` key.  Defaults to
             ``AnalysisBudget(max_instructions=100000)``.
 

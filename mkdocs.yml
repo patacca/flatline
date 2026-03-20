@@ -55,7 +55,7 @@ nav:
     - ISA Support: explanation/isa-support.md
 
 markdown_extensions:
-  - admonitions
+  - admonition
   - pymdownx.details
   - pymdownx.superfences
   - pymdownx.highlight:
