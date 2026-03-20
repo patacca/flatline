@@ -43,7 +43,14 @@ DEFAULT_MAX_INSTRUCTIONS = 100000
 
 @dataclass(frozen=True)
 class StorageInfo:
-    """Variable/parameter storage location."""
+    """Variable or parameter storage location.
+
+    Attributes:
+        space: Address space name (e.g. ``"register"``, ``"ram"``,
+            ``"stack"``).
+        offset: Byte offset within the address space.
+        size: Size in bytes.
+    """
 
     space: str
     offset: int
@@ -52,7 +59,17 @@ class StorageInfo:
 
 @dataclass(frozen=True)
 class TypeInfo:
-    """Recovered type descriptor."""
+    """Recovered type descriptor.
+
+    Attributes:
+        name: Type name (e.g. ``"int"``, ``"undefined8"``).
+        size: Type size in bytes.
+        metatype: Stable metatype classification string.  One of
+            :data:`~flatline.VALID_METATYPES` (``"void"``, ``"int"``,
+            ``"uint"``, ``"float"``, ``"pointer"``, ``"array"``,
+            ``"struct"``, ``"union"``, ``"code"``, ``"enum"``,
+            ``"bool"``, ``"unknown"``).
+    """
 
     name: str
     size: int
@@ -61,7 +78,14 @@ class TypeInfo:
 
 @dataclass(frozen=True)
 class ParameterInfo:
-    """One function parameter."""
+    """One function parameter.
+
+    Attributes:
+        name: Parameter name recovered by the decompiler.
+        type: Recovered type descriptor.
+        index: Zero-based position in the function signature.
+        storage: Storage location, or ``None`` if not mapped.
+    """
 
     name: str
     type: TypeInfo
@@ -71,7 +95,13 @@ class ParameterInfo:
 
 @dataclass(frozen=True)
 class VariableInfo:
-    """One local variable."""
+    """One local variable.
+
+    Attributes:
+        name: Variable name recovered by the decompiler.
+        type: Recovered type descriptor.
+        storage: Storage location, or ``None`` if not mapped.
+    """
 
     name: str
     type: TypeInfo
@@ -80,7 +110,13 @@ class VariableInfo:
 
 @dataclass(frozen=True)
 class CallSiteInfo:
-    """One call instruction within the function."""
+    """One call instruction within the function.
+
+    Attributes:
+        instruction_address: Address of the ``CALL`` instruction.
+        target_address: Resolved callee address, or ``None`` for indirect
+            calls.
+    """
 
     instruction_address: int
     target_address: int | None = None
@@ -88,7 +124,14 @@ class CallSiteInfo:
 
 @dataclass(frozen=True)
 class JumpTableInfo:
-    """One recovered jump table."""
+    """One recovered jump table.
+
+    Attributes:
+        switch_address: Address of the switch or indirect-branch
+            instruction.
+        target_count: Number of resolved target addresses.
+        target_addresses: Resolved target addresses.
+    """
 
     switch_address: int
     target_count: int
@@ -97,7 +140,19 @@ class JumpTableInfo:
 
 @dataclass(frozen=True)
 class DiagnosticFlags:
-    """Aggregated boolean diagnostic flags from the decompiler."""
+    """Aggregated boolean diagnostic flags from the decompiler.
+
+    Attributes:
+        is_complete: Whether decompilation completed fully.
+        has_unreachable_blocks: Whether unreachable basic blocks were
+            detected.
+        has_unimplemented: Whether unimplemented instructions were
+            encountered.
+        has_bad_data: Whether the decompiler flagged bad data in the
+            function body.
+        has_no_code: Whether the function entry contained no executable
+            code.
+    """
 
     is_complete: bool
     has_unreachable_blocks: bool
@@ -111,7 +166,20 @@ class DiagnosticFlags:
 
 @dataclass(frozen=True)
 class FunctionPrototype:
-    """Recovered function signature."""
+    """Recovered function signature.
+
+    Attributes:
+        calling_convention: Calling convention model name (e.g.
+            ``"__cdecl"``), or ``None`` if unknown.
+        parameters: Recovered function parameters.
+        return_type: Recovered return type.
+        is_noreturn: ``True`` if the function does not return.
+        has_this_pointer: ``True`` if the function has an implicit
+            ``this`` parameter.
+        has_input_errors: ``True`` if parameter recovery was incomplete.
+        has_output_errors: ``True`` if return type recovery was
+            incomplete.
+    """
 
     calling_convention: str | None
     parameters: list[ParameterInfo]
@@ -124,7 +192,23 @@ class FunctionPrototype:
 
 @dataclass(frozen=True)
 class FunctionInfo:
-    """Structured post-decompile data for one function."""
+    """Structured post-decompile data for one function.
+
+    Populated on successful decompilation.  Access via
+    :attr:`DecompileResult.function_info`.
+
+    Attributes:
+        name: Function name assigned by the decompiler.
+        entry_address: Function entry point virtual address.
+        size: Function body size in bytes.
+        is_complete: Whether decompilation completed fully.
+        prototype: Recovered function signature.
+        local_variables: Local scope variables.
+        call_sites: Call instructions within the function.
+        jump_tables: Recovered jump tables.
+        diagnostics: Aggregated diagnostic status flags.
+        varnode_count: Total Varnode count (complexity metric).
+    """
 
     name: str
     entry_address: int
@@ -143,7 +227,15 @@ class FunctionInfo:
 
 @dataclass(frozen=True)
 class WarningItem:
-    """One decompiler warning."""
+    """One decompiler warning.
+
+    Attributes:
+        code: Warning identifier string.
+        message: Human-readable warning message.
+        phase: Decompiler phase that produced the warning.  One of
+            :data:`~flatline.VALID_WARNING_PHASES` (``"init"``,
+            ``"analyze"``, ``"emit"``).
+    """
 
     code: str
     message: str
@@ -152,7 +244,14 @@ class WarningItem:
 
 @dataclass(frozen=True)
 class ErrorItem:
-    """Structured error descriptor."""
+    """Structured error descriptor returned in :attr:`DecompileResult.error`.
+
+    Attributes:
+        category: Error category string from
+            :data:`~flatline.ERROR_CATEGORIES`.
+        message: Human-readable error message.
+        retryable: ``True`` if the operation might succeed on retry.
+    """
 
     category: str
     message: str
@@ -164,7 +263,12 @@ class ErrorItem:
 
 @dataclass(frozen=True)
 class LanguageCompilerPair:
-    """One valid language_id + compiler_spec entry."""
+    """One valid language/compiler pair known to the runtime data directory.
+
+    Attributes:
+        language_id: Language identifier (e.g. ``"x86:LE:64:default"``).
+        compiler_spec: Compiler specification (e.g. ``"gcc"``).
+    """
 
     language_id: str
     compiler_spec: str
@@ -172,7 +276,13 @@ class LanguageCompilerPair:
 
 @dataclass(frozen=True)
 class VersionInfo:
-    """Runtime version information."""
+    """Runtime version information.
+
+    Attributes:
+        flatline_version: The installed flatline package version.
+        decompiler_version: The underlying Ghidra decompiler engine
+            version (e.g. ``"ghidra-6.1"``).
+    """
 
     flatline_version: str
     decompiler_version: str
@@ -180,7 +290,23 @@ class VersionInfo:
 
 @dataclass(frozen=True)
 class AnalysisBudget:
-    """Deterministic per-request resource limits."""
+    """Deterministic per-request resource limits.
+
+    Attributes:
+        max_instructions: Maximum number of p-code instructions the
+            decompiler will process before stopping.  Defaults to
+            ``100000``.  Must be a positive integer.
+
+    Raises:
+        InvalidArgumentError: If ``max_instructions`` is not a positive
+            integer.
+
+    Example:
+        ```python
+        budget = AnalysisBudget(max_instructions=500_000)
+        request = DecompileRequest(..., analysis_budget=budget)
+        ```
+    """
 
     max_instructions: int = DEFAULT_MAX_INSTRUCTIONS
 
@@ -196,7 +322,38 @@ class AnalysisBudget:
 
 @dataclass(frozen=True)
 class DecompileRequest:
-    """Input payload for one function decompilation."""
+    """Input payload for one function decompilation.
+
+    The caller provides a flat memory image covering the relevant address
+    space.  The library does not perform binary format parsing; callers
+    working with binary files must extract memory content first.
+
+    Attributes:
+        memory_image: Byte content of the target memory region.  Must be
+            non-empty ``bytes`` or ``bytearray``.
+        base_address: Virtual address of the start of ``memory_image``.
+        function_address: Entry point virtual address of the function to
+            decompile, within the memory image.
+        language_id: Target architecture identifier (e.g.
+            ``"x86:LE:64:default"``).  Use
+            :func:`~flatline.list_language_compilers` to discover valid
+            values.
+        compiler_spec: Compiler specification (e.g. ``"gcc"``).  When
+            ``None``, the default compiler for the language is used.
+        runtime_data_dir: Explicit path to the Ghidra runtime data
+            directory.  When ``None``, auto-discovered from
+            ``ghidra-sleigh``.
+        function_size_hint: Optional advisory size hint in bytes for the
+            function body.
+        analysis_budget: Resource limits for this decompilation.  Accepts
+            an :class:`AnalysisBudget` or a ``dict`` with a
+            ``"max_instructions"`` key.  Defaults to
+            ``AnalysisBudget(max_instructions=100000)``.
+
+    Raises:
+        InvalidArgumentError: If ``memory_image`` is empty or not bytes,
+            ``language_id`` is empty, or ``analysis_budget`` is invalid.
+    """
 
     memory_image: bytes
     base_address: int
@@ -221,7 +378,22 @@ class DecompileRequest:
 
 @dataclass(frozen=True)
 class DecompileResult:
-    """Output payload from one function decompilation."""
+    """Output payload from one function decompilation.
+
+    On success, ``c_code`` and ``function_info`` are populated.  On
+    failure, ``error`` describes the problem and the other fields may be
+    ``None``.
+
+    Attributes:
+        c_code: Decompiled C source code, or ``None`` on error.
+        function_info: Structured function data, or ``None`` on error.
+        warnings: Decompiler warnings emitted during processing.
+        error: Structured error descriptor if decompilation failed,
+            otherwise ``None``.
+        metadata: Additional metadata with stable keys:
+            ``"decompiler_version"``, ``"language_id"``,
+            ``"compiler_spec"``, and ``"diagnostics"``.
+    """
 
     c_code: str | None
     function_info: FunctionInfo | None

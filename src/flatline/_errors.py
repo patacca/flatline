@@ -20,7 +20,12 @@ ERROR_CATEGORIES: frozenset[str] = frozenset(
 
 
 class FlatlineError(Exception):
-    """Base exception for all flatline errors."""
+    """Base exception for all flatline errors.
+
+    All flatline exceptions inherit from this class.  Each subclass
+    corresponds to one entry in :data:`ERROR_CATEGORIES` and carries a
+    :attr:`category` class attribute with the matching category string.
+    """
 
     category: str = ""
 
@@ -30,37 +35,51 @@ class FlatlineError(Exception):
 
 
 class InvalidArgumentError(FlatlineError):
-    """Invalid or missing request arguments."""
+    """Raised when a request contains invalid or missing arguments.
+
+    Examples: empty ``memory_image``, non-string ``language_id``,
+    invalid ``analysis_budget`` fields.
+    """
 
     category = "invalid_argument"
 
 
 class UnsupportedTargetError(FlatlineError):
-    """Unsupported language or compiler specification."""
+    """Raised when the ``language_id`` or ``compiler_spec`` is not recognized.
+
+    Check available targets with :func:`~flatline.list_language_compilers`.
+    """
 
     category = "unsupported_target"
 
 
 class InvalidAddressError(FlatlineError):
-    """Invalid or unmapped address."""
+    """Raised when the function address falls outside the memory image."""
 
     category = "invalid_address"
 
 
 class DecompileFailedError(FlatlineError):
-    """Decompilation failed."""
+    """Raised when the decompiler engine fails to produce output."""
 
     category = "decompile_failed"
 
 
 class ConfigurationError(FlatlineError):
-    """User-fixable install, startup, or runtime-data configuration issue."""
+    """Raised for user-fixable configuration issues.
+
+    Indicates problems with the installation, runtime data directory, or
+    other startup configuration that the caller can resolve.
+    """
 
     category = "configuration_error"
 
 
 class InternalError(FlatlineError):
-    """Unexpected internal error."""
+    """Raised for unexpected internal errors (bugs in flatline).
+
+    If you encounter this error, please report it as a bug.
+    """
 
     category = "internal_error"
 

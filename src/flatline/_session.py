@@ -19,9 +19,24 @@ if TYPE_CHECKING:
 
 
 class DecompilerSession:
-    """Owns one bridge session and its native lifecycle.
+    """Long-lived decompiler session owning one native architecture instance.
 
-    Session lifecycle maps to native architecture construction/destruction.
+    A session manages the lifecycle of a native Ghidra ``Architecture`` object.
+    Use it as a context manager for deterministic resource cleanup, or call
+    :meth:`close` explicitly when done.
+
+    Args:
+        runtime_data_dir: Path to the Ghidra runtime data directory containing
+            processor ``.sla`` files and compiler specs.  When ``None``
+            (default), the directory is auto-discovered from the installed
+            ``ghidra-sleigh`` package.
+
+    Example:
+        ```python
+        with DecompilerSession() as session:
+            result = session.decompile_function(request)
+            pairs = session.list_language_compilers()
+        ```
     """
 
     def __init__(
@@ -54,12 +69,43 @@ class DecompilerSession:
         self._closed = True
 
     def list_language_compilers(self) -> list[LanguageCompilerPair]:
-        """Enumerate valid language/compiler pairs for this session."""
+        """Enumerate valid language/compiler pairs available in this session.
+
+        Returns only pairs whose backing assets (``.sla`` files and compiler
+        specs) are present in the session's runtime data directory.  Covers
+        all bundled ISAs including x86, ARM, RISC-V, MIPS, and others.
+
+        Returns:
+            List of :class:`~flatline.LanguageCompilerPair` entries.
+
+        Raises:
+            InvalidArgumentError: If the session has been closed.
+        """
         self._ensure_open()
         return self._bridge_session.list_language_compilers()
 
     def decompile_function(self, request: DecompileRequest) -> DecompileResult:
-        """Decompile a single function request in this session."""
+        """Decompile a single function described by *request*.
+
+        Args:
+            request: A :class:`~flatline.DecompileRequest` specifying the
+                memory image, addresses, and target architecture.
+
+        Returns:
+            A :class:`~flatline.DecompileResult` containing the decompiled C
+            code, structured :class:`~flatline.FunctionInfo`, warnings, and
+            any error information.
+
+        Raises:
+            InvalidArgumentError: If the session has been closed or the
+                request contains invalid arguments.
+            UnsupportedTargetError: If the ``language_id`` or
+                ``compiler_spec`` is not recognized.
+            InvalidAddressError: If the function address is outside the
+                memory image.
+            DecompileFailedError: If the decompiler engine fails
+                internally.
+        """
         self._ensure_open()
         return self._bridge_session.decompile_function(request)
 
@@ -78,12 +124,40 @@ class DecompilerSession:
 def list_language_compilers(
     runtime_data_dir: str | Path | None = None,
 ) -> list[LanguageCompilerPair]:
-    """Convenience wrapper for one-shot language/compiler enumeration."""
+    """Enumerate valid language/compiler pairs (one-shot convenience wrapper).
+
+    Creates a short-lived :class:`DecompilerSession`, runs the enumeration,
+    and closes the session deterministically.
+
+    Args:
+        runtime_data_dir: Optional path to the Ghidra runtime data directory.
+            When ``None``, auto-discovered from ``ghidra-sleigh``.
+
+    Returns:
+        List of :class:`~flatline.LanguageCompilerPair` entries.
+    """
     with DecompilerSession(runtime_data_dir=runtime_data_dir) as session:
         return session.list_language_compilers()
 
 
 def decompile_function(request: DecompileRequest) -> DecompileResult:
-    """Convenience wrapper for one-shot single-function decompilation."""
+    """Decompile a single function (one-shot convenience wrapper).
+
+    Creates a short-lived :class:`DecompilerSession`, runs the
+    decompilation, and closes the session deterministically.
+
+    Args:
+        request: A :class:`~flatline.DecompileRequest` specifying the
+            memory image, addresses, and target architecture.
+
+    Returns:
+        A :class:`~flatline.DecompileResult` with decompiled output.
+
+    Raises:
+        InvalidArgumentError: If the request contains invalid arguments.
+        UnsupportedTargetError: If the target is not recognized.
+        InvalidAddressError: If the function address is unmapped.
+        DecompileFailedError: If decompilation fails internally.
+    """
     with DecompilerSession(runtime_data_dir=request.runtime_data_dir) as session:
         return session.decompile_function(request)

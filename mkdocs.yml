@@ -1,0 +1,66 @@
+site_name: flatline
+site_description: Python wrapper around the Ghidra decompiler
+repo_url: https://github.com/patacca/flatline
+repo_name: patacca/flatline
+docs_dir: docs-site
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+  features:
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+    - content.code.annotate
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            show_source: false
+            show_root_heading: true
+            members_order: source
+            merge_init_into_class: true
+            show_signature_annotations: true
+            separate_signature: true
+
+extra:
+  version:
+    provider: mike
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Getting Started: getting-started.md
+  - How-to Guides:
+    - how-to/index.md
+    - Load from Binary: how-to/load-from-binary.md
+    - Enumerate Languages: how-to/enumerate-languages.md
+    - Session Management: how-to/session-management.md
+    - Handle Errors: how-to/handle-errors.md
+    - Analysis Budget: how-to/analysis-budget.md
+  - API Reference:
+    - reference/index.md
+    - API: reference/api.md
+    - Errors: reference/errors.md
+  - Explanation:
+    - Architecture: explanation/architecture.md
+    - ISA Support: explanation/isa-support.md
+
+markdown_extensions:
+  - admonitions
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - toc:
+      permalink: true

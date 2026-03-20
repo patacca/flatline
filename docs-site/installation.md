@@ -1,0 +1,66 @@
+# Installation
+
+## Prerequisites
+
+- Python 3.13 or later
+- pip
+
+Pre-built wheels are available for Linux x86_64/aarch64, Windows x86_64, and
+macOS x86_64/arm64. On these platforms a C++ compiler is not required.
+
+Platforms outside that matrix fall back to a source build, which additionally
+requires a C++20 compiler, Ninja, and zlib development headers.
+
+| Platform | Native build dependencies |
+|---|---|
+| Ubuntu / Debian | `sudo apt-get install g++ ninja-build zlib1g-dev` |
+| Fedora / RHEL | `sudo dnf install gcc-c++ ninja-build zlib-devel` |
+| macOS | `brew install ninja zlib` (Xcode provides the compiler) |
+| Windows | Visual Studio with the C++ workload; `pip install ninja`; `vcpkg install zlib:x64-windows` |
+
+## Install from PyPI
+
+```bash
+pip install flatline
+```
+
+This pulls in the `ghidra-sleigh` companion package, which ships the compiled
+Sleigh processor definitions that flatline needs at runtime. No separate
+download or path configuration is required.
+
+## Build from source
+
+Use this path when you want to work on flatline itself, run the test suite, or
+install on a platform without a pre-built wheel.
+
+```bash
+git clone https://github.com/patacca/flatline.git
+cd flatline
+git submodule update --init
+python -m venv .venv
+source .venv/bin/activate     # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
+```
+
+The editable install compiles the native C++ extension automatically if a
+suitable compiler is found. To force a native build and fail loudly if
+prerequisites are missing:
+
+```bash
+pip install -e ".[dev]" -Csetup-args=-Dnative_bridge=enabled
+```
+
+## Verify the installation
+
+```python
+import flatline
+
+info = flatline.get_version_info()
+print(info.flatline_version)    # e.g. "0.1.0"
+print(info.decompiler_version)  # e.g. "ghidra-6.1"
+```
+
+If the native extension built correctly, `flatline.decompile_function` will
+produce real decompiled output. Without the native extension the API is fully
+importable but every decompile call returns a `configuration_error` result
+rather than C code.
