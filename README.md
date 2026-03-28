@@ -24,7 +24,7 @@ metaphor for decompilation: extracting meaning from dead code.
 ## Requirements
 
 - Python 3.13+
-- Supported runtime host contract: Linux x86_64
+- Supported runtime host contract: Linux x86_64, macOS arm64, Windows x86_64
 - Published wheels: Linux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64
 
 Building from source (platforms without pre-built wheels, or forced native
@@ -45,8 +45,11 @@ pip install flatline
 
 `pip install flatline` uses pre-built wheels on Linux x86_64/aarch64, Windows
 x86_64, and macOS x86_64/arm64, so those installs work without a local
-compiler. Platforms outside that wheel matrix fall back to source builds and
-therefore need a C++20 compiler plus Ninja.
+compiler. The supported runtime-host contract currently covers Linux x86_64,
+macOS arm64, and Windows x86_64. Linux aarch64 and macOS x86_64 remain
+published-wheel targets until they gain dedicated equivalent-contract lanes.
+Platforms outside that wheel matrix fall back to source builds and therefore
+need a C++20 compiler plus Ninja.
 
 For development:
 
@@ -193,11 +196,18 @@ with release-facing guarantees and support-policy notes captured in
 [docs/release_notes.md](docs/release_notes.md) and the release/tag procedure
 recorded in [docs/release_workflow.md](docs/release_workflow.md). The manual
 artifact-review gate remains documented in [docs/release_review.md](docs/release_review.md)
-for future reference. The current roadmap focus is the P6.5 wheel distribution
-matrix, with the locked Tier-1 wheel set recorded in
-[docs/wheel_matrix.md](docs/wheel_matrix.md) while host-promotion evidence
-continues in [docs/host_feasibility.md](docs/host_feasibility.md). See
-[docs/roadmap.md](docs/roadmap.md) for the phase plan.
+for future reference. P6 host-feasibility work now promotes macOS arm64 and
+Windows x86_64 alongside Linux x86_64 in the supported runtime-host tier. The
+current roadmap focus is the remaining P6.5 public-publish step: the Tier-1
+wheel matrix and TestPyPI publish/smoke flow are validated, while the first
+production PyPI publish is still pending. See
+[docs/wheel_matrix.md](docs/wheel_matrix.md),
+[docs/host_feasibility.md](docs/host_feasibility.md), and
+[docs/roadmap.md](docs/roadmap.md) for the current phase state.
+
+## Acknowledgments
+
+This project was developed with the support of [Quarkslab](https://github.com/quarkslab).
 
 ## License
 
