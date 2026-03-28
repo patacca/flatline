@@ -18,8 +18,10 @@ from flatline import (
     CallSiteInfo,
     ConfigurationError,
     DecompileFailedError,
+    DecompileRequest,
     DecompileResult,
     DiagnosticFlags,
+    EnrichedOutput,
     ErrorItem,
     FlatlineError,
     FunctionInfo,
@@ -30,10 +32,13 @@ from flatline import (
     JumpTableInfo,
     LanguageCompilerPair,
     ParameterInfo,
+    PcodeOpInfo,
     StorageInfo,
     TypeInfo,
     UnsupportedTargetError,
     VariableInfo,
+    VarnodeFlags,
+    VarnodeInfo,
     VersionInfo,
     WarningItem,
     get_version_info,
@@ -48,7 +53,14 @@ def test_c001_result_schema_stability():
     """C-001: Required result keys/types remain stable across compatible releases."""
     # DecompileResult required fields (specs.md section 3.3)
     result_fields = {f.name for f in dataclasses.fields(DecompileResult)}
-    assert result_fields == {"c_code", "function_info", "warnings", "error", "metadata"}
+    assert result_fields == {
+        "c_code",
+        "function_info",
+        "warnings",
+        "error",
+        "metadata",
+        "enriched_output",
+    }
 
     # FunctionInfo required fields
     info_fields = {f.name for f in dataclasses.fields(FunctionInfo)}
@@ -244,3 +256,46 @@ def test_c004_structured_result_schema_stability():
         assert dataclasses.is_dataclass(cls), f"{cls.__name__} must be a dataclass"
         # Verify frozen by checking __dataclass_params__
         assert cls.__dataclass_params__.frozen, f"{cls.__name__} must be frozen"
+
+
+def test_c007_enriched_output_schema_stability() -> None:
+    """C-007: Enriched-output companion types keep stable field names."""
+    request_fields = {f.name for f in dataclasses.fields(DecompileRequest)}
+    assert "include_enriched_output" in request_fields
+
+    enriched_fields = {f.name for f in dataclasses.fields(EnrichedOutput)}
+    assert enriched_fields == {"pcode_ops", "varnodes"}
+
+    pcode_fields = {f.name for f in dataclasses.fields(PcodeOpInfo)}
+    assert pcode_fields == {
+        "id",
+        "opcode",
+        "instruction_address",
+        "sequence_time",
+        "sequence_order",
+        "input_varnode_ids",
+        "output_varnode_id",
+    }
+
+    varnode_fields = {f.name for f in dataclasses.fields(VarnodeInfo)}
+    assert varnode_fields == {
+        "id",
+        "space",
+        "offset",
+        "size",
+        "flags",
+        "defining_op_id",
+        "use_op_ids",
+    }
+
+    flag_fields = {f.name for f in dataclasses.fields(VarnodeFlags)}
+    assert flag_fields == {
+        "is_constant",
+        "is_input",
+        "is_free",
+        "is_implied",
+        "is_explicit",
+        "is_read_only",
+        "is_persist",
+        "is_addr_tied",
+    }

@@ -4,7 +4,8 @@
 # Overview
 - `flatline`: pip-installable Python wrapper around Ghidra C++ decompiler; decompiler surface only, no UI/project DB.
 - Repo version `0.1.1.dev1`; aligned in `pyproject.toml`, `meson.build`, `src/flatline/_version.py`; latest public release remains `0.1.0`; P5 complete.
-- Next: P6.5 release workflow now includes published-wheel smoke across the Tier-1 matrix; P6 host-feasibility remains macOS-first (ADR-008); P7 design is unblocked by resolved ADR-012.
+- P6.5 release workflow already includes published-wheel smoke across the Tier-1 matrix; P6 host-feasibility order remains macOS-first (ADR-008).
+- Active roadmap state: P6/P6.5 are paused due GitHub CI usage limits; P7 phase-1 landed with opt-in enriched output via `DecompileRequest.include_enriched_output` and `DecompileResult.enriched_output`, exposing post-simplification pcode ops plus varnode use-def graphs as frozen value types.
 - 64-bit wheel matrix locked in `docs/wheel_matrix.md`: manylinux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64.
 - Runtime data: dependency `ghidra-sleigh` (import `ghidra_sleigh`); omitted `runtime_data_dir` auto-discovers via `ghidra_sleigh.get_runtime_data_dir()`; explicit overrides; full multi-ISA default.
 - `pyproject.toml`: unpinned `ghidra-sleigh`, `license-files = ["LICENSE", "NOTICE"]`, `cibuildwheel` config (`cp313-* cp314-*`; Windows `before-build = "pip install delvewheel"` + `repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel}"`), global Meson `setup = ["--vsenv"]` under `[tool.meson-python.args]`.
@@ -24,8 +25,9 @@
 
 # Architecture (3-layer adapter)
 - Public: `DecompilerSession` + one-shot wrappers in `_session.py`; models in `_models.py`; errors in `_errors.py`.
+- Public enriched-output companion: `EnrichedOutput`, `PcodeOpInfo`, `VarnodeInfo`, `VarnodeFlags`; request opt-in only; base decompile contract stays lightweight when omitted.
 - Bridge: nanobind `_flatline_native.cpp` + Python fallback `_bridge.py`; pre-validates language/compiler, `.ldefs` fallback enumeration; unstable internal.
-- Native: 82 upstream C++ sources via Meson into static `ghidra_decompiler` (zlib required); `SleighArchitecture` init -> `LoadImage` -> action reset/perform -> `docFunction` -> `FunctionInfo`.
+- Native: 82 upstream C++ sources via Meson into static `ghidra_decompiler` (zlib required); `SleighArchitecture` init -> `LoadImage` -> action reset/perform -> `docFunction` -> `FunctionInfo`; P7 phase-1 extracts canonical opcode names via `get_opname(op.code())` and varnode use-def edges after `Action::perform()`.
 
 # Conventions
 - Max ~700 lines per file.
@@ -111,25 +113,29 @@
 - Native tests need `.sla` data from `ghidra-sleigh`; coverage: DATA, x86, AARCH64, RISCV, MIPS.
 - Runtime data resolved via `ghidra_sleigh.get_runtime_data_dir()`; `DecompilerSession` auto-discovers; `DecompileRequest`/`DecompilerSession` coerce path-like inputs.
 - `tests/conftest.py` auto-applies category markers from directory names.
-- Specs: `tests/specs/test_catalog.md` (46 defs, 5 categories), `tests/specs/fixtures.md` (10 fixtures, oracle strategy).
+- Specs: `tests/specs/test_catalog.md` (49 defs, 5 categories), `tests/specs/fixtures.md` (10 fixtures, oracle strategy).
 - Workflow specs: `test_ci_workflow_spec.py`, `test_native_tox_env_spec.py`, `test_release_ci_workflow_spec.py` — smoke-check critical CI/publish invariants incl Tier-1 wheel matrix.
-- Runtime/contract specs: `test_native_bridge_runtime_spec.py`, `test_runtime_data_spec.py`, `test_public_contract_spec.py`, `test_bridge_adapter_spec.py` — runtime smoke, `.ldefs` tolerance, ADR-005 budget, ADR-006 diagnostics.
+- Runtime/contract specs: `test_native_bridge_runtime_spec.py`, `test_runtime_data_spec.py`, `test_public_contract_spec.py`, `test_bridge_adapter_spec.py` — runtime smoke, `.ldefs` tolerance, ADR-005 budget, ADR-006 diagnostics, and P7 enriched-output opt-in/bridge normalization.
 - Release/devtool specs: `test_compliance_spec.py`, `test_footprint_spec.py`, `test_release_workflow_spec.py`, `test_artifact_audit_spec.py`; dev-tool tests skip under tox wheel installs via `pytest.importorskip`.
-- Regression/integration/negative: `test_regression_spec.py` covers switch-site baseline + warm-session p95 budgets across priority ISAs; `test_integration_spec.py` and `test_negative_spec.py` assert committed native fixtures.
+- Regression/integration/negative: `test_regression_spec.py` covers switch-site baseline + warm-session p95 budgets across priority ISAs; `test_integration_spec.py` and `test_negative_spec.py` assert committed native fixtures, including P7 use-def traversal on `fx_add_elf64`.
 
 # Vendored upstream
 - `third_party/ghidra` — submodule; `.gitmodules` tracks it.
 - `third_party/r2ghidra` — reference integration. Ignored, read-only unless explicitly asked.
 
 # Key data models (from specs.md)
-- `DecompileRequest` — `memory_image`, `base_address`, `function_address`, `language_id`, `compiler_spec`, `runtime_data_dir`, `function_size_hint`, `analysis_budget`.
+- `DecompileRequest` — `memory_image`, `base_address`, `function_address`, `language_id`, `compiler_spec`, `runtime_data_dir`, `function_size_hint`, `analysis_budget`, `include_enriched_output`.
 - `AnalysisBudget` — `max_instructions`; default `100000`.
-- `DecompileResult` — decompiled C, `FunctionInfo`, warnings, error, metadata.
+- `DecompileResult` — decompiled C, `FunctionInfo`, warnings, error, metadata, optional `EnrichedOutput`.
 - `FunctionInfo` — name, entry_address, size, is_complete, prototype, local_variables, call_sites, jump_tables, diagnostics, varnode_count.
 - `FunctionPrototype` — calling_convention, parameters, return_type, is_noreturn, has_this_pointer, recovery flags.
 - `TypeInfo` — name, size, metatype.
 - `DiagnosticFlags` — is_complete, has_unreachable_blocks, has_unimplemented, has_bad_data, has_no_code.
 - `LanguageCompilerPair` — `language_id`, `compiler_spec`.
+- `EnrichedOutput` — `pcode_ops`, `varnodes`.
+- `PcodeOpInfo` — `id`, `opcode`, `instruction_address`, `sequence_time`, `sequence_order`, `input_varnode_ids`, `output_varnode_id`.
+- `VarnodeInfo` — `id`, `space`, `offset`, `size`, `flags`, `defining_op_id`, `use_op_ids`.
+- `VarnodeFlags` — `is_constant`, `is_input`, `is_free`, `is_implied`, `is_explicit`, `is_read_only`, `is_persist`, `is_addr_tied`.
 - `WarningItem` — `code`, `message`, `phase`.
 - `ErrorItem` — `category`, `message`, `retryable`.
 - `VersionInfo` — `flatline_version`, `decompiler_version`.

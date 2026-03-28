@@ -17,6 +17,7 @@ from flatline import (
     DecompileRequest,
     DecompileResult,
     DiagnosticFlags,
+    EnrichedOutput,
     ErrorItem,
     FlatlineError,
     FunctionInfo,
@@ -24,10 +25,13 @@ from flatline import (
     InvalidArgumentError,
     JumpTableInfo,
     ParameterInfo,
+    PcodeOpInfo,
     StorageInfo,
     TypeInfo,
     UnsupportedTargetError,
     VariableInfo,
+    VarnodeFlags,
+    VarnodeInfo,
 )
 from flatline._models import _validate_compiler_spec
 from flatline._version import DECOMPILER_VERSION
@@ -129,6 +133,7 @@ def test_u001_request_schema_required_fields():
     assert req.runtime_data_dir is None
     assert req.function_size_hint is None
     assert req.analysis_budget == AnalysisBudget()
+    assert req.include_enriched_output is False
 
 
 # ---------------------------------------------------------------------------
@@ -408,3 +413,79 @@ def test_u006_analysis_budget_rejects_unsupported_fields_and_values():
     with pytest.raises(InvalidArgumentError) as exc_info:
         DecompileRequest(**base_kwargs, analysis_budget=object())
     assert exc_info.value.category == "invalid_argument"
+
+
+def test_u028_enriched_output_models_and_request_opt_in() -> None:
+    """U-028: Enriched-output companion types are frozen and opt-in via request."""
+    request = DecompileRequest(
+        memory_image=b"\x90\xc3",
+        base_address=0x1000,
+        function_address=0x1000,
+        language_id="x86:LE:64:default",
+        include_enriched_output=True,
+    )
+    assert request.include_enriched_output is True
+
+    add_op = PcodeOpInfo(
+        id=0,
+        opcode="INT_ADD",
+        instruction_address=0x1000,
+        sequence_time=1,
+        sequence_order=0,
+        input_varnode_ids=[0, 1],
+        output_varnode_id=2,
+    )
+    return_op = PcodeOpInfo(
+        id=1,
+        opcode="RETURN",
+        instruction_address=0x1003,
+        sequence_time=2,
+        sequence_order=1,
+        input_varnode_ids=[2],
+        output_varnode_id=None,
+    )
+    flags = VarnodeFlags(
+        is_constant=False,
+        is_input=False,
+        is_free=False,
+        is_implied=False,
+        is_explicit=True,
+        is_read_only=False,
+        is_persist=False,
+        is_addr_tied=False,
+    )
+    varnode = VarnodeInfo(
+        id=2,
+        space="unique",
+        offset=0x100,
+        size=4,
+        flags=flags,
+        defining_op_id=0,
+        use_op_ids=[1],
+    )
+    enriched_output = EnrichedOutput(
+        pcode_ops=[add_op, return_op],
+        varnodes=[varnode],
+    )
+
+    result = DecompileResult(
+        c_code="return a + b;",
+        function_info=_stub_function_info(),
+        warnings=[],
+        error=None,
+        metadata={
+            "decompiler_version": DECOMPILER_VERSION,
+            "language_id": request.language_id,
+            "compiler_spec": "",
+            "diagnostics": {},
+        },
+        enriched_output=enriched_output,
+    )
+
+    assert result.enriched_output == enriched_output
+    assert result.enriched_output is not None
+    assert result.enriched_output.pcode_ops[0].opcode == "INT_ADD"
+    assert result.enriched_output.varnodes[0].defining_op_id == 0
+
+    with pytest.raises(AttributeError):
+        result.enriched_output = None  # type: ignore[misc]

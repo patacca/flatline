@@ -161,6 +161,46 @@ class DiagnosticFlags:
     has_no_code: bool
 
 
+@dataclass(frozen=True)
+class VarnodeFlags:
+    """Stable boolean flags exported for one varnode."""
+
+    is_constant: bool
+    is_input: bool
+    is_free: bool
+    is_implied: bool
+    is_explicit: bool
+    is_read_only: bool
+    is_persist: bool
+    is_addr_tied: bool
+
+
+@dataclass(frozen=True)
+class PcodeOpInfo:
+    """One post-simplification pcode operation."""
+
+    id: int
+    opcode: str
+    instruction_address: int
+    sequence_time: int
+    sequence_order: int
+    input_varnode_ids: list[int]
+    output_varnode_id: int | None = None
+
+
+@dataclass(frozen=True)
+class VarnodeInfo:
+    """One varnode in the enriched use-def graph."""
+
+    id: int
+    space: str
+    offset: int
+    size: int
+    flags: VarnodeFlags
+    defining_op_id: int | None
+    use_op_ids: list[int]
+
+
 # --- Composite value types ---
 
 
@@ -220,6 +260,14 @@ class FunctionInfo:
     jump_tables: list[JumpTableInfo]
     diagnostics: DiagnosticFlags
     varnode_count: int
+
+
+@dataclass(frozen=True)
+class EnrichedOutput:
+    """Opt-in pcode and varnode graph extracted from the decompiler IR."""
+
+    pcode_ops: list[PcodeOpInfo]
+    varnodes: list[VarnodeInfo]
 
 
 # --- Warning/Error items ---
@@ -363,6 +411,7 @@ class DecompileRequest:
     runtime_data_dir: str | None = None
     function_size_hint: int | None = None
     analysis_budget: AnalysisBudget | None = None
+    include_enriched_output: bool = False
 
     def __post_init__(self) -> None:
         if not isinstance(self.memory_image, (bytes, bytearray)):
@@ -371,6 +420,8 @@ class DecompileRequest:
             raise InvalidArgumentError("memory_image must not be empty")
         if not isinstance(self.language_id, str) or not self.language_id:
             raise InvalidArgumentError("language_id must be a non-empty string")
+        if not isinstance(self.include_enriched_output, bool):
+            raise InvalidArgumentError("include_enriched_output must be a bool")
         if self.runtime_data_dir is not None:
             object.__setattr__(self, "runtime_data_dir", fspath(self.runtime_data_dir))
         object.__setattr__(self, "analysis_budget", _coerce_analysis_budget(self.analysis_budget))
@@ -400,6 +451,7 @@ class DecompileResult:
     warnings: list[WarningItem]
     error: ErrorItem | None
     metadata: dict[str, Any]
+    enriched_output: EnrichedOutput | None = None
 
 
 # --- Validation helpers (used by bridge, not user-facing) ---

@@ -12,8 +12,12 @@ from flatline import (
     ConfigurationError,
     DecompileRequest,
     DecompileResult,
+    EnrichedOutput,
     FunctionInfo,
     LanguageCompilerPair,
+    PcodeOpInfo,
+    VarnodeFlags,
+    VarnodeInfo,
 )
 from flatline import _bridge as bridge_module
 from flatline._version import DECOMPILER_VERSION
@@ -36,6 +40,50 @@ class _NativeSessionSuccessDouble:
     def decompile_function(self, request_payload: dict[str, Any]) -> dict[str, Any]:
         self.decompile_calls += 1
         self.last_request_payload = request_payload
+        enriched_output = None
+        if request_payload["include_enriched_output"]:
+            enriched_output = {
+                "pcode_ops": [
+                    {
+                        "id": 0,
+                        "opcode": "INT_ADD",
+                        "instruction_address": request_payload["function_address"],
+                        "sequence_time": 1,
+                        "sequence_order": 0,
+                        "input_varnode_ids": [0, 1],
+                        "output_varnode_id": 2,
+                    },
+                    {
+                        "id": 1,
+                        "opcode": "RETURN",
+                        "instruction_address": request_payload["function_address"] + 3,
+                        "sequence_time": 2,
+                        "sequence_order": 1,
+                        "input_varnode_ids": [2],
+                        "output_varnode_id": None,
+                    },
+                ],
+                "varnodes": [
+                    {
+                        "id": 2,
+                        "space": "unique",
+                        "offset": 0x100,
+                        "size": 4,
+                        "flags": {
+                            "is_constant": False,
+                            "is_input": False,
+                            "is_free": False,
+                            "is_implied": False,
+                            "is_explicit": True,
+                            "is_read_only": False,
+                            "is_persist": False,
+                            "is_addr_tied": False,
+                        },
+                        "defining_op_id": 0,
+                        "use_op_ids": [1],
+                    }
+                ],
+            }
         return {
             "c_code": "int add(int a, int b) { return a + b; }",
             "function_info": {
@@ -91,6 +139,7 @@ class _NativeSessionSuccessDouble:
                 "compiler_spec": request_payload["compiler_spec"],
                 "diagnostics": {},
             },
+            "enriched_output": enriched_output,
         }
 
 
@@ -129,6 +178,15 @@ class _NativeSessionInvalidSuccessShapeDouble:
 
     def close(self) -> None:
         return None
+
+
+class _NativeSessionMissingEnrichedOutputDouble(_NativeSessionSuccessDouble):
+    """Native-session double that omits opt-in enriched output."""
+
+    def decompile_function(self, request_payload: dict[str, Any]) -> dict[str, Any]:
+        result = super().decompile_function(request_payload)
+        result.pop("enriched_output", None)
+        return result
 
 
 class _NativeSessionEmptyEnumerationDouble:
@@ -294,6 +352,63 @@ def test_u011_bridge_serializes_explicit_analysis_budget(
     assert native_session.last_request_payload["analysis_budget"] == {
         "max_instructions": 4096,
     }
+
+
+def test_u028_bridge_session_adapts_enriched_output_when_requested(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """U-028: Native enriched-output payloads adapt to public frozen model types."""
+    native_session = _NativeSessionSuccessDouble()
+    native_module = _NativeModuleDouble(native_session=native_session)
+    monkeypatch.setattr(bridge_module.importlib, "import_module", lambda _: native_module)
+
+    runtime_dir = tmp_path / "runtime"
+    runtime_dir.mkdir()
+    bridge_session = bridge_module.create_bridge_session(runtime_data_dir=str(runtime_dir))
+
+    request = DecompileRequest(
+        memory_image=b"\x90\xc3",
+        base_address=0x1000,
+        function_address=0x1000,
+        language_id="x86:LE:64:default",
+        compiler_spec="gcc",
+        include_enriched_output=True,
+    )
+    result = bridge_session.decompile_function(request)
+
+    assert native_session.last_request_payload is not None
+    assert native_session.last_request_payload["include_enriched_output"] is True
+    assert isinstance(result.enriched_output, EnrichedOutput)
+    assert isinstance(result.enriched_output.pcode_ops[0], PcodeOpInfo)
+    assert isinstance(result.enriched_output.varnodes[0], VarnodeInfo)
+    assert isinstance(result.enriched_output.varnodes[0].flags, VarnodeFlags)
+    assert result.enriched_output.pcode_ops[0].opcode == "INT_ADD"
+    assert result.enriched_output.varnodes[0].use_op_ids == [1]
+
+
+def test_u028_bridge_rejects_missing_enriched_output_when_requested(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """U-028: Opt-in enriched output must not silently disappear on success."""
+    native_module = _NativeModuleDouble(native_session=_NativeSessionMissingEnrichedOutputDouble())
+    monkeypatch.setattr(bridge_module.importlib, "import_module", lambda _: native_module)
+
+    bridge_session = bridge_module.create_bridge_session()
+    request = DecompileRequest(
+        memory_image=b"\x90\xc3",
+        base_address=0x1000,
+        function_address=0x1000,
+        language_id="x86:LE:64:default",
+        compiler_spec="gcc",
+        include_enriched_output=True,
+    )
+
+    result = bridge_session.decompile_function(request)
+
+    assert result.error is not None
+    assert result.error.category == "internal_error"
+    assert result.enriched_output is None
 
 
 def test_u002_bridge_rejects_unsupported_target_without_native_fallback(

@@ -20,15 +20,19 @@ from flatline._models import (
     CallSiteInfo,
     DecompileResult,
     DiagnosticFlags,
+    EnrichedOutput,
     ErrorItem,
     FunctionInfo,
     FunctionPrototype,
     JumpTableInfo,
     LanguageCompilerPair,
     ParameterInfo,
+    PcodeOpInfo,
     StorageInfo,
     TypeInfo,
     VariableInfo,
+    VarnodeFlags,
+    VarnodeInfo,
     WarningItem,
 )
 from flatline._runtime_data import enumerate_runtime_data_language_compilers
@@ -171,6 +175,7 @@ def _request_to_native_payload(request: DecompileRequest) -> dict[str, Any]:
         "runtime_data_dir": request.runtime_data_dir,
         "function_size_hint": request.function_size_hint,
         "analysis_budget": _analysis_budget_to_native_payload(request.analysis_budget),
+        "include_enriched_output": request.include_enriched_output,
     }
 
 
@@ -220,15 +225,21 @@ def _coerce_decompile_result(raw_result: Any, request: DecompileRequest) -> Deco
     warnings = _coerce_warning_items(raw_map.get("warnings"))
     error = _coerce_error_item(raw_map.get("error"))
     metadata = _coerce_metadata(raw_map.get("metadata"), request)
+    enriched_output = _coerce_enriched_output(raw_map.get("enriched_output"))
 
     if error is not None:
         c_code = None
         function_info = None
+        enriched_output = None
     else:
         if c_code is None:
             raise InternalError("decompile_result.c_code must be set when error is None")
         if function_info is None:
             raise InternalError("decompile_result.function_info must be set when error is None")
+        if request.include_enriched_output and enriched_output is None:
+            raise InternalError(
+                "decompile_result.enriched_output must be set when include_enriched_output is True"
+            )
 
     return DecompileResult(
         c_code=c_code,
@@ -236,6 +247,7 @@ def _coerce_decompile_result(raw_result: Any, request: DecompileRequest) -> Deco
         warnings=warnings,
         error=error,
         metadata=metadata,
+        enriched_output=enriched_output,
     )
 
 
@@ -331,6 +343,109 @@ def _coerce_function_info(raw_info: Any) -> FunctionInfo | None:
         jump_tables=_coerce_jump_table_list(info_map.get("jump_tables")),
         diagnostics=_coerce_diagnostic_flags(info_map.get("diagnostics")),
         varnode_count=_require_int(info_map.get("varnode_count"), "function_info.varnode_count"),
+    )
+
+
+def _coerce_enriched_output(raw_enriched_output: Any) -> EnrichedOutput | None:
+    if raw_enriched_output is None:
+        return None
+    if isinstance(raw_enriched_output, EnrichedOutput):
+        return raw_enriched_output
+
+    enriched_map = _require_mapping(raw_enriched_output, "enriched_output")
+    return EnrichedOutput(
+        pcode_ops=_coerce_pcode_op_list(enriched_map.get("pcode_ops")),
+        varnodes=_coerce_varnode_info_list(enriched_map.get("varnodes")),
+    )
+
+
+def _coerce_pcode_op_list(raw_pcode_ops: Any) -> list[PcodeOpInfo]:
+    if raw_pcode_ops is None:
+        return []
+    if not _is_sequence_like(raw_pcode_ops):
+        raise InternalError("enriched_output.pcode_ops must be a sequence")
+    return [_coerce_pcode_op(item) for item in raw_pcode_ops]
+
+
+def _coerce_pcode_op(raw_pcode_op: Any) -> PcodeOpInfo:
+    if isinstance(raw_pcode_op, PcodeOpInfo):
+        return raw_pcode_op
+    pcode_map = _require_mapping(raw_pcode_op, "pcode_op")
+    raw_input_varnode_ids = pcode_map.get("input_varnode_ids", [])
+    if not _is_sequence_like(raw_input_varnode_ids):
+        raise InternalError("pcode_op.input_varnode_ids must be a sequence")
+    input_varnode_ids = [
+        _require_int(varnode_id, "pcode_op.input_varnode_ids[]")
+        for varnode_id in raw_input_varnode_ids
+    ]
+    output_varnode_id = pcode_map.get("output_varnode_id")
+    if output_varnode_id is not None:
+        output_varnode_id = _require_int(output_varnode_id, "pcode_op.output_varnode_id")
+
+    return PcodeOpInfo(
+        id=_require_int(pcode_map.get("id"), "pcode_op.id"),
+        opcode=_require_str(pcode_map.get("opcode"), "pcode_op.opcode"),
+        instruction_address=_require_int(
+            pcode_map.get("instruction_address"),
+            "pcode_op.instruction_address",
+        ),
+        sequence_time=_require_int(pcode_map.get("sequence_time"), "pcode_op.sequence_time"),
+        sequence_order=_require_int(pcode_map.get("sequence_order"), "pcode_op.sequence_order"),
+        input_varnode_ids=input_varnode_ids,
+        output_varnode_id=output_varnode_id,
+    )
+
+
+def _coerce_varnode_info_list(raw_varnodes: Any) -> list[VarnodeInfo]:
+    if raw_varnodes is None:
+        return []
+    if not _is_sequence_like(raw_varnodes):
+        raise InternalError("enriched_output.varnodes must be a sequence")
+    return [_coerce_varnode_info(item) for item in raw_varnodes]
+
+
+def _coerce_varnode_info(raw_varnode: Any) -> VarnodeInfo:
+    if isinstance(raw_varnode, VarnodeInfo):
+        return raw_varnode
+    varnode_map = _require_mapping(raw_varnode, "varnode")
+    raw_use_op_ids = varnode_map.get("use_op_ids", [])
+    if not _is_sequence_like(raw_use_op_ids):
+        raise InternalError("varnode.use_op_ids must be a sequence")
+    use_op_ids = [_require_int(op_id, "varnode.use_op_ids[]") for op_id in raw_use_op_ids]
+    defining_op_id = varnode_map.get("defining_op_id")
+    if defining_op_id is not None:
+        defining_op_id = _require_int(defining_op_id, "varnode.defining_op_id")
+
+    return VarnodeInfo(
+        id=_require_int(varnode_map.get("id"), "varnode.id"),
+        space=_require_str(varnode_map.get("space"), "varnode.space"),
+        offset=_require_int(varnode_map.get("offset"), "varnode.offset"),
+        size=_require_int(varnode_map.get("size"), "varnode.size"),
+        flags=_coerce_varnode_flags(varnode_map.get("flags")),
+        defining_op_id=defining_op_id,
+        use_op_ids=use_op_ids,
+    )
+
+
+def _coerce_varnode_flags(raw_flags: Any) -> VarnodeFlags:
+    if isinstance(raw_flags, VarnodeFlags):
+        return raw_flags
+    flags_map = _require_mapping(raw_flags, "varnode.flags")
+    return VarnodeFlags(
+        is_constant=_require_bool(flags_map.get("is_constant"), "varnode.flags.is_constant"),
+        is_input=_require_bool(flags_map.get("is_input"), "varnode.flags.is_input"),
+        is_free=_require_bool(flags_map.get("is_free"), "varnode.flags.is_free"),
+        is_implied=_require_bool(flags_map.get("is_implied"), "varnode.flags.is_implied"),
+        is_explicit=_require_bool(flags_map.get("is_explicit"), "varnode.flags.is_explicit"),
+        is_read_only=_require_bool(
+            flags_map.get("is_read_only"),
+            "varnode.flags.is_read_only",
+        ),
+        is_persist=_require_bool(flags_map.get("is_persist"), "varnode.flags.is_persist"),
+        is_addr_tied=_require_bool(
+            flags_map.get("is_addr_tied"),
+            "varnode.flags.is_addr_tied",
+        ),
     )
 
 

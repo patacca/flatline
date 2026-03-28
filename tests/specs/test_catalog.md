@@ -31,6 +31,7 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 | U-025 | Validate release publish workflow smoke invariants | Committed `.github/workflows/release.yml` + `pyproject.toml` + `tools/flatline_dev/wheel_smoke.py` + `tools/flatline_dev/published_wheel_smoke.py` | Parse the committed release workflow definition and wheel config | The workflow runs only on GitHub `release.published` or `workflow_dispatch`, builds the locked wheel matrix plus sdist, runs the installed-wheel smoke script before publish, runs a post-publish index-backed smoke install on the full Tier-1 platform/arch/Python matrix, routes manual dispatches to TestPyPI while release-triggered publishes go to PyPI, and requires unique manual-dispatch versions instead of skipping duplicate uploads | Workflow-smoke oracle | Critical publish routing, wheel-matrix scope, and artifact validation stay explicit without pinning incidental step structure |
 | U-026 | Validate native-forced tox env and macOS contract-lane smoke invariants | Committed `pyproject.toml` + `.github/workflows/ci.yml` | Parse the native tox config and the macOS CI job | `py314-native` still forces `native_bridge=enabled`, and a dedicated macOS lane runs `tox -e py314-native -- -m "not regression"` without manual `CPPFLAGS` / `LDFLAGS` / `PKG_CONFIG_PATH` exports | Config-smoke oracle | Host-feasibility coverage stays explicit without pinning incidental workflow details |
 | U-027 | Validate Windows contract-lane smoke invariants | Committed `.github/workflows/ci.yml` | Parse the committed CI workflow definition | A dedicated Windows lane runs `tox -e py314-native -- -m "not regression"` on a Windows runner without manual `CPPFLAGS` / `LDFLAGS` / `PKG_CONFIG_PATH` exports | Workflow-smoke oracle | Windows host-feasibility coverage stays explicit without pinning incidental workflow details |
+| U-028 | Validate enriched-output opt-in and bridge enforcement | None | Construct requests/result companions with and without `include_enriched_output`; adapt native enriched-output payloads through the bridge; simulate a successful native response that omits the opt-in payload | Request opt-in defaults to `False`, enriched-output companion models remain frozen, the bridge serializes the opt-in flag and coerces pcode/varnode payloads to public value types, and successful opt-in requests fail hard if `enriched_output` is missing | Companion-schema + boundary-shape oracle | Opt-in enriched output never silently disappears on successful results |
 
 ## 2. Contract Tests
 
@@ -42,6 +43,7 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 | C-004 | Structured result object schema stability | None | Call API stub and inspect FunctionInfo, FunctionPrototype, TypeInfo fields/types | Required fields/types unchanged; metatype strings are stable enum values | JSON-schema-like oracle | Additive fields allowed only; metatype mapping is contract-stable |
 | C-005 | Session API surface stability | None | Inspect `DecompilerSession` for required methods | Lifecycle and operation methods are present and callable | API-surface oracle | Required methods remain stable |
 | C-006 | Top-level operation function availability | None | Inspect module-level operation callables and signatures | `decompile_function` and `list_language_compilers` exist with stable parameters | Signature oracle | Parameter names remain stable |
+| C-007 | Enriched-output schema stability | None | Inspect `DecompileRequest`, `DecompileResult`, and enriched companion dataclasses | The opt-in request flag plus `EnrichedOutput`, `PcodeOpInfo`, `VarnodeInfo`, and `VarnodeFlags` keep stable field names | JSON-schema-like oracle | Additive fields allowed only; enriched companion field names are contract-stable |
 
 ## 3. Integration Tests
 
@@ -54,6 +56,7 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 | I-005 | Known function produces populated FunctionInfo | `fx_add_elf64` | Decompile known function and inspect function_info | `function_info` is not None; `is_complete` True; `prototype` has expected parameter count and return type; `diagnostics` flags consistent | Structured-field oracle | Field shapes stable for same fixture and upstream pin |
 | I-006 | Multi-ISA and multi-bitwidth known function decompilation | `fx_add_elf32`, `fx_add_arm64`, `fx_add_riscv64`, `fx_add_mips32` | Decompile known function for each additional priority ISA variant (x86_32, ARM64, RISC-V 64, MIPS32) | Non-empty C output and success status per ISA; `function_info` populated; no cross-ISA interference | Per-ISA normalized oracle | Each ISA evaluated independently; oracle baselines are ISA-specific |
 | I-007 | Warning-only success with warning structure | `fx_warning_elf64` | Decompile function that produces warnings but succeeds | `c_code` non-empty; `error` is `None`; `function_info` populated; `warnings` non-empty with each item having `code` (str), `message` (str), `phase` (str) | Status + warning-structure oracle | Warning codes stable; message text informative only; phase values from defined set (`init`, `analyze`, `emit`) |
+| I-008 | Opt-in enriched output supports use-def analysis | `fx_add_elf64` | Decompile the known add fixture with `include_enriched_output=True`, then walk the exported pcode/varnode graph | Default requests keep `enriched_output=None`; opt-in requests populate pcode ops and varnodes; a downstream walk from the `INT_ADD` result reaches a `RETURN` op through exported use-def edges | Use-def traversal oracle | Pcode-op IDs and varnode edges stay deterministic for the pinned fixture/upstream pair |
 
 ## 4. Regression Tests
 
@@ -88,14 +91,17 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 | §3.3 DecompileRequest `runtime_data_dir` | Omission uses dependency-backed default; explicit values remain overrides | U-016 |
 | §3.3 DecompileRequest `function_size_hint` | Advisory; omission not an error | U-004 |
 | §3.3 DecompileRequest `analysis_budget` | Omission resolves to the pinned default budget; supported inputs normalize deterministically | U-006, U-011 |
+| §3.3 DecompileRequest `include_enriched_output` | Opt-in enriched output is explicit and defaults to `False` | U-028, C-007, I-001, I-008 |
 | §3.3 `AnalysisBudget` | `max_instructions` is the stable budget field for P2 | U-006, C-004 |
 | §3.3 DecompileResult metadata keys | Required top-level keys always present | U-003, C-001 |
+| §3.3 DecompileResult `enriched_output` | Companion payload is absent by default and present on successful opt-in requests | U-028, C-001, C-007, I-001, I-008 |
 | §3.3 FunctionInfo fields + types | Required fields present, correct types, diagnostics consistent | U-005, I-005, C-004 |
 | §3.3 FunctionPrototype fields | Calling convention, parameters, return type, flags | C-004, I-005 |
 | §3.3 ParameterInfo, VariableInfo, TypeInfo | Stable required fields and metatype strings | C-004 |
 | §3.3 CallSiteInfo, JumpTableInfo | Call/jump-table structured data | R-002, I-005 |
 | §3.3 DiagnosticFlags | Aggregated boolean flags | U-005, I-005 |
 | §3.3 LanguageCompilerPair | language_id + compiler_spec fields | I-002 |
+| §3.3 EnrichedOutput, PcodeOpInfo, VarnodeInfo, VarnodeFlags | Frozen companion schema and graph edges remain stable | U-028, C-007, I-008 |
 | §3.3 WarningItem structure | code, message, phase fields | I-007 |
 | §3.3 VersionInfo fields | flatline_version, decompiler_version | C-003 |
 | §3.4 Unknown compiler → hard error | No implicit fallback | U-002, N-003 |
@@ -109,6 +115,7 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 | §3.4 Warning-only → successful status | c_code valid, error None, function_info populated | I-007 |
 | §3.4 Error set → function_info=None, c_code=None | Error model invariant | N-001, N-002, N-003, N-005 |
 | §3.4 Success → function_info populated | Never None on success | I-005 |
+| §3.4 Opt-in enriched output is all-or-nothing | Successful opt-in requests never silently drop the companion payload | U-028, I-008 |
 | §3.5 Additive fields only in minor | Schema stability | C-001, C-004 |
 | §3.5 SemVer baseline + §7 release workflow | The first public release finalizes `0.1.0.devN` as `0.1.0`, and the release workflow stays source-controlled and auditable | U-021 |
 | §7 Packaging and compliance | Release artifacts include notices and attribution; ADR-007 audit passes; built wheel/sdist metadata stay auditable; repo-only dev tooling stays outside shipped payloads; default-install footprint stays measured/documented with an explicit size-policy note | U-017, U-018, U-022 |
@@ -130,6 +137,7 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 - Post-decompile structured data (FunctionInfo, prototype, symbols, types): `notes/api/decompiler_inventory.md` §§1-7.
 - Public contract, runtime-data policy, and error semantics: `docs/specs.md`.
 - Structured result object definitions: `docs/specs.md` §3.3.
+- Enriched pcode/varnode companion contract and extraction invariants: `docs/specs.md` §3.3 and `notes/api/decompiler_inventory.md` §3.
 - Diagnostic path-visibility policy and public warning/error surfaces: `docs/specs.md` §3.4 and §7.
 - Initial public release notes and support messaging: `docs/release_notes.md`.
 - Redistribution/compliance manifest and release audit: `docs/compliance.md`.

@@ -45,8 +45,8 @@ Personas:
 - Reverse engineer automating decompilation pipelines from Python.
 - Security engineer building repeatable triage workflows.
 - Tooling engineer embedding deterministic decompilation checks into CI or release validation.
-- Researcher building binary similarity or diffing tools from decompiler output (post-MVP).
-- Security researcher performing data flow or taint analysis on decompiled functions (post-MVP).
+- Researcher building binary similarity or diffing tools from decompiler output.
+- Security researcher performing data flow or taint analysis on decompiled functions.
 
 Primary use cases:
 - Decompile one function by memory image + architecture + entry address (ADR-001 resolved: Option A).
@@ -59,7 +59,7 @@ Secondary (Next):
 - Batch execution over many functions with bounded resources.
 - Cross-platform parity (macOS/Windows).
 
-Post-MVP (Enriched Structured Output):
+P7 Opt-in Enriched Output:
 - Extract pcode intermediate representation sequences for custom analysis pipelines.
 - Access varnode data flow graphs as frozen Python value types for binary similarity computation (e.g., BSim reimplementation with custom hyperparameters and feature vectors).
 - Build binary diffing pipelines using normalized function representations (pcode sequences, control flow graph edges, varnode topology).
@@ -85,6 +85,10 @@ Post-MVP (Enriched Structured Output):
 | `StorageInfo` | Variable/parameter storage location: address space name, byte offset, byte size. |
 | `LanguageCompilerPair` | One valid `language_id` + `compiler_spec` entry known to current runtime data directory. |
 | `AnalysisBudget` | Deterministic per-request resource limits. MVP/P2 exposes only `max_instructions`. |
+| `EnrichedOutput` | Optional P7 companion payload containing post-simplification pcode operations and varnode use-def graph data. |
+| `PcodeOpInfo` | One pcode operation exported as a frozen value type with stable IDs and varnode references. |
+| `VarnodeInfo` | One varnode exported as a frozen value type with stable IDs and defining/use op references. |
+| `VarnodeFlags` | Stable boolean classification flags exported for one varnode. |
 | `FlatlineError` | Stable Python exception hierarchy mapped from status/error categories. |
 
 Derived from:
@@ -114,6 +118,7 @@ Module-level operation functions are convenience wrappers for single-call workfl
 - `runtime_data_dir` (optional explicit override over the dependency-provided default runtime-data root)
 - `function_size_hint` (optional advisory)
 - `analysis_budget` (optional `AnalysisBudget`; omitted requests default to `AnalysisBudget(max_instructions=100000)`)
+- `include_enriched_output` (optional bool; default `False`) — when `True`, success requires `DecompileResult.enriched_output` to be populated with post-simplification pcode + varnode graph data
 
 Input model resolved by ADR-001 (Option A: memory + architecture + function-level).
 The caller provides a memory image covering the relevant address space. The library
@@ -131,6 +136,7 @@ are planned extensions (see §8.3).
   - `metadata["language_id"]`
   - `metadata["compiler_spec"]`
   - `metadata["diagnostics"]` — legacy key; superseded by `function_info.diagnostics` when `function_info` is present
+- `enriched_output: EnrichedOutput | None` — populated only when `include_enriched_output=True` and decompilation succeeds
 
 `FunctionInfo` fields:
 - `name: str` — function name (from `Funcdata::getName()`)
@@ -207,6 +213,38 @@ callable surface has no wall-clock timeout or cancellation hook. Time-based
 limits remain a future extension requiring explicit upstream-compatible
 mechanisms.
 
+`EnrichedOutput` fields:
+- `pcode_ops: list[PcodeOpInfo]`
+- `varnodes: list[VarnodeInfo]`
+
+`PcodeOpInfo` fields:
+- `id: int` — stable integer ID assigned by `Funcdata::beginOpAll()` order
+- `opcode: str` — canonical Ghidra opcode name from `get_opname(OpCode)` (for example `INT_ADD`, `COPY`, `RETURN`)
+- `instruction_address: int` — original instruction address for the pcode op (`PcodeOp::getAddr()`)
+- `sequence_time: int` — sequence-number time field (`SeqNum::getTime()`)
+- `sequence_order: int` — sequence-number order field (`SeqNum::getOrder()`)
+- `input_varnode_ids: list[int]` — input varnode IDs in slot order
+- `output_varnode_id: int | None` — output varnode ID when present
+
+`VarnodeFlags` fields:
+- `is_constant: bool`
+- `is_input: bool`
+- `is_free: bool`
+- `is_implied: bool`
+- `is_explicit: bool`
+- `is_read_only: bool`
+- `is_persist: bool`
+- `is_addr_tied: bool`
+
+`VarnodeInfo` fields:
+- `id: int` — stable integer ID assigned on first encounter while walking pcode ops in ID order (output first, then inputs by slot)
+- `space: str` — address-space name for the varnode storage/value
+- `offset: int` — address-space offset or constant value offset
+- `size: int` — varnode size in bytes
+- `flags: VarnodeFlags`
+- `defining_op_id: int | None` — pcode op that defines this varnode, if any
+- `use_op_ids: list[int]` — pcode ops that read this varnode
+
 `WarningItem` fields:
 - `code: str` — stable warning code using hierarchical namespace (`<phase>.<code>`, e.g., `analyze.W001`); flatline reserves this namespace and may add new codes additively in minor releases
 - `message: str` — human-readable warning text (informative, not exact-match stable); may include full filesystem paths for debuggability
@@ -221,11 +259,14 @@ mechanisms.
 - `flatline_version: str`
 - `decompiler_version: str` — version of the underlying Ghidra decompiler engine, not of flatline itself
 
-All structured result objects (`FunctionInfo`, `FunctionPrototype`, `ParameterInfo`, `VariableInfo`, `TypeInfo`, `CallSiteInfo`, `JumpTableInfo`, `DiagnosticFlags`, `StorageInfo`, `LanguageCompilerPair`, `WarningItem`, `ErrorItem`, `VersionInfo`) are pure Python frozen value types. Data is extracted at the bridge boundary; no native pointers or references survive past the bridge call.
+All structured result objects (`FunctionInfo`, `FunctionPrototype`, `ParameterInfo`, `VariableInfo`, `TypeInfo`, `CallSiteInfo`, `JumpTableInfo`, `DiagnosticFlags`, `StorageInfo`, `LanguageCompilerPair`, `WarningItem`, `ErrorItem`, `VersionInfo`, `EnrichedOutput`, `PcodeOpInfo`, `VarnodeInfo`, `VarnodeFlags`) are pure Python frozen value types. Data is extracted at the bridge boundary; no native pointers or references survive past the bridge call.
 
 Error model for structured results:
 - If `DecompileResult.error` is set, then `function_info` is `None` and `c_code` is `None`.
+- If `DecompileResult.error` is set, then `enriched_output` is `None`.
 - If decompilation succeeds, `function_info` is populated (never `None`) and `c_code` is set.
+- If `include_enriched_output` is `True` and decompilation succeeds, `enriched_output` is populated (never `None`).
+- If `include_enriched_output` is `False`, `enriched_output` remains `None`.
 - Recovery failures within `function_info` are signaled via `prototype.has_input_errors` / `has_output_errors` and `diagnostics` flags, not by making individual fields `None`.
 
 Derived from:
@@ -247,7 +288,9 @@ Rules:
 - Public warning/error text may include full filesystem paths for debuggability; raw memory-image bytes must never be emitted in diagnostics.
 - Warning-only outcomes must still return successful operation status when C output is valid.
 - When `error` is set, `function_info` is always `None` and `c_code` is always `None`.
+- When `error` is set, `enriched_output` is always `None`.
 - When decompilation succeeds, `function_info` is always populated (never `None`).
+- When `include_enriched_output` is `True`, successful results must populate `enriched_output`; flatline must fail hard rather than silently dropping the companion payload.
 - Auto-discovered `ghidra-sleigh` runtime data that does not match flatline's pinned upstream baseline must emit an observable warning, not degrade silently. Explicit `runtime_data_dir` overrides are treated as user-managed custom assets.
 
 Derived from:
@@ -310,6 +353,7 @@ Known limits at baseline:
 | Function lookup/materialization | `decompile_function(request)` address targeting | Missing/invalid function target returns structured error category |
 | Action execution pipeline | Internal execution of request | Successful path yields `c_code` and optional warnings |
 | Post-decompile structured data (Funcdata, FuncProto, Scope, Types) | `DecompileResult.function_info` | Structured function metadata, prototype, variables, call sites, jump tables, diagnostics extracted field-by-field at bridge boundary (not via XML serialization) |
+| Post-simplification IR graph (PcodeOp, Varnode) | `DecompileResult.enriched_output` when `include_enriched_output=True` | Pcode ops and varnode use-def edges are exported as frozen value types with stable integer IDs; opt-in requests must not silently degrade |
 | Warning propagation | `DecompileResult.warnings` | Warning codes are stable identifiers |
 | Failure propagation | `DecompileResult.error` / exception mapping | No uncaught native exception reaches user |
 
@@ -679,20 +723,9 @@ Extensibility:
 - Batch decompilation APIs.
 - Cross-platform host parity (macOS/Windows).
 - Extended fixture coverage for non-priority Ghidra-supported ISAs beyond the MVP set.
-- Enriched structured output: expose pcode operations and varnode data flow graphs
-  as frozen Python value types in a dedicated `DecompileResult` companion,
-  requested explicitly so the baseline P2 `FunctionInfo` contract stays small
-  for callers that only need decompiled C and recovered symbols. Pcode is a
-  documented Ghidra IR with a stable opcode table and formal
-  Sleigh-specification semantics, not an unstable internal. Varnodes are
-  exported as frozen data (space, offset, size, flags, defining-op ID, use-op
-  IDs) at the bridge boundary, not as live C++ object handles. The extraction
-  point is the post-`Action::perform()` `Funcdata` state so callers see the same
-  simplified IR the C printer uses. Target use cases include: BSim-style binary
-  similarity with user-defined hyperparameters/feature vectors, binary diffing
-  via normalized function fingerprints, data flow and taint analysis over
-  use-def chains, and semantic understanding pipelines. ADR-012 now fixes this
-  representation/placement strategy; implementation remains post-MVP.
+- Enriched-output follow-ons: add CFG/basic-block exports, richer symbol/type
+  links on pcode and varnodes, broader fixture coverage, and additional
+  end-to-end downstream validations beyond the current use-def graph slice.
 
 ## 9. Open Questions
 

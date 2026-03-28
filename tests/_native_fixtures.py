@@ -62,7 +62,12 @@ class NativeFixture:
             )
         return memory_image
 
-    def build_request(self, runtime_data_dir: str) -> DecompileRequest:
+    def build_request(
+        self,
+        runtime_data_dir: str,
+        *,
+        include_enriched_output: bool = False,
+    ) -> DecompileRequest:
         return DecompileRequest(
             memory_image=self.memory_image(),
             base_address=self.base_address,
@@ -70,6 +75,7 @@ class NativeFixture:
             language_id=self.language_id,
             compiler_spec=self.compiler_spec,
             runtime_data_dir=runtime_data_dir,
+            include_enriched_output=include_enriched_output,
         )
 
 

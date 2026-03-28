@@ -113,6 +113,13 @@ After `Action::perform(Funcdata&)` returns successfully (return value >= 0), the
   PcodeOp IDs, export opcode/address/SeqNum fields from each `PcodeOp`, and use
   `getIn()` / `getOut()` plus `Varnode::getDef()` / `beginDescend()` /
   `endDescend()` to encode the varnode graph with ID-based edges only.
+- P7 phase-1 implementation uses `get_opname(op.code())` (from
+  `opcodes.hh`/`opcodes.cc`) for canonical opcode strings; `PcodeOp::getOpName()`
+  is avoided because it can produce printer-oriented spellings like `+`.
+- P7 phase-1 companion fields are sourced from `PcodeOp::getAddr()`,
+  `PcodeOp::getSeqNum()`, `SeqNum::getTime()` / `getOrder()` (in `address.hh`),
+  and the stable `Varnode` flag queries `isConstant()`, `isInput()`, `isFree()`,
+  `isImplied()`, `isExplicit()`, `isReadOnly()`, `isPersist()`, `isAddrTied()`.
 
 ### 4) Symbols & Variables
 
