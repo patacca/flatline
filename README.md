@@ -172,12 +172,12 @@ reference generation without requiring a native build.
 Project history lives in [CHANGELOG.md](CHANGELOG.md). Update it for every
 release using the Keep a Changelog structure already in the file.
 The release-facing contract guarantees, support tiers, known-variant limits,
-and upgrade policy for the first public release live in
+and upgrade policy for the public `0.1.x` line live in
 [docs/release_notes.md](docs/release_notes.md).
 The public artifact review checklist and manual approval hold point live in
 [docs/release_review.md](docs/release_review.md).
-The initial public release workflow and the `0.1.0` SemVer recommendation live
-in [docs/release_workflow.md](docs/release_workflow.md).
+The current production release workflow and the active `.devN` to public-version
+recommendation live in [docs/release_workflow.md](docs/release_workflow.md).
 GitHub Actions release publishing lives in
 [.github/workflows/release.yml](.github/workflows/release.yml): published
 GitHub releases go to PyPI, while manual dispatch uploads to TestPyPI.
@@ -193,17 +193,18 @@ The current P6 host-expansion feasibility record lives in
 
 The `0.1.0` MVP release is available. P5 initial public release is complete,
 with release-facing guarantees and support-policy notes captured in
-[docs/release_notes.md](docs/release_notes.md) and the release/tag procedure
-recorded in [docs/release_workflow.md](docs/release_workflow.md). The manual
-artifact-review gate remains documented in [docs/release_review.md](docs/release_review.md)
-for future reference. P6 host-feasibility work now promotes macOS arm64 and
-Windows x86_64 alongside Linux x86_64 in the supported runtime-host tier. The
-current roadmap focus is the remaining P6.5 public-publish step: the Tier-1
-wheel matrix and TestPyPI publish/smoke flow are validated, while the first
-production PyPI publish is still pending. See
+[docs/release_notes.md](docs/release_notes.md). The current production publish
+workflow for the `0.1.1.dev1` release candidate, including the audited
+`0.1.1.dev1` to `0.1.1` recommendation, is recorded in
+[docs/release_workflow.md](docs/release_workflow.md), and the human approval
+gate remains documented in [docs/release_review.md](docs/release_review.md).
+P6 host-feasibility work now promotes macOS arm64 and Windows x86_64 alongside
+Linux x86_64 in the supported runtime-host tier. The remaining P6.5 step is
+the first production PyPI publish of the Tier-1 wheel set. `python tools/release.py`
+audits the current release candidate, while
 [docs/wheel_matrix.md](docs/wheel_matrix.md),
 [docs/host_feasibility.md](docs/host_feasibility.md), and
-[docs/roadmap.md](docs/roadmap.md) for the current phase state.
+[docs/roadmap.md](docs/roadmap.md) remain the source-of-truth phase documents.
 
 ## Acknowledgments
 

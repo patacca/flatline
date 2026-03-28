@@ -300,16 +300,23 @@ Derived from:
 
 Stability guarantees:
 - Public Python names, payload fields, and error categories are stable API.
-- New optional metadata keys may be added in minor releases.
+- New optional metadata keys may be added in minor releases, or in patch
+  releases on the active pre-1.0 line.
 - Existing required fields cannot be removed without a major release.
 
-SemVer rules:
+Release-line rules:
+- The first public flatline release finalized the existing `0.1.0.devN`
+  development line as `0.1.0`; that tag established the initial public
+  baseline for later classification.
+- Flatline remains on a public `0.1.x` pre-1.0 line. The current production
+  publish candidate is `0.1.1.dev1`; production publishes on this line strip
+  the `.devN` suffix and keep the rest of the version stable.
 - Major: breaking Python API contract changes.
-- Minor: backward-compatible features, new optional fields, new warnings.
-- Patch: bug fixes with no contract shape changes.
-- The first public flatline release finalizes the existing `0.1.0.devN`
-  development line as `0.1.0`; that tag establishes the initial public SemVer
-  baseline for later major/minor/patch classification.
+- Minor: a deliberate release-line reset (for example `0.2.0`) or a post-1.0
+  backward-compatible capability release.
+- Patch: on the active `0.1.x` line, backward-compatible capabilities,
+  support-matrix expansion, additive metadata/warnings, and bug fixes with no
+  required contract-shape change.
 
 Latest-upstream-only policy:
 - Each flatline release line tracks exactly one upstream Ghidra decompiler revision.
@@ -668,13 +675,14 @@ Release-facing policy:
 - Release-facing upgrade notes must restate the latest-upstream-only policy,
   SemVer classification rules, the minimum one-minor deprecation window, and
   the caller-managed compatibility risk of custom `runtime_data_dir` roots.
-- The initial public release must also keep the human artifact-review checklist
-  in `docs/release_review.md` aligned with the release workflow, changelog, and
-  release notes so the final sign-off criteria are explicit, with an external
-  approval hold point before tagging and no requirement to commit review notes.
-- The initial public release workflow and its `0.1.0` version recommendation
-  are source-controlled in `docs/release_workflow.md` and audited by
-  `python tools/release.py` before the release tag is created.
+- Each production publish candidate must also keep the human artifact-review
+  checklist in `docs/release_review.md` aligned with the release workflow,
+  changelog, and release notes so the final sign-off criteria are explicit,
+  with an external approval hold point before tagging and no requirement to
+  commit review notes.
+- The release workflow and its current `.devN` to public-version
+  recommendation are source-controlled in `docs/release_workflow.md` and
+  audited by `python tools/release.py` before the GitHub release is published.
 
 Cross-platform feasibility policy:
 - Post-MVP host expansion proceeds macOS first and Windows second (ADR-008).

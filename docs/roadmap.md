@@ -30,8 +30,9 @@ Current status:
   Windows x86_64 into the supported runtime-host tier; Linux aarch64 and macOS
   x86_64 remain published-wheel-only targets.
 - The P6.5 wheel matrix, TestPyPI publish flow, and post-publish smoke matrix
-  are validated; the remaining phase-exit step is the first production PyPI
-  publish of the Tier-1 wheel set.
+  are validated for release candidate `0.1.1.dev1`; the remaining phase-exit
+  step is the first production PyPI publish of `0.1.1` and the Tier-1 wheel
+  set.
 
 ## 2. Detailed Milestone Gates
 
@@ -82,9 +83,9 @@ Current status:
   known-variant limits, and upgrade policy for the first public release
 - `docs/release_review.md` capturing the public artifact-review checklist and
   the explicit external approval hold point for final human sign-off
-- `docs/release_workflow.md` capturing the initial public release procedure and
-  the `0.1.0` SemVer recommendation that finalized the prior `0.1.0.dev0`
-  branch state
+- `docs/release_workflow.md` capturing the current production release
+  procedure, including the active `0.1.1.dev1` to `0.1.1` recommendation while
+  retaining the prior `0.1.0` baseline note
 - built-artifact audit evidence from `python tools/artifacts.py`
 - Exit checks:
 - SemVer classification approved
@@ -186,10 +187,21 @@ Release stream model:
 - The initial public release for this stream is `0.1.0`, finalized from the
   earlier `0.1.0.dev0` release-candidate line.
 
+Pre-1.0 release-line policy:
+- The active production publish candidate is `0.1.1.dev1`, and production
+  publishes on the `0.1.x` line strip the `.devN` suffix.
+- While flatline remains on the `0.1.x` line, backward-compatible
+  capabilities, support-matrix expansion, additive metadata/warnings, and
+  bug/determinism fixes may ship as documented patch releases.
+
 Versioning rules:
 - `MAJOR`: breaking Python API contract change.
-- `MINOR`: backward-compatible capabilities, additive metadata/warnings, upstream bump that preserves public contract.
-- `PATCH`: bug fixes and determinism improvements with unchanged contract shape.
+- `MINOR`: a deliberate release-line reset (for example `0.2.0`) or a
+  post-1.0 backward-compatible capability release, including an upstream bump
+  that preserves the public contract.
+- `PATCH`: on the active `0.1.x` line, backward-compatible capabilities,
+  support expansion, additive metadata/warnings, and bug fixes/determinism
+  improvements with unchanged required contract shape.
 
 Upstream bump protocol:
 1. Create bump candidate branch with new upstream pin.

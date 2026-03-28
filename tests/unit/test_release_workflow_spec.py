@@ -1,4 +1,4 @@
-"""Unit tests for the initial public release workflow and SemVer recommendation."""
+"""Unit tests for the current release workflow and version recommendation."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 pytest.importorskip("flatline_dev.release", reason="dev-only module not shipped in wheel")
-from flatline_dev.release import audit_initial_public_release_readiness
+from flatline_dev.release import audit_release_readiness
 
 
 def _write_minimal_release_ready_repo(repo_root: Path) -> None:
@@ -19,7 +19,7 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
         "\n".join(
             [
                 "[project]",
-                'version = "0.1.0.dev0"',
+                'version = "0.1.1.dev1"',
                 "",
                 "[project.optional-dependencies]",
                 'dev = ["build >= 1.2", "tox >= 4.0"]',
@@ -34,7 +34,7 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
                 "project(",
                 "  'flatline',",
                 "  'cpp',",
-                "  version: '0.1.0.dev0',",
+                "  version: '0.1.1.dev1',",
                 ")",
                 "",
             ]
@@ -42,7 +42,7 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
         encoding="ascii",
     )
     (repo_root / "src" / "flatline" / "_version.py").write_text(
-        '__version__ = "0.1.0.dev0"\n',
+        '__version__ = "0.1.1.dev1"\n',
         encoding="ascii",
     )
     (repo_root / "CHANGELOG.md").write_text(
@@ -69,8 +69,12 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
                 "",
                 "## Project status",
                 "",
-                "The current roadmap focus is the P6.5 wheel distribution matrix.",
+                (
+                    "The current production-publish candidate is `0.1.1.dev1`, "
+                    "and `python tools/release.py` audits it toward `0.1.1`."
+                ),
                 "[docs/wheel_matrix.md](docs/wheel_matrix.md)",
+                "[docs/roadmap.md](docs/roadmap.md)",
                 "",
                 "[docs/release_notes.md](docs/release_notes.md)",
                 "[docs/release_review.md](docs/release_review.md)",
@@ -87,7 +91,7 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
     (repo_root / "docs" / "release_notes.md").write_text(
         "\n".join(
             [
-                "# Initial Public Release Notes",
+                "# Release Notes Contract",
                 "",
                 "## Support Tiers",
                 "",
@@ -123,8 +127,8 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
                 "# Public Artifact Review Checklist",
                 "",
                 (
-                    "This checklist is the manual human gate for the initial public "
-                    "release of `0.1.0`."
+                    "This checklist is the manual human gate for publishing "
+                    "`0.1.1` from the current `0.1.1.dev1` release candidate."
                 ),
                 "",
                 "## Preconditions",
@@ -141,7 +145,8 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
                 "- Confirm `ghidra-sleigh` dependency is declared.",
                 "",
                 "## Approval Signal",
-                "- Do not create `git tag v0.1.0` until the checklist passes.",
+                "- Do not create `git tag v0.1.1` until the checklist passes.",
+                "- Do not publish GitHub release `v0.1.1` until the checklist passes.",
                 "- Keep any manual review notes outside the repo; do not commit them.",
                 "- Proceed only after the reviewer explicitly approves the release.",
                 "",
@@ -152,10 +157,11 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
     (repo_root / "docs" / "release_workflow.md").write_text(
         "\n".join(
             [
-                "# Initial Public Release Workflow",
+                "# Release Workflow",
                 "",
-                "- Current development version: `0.1.0.dev0`",
-                "- Recommended first public version: `0.1.0`",
+                "- Current release candidate: `0.1.1.dev1`",
+                "- Recommended public version: `0.1.1`",
+                "- Release decision: `pre_1_0_patch_release`",
                 "- Run `git status --short`",
                 "- Run `python tools/release.py`",
                 "- Run `python tools/compliance.py`",
@@ -166,7 +172,9 @@ def _write_minimal_release_ready_repo(repo_root: Path) -> None:
                 "- Run the manual checklist in `docs/release_review.md`",
                 "- Do not commit review notes",
                 "- Update `CHANGELOG.md`",
-                "- Create `git tag v0.1.0`",
+                "- Create `git tag v0.1.1`",
+                "- Publish the GitHub release with `gh release create v0.1.1`",
+                "- Wait for `release.published` to trigger PyPI publish",
                 "",
             ]
         ),
@@ -208,17 +216,17 @@ def _init_git_repo(repo_root: Path) -> None:
 
 
 def test_u021_release_readiness_audit_accepts_compliant_repo(tmp_path: Path) -> None:
-    """U-021: A compliant synthetic repo passes the initial-public-release audit."""
+    """U-021: A compliant synthetic repo passes the current release-readiness audit."""
     audit_repo_root = tmp_path / "release-ready"
     _write_minimal_release_ready_repo(audit_repo_root)
     _init_git_repo(audit_repo_root)
 
-    report = audit_initial_public_release_readiness(audit_repo_root)
+    report = audit_release_readiness(audit_repo_root)
 
     assert report.is_ready
-    assert report.current_version == "0.1.0.dev0"
-    assert report.recommended_release_version == "0.1.0"
-    assert report.semver_decision == "initial_public_release"
+    assert report.current_version == "0.1.1.dev1"
+    assert report.recommended_release_version == "0.1.1"
+    assert report.semver_decision == "pre_1_0_patch_release"
     assert report.required_artifacts == (
         "CHANGELOG.md",
         "README.md",

@@ -1,10 +1,11 @@
 # Public Artifact Review Checklist
 
-This checklist is the source-controlled human gate for the initial public
-release of `0.1.0`. Run it after the deterministic release helpers have passed
-and before creating `git tag v0.1.0`. Keep per-run review notes, reviewed
-commit hashes, and artifact filenames outside the repo; the checklist stays
-source-controlled, but the results do not.
+This checklist is the source-controlled human gate for publishing `0.1.1` from
+the current `0.1.1.dev1` release candidate. Run it after the deterministic
+release helpers have passed and before creating `git tag v0.1.1` or publishing
+GitHub release `v0.1.1`. Keep per-run review notes, reviewed commit hashes,
+and artifact filenames outside the repo; the checklist stays source-controlled,
+but the results do not.
 
 ## Preconditions
 
@@ -20,8 +21,9 @@ source-controlled, but the results do not.
 
 ## Review Evidence
 
-- Confirm `python tools/release.py` still reports the expected `0.1.0`
-  recommendation for the initial public release workflow.
+- Confirm `python tools/release.py` still reports the expected
+  `0.1.1.dev1` to `0.1.1` recommendation for the current
+  `pre_1_0_patch_release` workflow.
 - Confirm `tox` passed on the release matrix and no release-facing docs drifted
   while fixing the branch for release.
 - Confirm `python tools/compliance.py` passed and still reports the
@@ -41,7 +43,8 @@ source-controlled, but the results do not.
 
 ## Approval Signal
 
-- Do not create `git tag v0.1.0` until every checklist item passes.
+- Do not create `git tag v0.1.1` until every checklist item passes.
+- Do not publish GitHub release `v0.1.1` until every checklist item passes.
 - Keep any manual review notes outside the repo; do not commit them to
   `docs/release_review.md`.
 - Proceed only after the reviewer explicitly approves the release.

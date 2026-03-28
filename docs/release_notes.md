@@ -1,11 +1,12 @@
-# Initial Public Release Notes
+# Release Notes Contract
 
-These notes define the release-facing contract for the `0.1.x` release line.
+These notes define the release-facing contract for the public `0.1.x` line.
 They summarize what users can rely on, which targets are fixture-backed versus
 best-effort, how published wheel availability maps to runtime support, and how
 upgrades are handled as the project moves past the initial Linux MVP. This
-document accompanies the initial `0.1.0` public release plus the subsequent
-host-support and wheel-distribution updates on the same release line.
+document started with the `0.1.0` public release and now tracks the current
+support-tier and wheel-distribution contract for later publishes on the same
+line.
 
 ## Contract Guarantees
 
@@ -74,11 +75,17 @@ Support-tier interpretation:
 - Flatline follows a latest-upstream-only policy: each flatline release line
   ships one vendored Ghidra decompiler revision. Any compatible `ghidra-sleigh`
   version provides the default runtime data.
-- SemVer classification rules are:
+- Flatline remains on a public `0.1.x` pre-1.0 line. The current production
+  publish candidate is `0.1.1.dev1`; production publishes on this line strip
+  the `.devN` suffix and keep the rest of the version stable.
+- Version classification rules for the current line are:
   - `MAJOR`: breaking public Python API or contract changes.
-  - `MINOR`: backward-compatible features, additive metadata/warnings, or an
-    upstream bump that preserves the public contract.
-  - `PATCH`: bug fixes and determinism/perf fixes with unchanged contract shape.
+  - `MINOR`: a deliberate release-line reset (for example `0.2.0`) when the
+    pre-1.0 public contract needs a broader compatibility step or when the
+    project moves to `1.0`.
+  - `PATCH`: on the active `0.1.x` line, backward-compatible capabilities,
+    support-matrix expansion, additive metadata/warnings, and bug/determinism
+    fixes with unchanged required contract shape.
 - Public API removals require at least one minor release of deprecation notice
   before removal, except for emergency security or compliance removals.
 - Default installs should take flatline and `ghidra-sleigh` together.

@@ -1,4 +1,4 @@
-"""Initial-public-release readiness helpers for flatline."""
+"""Release-readiness helpers for flatline."""
 
 from __future__ import annotations
 
@@ -18,8 +18,7 @@ REQUIRED_ARTIFACTS = (
     "docs/release_review.md",
     "docs/release_workflow.md",
 )
-INITIAL_PUBLIC_RELEASE_VERSION = "0.1.0"
-INITIAL_PUBLIC_SEMVER_DECISION = "initial_public_release"
+PRE_1_0_PATCH_RELEASE_DECISION = "pre_1_0_patch_release"
 
 
 @dataclass(frozen=True)
@@ -32,7 +31,7 @@ class ReleaseReadinessIssue:
 
 @dataclass(frozen=True)
 class ReleaseReadinessReport:
-    """Readiness report for the initial public release gate."""
+    """Readiness report for the current release gate."""
 
     current_version: str
     recommended_release_version: str
@@ -52,6 +51,13 @@ def recommended_release_version(current_version: str) -> str:
     if dev_match is not None:
         return dev_match.group("base")
     return current_version
+
+
+def current_release_decision(current_version: str) -> str:
+    """Return the current release-line classification for the repo version."""
+    if recommended_release_version(current_version) == "0.1.0":
+        return "initial_public_release"
+    return PRE_1_0_PATCH_RELEASE_DECISION
 
 
 def _append_issue(issues: list[ReleaseReadinessIssue], code: str, message: str) -> None:
@@ -229,16 +235,16 @@ def _audit_release_support_notes(
         )
     else:
         required_status_fragments = (
-            "P6.5 wheel distribution matrix",
             "docs/wheel_matrix.md",
+            "docs/roadmap.md",
         )
         if any(fragment not in project_status for fragment in required_status_fragments):
             _append_issue(
                 issues,
-                "readme_wheel_status_missing",
+                "readme_release_status_missing",
                 (
-                    "README.md must point readers at the active P6.5 wheel-matrix "
-                    "status and source of truth."
+                    "README.md must point readers at the current wheel-matrix and "
+                    "roadmap source-of-truth documents."
                 ),
             )
 
@@ -403,8 +409,8 @@ def _audit_git_worktree(repo_root: Path, issues: list[ReleaseReadinessIssue]) ->
     )
 
 
-def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseReadinessReport:
-    """Audit the repo's initial-public-release workflow and version recommendation."""
+def audit_release_readiness(repo_root: str | Path) -> ReleaseReadinessReport:
+    """Audit the repo's current release workflow and version recommendation."""
     root = Path(repo_root).resolve()
     issues: list[ReleaseReadinessIssue] = []
 
@@ -418,6 +424,8 @@ def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseRead
         value for value in (project_version, meson_version, package_version) if value is not None
     }
     current_version = project_version or package_version or meson_version or "<unknown>"
+    release_version = recommended_release_version(current_version)
+    semver_decision = current_release_decision(current_version)
     if len(resolved_versions) > 1:
         _append_issue(
             issues,
@@ -425,17 +433,6 @@ def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseRead
             (
                 "Version strings must match across pyproject.toml, meson.build, and "
                 f"src/flatline/_version.py: {sorted(resolved_versions)}"
-            ),
-        )
-
-    if recommended_release_version(current_version) != INITIAL_PUBLIC_RELEASE_VERSION:
-        _append_issue(
-            issues,
-            "initial_public_version_unexpected",
-            (
-                "Initial public release should finalize to "
-                f"{INITIAL_PUBLIC_RELEASE_VERSION}, not "
-                f"{recommended_release_version(current_version)}."
             ),
         )
 
@@ -490,7 +487,7 @@ def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseRead
     if release_notes_text is not None:
         _require_fragments(
             text=release_notes_text,
-            fragments=("# Initial Public Release Notes",),
+            fragments=("# Release Notes Contract",),
             code="release_notes_missing_reference",
             label="docs/release_notes.md",
             issues=issues,
@@ -511,7 +508,8 @@ def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseRead
                 "## Preconditions",
                 "## Review Evidence",
                 "## Approval Signal",
-                f"`{INITIAL_PUBLIC_RELEASE_VERSION}`",
+                current_version,
+                f"`{release_version}`",
                 "python tools/release.py",
                 "tox",
                 "python tools/compliance.py",
@@ -536,9 +534,10 @@ def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseRead
         _require_fragments(
             text=workflow_text,
             fragments=(
-                "# Initial Public Release Workflow",
+                "# Release Workflow",
                 current_version,
-                f"`{INITIAL_PUBLIC_RELEASE_VERSION}`",
+                f"`{release_version}`",
+                semver_decision,
                 "git status --short",
                 "python tools/release.py",
                 "python tools/compliance.py",
@@ -548,7 +547,9 @@ def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseRead
                 "python tools/artifacts.py",
                 "docs/release_review.md",
                 "CHANGELOG.md",
-                f"git tag v{INITIAL_PUBLIC_RELEASE_VERSION}",
+                f"git tag v{release_version}",
+                f"gh release create v{release_version}",
+                "release.published",
             ),
             code="workflow_doc_missing_reference",
             label="docs/release_workflow.md",
@@ -557,20 +558,18 @@ def audit_initial_public_release_readiness(repo_root: str | Path) -> ReleaseRead
 
     return ReleaseReadinessReport(
         current_version=current_version,
-        recommended_release_version=INITIAL_PUBLIC_RELEASE_VERSION,
-        semver_decision=INITIAL_PUBLIC_SEMVER_DECISION,
+        recommended_release_version=release_version,
+        semver_decision=semver_decision,
         required_artifacts=REQUIRED_ARTIFACTS,
         issues=tuple(issues),
     )
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Run the initial-public-release readiness audit as a small CLI."""
+    """Run the release-readiness audit as a small CLI."""
     parser = argparse.ArgumentParser(
         prog="python tools/release.py",
-        description=(
-            "Audit the repo's initial public release workflow and SemVer recommendation."
-        ),
+        description="Audit the repo's current release workflow and version recommendation.",
     )
     parser.add_argument(
         "repo_root",
@@ -580,16 +579,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    report = audit_initial_public_release_readiness(args.repo_root)
+    report = audit_release_readiness(args.repo_root)
     audited_root = Path(args.repo_root).resolve()
     if report.is_ready:
-        print(f"Initial public release readiness passed: {audited_root}")
+        print(f"Release readiness passed: {audited_root}")
         print(f"- Current version: {report.current_version}")
         print(f"- Recommended release version: {report.recommended_release_version}")
         print(f"- SemVer decision: {report.semver_decision}")
         return 0
 
-    print(f"Initial public release readiness failed: {audited_root}")
+    print(f"Release readiness failed: {audited_root}")
     print(f"- Current version: {report.current_version}")
     print(f"- Recommended release version: {report.recommended_release_version}")
     print(f"- SemVer decision: {report.semver_decision}")

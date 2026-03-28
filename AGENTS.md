@@ -1,144 +1,136 @@
 # Maintenance
-- Update this file on every repo operation; keep only facts that save re-derivation time.
+- Update on every repo op; keep only facts that save re-derivation.
 
 # Overview
-- `flatline`: pip-installable Python wrapper around Ghidra C++ decompiler; decompiler surface only, no UI/project DB.
-- Repo version `0.1.1.dev1`; aligned in `pyproject.toml`, `meson.build`, `src/flatline/_version.py`; latest public release remains `0.1.0`; P5 complete.
-- P6 host-feasibility outcome: supported runtime hosts now Linux x86_64, macOS arm64, and Windows x86_64; Linux aarch64 and macOS x86_64 remain published-wheel targets pending dedicated equivalent-coverage lanes; host-feasibility order remains macOS-first (ADR-008).
-- Active roadmap state: P6 docs are closed; P6.5 release workflow and full published-wheel smoke are validated on TestPyPI, and the remaining exit step is the first production PyPI publish of the Tier-1 wheel set; P7 phase-1 landed with opt-in enriched output via `DecompileRequest.include_enriched_output` and `DecompileResult.enriched_output`, exposing post-simplification pcode ops plus varnode use-def graphs as frozen value types.
-- 64-bit wheel matrix locked in `docs/wheel_matrix.md`: manylinux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64.
-- Runtime data: dependency `ghidra-sleigh` (import `ghidra_sleigh`); omitted `runtime_data_dir` auto-discovers via `ghidra_sleigh.get_runtime_data_dir()`; explicit overrides; full multi-ISA default.
-- `pyproject.toml`: unpinned `ghidra-sleigh`, `license-files = ["LICENSE", "NOTICE"]`, `cibuildwheel` config (`cp313-* cp314-*`; Windows `before-build = "pip install delvewheel"` + `repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel}"`), global Meson `setup = ["--vsenv"]` under `[tool.meson-python.args]`.
-- `third_party/ghidra` git submodule; `third_party/r2ghidra` local read-only, ignored.
-- Fixture-backed ISAs: x86_64, x86_32, AArch64, RISC-V 64, MIPS32; fixtures in `tests/fixtures/*.hex`, sources in `tests/fixtures/sources/`, regen via `tests/fixtures/generate_hex_fixtures.py`; additional x86_64 switch/warning fixtures; regression asserts switch site `0x1009` + 9 targets.
-- Tox envs: `py313`/`py314` build wheels in `.tox`; `py314-native` forces `native_bridge=enabled`; Meson `--vsenv` comes from `[tool.meson-python.args]` rather than tox `config_settings_*`; `.pkg-py314-native` must `pass_env = ["VCPKG_INSTALLATION_ROOT"]` so Windows zlib fallback can see vcpkg; `lint` = `ruff`; dev tools in `tools/flatline_dev/` excluded from wheels by `tools/prune_dist.py`.
-- Build hardening: `src/flatline/meson.build` handles compiler flags, Meson include dirs for nanobind, auto-discovers Homebrew/vcpkg `zlib`; `pyproject.toml` globally adds Meson `--vsenv` so isolated Windows package builds can self-bootstrap MSVC; do not pre-activate MSVC in outer workflows because Meson skips `--vsenv` when `cl.exe`/`VSINSTALLDIR` is already present; no raw compiler/linker env flags needed.
-- CI (`ci.yml`): Python `3.14` for non-Ubuntu jobs; Ubuntu full matrix (`py313`+`py314`) runs full suite incl regression; host-feasibility lanes use `tox -e py314-native -- -m "not regression"`; Windows lane must not use `ilammy/msvc-dev-cmd`.
-- GitHub Actions security workflow (`zizmor.yml`): push to `main` + PRs touching `.github/workflows/**` plus `workflow_dispatch`; runs `uvx zizmor --format sarif .` and uploads SARIF as category `zizmor`.
-- Release (`release.yml`): `pypa/cibuildwheel@v3.4.0` + `manylinux_2_28`; Windows bootstraps vcpkg zlib, repairs wheels with `delvewheel`, and must not pre-activate MSVC; pre-publish wheel smoke via `tools/flatline_dev/wheel_smoke.py`; post-publish index smoke via `tools/flatline_dev/published_wheel_smoke.py`; sdist with compliance audit; `twine check` + `python tools/artifacts.py`; PyPI on `release.published`, TestPyPI on `workflow_dispatch`; manual TestPyPI dispatches must use a unique version because duplicate uploads fail instead of being skipped.
-- Manual TestPyPI dispatch validated on `2026-03-28` for `main` commit `299fae580bdb202e0c930878b33067d0eceef01a` via Actions run `23694378228`: published `flatline 0.1.1.dev1`, uploaded 10 wheels plus 1 sdist, and passed the full post-publish smoke matrix.
-- Release tooling: `python tools/release.py` remains the initial-public (`0.1.0`) readiness audit and rejects dirty worktrees; `python tools/artifacts.py dist` audits metadata/LICENSE/NOTICE/leaked dev tools/native extensions.
-- Compliance: root `LICENSE` + `NOTICE`, `docs/compliance.md`, `python tools/compliance.py`; footprint `30,742,876` bytes (`29.32 MiB`), `ghidra-sleigh` data `80.3%`.
-- Support messaging: fixture-backed ISAs vs best-effort bundled; docs distinguish published wheel availability from supported host status.
+- `flatline`: pip-installable Python wrapper around Ghidra C++ decompiler (decompiler surface only).
+- Version `0.1.1.dev1` aligned in `pyproject.toml`, `meson.build`, `src/flatline/_version.py`; current production publish candidate = `0.1.1.dev1 -> 0.1.1`; latest release `0.1.0`.
+- Roadmap: P6 closed; P6.5 validated on TestPyPI for `0.1.1.dev1`, remaining exit = first production PyPI publish of `0.1.1`; P7 phase-1 landed (opt-in enriched output).
+- Supported hosts: Linux x86_64, macOS arm64, Windows x86_64; Linux aarch64 + macOS x86_64 = published-wheel targets pending coverage lanes.
+- Wheels: 64-bit; manylinux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64; locked in `docs/wheel_matrix.md`.
+- Dep `ghidra-sleigh` (import `ghidra_sleigh`); unpinned; auto-discovers runtime data via `ghidra_sleigh.get_runtime_data_dir()`.
+- `third_party/ghidra` submodule; `third_party/r2ghidra` read-only, ignored.
+- Fixture ISAs: x86_64, x86_32, AArch64, RISC-V 64, MIPS32; `tests/fixtures/*.hex`; regen `tests/fixtures/generate_hex_fixtures.py`; regression switch site `0x1009` + 9 targets.
+- Tox: `py313`/`py314` wheel-based; `py314-native` forces `native_bridge=enabled`; `.pkg-py314-native` `pass_env = ["VCPKG_INSTALLATION_ROOT"]`; `lint` = ruff + clang-format; `dev` = source-tree dev-tool tests.
+- `--vsenv` via `[tool.meson-python.args]`; do NOT pre-activate MSVC (Meson skips `--vsenv` if `cl.exe`/`VSINSTALLDIR` present); no raw compiler/linker env flags.
+- CI (`ci.yml`): py3.14 non-Ubuntu; Ubuntu full matrix py313+py314 incl regression; host-feasibility `tox -e py314-native -- -m "not regression"`; Windows must not use `ilammy/msvc-dev-cmd`.
+- Security (`zizmor.yml`): push main + PRs `.github/workflows/**` + dispatch; `uvx zizmor --format sarif .`; SARIF category `zizmor`.
+- Release (`release.yml`): `pypa/cibuildwheel@v3.4.0`, `manylinux_2_28`; Windows vcpkg zlib + delvewheel, no MSVC pre-activation; smoke `tools/flatline_dev/wheel_smoke.py` + `tools/flatline_dev/published_wheel_smoke.py`; sdist compliance; `twine check` + `python tools/artifacts.py`; PyPI on `release.published`, TestPyPI on `workflow_dispatch` (unique version required).
+- TestPyPI validated `2026-03-28` commit `299fae580bdb202e0c930878b33067d0eceef01a` run `23694378228`: 10 wheels + 1 sdist, full smoke pass.
+- `python tools/release.py`: current release-candidate audit (`0.1.1.dev1 -> 0.1.1`), rejects dirty worktrees. `python tools/artifacts.py dist`: metadata/LICENSE/NOTICE/dev-tool/native-ext audit.
+- Compliance: `LICENSE` + `NOTICE`, `docs/compliance.md`, `python tools/compliance.py`; footprint 30,742,876 bytes (29.32 MiB), `ghidra-sleigh` 80.3%.
 
 # Design posture
-- User-centered library; prefer caller convenience.
-- Only test functional changes; routine CI/workflow/security-automation toggles do not get dedicated tests unless they change a maintained release/support contract.
+- User-centered; prefer caller convenience.
+- Only test functional changes; no tests for NFC/CI/doc-only unless it changes a release/support contract.
 
 # Architecture (3-layer adapter)
-- Public: `DecompilerSession` + one-shot wrappers in `_session.py`; models in `_models.py`; errors in `_errors.py`.
-- Public enriched-output companion: `EnrichedOutput`, `PcodeOpInfo`, `VarnodeInfo`, `VarnodeFlags`; request opt-in only; base decompile contract stays lightweight when omitted.
-- Bridge: nanobind `_flatline_native.cpp` + Python fallback `_bridge.py`; pre-validates language/compiler, `.ldefs` fallback enumeration; unstable internal.
-- Native: 82 upstream C++ sources via Meson into static `ghidra_decompiler` (zlib required); `SleighArchitecture` init -> `LoadImage` -> action reset/perform -> `docFunction` -> `FunctionInfo`; P7 phase-1 extracts canonical opcode names via `get_opname(op.code())` and varnode use-def edges after `Action::perform()`.
+- Public: `DecompilerSession` + one-shot wrappers `_session.py`; models `_models.py`; errors `_errors.py`.
+- Enriched output: `EnrichedOutput`, `PcodeOpInfo`, `VarnodeInfo`, `VarnodeFlags`; opt-in; base contract lightweight when omitted.
+- Bridge: nanobind `_flatline_native.cpp` + Python fallback `_bridge.py`; pre-validates language/compiler, `.ldefs` fallback; unstable internal.
+- Native: 82 upstream .cc via Meson into static `ghidra_decompiler` (zlib required); `SleighArchitecture` -> `LoadImage` -> action reset/perform -> `docFunction` -> `FunctionInfo`; P7 extracts opcode names via `get_opname(op.code())` + varnode use-def edges post-`Action::perform()`.
 
 # Conventions
-- Max ~700 lines per file.
-- Spec-first / TDD.
+- Max ~700 lines/file. Spec-first/TDD. ASCII only in `.py`, `.cpp`, `.h`, `meson.build`.
 - Hard errors on invalid input; warnings on degraded success; no silent fallbacks.
-- Frozen value copies; no native pointers cross ABI boundary.
-- Tests: parse structured formats, not grep; no tests for NFC/CI/doc-only changes; workflow tests only for durable release/support/native-build invariants, not routine automation toggles.
-- Build UX: no user-facing `CPPFLAGS`/`LDFLAGS`/`PKG_CONFIG_PATH`; hide in build layer.
+- Frozen value copies; no native pointers cross ABI.
+- Tests: structured format parsing, not grep; workflow tests only for durable release/support/native-build invariants.
+- Build UX: no user-facing `CPPFLAGS`/`LDFLAGS`/`PKG_CONFIG_PATH`.
 - C++20: `default_options: ['cpp_std=c++20']` root, `-std=c++20` in `src/flatline/meson.build`.
-- Style: `docs/code_style.md`; ASCII only in `.py`, `.cpp`, `.h`, `meson.build`.
+- Style: `docs/code_style.md`.
 
 # Baseline and policy
-- Vendored source: `third_party/ghidra` submodule.
-- MVP host: Linux x86_64, Python 3.13+, latest-upstream-only.
-- ISA: priority x86/ARM/RISC-V/MIPS 32+64; fixture-backed x86 32/64, ARM64, RISC-V 64, MIPS32; others best-effort.
-- Stable public API over unstable internals.
-- Always use Python venv.
+- Vendored: `third_party/ghidra` submodule.
+- MVP: Linux x86_64, Python 3.13+, latest-upstream-only.
+- ISA priority: x86/ARM/RISC-V/MIPS 32+64; fixture-backed x86 32/64, ARM64, RISC-V 64, MIPS32; others best-effort.
+- Stable public API over unstable internals. Always use venv.
 
 # ADR status
-- ADR-001: Option A; `memory_image` + `base_address`; file-to-memory deferred; `docs/specs.md` S5.5.
-- ADR-002: nanobind extension; public stable, bridge internal.
-- ADR-003: normalized token/structure comparison, not canonical text.
-- ADR-004: `ghidra-sleigh` auto-discovery; full multi-ISA default; explicit `runtime_data_dir` for custom roots; no flatline-side size gate.
-- ADR-005: default `AnalysisBudget(max_instructions=100000)`; unsupported keys / non-positive limits -> `invalid_argument`; no wall-clock timeout.
-- ADR-006: startup `RuntimeWarning` + structured `WarningItem`/`ErrorItem`; paths in diagnostics; no raw bytes; no public logging sink.
-- ADR-007: `LICENSE`+`NOTICE`, `docs/compliance.md`, `python tools/compliance.py`, footprint via `python tools/footprint.py`; dev tools excluded from artifacts.
-- ADR-008: macOS first, Windows second; shared build hardening + `docs/host_feasibility.md`.
-- ADR-009: x86 32+64, ARM64, RISC-V 64, MIPS32; others best-effort.
-- ADR-010: `ghidra-sleigh` (repo `patacca/ghidra-sleigh`, import `ghidra_sleigh`); builds `sleighc`, ships `.sla`, exposes `get_runtime_data_dir()`.
+- ADR-001: `memory_image` + `base_address`; file-to-memory deferred.
+- ADR-002: nanobind; public stable, bridge internal.
+- ADR-003: normalized token/structure comparison.
+- ADR-004: `ghidra-sleigh` auto-discovery; full multi-ISA default; explicit `runtime_data_dir` override.
+- ADR-005: default `AnalysisBudget(max_instructions=100000)`; bad keys/non-positive -> `invalid_argument`; no wall-clock timeout.
+- ADR-006: `RuntimeWarning` + `WarningItem`/`ErrorItem`; paths in diagnostics; no raw bytes; no public logging.
+- ADR-007: `LICENSE`+`NOTICE`, compliance tooling, footprint; dev tools excluded from artifacts.
+- ADR-008: macOS first, Windows second; `docs/host_feasibility.md`.
+- ADR-009: fixture-backed ISAs = x86 32/64, ARM64, RISC-V 64, MIPS32.
+- ADR-010: `ghidra-sleigh` (repo `patacca/ghidra-sleigh`); `sleighc`, `.sla`, `get_runtime_data_dir()`.
 - ADR-011: `configuration_error` = user-fixable; `internal_error` = flatline bugs.
-- ADR-012: decided; P7 enriched output is opt-in, extracted post-`Action::perform()`, and exposed as a dedicated `DecompileResult` companion with ID-based pcode/varnode graph edges.
-- ADR-013: CPython `>= 3.13`, `cibuildwheel`; 64-bit: manylinux x86_64 + aarch64, Windows x86_64, macOS x86_64 + arm64; `manylinux_2_28`; macOS target `11.0`; 32-bit/musllinux/Windows ARM64 deferred; `docs/wheel_matrix.md`.
+- ADR-012: P7 enriched output opt-in, post-`Action::perform()`, ID-based pcode/varnode graph.
+- ADR-013: CPython >= 3.13, `cibuildwheel`; `manylinux_2_28`; macOS target `11.0`; 32-bit/musllinux/Win ARM64 deferred.
 
 # Source of truth
-- `docs/specs.md` — API contract, models, errors.
-- `docs/roadmap.md` — P0-P7 (incl P6.5), M0-M6 (incl M5.5), risks, ADR backlog.
-- `docs/code_style.md` — naming, formatting, imports, annotations, tests.
-- `CHANGELOG.md` — release history; update on every release.
-- `docs/ai/planning.md` — original brief.
-- `docs/ai/preplanning.md` — discovery constraints.
-- `docs/ai/refine_plan.md` — refinement checklist, cross-file consistency.
-- `docs/compliance.md` — compliance manifest.
-- `docs/footprint.md` — footprint baseline.
-- `docs/host_feasibility.md` — P6 platform audit.
-- `docs/release_notes.md` — `0.1.0` contract, support tiers, upgrade policy.
-- `docs/release_review.md` — artifact-review checklist.
-- `docs/wheel_matrix.md` — wheel matrix analysis, manylinux policy.
+- `docs/specs.md` -- API contract, models, errors
+- `docs/roadmap.md` -- P0-P7 (incl P6.5), M0-M6 (incl M5.5), risks, ADR backlog
+- `docs/code_style.md` -- style guide
+- `CHANGELOG.md` -- release history
+- `docs/ai/planning.md` -- original brief
+- `docs/ai/preplanning.md` -- discovery constraints
+- `docs/ai/refine_plan.md` -- refinement checklist
+- `docs/compliance.md` -- compliance manifest
+- `docs/footprint.md` -- footprint baseline
+- `docs/host_feasibility.md` -- P6 platform audit
+- `docs/release_notes.md` -- `0.1.x` release-line contract, support tiers
+- `docs/release_review.md` -- artifact-review checklist
+- `docs/wheel_matrix.md` -- wheel matrix, manylinux policy
 
 # Repo structure (non-vendored)
-- Build: `pyproject.toml`, `.github/workflows/release.yml`, `meson.build`, `src/flatline/meson.build`, `meson_options.txt`.
-- Package: `src/flatline/`; `_session.py`, `_bridge.py`, `_runtime_data.py`, `_flatline_native.cpp`.
-- Dev tools: `tools/flatline_dev/`; wrappers `tools/compliance.py`, `tools/footprint.py`, `tools/release.py`, `tools/artifacts.py`.
-- Docs: `docs/`, `docs/ai/`; `notes/api/decompiler_inventory.md`, `notes/r2ghidra/integration_map.md`.
-- Tests: `tests/`, `tests/_native_fixtures.py`, `tests/fixtures/*.hex`, `tests/fixtures/sources/`, `tests/fixtures/generate_hex_fixtures.py`.
-- External: `ghidra-sleigh` (`patacca/ghidra-sleigh`), not vendored.
+- Build: `pyproject.toml`, `.github/workflows/release.yml`, `meson.build`, `src/flatline/meson.build`, `meson_options.txt`
+- Package: `src/flatline/` -- `_session.py`, `_bridge.py`, `_runtime_data.py`, `_flatline_native.cpp`, `_models.py`, `_errors.py`, `_version.py`
+- Dev tools: `tools/flatline_dev/`; wrappers `tools/compliance.py`, `tools/footprint.py`, `tools/release.py`, `tools/artifacts.py`; excluded from wheels by `tools/prune_dist.py`
+- Tests: `tests/`, `tests/_native_fixtures.py`, `tests/fixtures/*.hex`, `tests/fixtures/sources/`
+- Docs: `docs/`, `docs/ai/`; `notes/api/decompiler_inventory.md`, `notes/r2ghidra/integration_map.md`
 
 # Build & development commands
 - Activate venv: `source .venv/bin/activate`
 - Always use `tox` for tests and lint.
 - Editable install: `pip install -e ".[dev]"`
-- Editable + native forced: `pip install -e ".[dev]" -Csetup-args=-Dnative_bridge=enabled`
+- Editable + native: `pip install -e ".[dev]" -Csetup-args=-Dnative_bridge=enabled`
 - Debug build: `pip install -e ".[dev]" -Csetup-args=-Dbuildtype=debug`
 - Release build: `pip install -e ".[dev]" -Csetup-args=-Dbuildtype=release`
-- Meson buildtype default: `release` (`-O3`); override with `-Csetup-args=-Dbuildtype=<debug|release|debugoptimized>`.
+- Meson default `release` (`-O3`); override `-Csetup-args=-Dbuildtype=<debug|release|debugoptimized>`
 - Build wheel: `python -m build`
-- Compliance audit: `python tools/compliance.py`
+- Compliance: `python tools/compliance.py`
 - Release readiness: `python tools/release.py`
-- Footprint report: `python tools/footprint.py`
+- Footprint: `python tools/footprint.py`
 - Artifact audit: `python tools/artifacts.py dist`
-- All checks: `tox` (envs: `py313`, `py314`, `lint`; `dev` must be run explicitly)
+- All checks: `tox` (envs: `py313`, `py314`, `lint`; `dev` explicit)
 - Tests only: `tox -e py313,py314`
-- Dev-only tests: `tox -e dev` (compliance, footprint, release workflow, artifact audit; runs against source tree, not wheel)
+- Dev-only tests: `tox -e dev`
 - Lint only: `tox -e lint`
 - Native tests: `tox -e py313,py314 -- -m requires_native`
-- Native tests with forced bridge: `tox -e py314-native -- -m requires_native`
+- Native forced bridge: `tox -e py314-native -- -m requires_native`
 - Single category: `tox -e py313,py314 -- -m unit` (also: `contract`, `integration`, `regression`, `negative`)
 - Single file: `tox -e py313,py314 -- tests/unit/test_models.py`
 - Single test: `tox -e py313,py314 -- tests/unit/test_models.py::test_name -v`
-- Tox: `py313`/`py314` build wheels; `dev` uses `PYTHONPATH=src:tools`; `lint` runs `ruff` on `src/`, `tests/`, `tools/`; `skip_missing_interpreters = true`.
-- `ghidra-sleigh` build details in its own repo.
 
 # Tests
-- Native tests need `.sla` data from `ghidra-sleigh`; coverage: DATA, x86, AARCH64, RISCV, MIPS.
-- Runtime data resolved via `ghidra_sleigh.get_runtime_data_dir()`; `DecompilerSession` auto-discovers; `DecompileRequest`/`DecompilerSession` coerce path-like inputs.
+- Native tests need `.sla` from `ghidra-sleigh`; coverage: DATA, x86, AARCH64, RISCV, MIPS.
 - `tests/conftest.py` auto-applies category markers from directory names.
-- Specs: `tests/specs/test_catalog.md` (49 defs, 5 categories), `tests/specs/fixtures.md` (10 fixtures, oracle strategy).
-- Workflow specs: `test_ci_workflow_spec.py`, `test_native_tox_env_spec.py`, `test_release_ci_workflow_spec.py` — smoke-check critical CI/publish invariants incl Tier-1 wheel matrix.
-- Runtime/contract specs: `test_native_bridge_runtime_spec.py`, `test_runtime_data_spec.py`, `test_public_contract_spec.py`, `test_bridge_adapter_spec.py` — runtime smoke, `.ldefs` tolerance, ADR-005 budget, ADR-006 diagnostics, and P7 enriched-output opt-in/bridge normalization.
-- Release/devtool specs: `test_compliance_spec.py`, `test_footprint_spec.py`, `test_release_workflow_spec.py`, `test_artifact_audit_spec.py`; dev-tool tests skip under tox wheel installs via `pytest.importorskip`.
-- Regression/integration/negative: `test_regression_spec.py` covers switch-site baseline + warm-session p95 budgets across priority ISAs; `test_integration_spec.py` and `test_negative_spec.py` assert committed native fixtures, including P7 use-def traversal on `fx_add_elf64`.
+- Specs: `tests/specs/test_catalog.md` (49 defs, 5 categories), `tests/specs/fixtures.md` (10 fixtures).
+- Workflow: `test_ci_workflow_spec.py`, `test_native_tox_env_spec.py`, `test_release_ci_workflow_spec.py` -- CI/publish invariants.
+- Runtime/contract: `test_native_bridge_runtime_spec.py`, `test_runtime_data_spec.py`, `test_public_contract_spec.py`, `test_bridge_adapter_spec.py` -- runtime smoke, `.ldefs`, ADR-005/006, P7 enriched-output.
+- Dev-tool: `test_compliance_spec.py`, `test_footprint_spec.py`, `test_release_workflow_spec.py`, `test_artifact_audit_spec.py`; skip under wheel installs via `pytest.importorskip`.
+- Regression/integration/negative: switch-site baseline + p95 budgets; native fixtures incl P7 use-def on `fx_add_elf64`.
 
 # Vendored upstream
-- `third_party/ghidra` — submodule; `.gitmodules` tracks it.
-- `third_party/r2ghidra` — reference integration. Ignored, read-only unless explicitly asked.
+- `third_party/ghidra` -- submodule.
+- `third_party/r2ghidra` -- read-only reference; ignored.
 
 # Key data models (from specs.md)
-- `DecompileRequest` — `memory_image`, `base_address`, `function_address`, `language_id`, `compiler_spec`, `runtime_data_dir`, `function_size_hint`, `analysis_budget`, `include_enriched_output`.
-- `AnalysisBudget` — `max_instructions`; default `100000`.
-- `DecompileResult` — decompiled C, `FunctionInfo`, warnings, error, metadata, optional `EnrichedOutput`.
-- `FunctionInfo` — name, entry_address, size, is_complete, prototype, local_variables, call_sites, jump_tables, diagnostics, varnode_count.
-- `FunctionPrototype` — calling_convention, parameters, return_type, is_noreturn, has_this_pointer, recovery flags.
-- `TypeInfo` — name, size, metatype.
-- `DiagnosticFlags` — is_complete, has_unreachable_blocks, has_unimplemented, has_bad_data, has_no_code.
-- `LanguageCompilerPair` — `language_id`, `compiler_spec`.
-- `EnrichedOutput` — `pcode_ops`, `varnodes`.
-- `PcodeOpInfo` — `id`, `opcode`, `instruction_address`, `sequence_time`, `sequence_order`, `input_varnode_ids`, `output_varnode_id`.
-- `VarnodeInfo` — `id`, `space`, `offset`, `size`, `flags`, `defining_op_id`, `use_op_ids`.
-- `VarnodeFlags` — `is_constant`, `is_input`, `is_free`, `is_implied`, `is_explicit`, `is_read_only`, `is_persist`, `is_addr_tied`.
-- `WarningItem` — `code`, `message`, `phase`.
-- `ErrorItem` — `category`, `message`, `retryable`.
-- `VersionInfo` — `flatline_version`, `decompiler_version`.
-- `FlatlineError` — `invalid_argument`, `unsupported_target`, `invalid_address`, `decompile_failed`, `configuration_error`, `internal_error`.
+- `DecompileRequest` -- `memory_image`, `base_address`, `function_address`, `language_id`, `compiler_spec`, `runtime_data_dir`, `function_size_hint`, `analysis_budget`, `include_enriched_output`
+- `AnalysisBudget` -- `max_instructions`; default `100000`
+- `DecompileResult` -- decompiled C, `FunctionInfo`, warnings, error, metadata, optional `EnrichedOutput`
+- `FunctionInfo` -- name, entry_address, size, is_complete, prototype, local_variables, call_sites, jump_tables, diagnostics, varnode_count
+- `FunctionPrototype` -- calling_convention, parameters, return_type, is_noreturn, has_this_pointer, recovery flags
+- `TypeInfo` -- name, size, metatype
+- `DiagnosticFlags` -- is_complete, has_unreachable_blocks, has_unimplemented, has_bad_data, has_no_code
+- `LanguageCompilerPair` -- `language_id`, `compiler_spec`
+- `EnrichedOutput` -- `pcode_ops`, `varnodes`
+- `PcodeOpInfo` -- `id`, `opcode`, `instruction_address`, `sequence_time`, `sequence_order`, `input_varnode_ids`, `output_varnode_id`
+- `VarnodeInfo` -- `id`, `space`, `offset`, `size`, `flags`, `defining_op_id`, `use_op_ids`
+- `VarnodeFlags` -- `is_constant`, `is_input`, `is_free`, `is_implied`, `is_explicit`, `is_read_only`, `is_persist`, `is_addr_tied`
+- `WarningItem` -- `code`, `message`, `phase`
+- `ErrorItem` -- `category`, `message`, `retryable`
+- `VersionInfo` -- `flatline_version`, `decompiler_version`
+- `FlatlineError` -- `invalid_argument`, `unsupported_target`, `invalid_address`, `decompile_failed`, `configuration_error`, `internal_error`

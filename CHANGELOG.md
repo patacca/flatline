@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Opt-in enriched output via `DecompileRequest.include_enriched_output` and
+  `DecompileResult.enriched_output`, exposing post-simplification pcode ops and
+  varnode use-def graphs as frozen value types
+
 ### Changed
 - `VersionInfo` now exposes `decompiler_version` (Ghidra engine version) instead
   of `upstream_tag` and `upstream_commit`
@@ -22,6 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pending dedicated equivalent-contract lanes
 - The Tier-1 wheel matrix is now validated end to end on TestPyPI ahead of the
   first production PyPI publish
+- Release readiness tooling and docs now audit the current `0.1.1.dev1` to
+  `0.1.1` production publish path and the GitHub-release trigger to PyPI
+- The public `0.1.x` release-line policy now explicitly allows
+  backward-compatible support expansion and opt-in capabilities to ship as
+  documented patch releases while flatline remains pre-1.0
 
 ### Removed
 - `UPSTREAM_TAG` and `UPSTREAM_COMMIT` constants from `flatline._version`
