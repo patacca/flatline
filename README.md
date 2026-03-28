@@ -24,32 +24,48 @@ metaphor for decompilation: extracting meaning from dead code.
 ## Requirements
 
 - Python 3.13+
-- Supported runtime host contract: Linux x86_64, macOS arm64, Windows x86_64
-- Published wheels: Linux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64
-
-Building from source (platforms without pre-built wheels, or forced native
-builds) requires a C++20 compiler, Ninja, and zlib headers:
-
-| Platform | Install command |
-|----------|----------------|
-| Ubuntu/Debian | `sudo apt-get install g++ ninja-build zlib1g-dev` |
-| Fedora/RHEL | `sudo dnf install gcc-c++ ninja-build zlib-devel` |
-| macOS | `brew install ninja zlib` (Xcode provides the C++ compiler) |
-| Windows | Visual Studio with C++ workload; `pip install ninja`; `vcpkg install zlib:x64-windows` |
+- Supported platforms: Linux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64
 
 ## Installation
+
+### Install from PyPI
 
 ```bash
 pip install flatline
 ```
 
-`pip install flatline` uses pre-built wheels on Linux x86_64/aarch64, Windows
-x86_64, and macOS x86_64/arm64, so those installs work without a local
-compiler. The supported runtime-host contract currently covers Linux x86_64,
-macOS arm64, and Windows x86_64. Linux aarch64 and macOS x86_64 remain
-published-wheel targets until they gain dedicated equivalent-contract lanes.
-Platforms outside that wheel matrix fall back to source builds and therefore
-need a C++20 compiler plus Ninja.
+`pip install flatline` downloads a pre-built wheel when one is available.
+Wheels are currently published for Linux x86_64/aarch64, Windows x86_64, and
+macOS x86_64/arm64, so those installs do not need a local compiler or build
+toolchain. If no wheel is available for your target, `pip` falls back to a
+source build.
+
+The platforms with published wheels are the supported platforms. Other
+platforms may still work via a source build, but they are best effort.
+
+### Build from source or install from a local checkout
+
+Use this path when no pre-built wheel is available for your target, when you
+want to install from a local checkout, or when you want to force a native
+build.
+
+Source builds require a C++20 compiler, Ninja, and zlib headers:
+
+| Platform | Install command |
+|----------|----------------|
+| Ubuntu/Debian | `sudo apt-get install g++ ninja-build zlib1g-dev` |
+| Fedora/RHEL | `sudo dnf install gcc-c++ ninja-build zlib-devel` |
+| Arch Linux | `sudo pacman -S gcc ninja zlib` |
+| macOS | `brew install ninja zlib` (Xcode provides the C++ compiler) |
+| Windows | Visual Studio with C++ workload; `pip install ninja`; `vcpkg install zlib:x64-windows` |
+
+Install from a local checkout:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install .
+```
 
 For development:
 
@@ -68,8 +84,9 @@ explicit override for custom or reduced runtime-data roots.
 
 Real decompilation requires the native bridge -- a compiled C++ extension
 (`flatline._flatline_native`) that links against the Ghidra decompiler library.
+The published wheels already include this extension.
 Without it the Python API is fully importable, but every `decompile_function`
-call returns a `configuration_error` result.  `list_language_compilers` still
+call returns a `configuration_error` result. `list_language_compilers` still
 returns runtime-data pairs discovered from the installed `ghidra-sleigh`
 package.
 
@@ -176,8 +193,8 @@ and upgrade policy for the public `0.1.x` line live in
 [docs/release_notes.md](docs/release_notes.md).
 The public artifact review checklist and manual approval hold point live in
 [docs/release_review.md](docs/release_review.md).
-The current production release workflow and the active `.devN` to public-version
-recommendation live in [docs/release_workflow.md](docs/release_workflow.md).
+Release publication workflow details live in
+[docs/release_workflow.md](docs/release_workflow.md).
 GitHub Actions release publishing lives in
 [.github/workflows/release.yml](.github/workflows/release.yml): published
 GitHub releases go to PyPI, while manual dispatch uploads to TestPyPI.
@@ -191,15 +208,12 @@ The current P6 host-expansion feasibility record lives in
 
 ## Project status
 
-The `0.1.0` MVP release is available. P5 initial public release is complete,
-with release-facing guarantees and support-policy notes captured in
-[docs/release_notes.md](docs/release_notes.md). The current production publish
-workflow for the staged `0.1.1` release is recorded in
-[docs/release_workflow.md](docs/release_workflow.md), and the human approval
-gate remains documented in [docs/release_review.md](docs/release_review.md).
-P6 host-feasibility work now promotes macOS arm64 and Windows x86_64 alongside
-Linux x86_64 in the supported runtime-host tier. The remaining P6.5 step is
-the first production PyPI publish of the Tier-1 wheel set. `python tools/release.py`
+The current public release is `0.1.1`. P6 and P6.5 are complete: supported
+platforms are Linux x86_64/aarch64, Windows x86_64, and macOS x86_64/arm64.
+P7 phase 1 has landed as opt-in enriched output.
+
+Release-facing guarantees and support-policy notes live in
+[docs/release_notes.md](docs/release_notes.md). `python tools/release.py`
 audits the current release candidate, while
 [docs/wheel_matrix.md](docs/wheel_matrix.md),
 [docs/host_feasibility.md](docs/host_feasibility.md), and
