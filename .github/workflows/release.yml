@@ -126,7 +126,7 @@ jobs:
       - name: Validate distribution artifacts
         run: |
           twine check dist/*
-          python tools/artifacts.py dist --repo-root .
+          python tools/artifacts.py dist --repo-root . --require-pypi-metadata
 
       - name: Upload validated distribution artifacts
         uses: actions/upload-artifact@v7

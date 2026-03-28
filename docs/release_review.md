@@ -16,7 +16,7 @@ the repo; the checklist stays source-controlled, but the results do not.
   - `python tools/compliance.py`
   - `python tools/footprint.py`
   - `python -m build`
-  - `python tools/artifacts.py dist`
+  - `python tools/artifacts.py dist --repo-root . --require-pypi-metadata`
 
 ## Review Evidence
 
@@ -32,10 +32,13 @@ the repo; the checklist stays source-controlled, but the results do not.
   footprint baseline was intentionally refreshed in the same review.
 - Confirm `python -m build` produced exactly the current release artifacts that
   are under review.
-- Confirm `python tools/artifacts.py dist` passed against the built wheel
-  and sdist for the current version.
+- Confirm `python tools/artifacts.py dist --repo-root . --require-pypi-metadata`
+  passed against the built wheel and sdist for the current version.
 - Inspect the reviewed artifacts and verify `LICENSE` and `NOTICE` are shipped
   in both the wheel and the sdist.
+- Inspect the reviewed artifacts and verify the built metadata carries the
+  README-backed long description plus `Description-Content-Type` for PyPI
+  rendering.
 - Review `CHANGELOG.md` and `docs/release_notes.md` for release-facing drift so
   the published support tiers, upgrade policy, and per-version delta remain
   aligned with the audited artifacts.

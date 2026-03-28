@@ -6,12 +6,34 @@ build-backend = "mesonpy"
 name = "flatline"
 version = "0.1.1"
 description = "Python wrapper around the Ghidra decompiler"
+readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">= 3.13"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
+keywords = ["ghidra", "decompiler", "reverse engineering", "binary analysis"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: C++",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "ghidra-sleigh",
 ]
+
+[project.urls]
+Homepage = "https://github.com/patacca/flatline"
+Repository = "https://github.com/patacca/flatline"
+Issues = "https://github.com/patacca/flatline/issues"
+Changelog = "https://github.com/patacca/flatline/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 test = [

@@ -5,6 +5,7 @@
 - `flatline`: pip-installable Python wrapper around Ghidra C++ decompiler (decompiler surface only).
 - Version `0.1.1` aligned in `pyproject.toml`, `meson.build`, `src/flatline/_version.py`; latest public release is `0.1.1`; current repo state matches the public release.
 - Roadmap: P6 and P6.5 are closed; TestPyPI validated `0.1.1.dev1`, then production `0.1.1` published successfully on `2026-03-28`; P7 phase-1 landed (opt-in enriched output).
+- Docs: GitHub Pages published at `https://patacca.github.io/flatline/` (root redirects to `latest/`); README documents both hosted and local MkDocs access.
 - Supported hosts: Linux x86_64, macOS arm64, Windows x86_64; Linux aarch64 + macOS x86_64 = published-wheel targets pending coverage lanes.
 - Wheels: 64-bit; manylinux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64; locked in `docs/wheel_matrix.md`.
 - Dep `ghidra-sleigh` (import `ghidra_sleigh`); unpinned; auto-discovers runtime data via `ghidra_sleigh.get_runtime_data_dir()`.
@@ -14,15 +15,15 @@
 - `--vsenv` via `[tool.meson-python.args]`; do NOT pre-activate MSVC (Meson skips `--vsenv` if `cl.exe`/`VSINSTALLDIR` present); no raw compiler/linker env flags.
 - CI (`ci.yml`): py3.14 non-Ubuntu; Ubuntu full matrix py313+py314 incl regression; host-feasibility `tox -e py314-native -- -m "not regression"`; Windows must not use `ilammy/msvc-dev-cmd`.
 - Security (`zizmor.yml`): push main + PRs `.github/workflows/**` + dispatch; `uvx zizmor --format sarif .`; SARIF category `zizmor`.
-- Release (`release.yml`): `pypa/cibuildwheel@v3.4.0`, `manylinux_2_28`; Windows vcpkg zlib + delvewheel, no MSVC pre-activation; smoke `tools/flatline_dev/wheel_smoke.py` + `tools/flatline_dev/published_wheel_smoke.py`; sdist compliance; `twine check` + `python tools/artifacts.py`; PyPI on `release.published`, TestPyPI on `workflow_dispatch` (unique version required).
+- Release (`release.yml`): `pypa/cibuildwheel@v3.4.0`, `manylinux_2_28`; Windows vcpkg zlib + delvewheel, no MSVC pre-activation; smoke `tools/flatline_dev/wheel_smoke.py` + `tools/flatline_dev/published_wheel_smoke.py`; sdist compliance; validate with `twine check` + `python tools/artifacts.py dist --repo-root . --require-pypi-metadata`; PyPI on `release.published`, TestPyPI on `workflow_dispatch` (unique version required).
 - TestPyPI validated `2026-03-28` commit `299fae580bdb202e0c930878b33067d0eceef01a` run `23694378228`: 10 wheels + 1 sdist, full smoke pass.
-- Local clean-snapshot validation `2026-03-28`: `python tools/release.py`, `tox`, `tox -e dev`, `python tools/compliance.py`, `python tools/footprint.py`, `python -m build --outdir dist`, `python tools/artifacts.py dist --repo-root .`, and `python -m twine check dist/*` all passed; `twine` warns because no long description is shipped.
-- `python tools/release.py`: current staged-release audit (`0.1.1`), rejects dirty worktrees. `python tools/artifacts.py dist`: metadata/LICENSE/NOTICE/dev-tool/native-ext audit.
+- Local clean-snapshot validation `2026-03-28`: `python tools/release.py`, `tox`, `tox -e dev`, `python tools/compliance.py`, `python tools/footprint.py`, `python -m build --outdir dist`, `python tools/artifacts.py dist --repo-root .`, and `python -m twine check dist/*` all passed under the pre-fix metadata gate; built artifacts still omitted the README-backed long description plus project URLs/classifiers/keywords.
+- `python tools/release.py`: current staged-release audit (`0.1.1`), rejects dirty worktrees. `python tools/artifacts.py dist`: metadata/LICENSE/NOTICE/dev-tool/native-ext audit; `--require-pypi-metadata` adds README long-description checks for release uploads.
 - Compliance: `LICENSE` + `NOTICE`, `docs/compliance.md`, `python tools/compliance.py`; current `.venv` footprint 24,839,137 bytes (23.69 MiB), `ghidra-sleigh` runtime data 99.4%.
 
 # Design posture
 - User-centered; prefer caller convenience.
-- Only test functional changes; no tests for NFC/CI/doc-only unless it changes a release/support contract.
+- Only test functional changes; packaging/release-metadata/CI-only fixes use direct build+artifact validation, not new tests, unless they change a durable release/support/native-build contract.
 
 # Architecture (3-layer adapter)
 - Public: `DecompilerSession` + one-shot wrappers `_session.py`; models `_models.py`; errors `_errors.py`.

@@ -65,31 +65,8 @@ def _read_text(
 
 
 def _load_repo_version(repo_root: Path, issues: list[BuiltArtifactIssue]) -> str:
-    pyproject_text = _read_text(
-        repo_root / "pyproject.toml",
-        missing_code="pyproject_missing",
-        issues=issues,
-    )
-    if pyproject_text is None:
-        return "<unknown>"
-
-    try:
-        loaded = tomllib.loads(pyproject_text)
-    except tomllib.TOMLDecodeError as exc:
-        _append_issue(
-            issues,
-            "pyproject_invalid",
-            f"pyproject.toml is not valid TOML: {exc}",
-        )
-        return "<unknown>"
-
-    project_table = loaded.get("project")
-    if not isinstance(project_table, dict):
-        _append_issue(
-            issues,
-            "pyproject_project_missing",
-            "pyproject.toml is missing the [project] table.",
-        )
+    project_table = _load_project_table(repo_root, issues)
+    if project_table is None:
         return "<unknown>"
 
     version = project_table.get("version")
@@ -101,6 +78,40 @@ def _load_repo_version(repo_root: Path, issues: list[BuiltArtifactIssue]) -> str
         )
         return "<unknown>"
     return version
+
+
+def _load_project_table(
+    repo_root: Path,
+    issues: list[BuiltArtifactIssue],
+) -> dict[str, object] | None:
+    pyproject_text = _read_text(
+        repo_root / "pyproject.toml",
+        missing_code="pyproject_missing",
+        issues=issues,
+    )
+    if pyproject_text is None:
+        return None
+
+    try:
+        loaded = tomllib.loads(pyproject_text)
+    except tomllib.TOMLDecodeError as exc:
+        _append_issue(
+            issues,
+            "pyproject_invalid",
+            f"pyproject.toml is not valid TOML: {exc}",
+        )
+        return None
+
+    project_table = loaded.get("project")
+    if not isinstance(project_table, dict):
+        _append_issue(
+            issues,
+            "pyproject_project_missing",
+            "pyproject.toml is missing the [project] table.",
+        )
+        return None
+
+    return project_table
 
 
 def _normalize_requirement(requirement: str) -> str:
@@ -116,6 +127,7 @@ def _audit_metadata(
     metadata_text: str,
     expected_version: str,
     expected_dependency: str,
+    require_pypi_metadata: bool,
     artifact_label: str,
     artifact_path: Path,
     issues: list[BuiltArtifactIssue],
@@ -138,6 +150,25 @@ def _audit_metadata(
             issues,
             f"{artifact_label}_dependency_missing",
             (f"{artifact_path} does not declare the expected dependency {expected_dependency!r}."),
+        )
+
+    if not require_pypi_metadata:
+        return
+
+    description = metadata.get_payload()
+    if not isinstance(description, str) or not description.strip():
+        _append_issue(
+            issues,
+            f"{artifact_label}_long_description_missing",
+            f"{artifact_path} is missing the README-backed long description body.",
+        )
+
+    description_content_type = metadata.get("Description-Content-Type")
+    if not isinstance(description_content_type, str) or not description_content_type.strip():
+        _append_issue(
+            issues,
+            f"{artifact_label}_description_content_type_missing",
+            f"{artifact_path} is missing Description-Content-Type metadata.",
         )
 
 
@@ -214,6 +245,7 @@ def _audit_wheel(
     *,
     expected_version: str,
     expected_dependency: str,
+    require_pypi_metadata: bool,
     issues: list[BuiltArtifactIssue],
 ) -> None:
     try:
@@ -270,6 +302,7 @@ def _audit_wheel(
         metadata_text=metadata_text,
         expected_version=expected_version,
         expected_dependency=expected_dependency,
+        require_pypi_metadata=require_pypi_metadata,
         artifact_label="wheel",
         artifact_path=path,
         issues=issues,
@@ -281,6 +314,7 @@ def _audit_sdist(
     *,
     expected_version: str,
     expected_dependency: str,
+    require_pypi_metadata: bool,
     issues: list[BuiltArtifactIssue],
 ) -> None:
     try:
@@ -336,6 +370,7 @@ def _audit_sdist(
         metadata_text=metadata_text,
         expected_version=expected_version,
         expected_dependency=expected_dependency,
+        require_pypi_metadata=require_pypi_metadata,
         artifact_label="sdist",
         artifact_path=path,
         issues=issues,
@@ -345,6 +380,8 @@ def _audit_sdist(
 def audit_built_release_artifacts(
     repo_root: str | Path,
     dist_dir: str | Path = "dist",
+    *,
+    require_pypi_metadata: bool = False,
 ) -> BuiltArtifactAuditReport:
     """Audit the built wheel and sdist artifacts for the current repo version."""
     root = Path(repo_root).resolve()
@@ -390,6 +427,7 @@ def audit_built_release_artifacts(
                 wheel_path,
                 expected_version=expected_version,
                 expected_dependency=expected_dependency,
+                require_pypi_metadata=require_pypi_metadata,
                 issues=issues,
             )
         for sdist_path in sdists:
@@ -397,6 +435,7 @@ def audit_built_release_artifacts(
                 sdist_path,
                 expected_version=expected_version,
                 expected_dependency=expected_dependency,
+                require_pypi_metadata=require_pypi_metadata,
                 issues=issues,
             )
 
@@ -427,9 +466,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=".",
         help="Repository root used to derive the expected version (default: current directory).",
     )
+    parser.add_argument(
+        "--require-pypi-metadata",
+        action="store_true",
+        help=(
+            "Fail when built artifacts omit the README-backed long description "
+            "metadata needed for PyPI rendering."
+        ),
+    )
     args = parser.parse_args(argv)
 
-    report = audit_built_release_artifacts(args.repo_root, args.dist_dir)
+    report = audit_built_release_artifacts(
+        args.repo_root,
+        args.dist_dir,
+        require_pypi_metadata=args.require_pypi_metadata,
+    )
     audited_dist_dir = Path(args.dist_dir)
     if not audited_dist_dir.is_absolute():
         audited_dist_dir = Path(args.repo_root) / audited_dist_dir

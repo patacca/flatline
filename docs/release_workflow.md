@@ -60,9 +60,11 @@ are repo-only; they are not part of the wheel or sdist payload.
 9. Confirm `pyproject.toml`, `meson.build`, and `src/flatline/_version.py`
    already agree on `0.1.1`
 10. Build artifacts with `python -m build`
-11. Audit the built sdist/wheel with `python tools/artifacts.py dist`
-    so the current version, dependency metadata, and shipped `LICENSE` / `NOTICE`
-    files are verified from the actual release artifacts
+11. Audit the built sdist/wheel with
+    `python tools/artifacts.py dist --repo-root . --require-pypi-metadata`
+    so the current version, dependency metadata, shipped `LICENSE` / `NOTICE`
+    files, and README-backed long description metadata are verified from the
+    actual release artifacts
 12. Run the manual checklist in `docs/release_review.md`; keep reviewed
     commit/artifact notes outside the repo and wait for explicit approval.
     Do not commit review notes.
@@ -75,8 +77,9 @@ are repo-only; they are not part of the wheel or sdist payload.
 ## Hold Point
 
 Do not run `git tag v0.1.1` or publish GitHub release `v0.1.1` until the
-public artifact review is explicitly approved. `python tools/artifacts.py dist`
-provides deterministic artifact evidence for that review, and
+public artifact review is explicitly approved. `python tools/artifacts.py dist
+--repo-root . --require-pypi-metadata` provides deterministic artifact
+evidence for that review, and
 `docs/release_review.md` records the checklist criteria used for the final
 human sign-off. The operator reports approval out-of-band. Do not commit
 review notes to this repo.
@@ -93,7 +96,7 @@ review notes to this repo.
   auto-discover `ghidra-sleigh` runtime data, and decompile `fx_add_elf64`
   before publish continues.
 - A validation job merges the built artifacts, runs `twine check dist/*`, and
-  runs `python tools/artifacts.py dist --repo-root .`.
+  runs `python tools/artifacts.py dist --repo-root . --require-pypi-metadata`.
 - `workflow_dispatch` runs the same build, smoke, and validation flow, but
   publishes the full wheel set plus sdist to TestPyPI instead of PyPI.
   Manual TestPyPI dispatches must use a unique version because duplicate
