@@ -92,6 +92,10 @@ that tools cannot enforce.
 ## Test conventions
 
 - **Framework:** pytest.
+- **Scope gate:** add tests only for contract, runtime, release, or other
+  user-visible functional behavior. Routine CI/workflow toggles, security
+  automation changes, housekeeping, and doc-only edits do not get dedicated
+  tests unless they change a maintained support or release invariant.
 - **Layout:** tests are organised by category under `tests/{unit,contract,integration,regression,negative}/`.
 - **Markers:** auto-applied from directory name via `conftest.py`
   (`unit`, `contract`, `integration`, `regression`, `negative`).

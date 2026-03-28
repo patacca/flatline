@@ -552,6 +552,12 @@ Contract-test strategy:
 - Build/workflow config tests are smoke checks over contract-critical behavior;
   they should avoid pinning incidental YAML/TOML structure, step names, cache
   settings, or exact shell formatting when equivalent behavior is preserved.
+- Add workflow/config tests only when the asserted behavior is a durable product
+  or release contract boundary such as the published wheel matrix, release
+  routing, native-build enforcement, or another user-visible support guarantee.
+- Do not add dedicated tests for routine CI/workflow toggles, security-tool
+  enablement, housekeeping, or other changes whose failure mode is already
+  visible in GitHub Actions itself rather than in shipped package behavior.
 
 Change-detection process for upstream bump:
 1. Rebuild decompiler inventory diff from pinned upstream callable symbols.

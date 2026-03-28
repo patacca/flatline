@@ -118,6 +118,7 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 | §3.4 Opt-in enriched output is all-or-nothing | Successful opt-in requests never silently drop the companion payload | U-028, I-008 |
 | §3.5 Additive fields only in minor | Schema stability | C-001, C-004 |
 | §3.5 SemVer baseline + §7 release workflow | The first public release finalizes `0.1.0.devN` as `0.1.0`, and the release workflow stays source-controlled and auditable | U-021 |
+| §6 Contract-test strategy (build/workflow config tests) | Workflow/config tests stay smoke-level and assert only contract-critical CI behavior | U-019, U-025, U-026, U-027 |
 | §7 Packaging and compliance | Release artifacts include notices and attribution; ADR-007 audit passes; built wheel/sdist metadata stay auditable; repo-only dev tooling stays outside shipped payloads; default-install footprint stays measured/documented with an explicit size-policy note | U-017, U-018, U-022 |
 | §7 Public artifact review gate | The final human artifact review uses a source-controlled checklist tied to deterministic readiness evidence | U-021, U-022 |
 | §7 Release automation | GitHub Actions release automation builds and audits distributions, publishes GitHub releases to PyPI, routes manual dispatches to TestPyPI, rejects duplicate manual-dispatch versions, keeps the locked wheel matrix explicit, and smoke-tests the published index artifacts on the Tier-1 matrix | U-025 |

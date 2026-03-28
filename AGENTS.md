@@ -14,6 +14,7 @@
 - Tox envs: `py313`/`py314` build wheels in `.tox`; `py314-native` forces `native_bridge=enabled`; Meson `--vsenv` comes from `[tool.meson-python.args]` rather than tox `config_settings_*`; `.pkg-py314-native` must `pass_env = ["VCPKG_INSTALLATION_ROOT"]` so Windows zlib fallback can see vcpkg; `lint` = `ruff`; dev tools in `tools/flatline_dev/` excluded from wheels by `tools/prune_dist.py`.
 - Build hardening: `src/flatline/meson.build` handles compiler flags, Meson include dirs for nanobind, auto-discovers Homebrew/vcpkg `zlib`; `pyproject.toml` globally adds Meson `--vsenv` so isolated Windows package builds can self-bootstrap MSVC; do not pre-activate MSVC in outer workflows because Meson skips `--vsenv` when `cl.exe`/`VSINSTALLDIR` is already present; no raw compiler/linker env flags needed.
 - CI (`ci.yml`): Python `3.14` for non-Ubuntu jobs; Ubuntu full matrix (`py313`+`py314`) runs full suite incl regression; host-feasibility lanes use `tox -e py314-native -- -m "not regression"`; Windows lane must not use `ilammy/msvc-dev-cmd`.
+- GitHub Actions security workflow (`zizmor.yml`): push to `main` + PRs touching `.github/workflows/**` plus `workflow_dispatch`; runs `uvx zizmor --format sarif .` and uploads SARIF as category `zizmor`.
 - Release (`release.yml`): `pypa/cibuildwheel@v3.4.0` + `manylinux_2_28`; Windows bootstraps vcpkg zlib, repairs wheels with `delvewheel`, and must not pre-activate MSVC; pre-publish wheel smoke via `tools/flatline_dev/wheel_smoke.py`; post-publish index smoke via `tools/flatline_dev/published_wheel_smoke.py`; sdist with compliance audit; `twine check` + `python tools/artifacts.py`; PyPI on `release.published`, TestPyPI on `workflow_dispatch`; manual TestPyPI dispatches must use a unique version because duplicate uploads fail instead of being skipped.
 - Release tooling: `python tools/release.py` remains the initial-public (`0.1.0`) readiness audit and rejects dirty worktrees; `python tools/artifacts.py dist` audits metadata/LICENSE/NOTICE/leaked dev tools/native extensions.
 - Compliance: root `LICENSE` + `NOTICE`, `docs/compliance.md`, `python tools/compliance.py`; footprint `30,742,876` bytes (`29.32 MiB`), `ghidra-sleigh` data `80.3%`.
@@ -21,7 +22,7 @@
 
 # Design posture
 - User-centered library; prefer caller convenience.
-- Only test functional changes.
+- Only test functional changes; routine CI/workflow/security-automation toggles do not get dedicated tests unless they change a maintained release/support contract.
 
 # Architecture (3-layer adapter)
 - Public: `DecompilerSession` + one-shot wrappers in `_session.py`; models in `_models.py`; errors in `_errors.py`.
@@ -34,7 +35,7 @@
 - Spec-first / TDD.
 - Hard errors on invalid input; warnings on degraded success; no silent fallbacks.
 - Frozen value copies; no native pointers cross ABI boundary.
-- Tests: parse structured formats, not grep; no tests for NFC/CI/doc-only changes; workflow tests smoke-check critical behavior only.
+- Tests: parse structured formats, not grep; no tests for NFC/CI/doc-only changes; workflow tests only for durable release/support/native-build invariants, not routine automation toggles.
 - Build UX: no user-facing `CPPFLAGS`/`LDFLAGS`/`PKG_CONFIG_PATH`; hide in build layer.
 - C++20: `default_options: ['cpp_std=c++20']` root, `-std=c++20` in `src/flatline/meson.build`.
 - Style: `docs/code_style.md`; ASCII only in `.py`, `.cpp`, `.h`, `meson.build`.
