@@ -2,6 +2,10 @@
 
 ADR-013 deliverable: locked P6.5 wheel matrix for GitHub-hosted CI.
 
+Status: GitHub CI and the `2026-03-28` TestPyPI rehearsal validated this
+10-wheel-plus-sdist matrix end to end. The remaining P6.5 step is the first
+production PyPI publish.
+
 ## Decision
 
 Ship 64-bit CPython wheels for every Tier-1 host family we can build on

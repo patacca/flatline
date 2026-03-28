@@ -1,12 +1,11 @@
 # Initial Public Release Notes
 
-These notes define the release-facing contract for flatline's first public
-release line. They summarize what users can rely on, which targets are
-fixture-backed versus best-effort, how published wheel availability maps to
-runtime support, and how upgrades are handled while the project remains on the
-Linux MVP track. This document accompanies version `0.1.0`, which finalized
-the earlier `0.1.0.dev0` release-candidate line, plus the current Tier-1
-wheel-publish workflow for that same release line.
+These notes define the release-facing contract for the `0.1.x` release line.
+They summarize what users can rely on, which targets are fixture-backed versus
+best-effort, how published wheel availability maps to runtime support, and how
+upgrades are handled as the project moves past the initial Linux MVP. This
+document accompanies the initial `0.1.0` public release plus the subsequent
+host-support and wheel-distribution updates on the same release line.
 
 ## Contract Guarantees
 
@@ -34,7 +33,7 @@ wheel-publish workflow for that same release line.
 
 | Surface | Tier | Notes |
 | --- | --- | --- |
-| Host platform | Supported | Linux x86_64 only for the runtime contract in this release line |
+| Host platform | Supported | Linux x86_64, macOS arm64, and Windows x86_64 for the runtime contract in this release line |
 | Wheel install availability | Published | `pip install flatline` publishes wheels for Linux x86_64, Linux aarch64, Windows x86_64, macOS x86_64, and macOS arm64, so those installs work without a local compiler |
 | Target ISA variants | Fixture-backed | x86 (32/64), ARM64, RISC-V 64, and MIPS32 |
 | Other bundled ISAs and variants | best-effort | Enumerated and loadable when runtime data ships them, but without dedicated fixture-backed output or perf guarantees |
@@ -47,11 +46,14 @@ Support-tier interpretation:
 - Wheel publication and supported-host status can differ. Wheel publication
   means the packaged install path and wheel smoke checks are green for that
   target, not that the host has reached equivalent contract coverage.
+- macOS arm64 and Windows x86_64 now satisfy the equivalent-contract-coverage
+  bar through dedicated native contract lanes plus published-wheel smoke.
 - CI regression gates and warm-session budgets are source-controlled only for
   the fixture-backed matrix above.
-- Linux aarch64, macOS, and Windows wheel targets remain installable through
-  the published wheel matrix, but Linux x86_64 is still the only supported host
-  until additional hosts clear the equivalent contract coverage bar.
+- Linux aarch64 and macOS x86_64 remain installable through the published wheel
+  matrix, but they are not yet promoted into the supported runtime-host tier
+  because the repo does not keep dedicated equivalent-contract lanes for those
+  targets.
 
 ## Known Variant Limits
 

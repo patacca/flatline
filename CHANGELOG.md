@@ -17,6 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Ghidra decompiler engine version, not the flatline package version
 - Manual TestPyPI release dispatches now require a unique package version
   instead of silently skipping duplicate uploads
+- The supported runtime-host contract now includes macOS arm64 and Windows
+  x86_64; Linux aarch64 and macOS x86_64 remain published-wheel-only targets
+  pending dedicated equivalent-contract lanes
+- The Tier-1 wheel matrix is now validated end to end on TestPyPI ahead of the
+  first production PyPI publish
 
 ### Removed
 - `UPSTREAM_TAG` and `UPSTREAM_COMMIT` constants from `flatline._version`

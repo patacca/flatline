@@ -25,6 +25,14 @@ Product policy:
 | P6.5 | Wheel distribution matrix | P6 macOS feasibility complete (equivalent contract coverage on macOS); Windows feasibility may still be in progress | Pre-built wheels published to PyPI for every Tier-1 platform/arch/Python combination; `pip install flatline` succeeds without a local compiler on all Tier-1 targets |
 | P7 | Enriched structured output | P5 complete | Pcode ops and varnode graphs exposed as frozen Python types; at least one downstream use case (similarity, diffing, or data flow) validated end-to-end |
 
+Current status:
+- P6 equivalent-contract evidence now promotes Linux x86_64, macOS arm64, and
+  Windows x86_64 into the supported runtime-host tier; Linux aarch64 and macOS
+  x86_64 remain published-wheel-only targets.
+- The P6.5 wheel matrix, TestPyPI publish flow, and post-publish smoke matrix
+  are validated; the remaining phase-exit step is the first production PyPI
+  publish of the Tier-1 wheel set.
+
 ## 2. Detailed Milestone Gates
 
 ### M0: Planning closure

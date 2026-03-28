@@ -678,21 +678,21 @@ Release-facing policy:
 
 Cross-platform feasibility policy:
 - Post-MVP host expansion proceeds macOS first and Windows second (ADR-008).
-- Until a host reaches equivalent contract coverage, release-facing support
-  notes continue to list Linux x86_64 as the only supported host platform.
+- Release-facing support notes list Linux x86_64, macOS arm64, and Windows
+  x86_64 as supported runtime hosts because those targets now have both
+  dedicated native contract lanes and index-backed wheel validation. Linux
+  aarch64 and macOS x86_64 remain published-wheel targets until they gain the
+  same continuous host evidence.
 - Shared Meson/native-build paths must select compiler-argument syntax through
   Meson rather than hardcoding GCC-only flags in a way that prevents MSVC-family
   feasibility work from starting, and staged third-party header roots must flow
   through Meson include directories instead of compiler-specific `-I` / `/I`
   arguments.
-- P6 feasibility now keeps a dedicated macOS CI lane on the installed-wheel
-  non-regression tox matrix, using a native-forced tox env so
-  `native_bridge=enabled` cannot silently fall back to the Python bridge, and
-  macOS builds must not require callers to inject manual compiler/linker flags
-  for zlib discovery. After that first non-Linux signal is established, the
-  Windows feasibility spike runs the same native-forced tox env to quantify the
-  remaining MSVC-specific blockers. Full contract-matrix coverage remains the
-  bar for changing release-facing support notes.
+- P6 feasibility keeps dedicated macOS arm64 and Windows x86_64 CI lanes on
+  the installed-wheel non-regression tox matrix, using a native-forced tox env
+  so `native_bridge=enabled` cannot silently fall back to the Python bridge.
+  Published-wheel smoke on the Tier-1 release matrix covers Linux aarch64 and
+  macOS x86_64 until those targets gain dedicated host-promotion evidence.
 - `docs/host_feasibility.md` records the current platform audit, the ordered
   host-expansion rationale, and the concrete evidence required before a new host
   can move from feasibility to supported status.
