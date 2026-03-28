@@ -107,10 +107,10 @@
 # Tests
 - Native tests need `.sla` from `ghidra-sleigh`; coverage: DATA, x86, AARCH64, RISCV, MIPS.
 - `tests/conftest.py` auto-applies category markers from directory names.
-- Specs: `tests/specs/test_catalog.md` (49 defs, 5 categories), `tests/specs/fixtures.md` (10 fixtures).
+- Specs: `tests/specs/test_catalog.md` (48 defs, 5 categories), `tests/specs/fixtures.md` (10 fixtures).
 - Workflow: `test_ci_workflow_spec.py`, `test_native_tox_env_spec.py`, `test_release_ci_workflow_spec.py` -- CI/publish invariants.
 - Runtime/contract: `test_native_bridge_runtime_spec.py`, `test_runtime_data_spec.py`, `test_public_contract_spec.py`, `test_bridge_adapter_spec.py` -- runtime smoke, `.ldefs`, ADR-005/006, P7 enriched-output.
-- Dev-tool: `test_compliance_spec.py`, `test_footprint_spec.py`, `test_release_workflow_spec.py`, `test_artifact_audit_spec.py`; skip under wheel installs via `pytest.importorskip`.
+- Dev-tool: `test_compliance_spec.py`, `test_footprint_spec.py`, `test_artifact_audit_spec.py`; skip under wheel installs via `pytest.importorskip`.
 - Regression/integration/negative: switch-site baseline + p95 budgets; native fixtures incl P7 use-def on `fx_add_elf64`.
 
 # Vendored upstream
