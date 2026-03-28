@@ -1,0 +1,4551 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Python wrapper around the Ghidra decompiler">
+      
+      
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../errors/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>API - flatline</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#api-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="flatline" class="md-header__button md-logo" aria-label="flatline" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            flatline
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              API
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/patacca/flatline" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    patacca/flatline
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="flatline" class="md-nav__button md-logo" aria-label="flatline" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    flatline
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/patacca/flatline" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    patacca/flatline
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to Guides
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/load-from-binary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Load from Binary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/enumerate-languages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Enumerate Languages
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/session-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Session Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/handle-errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Handle Errors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/analysis-budget/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Analysis Budget
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#session-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session API
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.DecompilerSession" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DecompilerSession
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DecompilerSession">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#flatline.DecompilerSession.is_closed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_closed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flatline.DecompilerSession.decompile_function" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        decompile_function
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flatline.DecompilerSession.list_language_compilers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        list_language_compilers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flatline.DecompilerSession.close" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        close
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#one-shot-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One-Shot Functions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.decompile_function" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        decompile_function
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.list_language_compilers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        list_language_compilers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.get_version_info" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_version_info
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#request-and-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request and Result
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.DecompileRequest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DecompileRequest
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.DecompileResult" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DecompileResult
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.FunctionInfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FunctionInfo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.FunctionPrototype" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FunctionPrototype
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.TypeInfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TypeInfo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.ParameterInfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ParameterInfo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.VariableInfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VariableInfo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.CallSiteInfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CallSiteInfo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.JumpTableInfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JumpTableInfo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.DiagnosticFlags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DiagnosticFlags
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.StorageInfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        StorageInfo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.AnalysisBudget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AnalysisBudget
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagnostics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.WarningItem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WarningItem
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.ErrorItem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ErrorItem
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enumeration-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enumeration Types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.LanguageCompilerPair" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LanguageCompilerPair
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.VersionInfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VersionInfo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#constants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Constants
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.VALID_METATYPES" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VALID_METATYPES
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.VALID_WARNING_PHASES" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VALID_WARNING_PHASES
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.ERROR_CATEGORIES" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ERROR_CATEGORIES
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.CATEGORY_TO_EXCEPTION" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CATEGORY_TO_EXCEPTION
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.DECOMPILER_VERSION" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DECOMPILER_VERSION
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.__version__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __version__
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Errors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/isa-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ISA Support
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#session-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Session API
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.DecompilerSession" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DecompilerSession
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DecompilerSession">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#flatline.DecompilerSession.is_closed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        is_closed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flatline.DecompilerSession.decompile_function" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        decompile_function
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flatline.DecompilerSession.list_language_compilers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        list_language_compilers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#flatline.DecompilerSession.close" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        close
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#one-shot-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One-Shot Functions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.decompile_function" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        decompile_function
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.list_language_compilers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        list_language_compilers
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.get_version_info" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_version_info
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#request-and-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request and Result
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.DecompileRequest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DecompileRequest
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.DecompileResult" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DecompileResult
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.FunctionInfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FunctionInfo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.FunctionPrototype" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FunctionPrototype
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.TypeInfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TypeInfo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.ParameterInfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ParameterInfo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.VariableInfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VariableInfo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.CallSiteInfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CallSiteInfo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.JumpTableInfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JumpTableInfo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.DiagnosticFlags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DiagnosticFlags
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.StorageInfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        StorageInfo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.AnalysisBudget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AnalysisBudget
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Diagnostics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.WarningItem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WarningItem
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.ErrorItem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ErrorItem
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enumeration-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enumeration Types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.LanguageCompilerPair" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LanguageCompilerPair
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.VersionInfo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VersionInfo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#constants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Constants
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.VALID_METATYPES" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VALID_METATYPES
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.VALID_WARNING_PHASES" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VALID_WARNING_PHASES
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.ERROR_CATEGORIES" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ERROR_CATEGORIES
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.CATEGORY_TO_EXCEPTION" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CATEGORY_TO_EXCEPTION
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.DECOMPILER_VERSION" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DECOMPILER_VERSION
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flatline.__version__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __version__
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="api-reference">API Reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h1>
+<h2 id="session-api">Session API<a class="headerlink" href="#session-api" title="Permanent link">&para;</a></h2>
+<p>A <code>DecompilerSession</code> owns one native bridge session and amortizes library
+initialization, runtime data resolution, and language/compiler enumeration
+across multiple calls. Use it as a context manager for deterministic cleanup,
+or manage the lifecycle manually with <code>close()</code>.</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="flatline.DecompilerSession" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">flatline.DecompilerSession</span>
+
+
+<a href="#flatline.DecompilerSession" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">DecompilerSession</span><span class="p">(</span><span class="n">runtime_data_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">_bridge_session</span><span class="p">:</span> <span class="n">BridgeSession</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Long-lived decompiler session owning one native bridge session.</p>
+<p>A session amortizes startup costs (library initialization, runtime data
+resolution, language/compiler enumeration) across calls.  Use it as a
+context manager for deterministic resource cleanup, or call
+<a class="autorefs autorefs-internal" title="close" href="#flatline.DecompilerSession.close"><code>close()</code></a> explicitly when done.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>runtime_data_dir</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | <span title="pathlib.Path">Path</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Path to the Ghidra runtime data directory containing
+processor <code>.sla</code> files and compiler specs.  When <code>None</code>
+(default), the directory is auto-discovered from the installed
+<code>ghidra-sleigh</code> package.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">with</span> <span class="n">DecompilerSession</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">decompile_function</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">pairs</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">list_language_compilers</span><span class="p">()</span>
+</code></pre></div>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="flatline.DecompilerSession.is_closed" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">is_closed</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#flatline.DecompilerSession.is_closed" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">is_closed</span><span class="p">:</span> <span class="nb">bool</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Report whether close() has already been called.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="flatline.DecompilerSession.decompile_function" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">decompile_function</span>
+
+
+<a href="#flatline.DecompilerSession.decompile_function" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">decompile_function</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">DecompileRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecompileResult</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Decompile a single function described by <em>request</em>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>request</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="flatline.DecompileRequest
+
+
+  
+      dataclass
+   (flatline._models.DecompileRequest)" href="#flatline.DecompileRequest">DecompileRequest</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A <a class="autorefs autorefs-internal" title="flatline.DecompileRequest
+
+
+  
+      dataclass
+  " href="#flatline.DecompileRequest"><code>DecompileRequest</code></a> specifying the
+memory image, addresses, and target architecture.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="flatline.DecompileResult
+
+
+  
+      dataclass
+   (flatline._models.DecompileResult)" href="#flatline.DecompileResult">DecompileResult</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A <a class="autorefs autorefs-internal" title="flatline.DecompileResult
+
+
+  
+      dataclass
+  " href="#flatline.DecompileResult"><code>DecompileResult</code></a> containing the decompiled C
+code, structured <a class="autorefs autorefs-internal" title="flatline.FunctionInfo
+
+
+  
+      dataclass
+  " href="#flatline.FunctionInfo"><code>FunctionInfo</code></a>, warnings,
+and any error information.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="flatline._errors.InvalidArgumentError">InvalidArgumentError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the session has been closed or the
+request contains invalid arguments.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="flatline._errors.UnsupportedTargetError">UnsupportedTargetError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the <code>language_id</code> or
+<code>compiler_spec</code> is not recognized.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="flatline._errors.InvalidAddressError">InvalidAddressError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the function address is outside the
+memory image.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="flatline._errors.DecompileFailedError">DecompileFailedError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the decompiler engine fails
+internally.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="flatline.DecompilerSession.list_language_compilers" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">list_language_compilers</span>
+
+
+<a href="#flatline.DecompilerSession.list_language_compilers" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">list_language_compilers</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">LanguageCompilerPair</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Enumerate valid language/compiler pairs available in this session.</p>
+<p>Returns only pairs whose backing assets (<code>.sla</code> files and compiler
+specs) are present in the session's runtime data directory.  Covers
+all bundled ISAs including x86, ARM, RISC-V, MIPS, and others.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="flatline.LanguageCompilerPair
+
+
+  
+      dataclass
+   (flatline._models.LanguageCompilerPair)" href="#flatline.LanguageCompilerPair">LanguageCompilerPair</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of <a class="autorefs autorefs-internal" title="flatline.LanguageCompilerPair
+
+
+  
+      dataclass
+  " href="#flatline.LanguageCompilerPair"><code>LanguageCompilerPair</code></a> entries.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="flatline._errors.InvalidArgumentError">InvalidArgumentError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the session has been closed.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="flatline.DecompilerSession.close" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">close</span>
+
+
+<a href="#flatline.DecompilerSession.close" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">close</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Release session resources. Safe to call multiple times.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="one-shot-functions">One-Shot Functions<a class="headerlink" href="#one-shot-functions" title="Permanent link">&para;</a></h2>
+<p>These module-level convenience functions each create a short-lived session,
+run one operation, and close the session immediately. They are the simplest
+entry point when you only need a single call.</p>
+
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="flatline.decompile_function" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">flatline.decompile_function</span>
+
+
+<a href="#flatline.decompile_function" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">decompile_function</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">DecompileRequest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DecompileResult</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>Decompile a single function (one-shot convenience wrapper).</p>
+<p>Creates a short-lived <a class="autorefs autorefs-internal" title="flatline.DecompilerSession" href="#flatline.DecompilerSession"><code>DecompilerSession</code></a>, runs the
+decompilation, and closes the session deterministically.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>request</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="flatline.DecompileRequest
+
+
+  
+      dataclass
+   (flatline._models.DecompileRequest)" href="#flatline.DecompileRequest">DecompileRequest</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A <a class="autorefs autorefs-internal" title="flatline.DecompileRequest
+
+
+  
+      dataclass
+  " href="#flatline.DecompileRequest"><code>DecompileRequest</code></a> specifying the
+memory image, addresses, and target architecture.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="flatline.DecompileResult
+
+
+  
+      dataclass
+   (flatline._models.DecompileResult)" href="#flatline.DecompileResult">DecompileResult</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A <a class="autorefs autorefs-internal" title="flatline.DecompileResult
+
+
+  
+      dataclass
+  " href="#flatline.DecompileResult"><code>DecompileResult</code></a> with decompiled output.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="flatline._errors.InvalidArgumentError">InvalidArgumentError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the request contains invalid arguments.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="flatline._errors.UnsupportedTargetError">UnsupportedTargetError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the target is not recognized.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="flatline._errors.InvalidAddressError">InvalidAddressError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the function address is unmapped.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="flatline._errors.DecompileFailedError">DecompileFailedError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If decompilation fails internally.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="flatline.list_language_compilers" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">flatline.list_language_compilers</span>
+
+
+<a href="#flatline.list_language_compilers" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">list_language_compilers</span><span class="p">(</span><span class="n">runtime_data_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">LanguageCompilerPair</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>Enumerate valid language/compiler pairs (one-shot convenience wrapper).</p>
+<p>Creates a short-lived <a class="autorefs autorefs-internal" title="flatline.DecompilerSession" href="#flatline.DecompilerSession"><code>DecompilerSession</code></a>, runs the enumeration,
+and closes the session deterministically.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>runtime_data_dir</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> | <span title="pathlib.Path">Path</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional path to the Ghidra runtime data directory.
+When <code>None</code>, auto-discovered from <code>ghidra-sleigh</code>.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="flatline.LanguageCompilerPair
+
+
+  
+      dataclass
+   (flatline._models.LanguageCompilerPair)" href="#flatline.LanguageCompilerPair">LanguageCompilerPair</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of <a class="autorefs autorefs-internal" title="flatline.LanguageCompilerPair
+
+
+  
+      dataclass
+  " href="#flatline.LanguageCompilerPair"><code>LanguageCompilerPair</code></a> entries.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="flatline.get_version_info" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">flatline.get_version_info</span>
+
+
+<a href="#flatline.get_version_info" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_version_info</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">VersionInfo</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>Report runtime version information.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="flatline.VersionInfo
+
+
+  
+      dataclass
+   (flatline._models.VersionInfo)" href="#flatline.VersionInfo">VersionInfo</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The installed flatline package version and the underlying
+Ghidra decompiler engine version.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div><h2 id="request-and-result">Request and Result<a class="headerlink" href="#request-and-result" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="flatline.DecompileRequest" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">flatline.DecompileRequest</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#flatline.DecompileRequest" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">DecompileRequest</span><span class="p">(</span><span class="n">memory_image</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">base_address</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">function_address</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">language_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">compiler_spec</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">runtime_data_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">function_size_hint</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">analysis_budget</span><span class="p">:</span> <span class="n">AnalysisBudget</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">include_enriched_output</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Input payload for one function decompilation.</p>
+<p>The caller provides a flat memory image covering the relevant address
+space.  The library does not perform binary format parsing; callers
+working with binary files must extract memory content first.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.DecompileRequest.memory_image">memory_image</span></code></td>
+            <td>
+                  <code><span title="bytes">bytes</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Byte content of the target memory region.  Must be
+non-empty <code>bytes</code> or <code>bytearray</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.DecompileRequest.base_address">base_address</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Virtual address of the start of <code>memory_image</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.DecompileRequest.function_address">function_address</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Entry point virtual address of the function to
+decompile, within the memory image.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.DecompileRequest.language_id">language_id</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Target architecture identifier (e.g.
+<code>"x86:LE:64:default"</code>).  Use
+<a class="autorefs autorefs-internal" title="flatline.list_language_compilers" href="#flatline.list_language_compilers"><code>list_language_compilers()</code></a> to discover valid
+values.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.DecompileRequest.compiler_spec">compiler_spec</span></code></td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Compiler specification (e.g. <code>"gcc"</code>).  When
+<code>None</code>, the default compiler for the language is used.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.DecompileRequest.runtime_data_dir">runtime_data_dir</span></code></td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Explicit path to the Ghidra runtime data
+directory.  When <code>None</code>, auto-discovered from
+<code>ghidra-sleigh</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.DecompileRequest.function_size_hint">function_size_hint</span></code></td>
+            <td>
+                  <code><span title="int">int</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional advisory size hint in bytes for the
+function body.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.DecompileRequest.analysis_budget">analysis_budget</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="flatline.AnalysisBudget
+
+
+  
+      dataclass
+   (flatline._models.AnalysisBudget)" href="#flatline.AnalysisBudget">AnalysisBudget</a> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Resource limits for this decompilation.  Accepts
+an <a class="autorefs autorefs-internal" title="flatline.AnalysisBudget
+
+
+  
+      dataclass
+  " href="#flatline.AnalysisBudget"><code>AnalysisBudget</code></a> or a <code>dict</code> with a
+<code>"max_instructions"</code> key.  Defaults to
+<code>AnalysisBudget(max_instructions=100000)</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="flatline._errors.InvalidArgumentError">InvalidArgumentError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>memory_image</code> is empty or not bytes,
+<code>language_id</code> is empty, or <code>analysis_budget</code> is invalid.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="flatline.DecompileResult" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">flatline.DecompileResult</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#flatline.DecompileResult" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">DecompileResult</span><span class="p">(</span><span class="n">c_code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">function_info</span><span class="p">:</span> <span class="n">FunctionInfo</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">warnings</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">WarningItem</span><span class="p">],</span> <span class="n">error</span><span class="p">:</span> <span class="n">ErrorItem</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">enriched_output</span><span class="p">:</span> <span class="n">EnrichedOutput</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Output payload from one function decompilation.</p>
+<p>On success, <code>c_code</code> and <code>function_info</code> are populated.  On
+failure, <code>error</code> describes the problem and the other fields may be
+<code>None</code>.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.DecompileResult.c_code">c_code</span></code></td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Decompiled C source code, or <code>None</code> on error.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.DecompileResult.function_info">function_info</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="flatline.FunctionInfo
+
+
+  
+      dataclass
+   (flatline._models.FunctionInfo)" href="#flatline.FunctionInfo">FunctionInfo</a> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Structured function data, or <code>None</code> on error.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.DecompileResult.warnings">warnings</span></code></td>
+            <td>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="flatline.WarningItem
+
+
+  
+      dataclass
+   (flatline._models.WarningItem)" href="#flatline.WarningItem">WarningItem</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Decompiler warnings emitted during processing.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.DecompileResult.error">error</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="flatline.ErrorItem
+
+
+  
+      dataclass
+   (flatline._models.ErrorItem)" href="#flatline.ErrorItem">ErrorItem</a> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Structured error descriptor if decompilation failed,
+otherwise <code>None</code>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.DecompileResult.metadata">metadata</span></code></td>
+            <td>
+                  <code><span title="dict">dict</span>[<span title="str">str</span>, <span title="typing.Any">Any</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Additional metadata with stable keys:
+<code>"decompiler_version"</code>, <code>"language_id"</code>,
+<code>"compiler_spec"</code>, and <code>"diagnostics"</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="data-models">Data Models<a class="headerlink" href="#data-models" title="Permanent link">&para;</a></h2>
+<p>All data models are frozen dataclasses. Fields are populated on successful
+decompilation; see <code>DecompileResult</code> for how <code>None</code> values are used on error.</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="flatline.FunctionInfo" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">flatline.FunctionInfo</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#flatline.FunctionInfo" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">FunctionInfo</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">entry_address</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">is_complete</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">prototype</span><span class="p">:</span> <span class="n">FunctionPrototype</span><span class="p">,</span> <span class="n">local_variables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">VariableInfo</span><span class="p">],</span> <span class="n">call_sites</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CallSiteInfo</span><span class="p">],</span> <span class="n">jump_tables</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">JumpTableInfo</span><span class="p">],</span> <span class="n">diagnostics</span><span class="p">:</span> <span class="n">DiagnosticFlags</span><span class="p">,</span> <span class="n">varnode_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Structured post-decompile data for one function.</p>
+<p>Populated on successful decompilation.  Access via
+<a class="autorefs autorefs-internal" title="flatline.DecompileResult
+
+
+  
+      dataclass
+  " href="#flatline.DecompileResult"><code>DecompileResult.function_info</code></a>.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.FunctionInfo.name">name</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Function name assigned by the decompiler.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.FunctionInfo.entry_address">entry_address</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Function entry point virtual address.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.FunctionInfo.size">size</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Function body size in bytes.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.FunctionInfo.is_complete">is_complete</span></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether decompilation completed fully.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.FunctionInfo.prototype">prototype</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="flatline.FunctionPrototype
+
+
+  
+      dataclass
+   (flatline._models.FunctionPrototype)" href="#flatline.FunctionPrototype">FunctionPrototype</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Recovered function signature.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.FunctionInfo.local_variables">local_variables</span></code></td>
+            <td>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="flatline.VariableInfo
+
+
+  
+      dataclass
+   (flatline._models.VariableInfo)" href="#flatline.VariableInfo">VariableInfo</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Local scope variables.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.FunctionInfo.call_sites">call_sites</span></code></td>
+            <td>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="flatline.CallSiteInfo
+
+
+  
+      dataclass
+   (flatline._models.CallSiteInfo)" href="#flatline.CallSiteInfo">CallSiteInfo</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Call instructions within the function.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.FunctionInfo.jump_tables">jump_tables</span></code></td>
+            <td>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="flatline.JumpTableInfo
+
+
+  
+      dataclass
+   (flatline._models.JumpTableInfo)" href="#flatline.JumpTableInfo">JumpTableInfo</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Recovered jump tables.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.FunctionInfo.diagnostics">diagnostics</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="flatline.DiagnosticFlags
+
+
+  
+      dataclass
+   (flatline._models.DiagnosticFlags)" href="#flatline.DiagnosticFlags">DiagnosticFlags</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Aggregated diagnostic status flags.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.FunctionInfo.varnode_count">varnode_count</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Total Varnode count (complexity metric).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="flatline.FunctionPrototype" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">flatline.FunctionPrototype</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#flatline.FunctionPrototype" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">FunctionPrototype</span><span class="p">(</span><span class="n">calling_convention</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ParameterInfo</span><span class="p">],</span> <span class="n">return_type</span><span class="p">:</span> <span class="n">TypeInfo</span><span class="p">,</span> <span class="n">is_noreturn</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">has_this_pointer</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">has_input_errors</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">has_output_errors</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Recovered function signature.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.FunctionPrototype.calling_convention">calling_convention</span></code></td>
+            <td>
+                  <code><span title="str">str</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Calling convention model name (e.g.
+<code>"__cdecl"</code>), or <code>None</code> if unknown.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.FunctionPrototype.parameters">parameters</span></code></td>
+            <td>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="flatline.ParameterInfo
+
+
+  
+      dataclass
+   (flatline._models.ParameterInfo)" href="#flatline.ParameterInfo">ParameterInfo</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Recovered function parameters.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.FunctionPrototype.return_type">return_type</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="flatline.TypeInfo
+
+
+  
+      dataclass
+   (flatline._models.TypeInfo)" href="#flatline.TypeInfo">TypeInfo</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Recovered return type.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.FunctionPrototype.is_noreturn">is_noreturn</span></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>True</code> if the function does not return.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.FunctionPrototype.has_this_pointer">has_this_pointer</span></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>True</code> if the function has an implicit
+<code>this</code> parameter.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.FunctionPrototype.has_input_errors">has_input_errors</span></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>True</code> if parameter recovery was incomplete.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.FunctionPrototype.has_output_errors">has_output_errors</span></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>True</code> if return type recovery was
+incomplete.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="flatline.TypeInfo" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">flatline.TypeInfo</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#flatline.TypeInfo" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">TypeInfo</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">metatype</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Recovered type descriptor.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.TypeInfo.name">name</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Type name (e.g. <code>"int"</code>, <code>"undefined8"</code>).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.TypeInfo.size">size</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Type size in bytes.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.TypeInfo.metatype">metatype</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Stable metatype classification string.  One of
+<a class="autorefs autorefs-internal" title="flatline.VALID_METATYPES
+
+
+  
+      module-attribute
+  " href="#flatline.VALID_METATYPES"><code>VALID_METATYPES</code></a> (<code>"void"</code>, <code>"int"</code>,
+<code>"uint"</code>, <code>"float"</code>, <code>"pointer"</code>, <code>"array"</code>,
+<code>"struct"</code>, <code>"union"</code>, <code>"code"</code>, <code>"enum"</code>,
+<code>"bool"</code>, <code>"unknown"</code>).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="flatline.ParameterInfo" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">flatline.ParameterInfo</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#flatline.ParameterInfo" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">ParameterInfo</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="n">TypeInfo</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">storage</span><span class="p">:</span> <span class="n">StorageInfo</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>One function parameter.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.ParameterInfo.name">name</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Parameter name recovered by the decompiler.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.ParameterInfo.type">type</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="flatline.TypeInfo
+
+
+  
+      dataclass
+   (flatline._models.TypeInfo)" href="#flatline.TypeInfo">TypeInfo</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Recovered type descriptor.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.ParameterInfo.index">index</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Zero-based position in the function signature.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.ParameterInfo.storage">storage</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="flatline.StorageInfo
+
+
+  
+      dataclass
+   (flatline._models.StorageInfo)" href="#flatline.StorageInfo">StorageInfo</a> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Storage location, or <code>None</code> if not mapped.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="flatline.VariableInfo" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">flatline.VariableInfo</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#flatline.VariableInfo" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">VariableInfo</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="n">TypeInfo</span><span class="p">,</span> <span class="n">storage</span><span class="p">:</span> <span class="n">StorageInfo</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>One local variable.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.VariableInfo.name">name</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Variable name recovered by the decompiler.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.VariableInfo.type">type</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="flatline.TypeInfo
+
+
+  
+      dataclass
+   (flatline._models.TypeInfo)" href="#flatline.TypeInfo">TypeInfo</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Recovered type descriptor.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.VariableInfo.storage">storage</span></code></td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="flatline.StorageInfo
+
+
+  
+      dataclass
+   (flatline._models.StorageInfo)" href="#flatline.StorageInfo">StorageInfo</a> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Storage location, or <code>None</code> if not mapped.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="flatline.CallSiteInfo" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">flatline.CallSiteInfo</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#flatline.CallSiteInfo" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">CallSiteInfo</span><span class="p">(</span><span class="n">instruction_address</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">target_address</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>One call instruction within the function.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.CallSiteInfo.instruction_address">instruction_address</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Address of the <code>CALL</code> instruction.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.CallSiteInfo.target_address">target_address</span></code></td>
+            <td>
+                  <code><span title="int">int</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Resolved callee address, or <code>None</code> for indirect
+calls.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="flatline.JumpTableInfo" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">flatline.JumpTableInfo</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#flatline.JumpTableInfo" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">JumpTableInfo</span><span class="p">(</span><span class="n">switch_address</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">target_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">target_addresses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>One recovered jump table.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.JumpTableInfo.switch_address">switch_address</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Address of the switch or indirect-branch
+instruction.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.JumpTableInfo.target_count">target_count</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of resolved target addresses.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.JumpTableInfo.target_addresses">target_addresses</span></code></td>
+            <td>
+                  <code><span title="list">list</span>[<span title="int">int</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Resolved target addresses.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="flatline.DiagnosticFlags" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">flatline.DiagnosticFlags</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#flatline.DiagnosticFlags" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">DiagnosticFlags</span><span class="p">(</span><span class="n">is_complete</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">has_unreachable_blocks</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">has_unimplemented</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">has_bad_data</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">has_no_code</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Aggregated boolean diagnostic flags from the decompiler.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.DiagnosticFlags.is_complete">is_complete</span></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether decompilation completed fully.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.DiagnosticFlags.has_unreachable_blocks">has_unreachable_blocks</span></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether unreachable basic blocks were
+detected.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.DiagnosticFlags.has_unimplemented">has_unimplemented</span></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether unimplemented instructions were
+encountered.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.DiagnosticFlags.has_bad_data">has_bad_data</span></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether the decompiler flagged bad data in the
+function body.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.DiagnosticFlags.has_no_code">has_no_code</span></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether the function entry contained no executable
+code.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="flatline.StorageInfo" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">flatline.StorageInfo</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#flatline.StorageInfo" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">StorageInfo</span><span class="p">(</span><span class="n">space</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Variable or parameter storage location.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.StorageInfo.space">space</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Address space name (e.g. <code>"register"</code>, <code>"ram"</code>,
+<code>"stack"</code>).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.StorageInfo.offset">offset</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Byte offset within the address space.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.StorageInfo.size">size</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Size in bytes.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="flatline.AnalysisBudget" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">flatline.AnalysisBudget</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#flatline.AnalysisBudget" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">AnalysisBudget</span><span class="p">(</span><span class="n">max_instructions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_MAX_INSTRUCTIONS</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Deterministic per-request resource limits.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.AnalysisBudget.max_instructions">max_instructions</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Maximum number of p-code instructions the
+decompiler will process before stopping.  Defaults to
+<code>100000</code>.  Must be a positive integer.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="flatline._errors.InvalidArgumentError">InvalidArgumentError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>max_instructions</code> is not a positive
+integer.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">budget</span> <span class="o">=</span> <span class="n">AnalysisBudget</span><span class="p">(</span><span class="n">max_instructions</span><span class="o">=</span><span class="mi">500_000</span><span class="p">)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">request</span> <span class="o">=</span> <span class="n">DecompileRequest</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">analysis_budget</span><span class="o">=</span><span class="n">budget</span><span class="p">)</span>
+</code></pre></div>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="diagnostics">Diagnostics<a class="headerlink" href="#diagnostics" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="flatline.WarningItem" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">flatline.WarningItem</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#flatline.WarningItem" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">WarningItem</span><span class="p">(</span><span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">phase</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>One decompiler warning.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.WarningItem.code">code</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Warning identifier string.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.WarningItem.message">message</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Human-readable warning message.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.WarningItem.phase">phase</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Decompiler phase that produced the warning.  One of
+<a class="autorefs autorefs-internal" title="flatline.VALID_WARNING_PHASES
+
+
+  
+      module-attribute
+  " href="#flatline.VALID_WARNING_PHASES"><code>VALID_WARNING_PHASES</code></a> (<code>"init"</code>,
+<code>"analyze"</code>, <code>"emit"</code>).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="flatline.ErrorItem" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">flatline.ErrorItem</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#flatline.ErrorItem" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">ErrorItem</span><span class="p">(</span><span class="n">category</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">retryable</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Structured error descriptor returned in <a class="autorefs autorefs-internal" title="flatline.DecompileResult
+
+
+  
+      dataclass
+  " href="#flatline.DecompileResult"><code>DecompileResult.error</code></a>.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.ErrorItem.category">category</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Error category string from
+<a class="autorefs autorefs-internal" title="flatline.ERROR_CATEGORIES
+
+
+  
+      module-attribute
+  " href="#flatline.ERROR_CATEGORIES"><code>ERROR_CATEGORIES</code></a>.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.ErrorItem.message">message</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Human-readable error message.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.ErrorItem.retryable">retryable</span></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>True</code> if the operation might succeed on retry.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="enumeration-types">Enumeration Types<a class="headerlink" href="#enumeration-types" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="flatline.LanguageCompilerPair" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">flatline.LanguageCompilerPair</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#flatline.LanguageCompilerPair" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">LanguageCompilerPair</span><span class="p">(</span><span class="n">language_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">compiler_spec</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>One valid language/compiler pair known to the runtime data directory.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.LanguageCompilerPair.language_id">language_id</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Language identifier (e.g. <code>"x86:LE:64:default"</code>).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.LanguageCompilerPair.compiler_spec">compiler_spec</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Compiler specification (e.g. <code>"gcc"</code>).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="flatline.VersionInfo" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">flatline.VersionInfo</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+<a href="#flatline.VersionInfo" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">VersionInfo</span><span class="p">(</span><span class="n">flatline_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">decompiler_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Runtime version information.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.VersionInfo.flatline_version">flatline_version</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The installed flatline package version.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="flatline.VersionInfo.decompiler_version">decompiler_version</span></code></td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The underlying Ghidra decompiler engine
+version (e.g. <code>"ghidra-6.1"</code>).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div><h2 id="constants">Constants<a class="headerlink" href="#constants" title="Permanent link">&para;</a></h2>
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="flatline.VALID_METATYPES" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">flatline.VALID_METATYPES</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#flatline.VALID_METATYPES" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">VALID_METATYPES</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s1">&#39;void&#39;</span><span class="p">,</span> <span class="s1">&#39;bool&#39;</span><span class="p">,</span> <span class="s1">&#39;int&#39;</span><span class="p">,</span> <span class="s1">&#39;uint&#39;</span><span class="p">,</span> <span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="s1">&#39;pointer&#39;</span><span class="p">,</span> <span class="s1">&#39;array&#39;</span><span class="p">,</span> <span class="s1">&#39;struct&#39;</span><span class="p">,</span> <span class="s1">&#39;union&#39;</span><span class="p">,</span> <span class="s1">&#39;code&#39;</span><span class="p">,</span> <span class="s1">&#39;enum&#39;</span><span class="p">,</span> <span class="s1">&#39;unknown&#39;</span><span class="p">})</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="flatline.VALID_WARNING_PHASES" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">flatline.VALID_WARNING_PHASES</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#flatline.VALID_WARNING_PHASES" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">VALID_WARNING_PHASES</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s1">&#39;init&#39;</span><span class="p">,</span> <span class="s1">&#39;analyze&#39;</span><span class="p">,</span> <span class="s1">&#39;emit&#39;</span><span class="p">})</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="flatline.ERROR_CATEGORIES" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">flatline.ERROR_CATEGORIES</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#flatline.ERROR_CATEGORIES" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">ERROR_CATEGORIES</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s1">&#39;invalid_argument&#39;</span><span class="p">,</span> <span class="s1">&#39;unsupported_target&#39;</span><span class="p">,</span> <span class="s1">&#39;invalid_address&#39;</span><span class="p">,</span> <span class="s1">&#39;decompile_failed&#39;</span><span class="p">,</span> <span class="s1">&#39;configuration_error&#39;</span><span class="p">,</span> <span class="s1">&#39;internal_error&#39;</span><span class="p">})</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="flatline.CATEGORY_TO_EXCEPTION" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">flatline.CATEGORY_TO_EXCEPTION</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#flatline.CATEGORY_TO_EXCEPTION" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">CATEGORY_TO_EXCEPTION</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">[</span><span class="n">FlatlineError</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{(</span><span class="n">category</span><span class="p">):</span> <span class="bp">cls</span> <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="p">(</span><span class="n">InvalidArgumentError</span><span class="p">,</span> <span class="n">UnsupportedTargetError</span><span class="p">,</span> <span class="n">InvalidAddressError</span><span class="p">,</span> <span class="n">DecompileFailedError</span><span class="p">,</span> <span class="n">ConfigurationError</span><span class="p">,</span> <span class="n">InternalError</span><span class="p">)}</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="flatline.DECOMPILER_VERSION" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">flatline.DECOMPILER_VERSION</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#flatline.DECOMPILER_VERSION" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">DECOMPILER_VERSION</span> <span class="o">=</span> <span class="s1">&#39;ghidra-6.1&#39;</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h2 id="flatline.__version__" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">flatline.__version__</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-module-attribute"><code>module-attribute</code></small>
+  </span>
+
+<a href="#flatline.__version__" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;0.1.1&#39;</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
