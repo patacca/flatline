@@ -3,8 +3,8 @@
 
 # Overview
 - `flatline`: pip-installable Python wrapper around Ghidra C++ decompiler (decompiler surface only).
-- Version `0.1.1` aligned in `pyproject.toml`, `meson.build`, `src/flatline/_version.py`; latest public release still `0.1.0`; current repo state is staged for the pending production publish.
-- Roadmap: P6 closed; P6.5 validated on TestPyPI as `0.1.1.dev1`, repo now staged at `0.1.1`; clean local snapshot passed the full release gate on `2026-03-28`, so remaining exit = commit + first production PyPI publish; P7 phase-1 landed (opt-in enriched output).
+- Version `0.1.1` aligned in `pyproject.toml`, `meson.build`, `src/flatline/_version.py`; latest public release is `0.1.1`; current repo state matches the public release.
+- Roadmap: P6 and P6.5 are closed; TestPyPI validated `0.1.1.dev1`, then production `0.1.1` published successfully on `2026-03-28`; P7 phase-1 landed (opt-in enriched output).
 - Supported hosts: Linux x86_64, macOS arm64, Windows x86_64; Linux aarch64 + macOS x86_64 = published-wheel targets pending coverage lanes.
 - Wheels: 64-bit; manylinux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64; locked in `docs/wheel_matrix.md`.
 - Dep `ghidra-sleigh` (import `ghidra_sleigh`); unpinned; auto-discovers runtime data via `ghidra_sleigh.get_runtime_data_dir()`.
