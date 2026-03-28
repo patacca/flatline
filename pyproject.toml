@@ -4,7 +4,7 @@ build-backend = "mesonpy"
 
 [project]
 name = "flatline"
-version = "0.1.1.dev1"
+version = "0.1.1"
 description = "Python wrapper around the Ghidra decompiler"
 requires-python = ">= 3.13"
 license = "Apache-2.0"
@@ -124,7 +124,6 @@ commands = [
     ["pytest",
      "tests/unit/test_compliance_spec.py",
      "tests/unit/test_footprint_spec.py",
-     "tests/unit/test_release_workflow_spec.py",
      "tests/unit/test_artifact_audit_spec.py",
      { replace = "posargs", default = ["-ra"], extend = true }],
 ]

@@ -1,7 +1,7 @@
 project(
   'flatline',
   'cpp',
-  version: '0.1.1.dev1',
+  version: '0.1.1',
   license: 'Apache-2.0',
   meson_version: '>= 1.6',
   default_options: ['cpp_std=c++20', 'buildtype=release'],

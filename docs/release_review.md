@@ -1,11 +1,10 @@
 # Public Artifact Review Checklist
 
-This checklist is the source-controlled human gate for publishing `0.1.1` from
-the current `0.1.1.dev1` release candidate. Run it after the deterministic
-release helpers have passed and before creating `git tag v0.1.1` or publishing
-GitHub release `v0.1.1`. Keep per-run review notes, reviewed commit hashes,
-and artifact filenames outside the repo; the checklist stays source-controlled,
-but the results do not.
+This checklist is the source-controlled human gate for publishing the staged
+`0.1.1` release. Run it after the deterministic release helpers have passed and
+before creating `git tag v0.1.1` or publishing GitHub release `v0.1.1`. Keep
+per-run review notes, reviewed commit hashes, and artifact filenames outside
+the repo; the checklist stays source-controlled, but the results do not.
 
 ## Preconditions
 
@@ -21,9 +20,9 @@ but the results do not.
 
 ## Review Evidence
 
-- Confirm `python tools/release.py` still reports the expected
-  `0.1.1.dev1` to `0.1.1` recommendation for the current
-  `pre_1_0_patch_release` workflow.
+- Confirm `python tools/release.py` still reports the expected current version
+  `0.1.1`, recommended release version `0.1.1`, and
+  `pre_1_0_patch_release` workflow classification.
 - Confirm `tox` passed on the release matrix and no release-facing docs drifted
   while fixing the branch for release.
 - Confirm `python tools/compliance.py` passed and still reports the

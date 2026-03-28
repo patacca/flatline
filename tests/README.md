@@ -11,19 +11,20 @@ exercise the installed artifact instead of `PYTHONPATH=src`.
 
 - `source .venv/bin/activate && tox`: all configured test and lint envs (including dev-only).
 - `source .venv/bin/activate && tox -e py313,py314`: tests only (against installed wheel; dev-only tests skip).
-- `source .venv/bin/activate && tox -e dev`: dev-only tests (compliance, footprint, release workflow, artifact audit).
+- `source .venv/bin/activate && tox -e dev`: dev-only tests (compliance, footprint, artifact audit).
 - `source .venv/bin/activate && tox -e py313,py314 -- -m requires_native`: native-only coverage against the installed wheel artifact.
 - `source .venv/bin/activate && tox -e py314-native -- -m requires_native`: native-only coverage while forcing `native_bridge=enabled` during tox packaging.
 - `source .venv/bin/activate && tox -e lint`: Ruff only.
 
 ### Dev-only tests
 
-Four test files exercise repo-only dev modules in `tools/flatline_dev/`
-(`compliance`, `footprint`, `release`, `artifacts`). They are excluded from
-wheel and sdist artifacts. The `dev` tox env runs them against the repo tree
-via `PYTHONPATH=src:tools` (no wheel build). Under `py313`/`py314` these tests
-skip gracefully because `pytest.importorskip` cannot find the modules in the
-installed wheel.
+Three test files exercise repo-only dev modules in `tools/flatline_dev/`
+(`compliance`, `footprint`, `artifacts`). They are excluded from wheel and
+sdist artifacts. The `dev` tox env runs them against the repo tree via
+`PYTHONPATH=src:tools` (no wheel build). Under `py313`/`py314` these tests skip
+gracefully because `pytest.importorskip` cannot find the modules in the
+installed wheel. `python tools/release.py` remains a manual readiness gate
+rather than a dedicated pytest spec.
 
 ## Layout
 

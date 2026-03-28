@@ -3,8 +3,8 @@
 
 # Overview
 - `flatline`: pip-installable Python wrapper around Ghidra C++ decompiler (decompiler surface only).
-- Version `0.1.1.dev1` aligned in `pyproject.toml`, `meson.build`, `src/flatline/_version.py`; current production publish candidate = `0.1.1.dev1 -> 0.1.1`; latest release `0.1.0`.
-- Roadmap: P6 closed; P6.5 validated on TestPyPI for `0.1.1.dev1`, remaining exit = first production PyPI publish of `0.1.1`; P7 phase-1 landed (opt-in enriched output).
+- Version `0.1.1` aligned in `pyproject.toml`, `meson.build`, `src/flatline/_version.py`; latest public release still `0.1.0`; current repo state is staged for the pending production publish.
+- Roadmap: P6 closed; P6.5 validated on TestPyPI as `0.1.1.dev1`, repo now staged at `0.1.1`; clean local snapshot passed the full release gate on `2026-03-28`, so remaining exit = commit + first production PyPI publish; P7 phase-1 landed (opt-in enriched output).
 - Supported hosts: Linux x86_64, macOS arm64, Windows x86_64; Linux aarch64 + macOS x86_64 = published-wheel targets pending coverage lanes.
 - Wheels: 64-bit; manylinux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64; locked in `docs/wheel_matrix.md`.
 - Dep `ghidra-sleigh` (import `ghidra_sleigh`); unpinned; auto-discovers runtime data via `ghidra_sleigh.get_runtime_data_dir()`.
@@ -16,8 +16,9 @@
 - Security (`zizmor.yml`): push main + PRs `.github/workflows/**` + dispatch; `uvx zizmor --format sarif .`; SARIF category `zizmor`.
 - Release (`release.yml`): `pypa/cibuildwheel@v3.4.0`, `manylinux_2_28`; Windows vcpkg zlib + delvewheel, no MSVC pre-activation; smoke `tools/flatline_dev/wheel_smoke.py` + `tools/flatline_dev/published_wheel_smoke.py`; sdist compliance; `twine check` + `python tools/artifacts.py`; PyPI on `release.published`, TestPyPI on `workflow_dispatch` (unique version required).
 - TestPyPI validated `2026-03-28` commit `299fae580bdb202e0c930878b33067d0eceef01a` run `23694378228`: 10 wheels + 1 sdist, full smoke pass.
-- `python tools/release.py`: current release-candidate audit (`0.1.1.dev1 -> 0.1.1`), rejects dirty worktrees. `python tools/artifacts.py dist`: metadata/LICENSE/NOTICE/dev-tool/native-ext audit.
-- Compliance: `LICENSE` + `NOTICE`, `docs/compliance.md`, `python tools/compliance.py`; footprint 30,742,876 bytes (29.32 MiB), `ghidra-sleigh` 80.3%.
+- Local clean-snapshot validation `2026-03-28`: `python tools/release.py`, `tox`, `tox -e dev`, `python tools/compliance.py`, `python tools/footprint.py`, `python -m build --outdir dist`, `python tools/artifacts.py dist --repo-root .`, and `python -m twine check dist/*` all passed; `twine` warns because no long description is shipped.
+- `python tools/release.py`: current staged-release audit (`0.1.1`), rejects dirty worktrees. `python tools/artifacts.py dist`: metadata/LICENSE/NOTICE/dev-tool/native-ext audit.
+- Compliance: `LICENSE` + `NOTICE`, `docs/compliance.md`, `python tools/compliance.py`; current `.venv` footprint 24,839,137 bytes (23.69 MiB), `ghidra-sleigh` runtime data 99.4%.
 
 # Design posture
 - User-centered; prefer caller convenience.

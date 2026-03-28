@@ -30,9 +30,9 @@ Current status:
   Windows x86_64 into the supported runtime-host tier; Linux aarch64 and macOS
   x86_64 remain published-wheel-only targets.
 - The P6.5 wheel matrix, TestPyPI publish flow, and post-publish smoke matrix
-  are validated for release candidate `0.1.1.dev1`; the remaining phase-exit
-  step is the first production PyPI publish of `0.1.1` and the Tier-1 wheel
-  set.
+  were validated on release candidate `0.1.1.dev1`; the repo is now staged at
+  `0.1.1`, and the remaining phase-exit step is the first production PyPI
+  publish of the Tier-1 wheel set.
 
 ## 2. Detailed Milestone Gates
 
@@ -84,8 +84,8 @@ Current status:
 - `docs/release_review.md` capturing the public artifact-review checklist and
   the explicit external approval hold point for final human sign-off
 - `docs/release_workflow.md` capturing the current production release
-  procedure, including the active `0.1.1.dev1` to `0.1.1` recommendation while
-  retaining the prior `0.1.0` baseline note
+  procedure, including the staged `0.1.1` release state while retaining the
+  prior `0.1.0` baseline note
 - built-artifact audit evidence from `python tools/artifacts.py`
 - Exit checks:
 - SemVer classification approved
@@ -188,8 +188,8 @@ Release stream model:
   earlier `0.1.0.dev0` release-candidate line.
 
 Pre-1.0 release-line policy:
-- The active production publish candidate is `0.1.1.dev1`, and production
-  publishes on the `0.1.x` line strip the `.devN` suffix.
+- The current repo is staged at `0.1.1` for the pending production publish.
+- The same release line was validated on TestPyPI as `0.1.1.dev1`.
 - While flatline remains on the `0.1.x` line, backward-compatible
   capabilities, support-matrix expansion, additive metadata/warnings, and
   bug/determinism fixes may ship as documented patch releases.

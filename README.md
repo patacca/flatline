@@ -194,8 +194,7 @@ The current P6 host-expansion feasibility record lives in
 The `0.1.0` MVP release is available. P5 initial public release is complete,
 with release-facing guarantees and support-policy notes captured in
 [docs/release_notes.md](docs/release_notes.md). The current production publish
-workflow for the `0.1.1.dev1` release candidate, including the audited
-`0.1.1.dev1` to `0.1.1` recommendation, is recorded in
+workflow for the staged `0.1.1` release is recorded in
 [docs/release_workflow.md](docs/release_workflow.md), and the human approval
 gate remains documented in [docs/release_review.md](docs/release_review.md).
 P6 host-feasibility work now promotes macOS arm64 and Windows x86_64 alongside

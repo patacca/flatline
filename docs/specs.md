@@ -309,8 +309,8 @@ Release-line rules:
   development line as `0.1.0`; that tag established the initial public
   baseline for later classification.
 - Flatline remains on a public `0.1.x` pre-1.0 line. The current production
-  publish candidate is `0.1.1.dev1`; production publishes on this line strip
-  the `.devN` suffix and keep the rest of the version stable.
+  publish is staged at `0.1.1` after validating the same release line on
+  TestPyPI as `0.1.1.dev1`.
 - Major: breaking Python API contract changes.
 - Minor: a deliberate release-line reset (for example `0.2.0`) or a post-1.0
   backward-compatible capability release.
