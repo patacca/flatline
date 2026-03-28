@@ -159,6 +159,9 @@ intentionally absent from wheel and sdist artifacts.
 
 ## Documentation
 
+Documentation is available at <https://patacca.github.io/flatline/> or can be
+built locally from this checkout.
+
 Install the docs dependencies:
 
 ```bash
