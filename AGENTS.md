@@ -1,5 +1,6 @@
 # Maintenance
 - Update on every repo op; keep only facts that save re-derivation.
+- Prefer short commit message. One line if possible.
 
 # Overview
 - `flatline`: pip-installable Python wrapper around Ghidra C++ decompiler (decompiler surface only).
