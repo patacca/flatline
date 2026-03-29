@@ -239,9 +239,7 @@ via `result.enriched.pcode.to_graph()`.
 
 Release-facing guarantees and support-policy notes live in
 [docs/release_notes.md](docs/release_notes.md). `python tools/release.py`
-audits the current release candidate, while
-[docs/wheel_matrix.md](docs/wheel_matrix.md) captures the published wheel
-matrix.
+audits the current release candidate.
 
 ## Acknowledgments
 

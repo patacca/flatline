@@ -8,7 +8,7 @@
 - Status: P6, P6.5, and P7 are closed; TestPyPI validated `0.1.1.dev1`, then production `0.1.1` published successfully on `2026-03-28`; enriched output now exposes `Enriched.pcode` plus `Pcode.to_graph()` for downstream graph traversal/drawing.
 - Docs: GitHub Pages published at `https://patacca.github.io/flatline/` (root redirects to `latest/`); README documents both hosted and local MkDocs access.
 - Supported hosts: Linux x86_64, macOS arm64, Windows x86_64; Linux aarch64 + macOS x86_64 = published-wheel targets pending coverage lanes.
-- Wheels: 64-bit; manylinux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64; locked in `docs/wheel_matrix.md`.
+- Wheels: CPython 3.13/3.14, 64-bit only; manylinux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64; deferred targets: 32-bit, musllinux, Windows ARM64, macOS universal2; policy in `docs/adr/adr-013.md`.
 - Deps: `ghidra-sleigh` (import `ghidra_sleigh`) for runtime data, plus `networkx` for pcode graph projection; `ghidra-sleigh` is unpinned and auto-discovers runtime data via `ghidra_sleigh.get_runtime_data_dir()`.
 - `third_party/ghidra` submodule; `third_party/r2ghidra` read-only, ignored.
 - Fixture ISAs: x86_64, x86_32, AArch64, RISC-V 64, MIPS32; `tests/fixtures/*.hex`; regen `tests/fixtures/generate_hex_fixtures.py`; regression switch site `0x1009` + 9 targets.
@@ -61,7 +61,7 @@
 - `docs/footprint.md` -- footprint baseline
 - `docs/release_notes.md` -- `0.1.x` release-line contract, support tiers
 - `docs/release_review.md` -- artifact-review checklist
-- `docs/wheel_matrix.md` -- wheel matrix, manylinux policy
+- `docs/adr/adr-013.md` -- wheel distribution policy
 
 # Repo structure (non-vendored)
 - Build: `pyproject.toml`, `.github/workflows/release.yml`, `meson.build`, `src/flatline/meson.build`, `meson_options.txt`

@@ -18,9 +18,10 @@ All phases (P0-P7) and milestones (M0-M6) are closed; latest release is
 
 - [ ] **Linux aarch64 host promotion**: currently published-wheel-only; needs dedicated native contract lane and host-promotion evidence to become a supported runtime host.
 - [ ] **macOS x86_64 host promotion**: currently published-wheel-only; same evidence bar as Linux aarch64.
-- [ ] **32-bit wheels**: deferred by ADR-013.
+- [ ] **32-bit Linux/Windows wheels**: deferred by ADR-013.
 - [ ] **musllinux wheels**: deferred by ADR-013.
 - [ ] **Windows ARM64 wheels**: deferred by ADR-013.
+- [ ] **macOS universal2 wheels**: deferred by ADR-013.
 - [ ] **Free-threaded CPython (3.13t)**: deferred until nanobind declares stable free-threaded support; concurrency model currently assumes GIL or caller-provided serialization.
 
 ## ISA Coverage
