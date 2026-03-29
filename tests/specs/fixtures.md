@@ -10,6 +10,7 @@
 | `fx_runtime_data_min` | Runtime data directory | Pair enumeration and startup validation | Contains curated language/compiler assets required for MVP |
 | `fx_invalid_memory` | Empty/zero-length memory image | Invalid memory image input | Tests structured error path for degenerate memory input |
 | `fx_add_arm64` | Memory image (AArch64) | Multi-ISA known-function path (ARM) | Raw memory extracted from simple arithmetic function; ARM AArch64 |
+| `fx_external_call_arm64` | Memory image (AArch64) | Exact-slice tail-padding coverage with out-of-span call targets | Raw memory extracted from hand-written ARM64 assembly; integration trims the main function so call targets resolve outside the supplied span |
 | `fx_add_riscv64` | Memory image (RISC-V 64) | Multi-ISA known-function path (RISC-V) | Raw memory extracted from simple arithmetic function; RISC-V 64-bit |
 | `fx_add_mips32` | Memory image (MIPS32) | Multi-ISA known-function path (MIPS) | Raw memory extracted from simple arithmetic function; MIPS 32-bit |
 | `fx_add_elf32` | Memory image (x86_32) | x86 32-bit bitwidth coverage | Raw memory extracted from simple arithmetic function ELF; x86 32-bit; validates x86 family has both 32-bit and 64-bit fixture coverage |

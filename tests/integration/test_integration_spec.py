@@ -19,14 +19,6 @@ pytestmark = pytest.mark.requires_native
 
 TRIMMED_SLICE_FIXTURE_IDS = ("fx_add_elf64", *MULTI_ISA_FIXTURE_IDS)
 
-EXTERNAL_CALL_ARM64_BASE_ADDRESS = 0x1000
-EXTERNAL_CALL_ARM64_HEX = (
-    "fd7bbda9fd030091f35301a9f40300aaf51300f929ffff97c002003540008052b59cff97"
-    "f50300aac29cff97806000f013b045f9130100b5e00315aac39cff97e00313aaf35341a9"
-    "f51340f9fd7bc3a8c0035fd634ffffb4e00314aa610e40f9fce7d997a0feff34730a40f9"
-    "f2ffff17130080d2f3ffff17"
-)
-
 
 def test_i001_known_function_success_path(native_runtime_data_dir: str) -> None:
     """I-001: Known function decompilation succeeds and yields non-empty C output."""
@@ -216,31 +208,32 @@ def test_i010_external_call_slice_respects_tail_padding_toggle(
     native_runtime_data_dir: str,
 ) -> None:
     """I-010: Default/custom tail padding fixes exact slices while disabling preserves failure."""
-    memory_image = bytes.fromhex(EXTERNAL_CALL_ARM64_HEX)
-    image_end = EXTERNAL_CALL_ARM64_BASE_ADDRESS + len(memory_image)
+    fixture = get_native_fixture("fx_external_call_arm64")
+    memory_image = fixture.memory_image()[: fixture.expected_function_size]
+    image_end = fixture.base_address + len(memory_image)
     default_request = DecompileRequest(
         memory_image=memory_image,
-        base_address=EXTERNAL_CALL_ARM64_BASE_ADDRESS,
-        function_address=EXTERNAL_CALL_ARM64_BASE_ADDRESS,
-        language_id="AARCH64:LE:64:v8A",
-        compiler_spec="default",
+        base_address=fixture.base_address,
+        function_address=fixture.function_address,
+        language_id=fixture.language_id,
+        compiler_spec=fixture.compiler_spec,
         runtime_data_dir=native_runtime_data_dir,
     )
     custom_padding_request = DecompileRequest(
         memory_image=memory_image,
-        base_address=EXTERNAL_CALL_ARM64_BASE_ADDRESS,
-        function_address=EXTERNAL_CALL_ARM64_BASE_ADDRESS,
-        language_id="AARCH64:LE:64:v8A",
-        compiler_spec="default",
+        base_address=fixture.base_address,
+        function_address=fixture.function_address,
+        language_id=fixture.language_id,
+        compiler_spec=fixture.compiler_spec,
         runtime_data_dir=native_runtime_data_dir,
-        tail_padding=b"\x1f\x20\x03\xd5",
+        tail_padding=b"\x1f\x20\x03\xd5",  # Aarch64 NOP
     )
     strict_request = DecompileRequest(
         memory_image=memory_image,
-        base_address=EXTERNAL_CALL_ARM64_BASE_ADDRESS,
-        function_address=EXTERNAL_CALL_ARM64_BASE_ADDRESS,
-        language_id="AARCH64:LE:64:v8A",
-        compiler_spec="default",
+        base_address=fixture.base_address,
+        function_address=fixture.function_address,
+        language_id=fixture.language_id,
+        compiler_spec=fixture.compiler_spec,
         runtime_data_dir=native_runtime_data_dir,
         tail_padding=b"",
     )
@@ -257,11 +250,12 @@ def test_i010_external_call_slice_respects_tail_padding_toggle(
     assert any(
         call_site.target_address is not None
         and (
-            call_site.target_address < EXTERNAL_CALL_ARM64_BASE_ADDRESS
+            call_site.target_address < fixture.base_address
             or call_site.target_address >= image_end
         )
         for call_site in default_result.function_info.call_sites
     )
+    assert normalize_c_code(default_result.c_code) == fixture.normalized_c
     assert normalize_c_code(custom_padding_result.c_code) == normalize_c_code(
         default_result.c_code
     )

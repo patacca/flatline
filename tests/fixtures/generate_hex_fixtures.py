@@ -125,6 +125,12 @@ def main() -> None:
     _build_text_fixture("fx_add_elf32.s", "i386-linux-gnu", "fx_add_elf32", check=args.check)
     _build_text_fixture("fx_add_arm64.s", "aarch64-linux-gnu", "fx_add_arm64", check=args.check)
     _build_text_fixture(
+        "fx_external_call_arm64.s",
+        "aarch64-linux-gnu",
+        "fx_external_call_arm64",
+        check=args.check,
+    )
+    _build_text_fixture(
         "fx_add_riscv64.s",
         "riscv64-linux-gnu",
         "fx_add_riscv64",
