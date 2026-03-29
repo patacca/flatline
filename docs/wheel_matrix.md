@@ -3,8 +3,8 @@
 Canonical record: `docs/adr/adr-013.md`.
 
 Status: GitHub CI and the `2026-03-28` TestPyPI rehearsal validated this
-10-wheel-plus-sdist matrix end to end. The remaining P6.5 step is the first
-production PyPI publish.
+10-wheel-plus-sdist matrix end to end, and the same matrix reached production
+PyPI later that day as `0.1.1`.
 
 ## Decision
 

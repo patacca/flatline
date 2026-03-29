@@ -227,8 +227,6 @@ Redistribution/compliance guidance lives in [NOTICE](NOTICE), with the durable
 policy captured in [docs/adr/adr-007.md](docs/adr/adr-007.md). The current
 default-install footprint baseline and size-policy note live in
 [docs/footprint.md](docs/footprint.md).
-The current P6 host-expansion feasibility record lives in
-[docs/host_feasibility.md](docs/host_feasibility.md).
 
 ## Project status
 
@@ -242,9 +240,8 @@ via `result.enriched.pcode.to_graph()`.
 Release-facing guarantees and support-policy notes live in
 [docs/release_notes.md](docs/release_notes.md). `python tools/release.py`
 audits the current release candidate, while
-[docs/wheel_matrix.md](docs/wheel_matrix.md) and
-[docs/host_feasibility.md](docs/host_feasibility.md) capture the current
-distribution and host-expansion evidence.
+[docs/wheel_matrix.md](docs/wheel_matrix.md) captures the published wheel
+matrix.
 
 ## Acknowledgments
 

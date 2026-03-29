@@ -49,7 +49,8 @@ Support-tier interpretation:
   flatline promises fixture-backed output quality for that pair.
 - Wheel publication and supported-host status can differ. Wheel publication
   means the packaged install path and wheel smoke checks are green for that
-  target, not that the host has reached equivalent contract coverage.
+  target, not that the host has reached the ADR-008 promotion bar for supported
+  runtime-host status.
 - macOS arm64 and Windows x86_64 now satisfy the equivalent-contract-coverage
   bar through dedicated native contract lanes plus published-wheel smoke.
 - CI regression gates and warm-session budgets are source-controlled only for

@@ -14,7 +14,7 @@
 - Fixture ISAs: x86_64, x86_32, AArch64, RISC-V 64, MIPS32; `tests/fixtures/*.hex`; regen `tests/fixtures/generate_hex_fixtures.py`; regression switch site `0x1009` + 9 targets.
 - Tox: `py313`/`py314` wheel-based; `py314-native` forces `native_bridge=enabled`; `.pkg-py314-native` `pass_env = ["VCPKG_INSTALLATION_ROOT"]`; `lint` = ruff + clang-format; `dev` = source-tree dev-tool tests.
 - `--vsenv` via `[tool.meson-python.args]`; do NOT pre-activate MSVC (Meson skips `--vsenv` if `cl.exe`/`VSINSTALLDIR` present); no raw compiler/linker env flags.
-- CI (`ci.yml`): py3.14 non-Ubuntu; Ubuntu full matrix py313+py314 incl regression; host-feasibility `tox -e py314-native -- -m "not regression"`; Windows must not use `ilammy/msvc-dev-cmd`; explicit `permissions: contents: read`; all checkout steps set `persist-credentials: false`.
+- CI (`ci.yml`): py3.14 non-Ubuntu; Ubuntu full matrix py313+py314 incl regression; dedicated host-promotion lanes run `tox -e py314-native -- -m "not regression"`; Windows must not use `ilammy/msvc-dev-cmd`; explicit `permissions: contents: read`; all checkout steps set `persist-credentials: false`.
 - Security (`zizmor.yml`): push main + PRs `.github/workflows/**` + dispatch; `uvx zizmor --format sarif .`; SARIF category `zizmor`; third-party workflow actions pinned by commit SHA; docs deploy avoids `${{ }}` inside `run` blocks.
 - Release (`release.yml`): third-party actions pinned by commit SHA; `pypa/cibuildwheel` version line remains `v3.4.0`; `manylinux_2_28`; Windows vcpkg zlib + delvewheel, no MSVC pre-activation; smoke `tools/flatline_dev/wheel_smoke.py` + `tools/flatline_dev/published_wheel_smoke.py`; sdist compliance; validate with `twine check` + `python tools/artifacts.py dist --repo-root . --require-pypi-metadata`; PyPI on `release.published`, TestPyPI on `workflow_dispatch` (unique version required).
 - TestPyPI validated `2026-03-28` commit `299fae580bdb202e0c930878b33067d0eceef01a` run `23694378228`: 10 wheels + 1 sdist, full smoke pass.
@@ -51,7 +51,7 @@
 - `docs/design.md` -- durable design posture, boundaries, heuristics, and persistent risks worth keeping in day-to-day view. Must be kept up to date.
 - `docs/adr/` -- accepted architecture decision records; canonical rationale for settled design and release-policy choices.
 - `docs/TODO.md` -- next-scope features, platform/ISA expansion items, and remaining open work
-- `docs/archived/` -- archived historical docs (former full specs / roadmap); still useful for specific historical needs, but not maintained and may be outdated
+- `docs/archived/` -- archived historical docs (former full specs / roadmap); files under this directory are read-only unless explicitly requested, the directory may still receive newly archived files, and the contents are not maintained and may be outdated
 - `docs/code_style.md` -- style guide
 - `CHANGELOG.md` -- release history
 - `docs/ai/planning.md` -- original brief
@@ -59,7 +59,6 @@
 - `docs/ai/refine_plan.md` -- refinement checklist
 - `NOTICE` -- redistribution notice plus upstream/fixture attribution pointers
 - `docs/footprint.md` -- footprint baseline
-- `docs/host_feasibility.md` -- P6 platform audit
 - `docs/release_notes.md` -- `0.1.x` release-line contract, support tiers
 - `docs/release_review.md` -- artifact-review checklist
 - `docs/wheel_matrix.md` -- wheel matrix, manylinux policy
