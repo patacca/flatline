@@ -1,5 +1,11 @@
 # flatline
 
+[![PyPI](https://img.shields.io/pypi/v/flatline)](https://pypi.org/project/flatline/)
+[![Python](https://img.shields.io/pypi/pyversions/flatline)](https://pypi.org/project/flatline/)
+[![Downloads](https://img.shields.io/pepy/dt/flatline)](https://pepy.tech/projects/flatline)
+[![Docs](https://img.shields.io/badge/docs-online-blue)](https://patacca.github.io/flatline/)
+[![CI](https://github.com/patacca/flatline/actions/workflows/ci.yml/badge.svg)](https://github.com/patacca/flatline/actions/workflows/ci.yml)
+
 Python wrapper around the Ghidra decompiler. Provides a stable, pip-installable
 interface for single-function decompilation with structured output -- no Ghidra
 installation required.
