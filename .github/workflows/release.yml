@@ -60,7 +60,7 @@ jobs:
         run: vcpkg install zlib:x64-windows
 
       - name: Build wheels via cibuildwheel
-        uses: pypa/cibuildwheel@54a71d3375df80d84b6d4537d04614fec04e637f # v3.4.0
+        uses: pypa/cibuildwheel@ee02a1537ce3071a004a6b08c41e72f0fdc42d9a # v3.4.0
         env:
           CIBW_ARCHS: ${{ matrix.cibw-archs }}
 

@@ -1,5 +1,5 @@
 # Maintenance
-- Update on every repo op; keep only facts that save re-derivation.
+- Update only when repo instructions or durable project facts change; do not touch this file for routine code, CI, dependency-pin, or scanner-remediation edits.
 - Prefer short commit message. One line if possible.
 
 # Overview
@@ -36,7 +36,7 @@
 - Max ~700 lines/file. Spec-first/TDD. ASCII only in `.py`, `.cpp`, `.h`, `meson.build`.
 - Hard errors on invalid input; warnings on degraded success; no silent fallbacks.
 - Frozen value copies; no native pointers cross ABI.
-- Tests: structured format parsing, not grep; workflow tests only for durable release/support/native-build invariants.
+- Tests: structured format parsing, not grep; workflow tests only for durable release/support/native-build invariants, not for routine action pin rotations, SHA refreshes, or code-scanning remediations.
 - Build UX: no user-facing `CPPFLAGS`/`LDFLAGS`/`PKG_CONFIG_PATH`.
 - C++20: `default_options: ['cpp_std=c++20']` root, `-std=c++20` in `src/flatline/meson.build`.
 - Style: `docs/code_style.md`.
