@@ -7,6 +7,8 @@ name = "flatline"
 version = "0.1.1"
 description = "Python wrapper around the Ghidra decompiler"
 readme = { file = "README.md", content-type = "text/markdown" }
+authors = [{ name = "patacca" }]
+maintainers = [{ name = "patacca", email = "patacca@autistici.org" }]
 requires-python = ">= 3.13"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
@@ -14,6 +16,7 @@ keywords = ["ghidra", "decompiler", "reverse engineering", "binary analysis"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
     "Operating System :: MacOS",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
@@ -23,6 +26,7 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Topic :: Security",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
@@ -33,6 +37,7 @@ dependencies = [
 Homepage = "https://github.com/patacca/flatline"
 Repository = "https://github.com/patacca/flatline"
 Issues = "https://github.com/patacca/flatline/issues"
+Documentation = "https://patacca.github.io/flatline/"
 Changelog = "https://github.com/patacca/flatline/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
