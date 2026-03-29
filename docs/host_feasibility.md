@@ -29,21 +29,13 @@ continuous host lanes.
 - Remaining P6.5 step: first production PyPI publish of the same Tier-1 wheel
   set.
 
-## ADR-008 Decision
+## Decision Summary
 
-Decision: macOS first, Windows second.
+Canonical record: `docs/adr/adr-008.md`.
 
-Rationale:
-
-1. The current native stack is Meson + nanobind + Ghidra C++ sources + zlib.
-   Apple Clang and macOS keep the same general POSIX/process model and
-   GCC-like compiler-argument syntax as the Linux MVP host, so they are the
-   shortest path to the first non-Linux feasibility proof.
-2. Windows adds a second layer of work: MSVC-style argument syntax, ABI
-   validation, and runner/toolchain variance that the roadmap already tracks as
-   a separate risk.
-3. P6 should remove shared blockers once, then validate equivalent behavior on
-   the closest host before taking on the Windows-specific tail work.
+Accepted order: macOS first, Windows second. This document records the current
+feasibility evidence and support-promotion state that followed from that
+decision.
 
 ## Equivalent Contract Coverage
 

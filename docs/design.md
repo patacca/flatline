@@ -4,7 +4,8 @@ This file captures the durable design guidance that still matters for day-to-day
 work. It is intentionally brief.
 
 - Keep unfinished work in `docs/TODO.md`.
-- Keep implementation detail in code, reference docs, comments, and ADRs.
+- Keep accepted architecture and release-policy decisions in `docs/adr/`.
+- Keep implementation detail in code, reference docs, and comments.
 - Keep historical full-detail planning and specification material in
   `docs/archived/`; those archived docs are not maintained and may drift from
   the current repo state.

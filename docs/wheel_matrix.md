@@ -1,6 +1,6 @@
 # Platform/Architecture Wheel Matrix
 
-ADR-013 deliverable: locked P6.5 wheel matrix for GitHub-hosted CI.
+Canonical record: `docs/adr/adr-013.md`.
 
 Status: GitHub CI and the `2026-03-28` TestPyPI rehearsal validated this
 10-wheel-plus-sdist matrix end to end. The remaining P6.5 step is the first
@@ -52,9 +52,9 @@ The following stay out of the locked matrix:
 These are deferred for demand or maintenance reasons, not because the public
 API contract requires them.
 
-## ADR-013 Final State
+## Decision Snapshot
 
-ADR-013 is decided with the following outcomes:
+ADR-013 is accepted with the following outcomes:
 
 - Interpreter family: CPython only
 - Python versions: `>= 3.13`, currently 3.13 and 3.14

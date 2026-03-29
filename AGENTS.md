@@ -47,23 +47,9 @@
 - ISA priority: x86/ARM/RISC-V/MIPS 32+64; fixture-backed x86 32/64, ARM64, RISC-V 64, MIPS32; others best-effort.
 - Stable public API over unstable internals. Always use venv.
 
-# ADR status
-- ADR-001: `memory_image` + `base_address`; file-to-memory deferred.
-- ADR-002: nanobind; public stable, bridge internal.
-- ADR-003: normalized token/structure comparison.
-- ADR-004: `ghidra-sleigh` auto-discovery; full multi-ISA default; explicit `runtime_data_dir` override.
-- ADR-005: default `AnalysisBudget(max_instructions=100000)`; bad keys/non-positive -> `invalid_argument`; no wall-clock timeout.
-- ADR-006: `RuntimeWarning` + `WarningItem`/`ErrorItem`; paths in diagnostics; no raw bytes; no public logging.
-- ADR-007: `LICENSE`+`NOTICE`, compliance tooling, footprint; dev tools excluded from artifacts.
-- ADR-008: macOS first, Windows second; `docs/host_feasibility.md`.
-- ADR-009: fixture-backed ISAs = x86 32/64, ARM64, RISC-V 64, MIPS32.
-- ADR-010: `ghidra-sleigh` (repo `patacca/ghidra-sleigh`); `sleighc`, `.sla`, `get_runtime_data_dir()`.
-- ADR-011: `configuration_error` = user-fixable; `internal_error` = flatline bugs.
-- ADR-012: P7 enriched output opt-in, post-`Action::perform()`, ID-based pcode/varnode graph.
-- ADR-013: CPython >= 3.13, `cibuildwheel`; `manylinux_2_28`; macOS target `11.0`; 32-bit/musllinux/Win ARM64 deferred.
-
 # Source of truth
 - `docs/design.md` -- durable design posture, boundaries, heuristics, and persistent risks worth keeping in day-to-day view. Must be kept up to date.
+- `docs/adr/` -- accepted architecture decision records; canonical rationale for settled design and release-policy choices.
 - `docs/TODO.md` -- next-scope features, platform/ISA expansion items, and remaining open work
 - `docs/archived/` -- archived historical docs (former full specs / roadmap); still useful for specific historical needs, but not maintained and may be outdated
 - `docs/code_style.md` -- style guide

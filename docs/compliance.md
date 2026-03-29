@@ -1,8 +1,10 @@
 # Compliance
 
-## ADR-007 Decision
+## Decision Summary
 
-ADR-007 is resolved for flatline P3 packaging/compliance hardening.
+Canonical record: `docs/adr/adr-007.md`.
+
+ADR-007 is accepted for flatline P3 packaging/compliance hardening.
 
 Mandatory release-time checks for redistribution:
 
