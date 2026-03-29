@@ -6,6 +6,7 @@ from pathlib import Path
 
 import flatline._bridge as bridge_module
 import flatline._windows as windows_module
+import tests.conftest as pytest_config
 
 
 def test_u030_windows_native_loader_registers_vcpkg_zlib_bin_dir(
@@ -154,3 +155,30 @@ def test_u030_bridge_session_bootstraps_windows_loader_without_vcpkg_env(
 
     assert calls == ["called"]
     assert session.list_language_compilers() == []
+
+
+def test_u030_pytest_native_gate_bootstraps_windows_loader_before_import(
+    monkeypatch,
+) -> None:
+    """U-030: The strict-native pytest gate uses the same Windows DLL bootstrap."""
+    calls: list[str] = []
+
+    monkeypatch.setattr(
+        pytest_config.importlib.util,
+        "find_spec",
+        lambda module_name: object() if module_name == pytest_config.NATIVE_MODULE else None,
+    )
+    monkeypatch.setattr(
+        pytest_config,
+        "configure_windows_native_dll_dirs",
+        lambda: calls.append("called"),
+    )
+
+    def raise_import_error(module_name: str) -> object:
+        assert module_name == pytest_config.NATIVE_MODULE
+        assert calls == ["called"]
+        raise ImportError("DLL load failed while importing flatline._flatline_native")
+
+    monkeypatch.setattr(pytest_config.importlib, "import_module", raise_import_error)
+
+    assert pytest_config._native_bridge_available() is False

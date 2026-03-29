@@ -9,6 +9,7 @@ import pathlib
 
 import pytest
 
+from flatline._windows import configure_windows_native_dll_dirs
 from tests._native_fixtures import get_native_runtime_data_dir
 
 # ---------------------------------------------------------------------------
@@ -29,6 +30,9 @@ def _native_bridge_available() -> bool:
     """Return whether the compiled native bridge extension is importable."""
     if importlib.util.find_spec(NATIVE_MODULE) is None:
         return False
+    # Match the package runtime import path so Windows source-built wheels can
+    # register the vcpkg zlib DLL directory before the extension import.
+    configure_windows_native_dll_dirs()
     try:
         importlib.import_module(NATIVE_MODULE)
     except ImportError:
