@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import importlib
-import sys
-import types
 from pathlib import Path
 
+import flatline._bridge as bridge_module
 import flatline._windows as windows_module
 
 
@@ -129,31 +127,30 @@ def test_u030_windows_native_loader_falls_back_to_vcpkg_on_path(
     assert recorded_dirs == [str(dll_dir)]
 
 
-def test_u030_package_init_bootstraps_windows_loader_without_vcpkg_env(
+def test_u030_bridge_session_bootstraps_windows_loader_without_vcpkg_env(
     monkeypatch,
 ) -> None:
-    """U-030: Package import still boots the Windows loader without env gating."""
-    original_flatline = sys.modules.get("flatline")
-    original_windows = sys.modules.get("flatline._windows")
-    fake_windows = types.ModuleType("flatline._windows")
+    """U-030: Bridge-session startup still boots the Windows loader without env gating."""
     calls: list[str] = []
 
-    fake_windows.configure_windows_native_dll_dirs = lambda: calls.append("called")
-
-    monkeypatch.setattr(sys, "platform", "win32", raising=False)
     monkeypatch.delenv("VCPKG_INSTALLATION_ROOT", raising=False)
-    monkeypatch.setitem(sys.modules, "flatline._windows", fake_windows)
-    sys.modules.pop("flatline", None)
+    monkeypatch.setattr(
+        bridge_module,
+        "configure_windows_native_dll_dirs",
+        lambda: calls.append("called"),
+    )
+    monkeypatch.setattr(
+        bridge_module,
+        "enumerate_runtime_data_language_compilers",
+        lambda runtime_data_dir: [],
+    )
 
-    try:
-        importlib.import_module("flatline")
-    finally:
-        sys.modules.pop("flatline", None)
-        if original_flatline is not None:
-            sys.modules["flatline"] = original_flatline
-        if original_windows is not None:
-            sys.modules["flatline._windows"] = original_windows
-        else:
-            sys.modules.pop("flatline._windows", None)
+    def raise_import_error(module_name: str) -> object:
+        raise ImportError(module_name)
+
+    monkeypatch.setattr(bridge_module.importlib, "import_module", raise_import_error)
+
+    session = bridge_module.create_bridge_session()
 
     assert calls == ["called"]
+    assert session.list_language_compilers() == []
