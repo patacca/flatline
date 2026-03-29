@@ -320,6 +320,7 @@ def test_u011_bridge_session_adapts_native_payloads(
     assert native_session.last_request_payload["analysis_budget"] == {
         "max_instructions": 100000,
     }
+    assert native_session.last_request_payload["tail_padding"] == b"\x00"
 
     bridge_session.close()
     assert native_session.closed is True
@@ -352,6 +353,45 @@ def test_u011_bridge_serializes_explicit_analysis_budget(
     assert native_session.last_request_payload["analysis_budget"] == {
         "max_instructions": 4096,
     }
+
+
+def test_u011_bridge_serializes_explicit_tail_padding_values(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """U-011: Tail padding uses the stable native payload shape."""
+    native_session = _NativeSessionSuccessDouble()
+    native_module = _NativeModuleDouble(native_session=native_session)
+    monkeypatch.setattr(bridge_module.importlib, "import_module", lambda _: native_module)
+
+    runtime_dir = tmp_path / "runtime"
+    runtime_dir.mkdir()
+    bridge_session = bridge_module.create_bridge_session(runtime_data_dir=str(runtime_dir))
+
+    request = DecompileRequest(
+        memory_image=b"\x90\xc3",
+        base_address=0x1000,
+        function_address=0x1000,
+        language_id="x86:LE:64:default",
+        compiler_spec="gcc",
+        tail_padding=b"\x1f\x20\x03\xd5",
+    )
+    bridge_session.decompile_function(request)
+
+    assert native_session.last_request_payload is not None
+    assert native_session.last_request_payload["tail_padding"] == b"\x1f\x20\x03\xd5"
+
+    disabled_request = DecompileRequest(
+        memory_image=b"\x90\xc3",
+        base_address=0x1000,
+        function_address=0x1000,
+        language_id="x86:LE:64:default",
+        compiler_spec="gcc",
+        tail_padding=b"",
+    )
+    bridge_session.decompile_function(disabled_request)
+
+    assert native_session.last_request_payload["tail_padding"] is None
 
 
 def test_u028_bridge_session_adapts_enriched_output_when_requested(

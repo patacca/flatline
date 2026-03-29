@@ -140,6 +140,11 @@ print(result.c_code)
 Pass `runtime_data_dir=...` only when you need to override the dependency-backed
 default runtime-data root.
 
+Exact function slices do not need manual caller padding. Flatline zero-fills
+decoder lookahead past the end of `memory_image` by default via
+`tail_padding=b"\x00"`; set `tail_padding=None` or `tail_padding=b""` only
+when you need strict tail-boundary failures.
+
 ## Development
 
 ```bash

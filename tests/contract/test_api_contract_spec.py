@@ -262,6 +262,7 @@ def test_c007_enriched_output_schema_stability() -> None:
     """C-007: Enriched-output companion types keep stable field names."""
     request_fields = {f.name for f in dataclasses.fields(DecompileRequest)}
     assert "include_enriched_output" in request_fields
+    assert "tail_padding" in request_fields
 
     enriched_fields = {f.name for f in dataclasses.fields(EnrichedOutput)}
     assert enriched_fields == {"pcode_ops", "varnodes"}

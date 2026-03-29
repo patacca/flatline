@@ -50,6 +50,7 @@ struct NativeRequest {
     std::optional<std::string> compiler_spec;
     std::uint32_t max_instructions;
     bool include_enriched_output;
+    std::optional<std::string> tail_padding;
 };
 
 constexpr std::uint32_t kDefaultMaxInstructions = 100000;
@@ -108,6 +109,24 @@ static std::optional<std::string> optional_string_field(const nb::dict& request,
         return std::nullopt;
     }
     std::string value = nb::cast<std::string>(field_value);
+    if (value.empty()) {
+        return std::nullopt;
+    }
+    return value;
+}
+
+static std::optional<std::string> optional_bytes_field(const nb::dict& request,
+                                                       const char* field_name,
+                                                       std::optional<std::string> default_value) {
+    if (!request.contains(field_name)) {
+        return default_value;
+    }
+    nb::object field_value = request[field_name];
+    if (field_value.is_none()) {
+        return std::nullopt;
+    }
+    nb::bytes raw_bytes = nb::cast<nb::bytes>(field_value);
+    std::string value(raw_bytes.c_str(), raw_bytes.size());
     if (value.empty()) {
         return std::nullopt;
     }
@@ -195,6 +214,7 @@ static NativeRequest parse_request(const nb::dict& request) {
     parsed.max_instructions = parse_max_instructions(request);
     parsed.include_enriched_output =
         optional_bool_field(request, "include_enriched_output", false);
+    parsed.tail_padding = optional_bytes_field(request, "tail_padding", std::string("\0", 1));
     return parsed;
 }
 
@@ -701,14 +721,31 @@ static nb::dict success_result(const std::string& c_code, const nb::dict& functi
     return result;
 }
 
+static void fill_repeating_bytes(ghidra::uint1* ptr, std::size_t size,
+                                 const std::string& pattern) {
+    if (size == 0 || pattern.empty()) {
+        return;
+    }
+
+    const std::size_t pattern_size = pattern.size();
+    std::size_t copied = 0;
+    while (copied < size) {
+        const std::size_t chunk_size = std::min(pattern_size, size - copied);
+        std::memcpy(ptr + copied, pattern.data(), chunk_size);
+        copied += chunk_size;
+    }
+}
+
 class FlatlineMemoryLoadImage : public ghidra::LoadImage {
    public:
     FlatlineMemoryLoadImage(std::string filename, std::string arch_type,
-                            std::uint64_t base_address, std::string memory_image)
+                            std::uint64_t base_address, std::string memory_image,
+                            std::optional<std::string> tail_padding)
         : ghidra::LoadImage(std::move(filename)),
           arch_type_(std::move(arch_type)),
           base_address_(base_address),
-          memory_image_(std::move(memory_image)) {}
+          memory_image_(std::move(memory_image)),
+          tail_padding_(std::move(tail_padding)) {}
 
     void loadFill(ghidra::uint1* ptr, ghidra::int4 size, const ghidra::Address& address) override {
         if (size < 0) {
@@ -732,11 +769,23 @@ class FlatlineMemoryLoadImage : public ghidra::LoadImage {
                              &image_end)) {
             throw ghidra::DataUnavailError("memory image bounds overflow");
         }
-        if (requested_start < base_address_ || requested_end > image_end) {
+        if (requested_start < base_address_ || requested_start >= image_end) {
             throw ghidra::DataUnavailError("requested address range is outside memory_image");
         }
 
         const std::size_t offset = static_cast<std::size_t>(requested_start - base_address_);
+        if (requested_end > image_end) {
+            if (!tail_padding_.has_value()) {
+                throw ghidra::DataUnavailError("requested address range is outside memory_image");
+            }
+            const std::size_t available_size =
+                static_cast<std::size_t>(image_end - requested_start);
+            std::memcpy(ptr, memory_image_.data() + offset, available_size);
+            fill_repeating_bytes(ptr + available_size,
+                                 static_cast<std::size_t>(size) - available_size, *tail_padding_);
+            return;
+        }
+
         std::memcpy(ptr, memory_image_.data() + offset, static_cast<std::size_t>(size));
     }
 
@@ -754,30 +803,33 @@ class FlatlineMemoryLoadImage : public ghidra::LoadImage {
     std::string arch_type_;
     std::uint64_t base_address_;
     std::string memory_image_;
+    std::optional<std::string> tail_padding_;
 };
 
 class FlatlineSleighArchitecture : public ghidra::SleighArchitecture {
    public:
     FlatlineSleighArchitecture(std::string target_id, std::string language_id,
                                std::uint64_t base_address, std::string memory_image,
-                               std::ostream* error_stream)
+                               std::optional<std::string> tail_padding, std::ostream* error_stream)
         : ghidra::SleighArchitecture("<flatline-memory>", std::move(target_id), error_stream),
           language_id_(std::move(language_id)),
           base_address_(base_address),
-          memory_image_(std::move(memory_image)) {}
+          memory_image_(std::move(memory_image)),
+          tail_padding_(std::move(tail_padding)) {}
 
    protected:
     void buildLoader(ghidra::DocumentStorage& store) override {
         (void)store;
         ghidra::SleighArchitecture::collectSpecFiles(*errorstream);
         loader = new FlatlineMemoryLoadImage("<flatline-memory>", language_id_, base_address_,
-                                             memory_image_);
+                                             memory_image_, tail_padding_);
     }
 
    private:
     std::string language_id_;
     std::uint64_t base_address_;
     std::string memory_image_;
+    std::optional<std::string> tail_padding_;
 };
 
 }  // namespace
@@ -800,8 +852,18 @@ static void ensure_library_initialized(const std::string& runtime_data_dir) {
 
 class MemoryLoadImageSkeleton {
    public:
-    MemoryLoadImageSkeleton(std::uint64_t base_address, nb::bytes memory_image)
-        : base_address_(base_address), memory_image_(memory_image.c_str(), memory_image.size()) {}
+    MemoryLoadImageSkeleton(std::uint64_t base_address, nb::bytes memory_image,
+                            nb::object tail_padding_obj)
+        : base_address_(base_address), memory_image_(memory_image.c_str(), memory_image.size()) {
+        if (tail_padding_obj.is_none()) {
+            return;
+        }
+        nb::bytes raw_tail_padding = nb::cast<nb::bytes>(tail_padding_obj);
+        if (raw_tail_padding.size() == 0) {
+            return;
+        }
+        tail_padding_ = std::string(raw_tail_padding.c_str(), raw_tail_padding.size());
+    }
 
     nb::bytes read(std::uint64_t address, std::size_t size) const {
         std::uint64_t end = 0;
@@ -813,17 +875,29 @@ class MemoryLoadImageSkeleton {
         if (!checked_add_u64(address, static_cast<std::uint64_t>(size), &requested_end)) {
             throw nb::value_error("requested address range overflow");
         }
-        if (address < base_address_ || requested_end > end) {
+        if (address < base_address_ || address >= end) {
             throw nb::value_error("requested address range is outside memory_image");
         }
 
         const std::size_t offset = static_cast<std::size_t>(address - base_address_);
+        if (requested_end > end) {
+            if (!tail_padding_.has_value()) {
+                throw nb::value_error("requested address range is outside memory_image");
+            }
+            std::string output(size, '\0');
+            const std::size_t available_size = static_cast<std::size_t>(end - address);
+            std::memcpy(output.data(), memory_image_.data() + offset, available_size);
+            fill_repeating_bytes(reinterpret_cast<ghidra::uint1*>(output.data() + available_size),
+                                 size - available_size, *tail_padding_);
+            return nb::bytes(output.data(), size);
+        }
         return nb::bytes(memory_image_.data() + offset, size);
     }
 
    private:
     std::uint64_t base_address_;
     std::string memory_image_;
+    std::optional<std::string> tail_padding_;
 };
 
 // -- NativeSession ------------------------------------------------------------
@@ -893,7 +967,8 @@ class NativeSession {
             std::ostringstream ghidra_errors;
             FlatlineSleighArchitecture architecture(
                 target_id, native_request.language_id, native_request.base_address,
-                std::move(native_request.memory_image), &ghidra_errors);
+                std::move(native_request.memory_image), std::move(native_request.tail_padding),
+                &ghidra_errors);
 
             ghidra::DocumentStorage store;
             architecture.init(store);
@@ -999,7 +1074,8 @@ NB_MODULE(_flatline_native, m) {
     m.doc() = "flatline native bridge (nanobind + Ghidra decompiler)";
 
     nb::class_<MemoryLoadImageSkeleton>(m, "MemoryLoadImageSkeleton")
-        .def(nb::init<std::uint64_t, nb::bytes>())
+        .def(nb::init<std::uint64_t, nb::bytes, nb::object>(), nb::arg("base_address"),
+             nb::arg("memory_image"), nb::arg("tail_padding") = nb::none())
         .def("read", &MemoryLoadImageSkeleton::read);
 
     nb::class_<NativeSession>(m, "NativeSession")

@@ -30,3 +30,19 @@ def test_u011_native_bridge_produces_real_decompile_result(native_runtime_data_d
     assert result.c_code.strip() != ""
     assert "not implemented" not in result.c_code.lower()
     assert result.function_info.entry_address == fixture.function_address
+
+
+def test_u031_memory_load_image_skeleton_repeats_custom_tail_padding() -> None:
+    """U-031: Native load-image helper repeats custom tail padding as needed."""
+    native_module = pytest.importorskip("flatline._flatline_native")
+
+    loader = native_module.MemoryLoadImageSkeleton(
+        0x1000,
+        b"\xaa\xbb",
+        b"\x10\x20\x30",
+    )
+    assert loader.read(0x1001, 6) == b"\xbb\x10\x20\x30\x10\x20"
+
+    strict_loader = native_module.MemoryLoadImageSkeleton(0x1000, b"\xaa\xbb", b"")
+    with pytest.raises(ValueError, match="outside memory_image"):
+        strict_loader.read(0x1001, 6)

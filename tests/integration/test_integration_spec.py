@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from flatline import VALID_WARNING_PHASES, DiagnosticFlags
+from flatline import VALID_WARNING_PHASES, DecompileRequest, DiagnosticFlags
 from tests._native_fixtures import (
     FIXTURE_IDS,
     MULTI_ISA_FIXTURE_IDS,
@@ -15,6 +15,16 @@ from tests._native_fixtures import (
 )
 
 pytestmark = pytest.mark.requires_native
+
+TRIMMED_SLICE_FIXTURE_IDS = ("fx_add_elf64", *MULTI_ISA_FIXTURE_IDS)
+
+EXTERNAL_CALL_ARM64_BASE_ADDRESS = 0x1000
+EXTERNAL_CALL_ARM64_HEX = (
+    "fd7bbda9fd030091f35301a9f40300aaf51300f929ffff97c002003540008052b59cff97"
+    "f50300aac29cff97806000f013b045f9130100b5e00315aac39cff97e00313aaf35341a9"
+    "f51340f9fd7bc3a8c0035fd634ffffb4e00314aa610e40f9fce7d997a0feff34730a40f9"
+    "f2ffff17130080d2f3ffff17"
+)
 
 
 def test_i001_known_function_success_path(native_runtime_data_dir: str) -> None:
@@ -189,3 +199,87 @@ def test_i008_opt_in_enriched_output_supports_use_def_analysis(
             pending_varnodes.append(output_varnode_id)
 
     assert any(ops_by_id[op_id].opcode == "RETURN" for op_id in reachable_ops)
+
+
+@pytest.mark.parametrize("fixture_id", TRIMMED_SLICE_FIXTURE_IDS)
+def test_i009_exact_function_slices_use_default_tail_padding(
+    native_runtime_data_dir: str,
+    fixture_id: str,
+) -> None:
+    """I-009: Exact function slices decompile without manual caller padding."""
+    fixture = get_native_fixture(fixture_id)
+    trimmed_image = fixture.memory_image()[: fixture.expected_function_size]
+    request = DecompileRequest(
+        memory_image=trimmed_image,
+        base_address=fixture.base_address,
+        function_address=fixture.function_address,
+        language_id=fixture.language_id,
+        compiler_spec=fixture.compiler_spec,
+        runtime_data_dir=native_runtime_data_dir,
+    )
+
+    with open_native_session(native_runtime_data_dir) as session:
+        result = session.decompile_function(request)
+
+    assert_successful_result(result)
+    assert normalize_c_code(result.c_code) == fixture.normalized_c
+
+
+def test_i010_external_call_slice_respects_tail_padding_toggle(
+    native_runtime_data_dir: str,
+) -> None:
+    """I-010: Default/custom tail padding fixes exact slices while disabling preserves failure."""
+    memory_image = bytes.fromhex(EXTERNAL_CALL_ARM64_HEX)
+    image_end = EXTERNAL_CALL_ARM64_BASE_ADDRESS + len(memory_image)
+    default_request = DecompileRequest(
+        memory_image=memory_image,
+        base_address=EXTERNAL_CALL_ARM64_BASE_ADDRESS,
+        function_address=EXTERNAL_CALL_ARM64_BASE_ADDRESS,
+        language_id="AARCH64:LE:64:v8A",
+        compiler_spec="default",
+        runtime_data_dir=native_runtime_data_dir,
+    )
+    custom_padding_request = DecompileRequest(
+        memory_image=memory_image,
+        base_address=EXTERNAL_CALL_ARM64_BASE_ADDRESS,
+        function_address=EXTERNAL_CALL_ARM64_BASE_ADDRESS,
+        language_id="AARCH64:LE:64:v8A",
+        compiler_spec="default",
+        runtime_data_dir=native_runtime_data_dir,
+        tail_padding=b"\x1f\x20\x03\xd5",
+    )
+    strict_request = DecompileRequest(
+        memory_image=memory_image,
+        base_address=EXTERNAL_CALL_ARM64_BASE_ADDRESS,
+        function_address=EXTERNAL_CALL_ARM64_BASE_ADDRESS,
+        language_id="AARCH64:LE:64:v8A",
+        compiler_spec="default",
+        runtime_data_dir=native_runtime_data_dir,
+        tail_padding=b"",
+    )
+
+    with open_native_session(native_runtime_data_dir) as session:
+        default_result = session.decompile_function(default_request)
+        custom_padding_result = session.decompile_function(custom_padding_request)
+        strict_result = session.decompile_function(strict_request)
+
+    assert_successful_result(default_result)
+    assert_successful_result(custom_padding_result)
+    assert default_result.c_code.strip() != ""
+    assert custom_padding_result.c_code.strip() != ""
+    assert any(
+        call_site.target_address is not None
+        and (
+            call_site.target_address < EXTERNAL_CALL_ARM64_BASE_ADDRESS
+            or call_site.target_address >= image_end
+        )
+        for call_site in default_result.function_info.call_sites
+    )
+    assert normalize_c_code(custom_padding_result.c_code) == normalize_c_code(
+        default_result.c_code
+    )
+
+    assert strict_result.error is not None
+    assert strict_result.error.category == "invalid_address"
+    assert strict_result.function_info is None
+    assert strict_result.c_code is None

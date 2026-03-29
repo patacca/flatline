@@ -397,6 +397,12 @@ class DecompileRequest:
             an [`AnalysisBudget`][flatline.AnalysisBudget] or a ``dict`` with a
             ``"max_instructions"`` key.  Defaults to
             ``AnalysisBudget(max_instructions=100000)``.
+        tail_padding: Optional byte pattern used to satisfy decoder
+            lookahead reads that start within ``memory_image`` but extend
+            past its tail. Defaults to ``b"\\x00"`` so exact function
+            slices decompile without manual caller padding. Non-empty
+            padding is repeated as needed. Set to ``None`` or ``b""`` to
+            preserve strict tail-boundary failures.
 
     Raises:
         InvalidArgumentError: If ``memory_image`` is empty or not bytes,
@@ -412,6 +418,7 @@ class DecompileRequest:
     function_size_hint: int | None = None
     analysis_budget: AnalysisBudget | None = None
     include_enriched_output: bool = False
+    tail_padding: bytes | None = b"\x00"
 
     def __post_init__(self) -> None:
         if not isinstance(self.memory_image, (bytes, bytearray)):
@@ -422,8 +429,14 @@ class DecompileRequest:
             raise InvalidArgumentError("language_id must be a non-empty string")
         if not isinstance(self.include_enriched_output, bool):
             raise InvalidArgumentError("include_enriched_output must be a bool")
+        if self.tail_padding is not None and not isinstance(self.tail_padding, (bytes, bytearray)):
+            raise InvalidArgumentError("tail_padding must be bytes, bytearray, or None")
         if self.runtime_data_dir is not None:
             object.__setattr__(self, "runtime_data_dir", fspath(self.runtime_data_dir))
+        if isinstance(self.tail_padding, bytearray):
+            object.__setattr__(self, "tail_padding", bytes(self.tail_padding))
+        if self.tail_padding == b"":
+            object.__setattr__(self, "tail_padding", None)
         object.__setattr__(self, "analysis_budget", _coerce_analysis_budget(self.analysis_budget))
 
 

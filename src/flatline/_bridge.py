@@ -176,6 +176,7 @@ def _request_to_native_payload(request: DecompileRequest) -> dict[str, Any]:
         "function_size_hint": request.function_size_hint,
         "analysis_budget": _analysis_budget_to_native_payload(request.analysis_budget),
         "include_enriched_output": request.include_enriched_output,
+        "tail_padding": None if request.tail_padding is None else bytes(request.tail_padding),
     }
 
 

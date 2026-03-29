@@ -119,12 +119,14 @@ Module-level operation functions are convenience wrappers for single-call workfl
 - `function_size_hint` (optional advisory)
 - `analysis_budget` (optional `AnalysisBudget`; omitted requests default to `AnalysisBudget(max_instructions=100000)`)
 - `include_enriched_output` (optional bool; default `False`) — when `True`, success requires `DecompileResult.enriched_output` to be populated with post-simplification pcode + varnode graph data
+- `tail_padding` (optional bytes; default `b"\x00"`) — byte pattern used to satisfy decoder lookahead that starts inside `memory_image` but overruns its tail; repeated as needed; `None` or `b""` preserves strict tail-boundary failures
 
 Input model resolved by ADR-001 (Option A: memory + architecture + function-level).
 The caller provides a memory image covering the relevant address space. The library
 does not perform binary format parsing; callers who work with binary files must
 extract memory content before calling the API. Multi-region input and section metadata
-are planned extensions (see §8.3).
+are planned extensions (see §8.3). Exact function slices remain supported by
+the default `tail_padding=b"\x00"` convenience path.
 
 `DecompileResult` fields:
 - `c_code: str | None`

@@ -62,6 +62,7 @@ def test_u001_request_schema_required_fields():
     assert req.function_size_hint is None
     assert req.analysis_budget == AnalysisBudget()
     assert req.include_enriched_output is False
+    assert req.tail_padding == b"\x00"
 
 
 # ---------------------------------------------------------------------------
@@ -102,6 +103,35 @@ def test_request_accepts_pathlike_runtime_data_dir() -> None:
     )
 
     assert request.runtime_data_dir == str(runtime_dir)
+
+
+def test_request_tail_padding_defaults_and_validates() -> None:
+    """U-031: Tail padding defaults on and normalizes disable/custom values."""
+    base_kwargs: dict[str, object] = {
+        "memory_image": b"\xcc\xc3",
+        "base_address": 0x1000,
+        "function_address": 0x1000,
+        "language_id": "x86:LE:64:default",
+    }
+
+    default_request = DecompileRequest(**base_kwargs)
+    assert default_request.tail_padding == b"\x00"
+
+    custom_request = DecompileRequest(**base_kwargs, tail_padding=b"\x90\x91")
+    assert custom_request.tail_padding == b"\x90\x91"
+
+    bytearray_request = DecompileRequest(**base_kwargs, tail_padding=bytearray(b"\xaa"))
+    assert bytearray_request.tail_padding == b"\xaa"
+
+    disabled_request = DecompileRequest(**base_kwargs, tail_padding=None)
+    assert disabled_request.tail_padding is None
+
+    empty_padding_request = DecompileRequest(**base_kwargs, tail_padding=b"")
+    assert empty_padding_request.tail_padding is None
+
+    with pytest.raises(InvalidArgumentError) as exc_info:
+        DecompileRequest(**base_kwargs, tail_padding="no")
+    assert exc_info.value.category == "invalid_argument"
 
 
 # ---------------------------------------------------------------------------
