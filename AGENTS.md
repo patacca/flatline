@@ -4,12 +4,12 @@
 
 # Overview
 - `flatline`: pip-installable Python wrapper around Ghidra C++ decompiler (decompiler surface only).
-- Version `0.1.1` aligned in `pyproject.toml`, `meson.build`, `src/flatline/_version.py`; latest public release is `0.1.1`; current repo state matches the public release.
-- Roadmap: P6 and P6.5 are closed; TestPyPI validated `0.1.1.dev1`, then production `0.1.1` published successfully on `2026-03-28`; P7 phase-1 landed (opt-in enriched output).
+- Version `0.1.2.dev0` aligned in `pyproject.toml`, `meson.build`, `src/flatline/_version.py`; latest public release is `0.1.1`; repo now carries unreleased post-`0.1.1` work.
+- Roadmap: P6, P6.5, and P7 are closed; TestPyPI validated `0.1.1.dev1`, then production `0.1.1` published successfully on `2026-03-28`; enriched output now exposes `Enriched.pcode` plus `Pcode.to_graph()` for downstream graph traversal/drawing.
 - Docs: GitHub Pages published at `https://patacca.github.io/flatline/` (root redirects to `latest/`); README documents both hosted and local MkDocs access.
 - Supported hosts: Linux x86_64, macOS arm64, Windows x86_64; Linux aarch64 + macOS x86_64 = published-wheel targets pending coverage lanes.
 - Wheels: 64-bit; manylinux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64; locked in `docs/wheel_matrix.md`.
-- Dep `ghidra-sleigh` (import `ghidra_sleigh`); unpinned; auto-discovers runtime data via `ghidra_sleigh.get_runtime_data_dir()`.
+- Deps: `ghidra-sleigh` (import `ghidra_sleigh`) for runtime data, plus `networkx` for pcode graph projection; `ghidra-sleigh` is unpinned and auto-discovers runtime data via `ghidra_sleigh.get_runtime_data_dir()`.
 - `third_party/ghidra` submodule; `third_party/r2ghidra` read-only, ignored.
 - Fixture ISAs: x86_64, x86_32, AArch64, RISC-V 64, MIPS32; `tests/fixtures/*.hex`; regen `tests/fixtures/generate_hex_fixtures.py`; regression switch site `0x1009` + 9 targets.
 - Tox: `py313`/`py314` wheel-based; `py314-native` forces `native_bridge=enabled`; `.pkg-py314-native` `pass_env = ["VCPKG_INSTALLATION_ROOT"]`; `lint` = ruff + clang-format; `dev` = source-tree dev-tool tests.
@@ -19,8 +19,8 @@
 - Release (`release.yml`): third-party actions pinned by commit SHA; `pypa/cibuildwheel` version line remains `v3.4.0`; `manylinux_2_28`; Windows vcpkg zlib + delvewheel, no MSVC pre-activation; smoke `tools/flatline_dev/wheel_smoke.py` + `tools/flatline_dev/published_wheel_smoke.py`; sdist compliance; validate with `twine check` + `python tools/artifacts.py dist --repo-root . --require-pypi-metadata`; PyPI on `release.published`, TestPyPI on `workflow_dispatch` (unique version required).
 - TestPyPI validated `2026-03-28` commit `299fae580bdb202e0c930878b33067d0eceef01a` run `23694378228`: 10 wheels + 1 sdist, full smoke pass.
 - Local clean-snapshot validation `2026-03-28`: `python tools/release.py`, `tox`, `tox -e dev`, `python tools/compliance.py`, `python tools/footprint.py`, `python -m build --outdir dist`, `python tools/artifacts.py dist --repo-root .`, and `python -m twine check dist/*` all passed under the pre-fix metadata gate; built artifacts still omitted the README-backed long description plus project URLs/classifiers/keywords.
-- `python tools/release.py`: current staged-release audit (`0.1.1`), rejects dirty worktrees. `python tools/artifacts.py dist`: metadata/LICENSE/NOTICE/dev-tool/native-ext audit; `--require-pypi-metadata` adds README long-description checks for release uploads.
-- Compliance: `LICENSE` + `NOTICE`, `docs/compliance.md`, `python tools/compliance.py`; current `.venv` footprint 24,839,137 bytes (23.69 MiB), `ghidra-sleigh` runtime data 99.4%.
+- `python tools/release.py`: derives current version/release recommendation from version files and rejects dirty worktrees. `python tools/artifacts.py dist`: metadata/LICENSE/NOTICE/dev-tool/native-ext audit; `--require-pypi-metadata` adds README long-description checks for release uploads.
+- Compliance: `LICENSE` + `NOTICE`, `docs/compliance.md`, `python tools/compliance.py`; default-install footprint is tracked in `docs/footprint.md` via `python tools/footprint.py`.
 
 # Design posture
 - User-centered; prefer caller convenience.
@@ -28,7 +28,7 @@
 
 # Architecture (3-layer adapter)
 - Public: `DecompilerSession` + one-shot wrappers `_session.py`; models `_models.py`; errors `_errors.py`.
-- Enriched output: `EnrichedOutput`, `PcodeOpInfo`, `VarnodeInfo`, `VarnodeFlags`; opt-in; base contract lightweight when omitted.
+- Enriched output: `Enriched` -> `Pcode`, plus `PcodeOpInfo`, `VarnodeInfo`, `VarnodeFlags`; opt-in; base contract lightweight when omitted; `Pcode` keeps raw exported values, O(1) ID lookup, and `to_graph()` returns a `networkx.MultiDiGraph`.
 - Bridge: nanobind `_flatline_native.cpp` + Python fallback `_bridge.py`; pre-validates language/compiler, `.ldefs` fallback; unstable internal.
 - Native: 82 upstream .cc via Meson into static `ghidra_decompiler` (zlib required); `SleighArchitecture` -> `LoadImage` -> action reset/perform -> `docFunction` -> `FunctionInfo`; P7 extracts opcode names via `get_opname(op.code())` + varnode use-def edges post-`Action::perform()`.
 
@@ -110,26 +110,27 @@
 # Tests
 - Native tests need `.sla` from `ghidra-sleigh`; coverage: DATA, x86, AARCH64, RISCV, MIPS.
 - `tests/conftest.py` auto-applies category markers from directory names.
-- Specs: `tests/specs/test_catalog.md` (45 defs, 5 categories), `tests/specs/fixtures.md` (10 fixtures).
+- Specs: `tests/specs/test_catalog.md` (47 defs, 5 categories), `tests/specs/fixtures.md` (10 fixtures).
 - Workflow: `test_ci_workflow_spec.py`, `test_native_tox_env_spec.py`, `test_release_ci_workflow_spec.py` -- CI/publish invariants.
-- Runtime/contract: `test_native_bridge_runtime_spec.py`, `test_runtime_data_spec.py`, `test_public_contract_spec.py`, `test_bridge_adapter_spec.py` -- runtime smoke, `.ldefs`, ADR-005/006, P7 enriched-output.
+- Runtime/contract: `test_native_bridge_runtime_spec.py`, `test_runtime_data_spec.py`, `test_public_contract_spec.py`, `test_bridge_adapter_spec.py` -- runtime smoke, `.ldefs`, ADR-005/006, P7 enriched-output graph projection.
 - Dev-tool: `test_compliance_spec.py`, `test_footprint_spec.py`, `test_artifact_audit_spec.py`; skip under wheel installs via `pytest.importorskip`.
-- Regression/integration/negative: switch-site baseline + p95 budgets; native fixtures incl P7 use-def on `fx_add_elf64`.
+- Regression/integration/negative: switch-site baseline + p95 budgets; native fixtures incl P7 graph reachability coverage on `fx_add_elf64`.
 
 # Vendored upstream
 - `third_party/ghidra` -- submodule.
 - `third_party/r2ghidra` -- read-only reference; ignored.
 
 # Key data models (from specs.md)
-- `DecompileRequest` -- `memory_image`, `base_address`, `function_address`, `language_id`, `compiler_spec`, `runtime_data_dir`, `function_size_hint`, `analysis_budget`, `include_enriched_output`
+- `DecompileRequest` -- `memory_image`, `base_address`, `function_address`, `language_id`, `compiler_spec`, `runtime_data_dir`, `function_size_hint`, `analysis_budget`, `enriched`, `tail_padding`
 - `AnalysisBudget` -- `max_instructions`; default `100000`
-- `DecompileResult` -- decompiled C, `FunctionInfo`, warnings, error, metadata, optional `EnrichedOutput`
+- `DecompileResult` -- decompiled C, `FunctionInfo`, warnings, error, metadata, optional `Enriched`
 - `FunctionInfo` -- name, entry_address, size, is_complete, prototype, local_variables, call_sites, jump_tables, diagnostics, varnode_count
 - `FunctionPrototype` -- calling_convention, parameters, return_type, is_noreturn, has_this_pointer, recovery flags
 - `TypeInfo` -- name, size, metatype
 - `DiagnosticFlags` -- is_complete, has_unreachable_blocks, has_unimplemented, has_bad_data, has_no_code
 - `LanguageCompilerPair` -- `language_id`, `compiler_spec`
-- `EnrichedOutput` -- `pcode_ops`, `varnodes`
+- `Enriched` -- optional enriched companion payload; currently `pcode`
+- `Pcode` -- `pcode_ops`, `varnodes`; `get_pcode_op()`, `get_varnode()`, `to_graph()`
 - `PcodeOpInfo` -- `id`, `opcode`, `instruction_address`, `sequence_time`, `sequence_order`, `input_varnode_ids`, `output_varnode_id`
 - `VarnodeInfo` -- `id`, `space`, `offset`, `size`, `flags`, `defining_op_id`, `use_op_ids`
 - `VarnodeFlags` -- `is_constant`, `is_input`, `is_free`, `is_implied`, `is_explicit`, `is_read_only`, `is_persist`, `is_addr_tied`

@@ -49,7 +49,7 @@ struct NativeRequest {
     std::string language_id;
     std::optional<std::string> compiler_spec;
     std::uint32_t max_instructions;
-    bool include_enriched_output;
+    bool enriched;
     std::optional<std::string> tail_padding;
 };
 
@@ -212,8 +212,7 @@ static NativeRequest parse_request(const nb::dict& request) {
     }
     parsed.compiler_spec = optional_string_field(request, "compiler_spec");
     parsed.max_instructions = parse_max_instructions(request);
-    parsed.include_enriched_output =
-        optional_bool_field(request, "include_enriched_output", false);
+    parsed.enriched = optional_bool_field(request, "enriched", false);
     parsed.tail_padding = optional_bytes_field(request, "tail_padding", std::string("\0", 1));
     return parsed;
 }
@@ -500,8 +499,8 @@ struct EnrichedIndex {
     std::unordered_map<const ghidra::Varnode*, std::uint64_t> varnode_ids;
 };
 
-static void register_varnode_for_enriched_output(const ghidra::Varnode* varnode,
-                                                 EnrichedIndex* index) {
+static void register_varnode_for_pcode_index(const ghidra::Varnode* varnode,
+                                             EnrichedIndex* index) {
     if (varnode == nullptr) {
         return;
     }
@@ -525,10 +524,10 @@ static EnrichedIndex build_enriched_index(const ghidra::Funcdata& function) {
         index.pcode_op_ids.emplace(op, op_id);
         index.pcode_ops.push_back(op);
 
-        register_varnode_for_enriched_output(op->getOut(), &index);
+        register_varnode_for_pcode_index(op->getOut(), &index);
         const int input_count = op->numInput();
         for (int slot = 0; slot < input_count; ++slot) {
-            register_varnode_for_enriched_output(op->getIn(slot), &index);
+            register_varnode_for_pcode_index(op->getIn(slot), &index);
         }
     }
     return index;
@@ -638,7 +637,7 @@ static nb::dict varnode_to_dict(const ghidra::Varnode& varnode, const EnrichedIn
     return varnode_item;
 }
 
-static nb::dict enriched_output_to_dict(const ghidra::Funcdata& function) {
+static nb::dict pcode_to_dict(const ghidra::Funcdata& function) {
     const EnrichedIndex index = build_enriched_index(function);
     nb::list pcode_ops;
     for (const ghidra::PcodeOp* op : index.pcode_ops) {
@@ -650,10 +649,10 @@ static nb::dict enriched_output_to_dict(const ghidra::Funcdata& function) {
         varnodes.append(varnode_to_dict(*varnode, index));
     }
 
-    nb::dict enriched_output;
-    enriched_output["pcode_ops"] = pcode_ops;
-    enriched_output["varnodes"] = varnodes;
-    return enriched_output;
+    nb::dict pcode;
+    pcode["pcode_ops"] = pcode_ops;
+    pcode["varnodes"] = varnodes;
+    return pcode;
 }
 
 static std::string classifier_for_lowlevel_error(const std::string& message) {
@@ -702,14 +701,14 @@ static nb::dict error_result(const std::string& category, const std::string& mes
     result["warnings"] = nb::list();
     result["error"] = error;
     result["metadata"] = metadata_dict(decompiler_version, language_id, compiler_spec, nb::dict());
-    result["enriched_output"] = nb::none();
+    result["enriched"] = nb::none();
     return result;
 }
 
 static nb::dict success_result(const std::string& c_code, const nb::dict& function_info,
                                const nb::list& warnings, const std::string& decompiler_version,
                                const std::string& language_id, const std::string& compiler_spec,
-                               const nb::dict& diagnostics, const nb::object& enriched_output) {
+                               const nb::dict& diagnostics, const nb::object& enriched) {
     nb::dict result;
     result["c_code"] = c_code;
     result["function_info"] = function_info;
@@ -717,7 +716,7 @@ static nb::dict success_result(const std::string& c_code, const nb::dict& functi
     result["error"] = nb::none();
     result["metadata"] =
         metadata_dict(decompiler_version, language_id, compiler_spec, diagnostics);
-    result["enriched_output"] = enriched_output;
+    result["enriched"] = enriched;
     return result;
 }
 
@@ -1019,9 +1018,11 @@ class NativeSession {
             nb::dict diagnostics = diagnostics_to_dict(*function);
             nb::dict function_info = function_info_to_dict(*function);
             nb::list warnings = warnings_from_comment_database(*function, architecture);
-            nb::object enriched_output = nb::none();
-            if (native_request.include_enriched_output) {
-                enriched_output = enriched_output_to_dict(*function);
+            nb::object enriched = nb::none();
+            if (native_request.enriched) {
+                nb::dict enriched_dict;
+                enriched_dict["pcode"] = pcode_to_dict(*function);
+                enriched = enriched_dict;
             }
             if (status < 0) {
                 nb::dict warning;
@@ -1033,7 +1034,7 @@ class NativeSession {
 
             return success_result(output_stream.str(), function_info, warnings,
                                   fallback_decompiler_version, native_request.language_id,
-                                  selected_compiler, diagnostics, enriched_output);
+                                  selected_compiler, diagnostics, enriched);
         } catch (const std::invalid_argument& error) {
             return error_result("invalid_argument", error.what(), fallback_decompiler_version,
                                 fallback_language_id, fallback_compiler_spec);

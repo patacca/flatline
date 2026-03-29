@@ -29,10 +29,12 @@ Current status:
 - P6 equivalent-contract evidence now promotes Linux x86_64, macOS arm64, and
   Windows x86_64 into the supported runtime-host tier; Linux aarch64 and macOS
   x86_64 remain published-wheel-only targets.
-- The P6.5 wheel matrix, TestPyPI publish flow, and post-publish smoke matrix
-  were validated on release candidate `0.1.1.dev1`; the repo is now staged at
-  `0.1.1`, and the remaining phase-exit step is the first production PyPI
-  publish of the Tier-1 wheel set.
+- P6.5 is closed: the Tier-1 wheel matrix, TestPyPI publish flow, and
+  post-publish smoke matrix were validated on `0.1.1.dev1`, then the full wheel
+  set published to PyPI as `0.1.1` on `2026-03-28`.
+- P7 is now closed: enriched output remains opt-in and the exported pcode /
+  varnode payload now exposes a public `Pcode.to_graph()` projection,
+  validated on the committed x86_64 add fixture.
 
 ## 2. Detailed Milestone Gates
 
@@ -84,8 +86,8 @@ Current status:
 - `docs/release_review.md` capturing the public artifact-review checklist and
   the explicit external approval hold point for final human sign-off
 - `docs/release_workflow.md` capturing the current production release
-  procedure, including the staged `0.1.1` release state while retaining the
-  prior `0.1.0` baseline note
+  procedure, retaining the published `0.1.1` baseline note while remaining
+  applicable to later `0.1.x` patch publishes
 - built-artifact audit evidence from `python tools/artifacts.py`
 - Exit checks:
 - SemVer classification approved
@@ -137,7 +139,7 @@ and release activities require distinct checkpoints.
 - Exit checks:
 - pcode ops and varnode graphs extracted at bridge boundary as frozen value types, no live C++ handles cross ABI
 - at least one real-usage scenario (BSim-style similarity, binary diffing, or data flow analysis) demonstrated end-to-end
-- enriched output exposed via a dedicated `DecompileResult` companion value type, requested explicitly so the base P2 contract stays lightweight for callers that only need C text + `FunctionInfo`
+- enriched output exposed via dedicated `DecompileResult.enriched` / `Enriched.pcode` companion value types, requested explicitly so the base P2 contract stays lightweight for callers that only need C text + `FunctionInfo`
 
 ## 3. Risk Register
 
@@ -173,7 +175,7 @@ and release activities require distinct checkpoints.
 | ADR-006 Logging and Diagnostics | Which diagnostic fields are emitted by default? **Decided:** P2 emits diagnostics only through startup/runtime-data `RuntimeWarning` messages and structured `WarningItem` / `ErrorItem` payloads. Diagnostic text may include full filesystem paths for debuggability; raw memory-image bytes are never emitted. No path redaction is applied because flatline is a library running in the caller's own process. No general-purpose logging sink is exposed in P2. | End of P2 (decided) |
 | ADR-007 License Compliance Process | What release-time checks are mandatory for redistribution? **Decided:** releases must ship root `LICENSE` and `NOTICE`, keep the vendored Ghidra source attribution and declared `ghidra-sleigh` dependency recorded in `docs/compliance.md`, and pass `python tools/compliance.py` before tagging. The compliance, footprint, release-readiness, and artifact-audit helpers now live under `tools/flatline_dev` with `tools/*.py` wrappers as repo-only commands excluded from distribution artifacts (wheels and sdists). | End of P3 (decided) |
 | ADR-008 Cross-Platform Order | macOS-first or Windows-first after Linux host MVP? **Decided:** macOS first, then Windows. P6 starts by removing shared build-system assumptions (for example GCC-only Meson flags), documenting the feasibility findings in `docs/host_feasibility.md`, and keeping a dedicated macOS native contract lane green before taking on MSVC/Windows-specific blockers. | Start of P6 (decided) |
-| ADR-012 Enriched Output Design | What pcode/varnode representation do frozen Python types expose, and at which decompilation stage is data extracted? **Decided:** P7 enriched output is opt-in from `DecompileRequest`, extracted after `Action::perform()` from the post-simplification `Funcdata`, and surfaced as a dedicated companion value type under `DecompileResult` rather than inflating `FunctionInfo`. Pcode ops and varnodes use stable integer IDs, string opcode / address-space names, and ID-based graph edges so no live native handles cross the ABI. First downstream validation target remains similarity/diffing on committed fixtures. | Start of P7 (decided) |
+| ADR-012 Enriched Output Design | What pcode/varnode representation do frozen Python types expose, and at which decompilation stage is data extracted? **Decided:** P7 enriched output is opt-in from `DecompileRequest.enriched`, extracted after `Action::perform()` from the post-simplification `Funcdata`, and surfaced as `DecompileResult.enriched` with a dedicated `Enriched.pcode` layer rather than inflating `FunctionInfo`. Pcode ops and varnodes use stable integer IDs, string opcode / address-space names, and ID-based graph edges so no live native handles cross the ABI; `Pcode.to_graph()` projects them into a caller-owned bipartite multigraph for traversal/drawing. First downstream validation target remains graph-oriented analysis on committed fixtures. | Start of P7 (decided) |
 | ADR-013 Wheel Distribution Strategy | Which Python interpreters, versions, and platform/arch targets get pre-built wheels, and what tooling produces them? **Decided:** CPython only; `>= 3.13`; `cibuildwheel`; 64-bit wheel matrix = manylinux x86_64 + manylinux aarch64 + Windows x86_64 + macOS x86_64 + macOS arm64; native GitHub-hosted runners where available; `manylinux_2_28` policy; macOS deployment target `11.0`. 32-bit targets, musllinux, and Windows ARM64 remain deferred. | P6.5 matrix lock (decided) |
 | ADR-009 ISA Variant Scope | Which ISA variants (e.g., Thumb/Thumb-2, microMIPS, RV32 vs RV64 extensions) are in-scope for priority fixture coverage vs best-effort? **Decided: x86 has both 32-bit and 64-bit fixture coverage; other ISA families have one representative variant each — ARM64 (AArch64), RISC-V 64, MIPS32 — for diverse bitwidth coverage.** Other variants (ARM32/Thumb, RV32, MIPS64, microMIPS) are best-effort with no dedicated fixtures. See `tests/specs/fixtures.md` §1. | End of P1 (decided) |
 | ADR-010 Runtime Data Packaging | How are compiled `.sla` and runtime data files packaged and distributed? **Decided: separate `ghidra-sleigh` pip package** (import `ghidra_sleigh`). It builds `sleighc` from Ghidra C++ sources at package build time, compiles `.sla` files ahead of use, ships them as package data, and exposes `ghidra_sleigh.get_runtime_data_dir()` for consumers. ADR-004 now defines flatline's default dependency-backed asset policy on top of this mechanism. See `patacca/ghidra-sleigh`. | Start of P2 (decided) |
@@ -188,8 +190,8 @@ Release stream model:
   earlier `0.1.0.dev0` release-candidate line.
 
 Pre-1.0 release-line policy:
-- The current repo is staged at `0.1.1` for the pending production publish.
-- The same release line was validated on TestPyPI as `0.1.1.dev1`.
+- The latest published release on this line is `0.1.1`.
+- The same release line was first validated on TestPyPI as `0.1.1.dev1`.
 - While flatline remains on the `0.1.x` line, backward-compatible
   capabilities, support-matrix expansion, additive metadata/warnings, and
   bug/determinism fixes may ship as documented patch releases.

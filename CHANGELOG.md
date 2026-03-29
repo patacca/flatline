@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `DecompileRequest.enriched` and `DecompileResult.enriched` as the public
+  opt-in enriched-output contract
+- `Enriched.pcode` and `Pcode.get_pcode_op()`, `Pcode.get_varnode()`, and
+  `Pcode.to_graph()` for deterministic ID lookup and graph projection over the
+  exported raw pcode / varnode payload
+
+### Changed
+- The enriched-output contract now keeps pcode under its own future-proof
+  layer and exposes a caller-owned `networkx.MultiDiGraph` projection instead
+  of helper-specific data-flow traversal APIs
+- Release compliance, built-artifact auditing, and footprint measurement now
+  account for the `networkx` runtime dependency alongside `ghidra-sleigh`
+- Roadmap, spec, and release-state docs now record that `0.1.1` was published
+  on PyPI and that P7 is closed in the repo
+
 ## [0.1.1] - 2026-03-28
 
 ### Added

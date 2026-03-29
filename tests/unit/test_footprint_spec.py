@@ -40,6 +40,11 @@ def test_u018_default_install_footprint_uses_payload_files_only(tmp_path: Path) 
     _write_sized_file(site_packages / "flatline" / "__pycache__" / "__init__.pyc", 999)
     _write_sized_file(site_packages / "flatline-0.1.0.dev0.dist-info" / "METADATA", 7)
 
+    _write_sized_file(site_packages / "networkx" / "__init__.py", 19)
+    _write_sized_file(site_packages / "networkx" / "classes" / "graph.py", 31)
+    _write_sized_file(site_packages / "networkx" / "__pycache__" / "__init__.pyc", 777)
+    _write_sized_file(site_packages / "networkx-3.5.dist-info" / "METADATA", 23)
+
     _write_sized_file(site_packages / "ghidra_sleigh" / "__init__.py", 13)
     _write_sized_file(runtime_data_dir / "processors" / "x86.sla", 100)
     _write_sized_file(runtime_data_dir / "languages" / "x86.ldefs", 20)
@@ -55,6 +60,16 @@ def test_u018_default_install_footprint_uses_payload_files_only(tmp_path: Path) 
                 "flatline/_bridge.py",
                 "flatline/__pycache__/__init__.pyc",
                 "flatline-0.1.0.dev0.dist-info/METADATA",
+            ],
+        ),
+        "networkx": _DistributionDouble(
+            "networkx",
+            site_packages,
+            [
+                "networkx/__init__.py",
+                "networkx/classes/graph.py",
+                "networkx/__pycache__/__init__.pyc",
+                "networkx-3.5.dist-info/METADATA",
             ],
         ),
         "ghidra-sleigh": _DistributionDouble(
@@ -77,14 +92,16 @@ def test_u018_default_install_footprint_uses_payload_files_only(tmp_path: Path) 
 
     assert report.flatline_distribution.size_bytes == 47
     assert report.flatline_distribution.file_count == 3
+    assert report.networkx_distribution.size_bytes == 73
+    assert report.networkx_distribution.file_count == 3
     assert report.ghidra_sleigh_distribution.size_bytes == 150
     assert report.ghidra_sleigh_distribution.file_count == 4
     assert report.ghidra_sleigh_runtime_data.size_bytes == 120
     assert report.ghidra_sleigh_runtime_data.file_count == 2
-    assert report.combined_distribution.size_bytes == 197
-    assert report.combined_distribution.file_count == 7
+    assert report.combined_distribution.size_bytes == 270
+    assert report.combined_distribution.file_count == 10
 
     rendered = format_default_install_footprint(report)
     assert "payload files only; excludes __pycache__" in rendered
-    assert "197 bytes" in rendered
-    assert "Runtime data share of combined footprint: 60.9%" in rendered
+    assert "270 bytes" in rendered
+    assert "Runtime data share of combined footprint: 44.4%" in rendered

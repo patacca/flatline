@@ -66,7 +66,7 @@ class NativeFixture:
         self,
         runtime_data_dir: str,
         *,
-        include_enriched_output: bool = False,
+        enriched: bool = False,
         tail_padding: bytes | None = b"\x00",
     ) -> DecompileRequest:
         return DecompileRequest(
@@ -76,7 +76,7 @@ class NativeFixture:
             language_id=self.language_id,
             compiler_spec=self.compiler_spec,
             runtime_data_dir=runtime_data_dir,
-            include_enriched_output=include_enriched_output,
+            enriched=enriched,
             tail_padding=tail_padding,
         )
 

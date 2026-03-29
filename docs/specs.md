@@ -85,7 +85,8 @@ P7 Opt-in Enriched Output:
 | `StorageInfo` | Variable/parameter storage location: address space name, byte offset, byte size. |
 | `LanguageCompilerPair` | One valid `language_id` + `compiler_spec` entry known to current runtime data directory. |
 | `AnalysisBudget` | Deterministic per-request resource limits. MVP/P2 exposes only `max_instructions`. |
-| `EnrichedOutput` | Optional P7 companion payload containing post-simplification pcode operations and varnode use-def graph data. |
+| `Enriched` | Optional P7 companion payload containing future enriched surfaces; currently `pcode`. |
+| `Pcode` | Optional post-simplification pcode payload containing frozen pcode operations, varnodes, O(1) ID lookup, and graph projection. |
 | `PcodeOpInfo` | One pcode operation exported as a frozen value type with stable IDs and varnode references. |
 | `VarnodeInfo` | One varnode exported as a frozen value type with stable IDs and defining/use op references. |
 | `VarnodeFlags` | Stable boolean classification flags exported for one varnode. |
@@ -118,7 +119,7 @@ Module-level operation functions are convenience wrappers for single-call workfl
 - `runtime_data_dir` (optional explicit override over the dependency-provided default runtime-data root)
 - `function_size_hint` (optional advisory)
 - `analysis_budget` (optional `AnalysisBudget`; omitted requests default to `AnalysisBudget(max_instructions=100000)`)
-- `include_enriched_output` (optional bool; default `False`) — when `True`, success requires `DecompileResult.enriched_output` to be populated with post-simplification pcode + varnode graph data
+- `enriched` (optional bool; default `False`) — when `True`, success requires `DecompileResult.enriched.pcode` to be populated with post-simplification pcode + varnode graph data
 - `tail_padding` (optional bytes; default `b"\x00"`) — byte pattern used to satisfy decoder lookahead that starts inside `memory_image` but overruns its tail; repeated as needed; `None` or `b""` preserves strict tail-boundary failures
 
 Input model resolved by ADR-001 (Option A: memory + architecture + function-level).
@@ -138,7 +139,7 @@ the default `tail_padding=b"\x00"` convenience path.
   - `metadata["language_id"]`
   - `metadata["compiler_spec"]`
   - `metadata["diagnostics"]` — legacy key; superseded by `function_info.diagnostics` when `function_info` is present
-- `enriched_output: EnrichedOutput | None` — populated only when `include_enriched_output=True` and decompilation succeeds
+- `enriched: Enriched | None` — populated only when `enriched=True` and decompilation succeeds
 
 `FunctionInfo` fields:
 - `name: str` — function name (from `Funcdata::getName()`)
@@ -215,9 +216,25 @@ callable surface has no wall-clock timeout or cancellation hook. Time-based
 limits remain a future extension requiring explicit upstream-compatible
 mechanisms.
 
-`EnrichedOutput` fields:
+`Enriched` fields:
+- `pcode: Pcode | None`
+
+`Pcode` fields:
 - `pcode_ops: list[PcodeOpInfo]`
 - `varnodes: list[VarnodeInfo]`
+- helper methods:
+  - `get_pcode_op(op_id: int) -> PcodeOpInfo` — returns one pcode op by stable
+    integer ID in O(1)
+  - `get_varnode(varnode_id: int) -> VarnodeInfo` — returns one varnode by
+    stable integer ID in O(1)
+  - `to_graph() -> networkx.MultiDiGraph` — returns a deterministic caller-owned
+    bipartite multigraph projection:
+    - nodes: `("op", op.id)` with `kind="pcode_op"` and `op=<PcodeOpInfo>`
+    - nodes: `("varnode", varnode.id)` with `kind="varnode"` and `varnode=<VarnodeInfo>`
+    - input edges: `("varnode", id) -> ("op", id)` with `kind="input"` and `input_index`
+    - output edges: `("op", id) -> ("varnode", id)` with `kind="output"`
+    - repeated use of the same varnode in multiple operand slots is preserved as
+      distinct multiedges rather than being collapsed
 
 `PcodeOpInfo` fields:
 - `id: int` — stable integer ID assigned by `Funcdata::beginOpAll()` order
@@ -261,14 +278,14 @@ mechanisms.
 - `flatline_version: str`
 - `decompiler_version: str` — version of the underlying Ghidra decompiler engine, not of flatline itself
 
-All structured result objects (`FunctionInfo`, `FunctionPrototype`, `ParameterInfo`, `VariableInfo`, `TypeInfo`, `CallSiteInfo`, `JumpTableInfo`, `DiagnosticFlags`, `StorageInfo`, `LanguageCompilerPair`, `WarningItem`, `ErrorItem`, `VersionInfo`, `EnrichedOutput`, `PcodeOpInfo`, `VarnodeInfo`, `VarnodeFlags`) are pure Python frozen value types. Data is extracted at the bridge boundary; no native pointers or references survive past the bridge call.
+All structured result objects (`FunctionInfo`, `FunctionPrototype`, `ParameterInfo`, `VariableInfo`, `TypeInfo`, `CallSiteInfo`, `JumpTableInfo`, `DiagnosticFlags`, `StorageInfo`, `LanguageCompilerPair`, `WarningItem`, `ErrorItem`, `VersionInfo`, `Enriched`, `Pcode`, `PcodeOpInfo`, `VarnodeInfo`, `VarnodeFlags`) are pure Python frozen value types. Data is extracted at the bridge boundary; no native pointers or references survive past the bridge call. `Pcode.to_graph()` returns a derived caller-owned `networkx.MultiDiGraph`; it is not a live native object.
 
 Error model for structured results:
 - If `DecompileResult.error` is set, then `function_info` is `None` and `c_code` is `None`.
-- If `DecompileResult.error` is set, then `enriched_output` is `None`.
+- If `DecompileResult.error` is set, then `enriched` is `None`.
 - If decompilation succeeds, `function_info` is populated (never `None`) and `c_code` is set.
-- If `include_enriched_output` is `True` and decompilation succeeds, `enriched_output` is populated (never `None`).
-- If `include_enriched_output` is `False`, `enriched_output` remains `None`.
+- If `DecompileRequest.enriched` is `True` and decompilation succeeds, `DecompileResult.enriched` is populated and `DecompileResult.enriched.pcode` is populated (never `None`).
+- If `DecompileRequest.enriched` is `False`, `DecompileResult.enriched` remains `None`.
 - Recovery failures within `function_info` are signaled via `prototype.has_input_errors` / `has_output_errors` and `diagnostics` flags, not by making individual fields `None`.
 
 Derived from:
@@ -290,9 +307,11 @@ Rules:
 - Public warning/error text may include full filesystem paths for debuggability; raw memory-image bytes must never be emitted in diagnostics.
 - Warning-only outcomes must still return successful operation status when C output is valid.
 - When `error` is set, `function_info` is always `None` and `c_code` is always `None`.
-- When `error` is set, `enriched_output` is always `None`.
+- When `error` is set, `enriched` is always `None`.
 - When decompilation succeeds, `function_info` is always populated (never `None`).
-- When `include_enriched_output` is `True`, successful results must populate `enriched_output`; flatline must fail hard rather than silently dropping the companion payload.
+- When `DecompileRequest.enriched` is `True`, successful results must populate `DecompileResult.enriched.pcode`; flatline must fail hard rather than silently dropping the companion payload.
+- `Pcode.get_pcode_op()` / `get_varnode()` reject malformed or unknown IDs as `invalid_argument`.
+- `Pcode.to_graph()` must fail hard on malformed exported graph references rather than silently dropping edges.
 - Auto-discovered `ghidra-sleigh` runtime data that does not match flatline's pinned upstream baseline must emit an observable warning, not degrade silently. Explicit `runtime_data_dir` overrides are treated as user-managed custom assets.
 
 Derived from:
@@ -310,8 +329,8 @@ Release-line rules:
 - The first public flatline release finalized the existing `0.1.0.devN`
   development line as `0.1.0`; that tag established the initial public
   baseline for later classification.
-- Flatline remains on a public `0.1.x` pre-1.0 line. The current production
-  publish is staged at `0.1.1` after validating the same release line on
+- Flatline remains on a public `0.1.x` pre-1.0 line. The latest published
+  release on that line is `0.1.1`, after validating the same release line on
   TestPyPI as `0.1.1.dev1`.
 - Major: breaking Python API contract changes.
 - Minor: a deliberate release-line reset (for example `0.2.0`) or a post-1.0
@@ -362,7 +381,7 @@ Known limits at baseline:
 | Function lookup/materialization | `decompile_function(request)` address targeting | Missing/invalid function target returns structured error category |
 | Action execution pipeline | Internal execution of request | Successful path yields `c_code` and optional warnings |
 | Post-decompile structured data (Funcdata, FuncProto, Scope, Types) | `DecompileResult.function_info` | Structured function metadata, prototype, variables, call sites, jump tables, diagnostics extracted field-by-field at bridge boundary (not via XML serialization) |
-| Post-simplification IR graph (PcodeOp, Varnode) | `DecompileResult.enriched_output` when `include_enriched_output=True` | Pcode ops and varnode use-def edges are exported as frozen value types with stable integer IDs; opt-in requests must not silently degrade |
+| Post-simplification IR graph (PcodeOp, Varnode) | `DecompileResult.enriched.pcode` when `enriched=True`; `Pcode.to_graph()` for traversal | Pcode ops and varnode use-def edges are exported as frozen value types with stable integer IDs; opt-in requests must not silently degrade |
 | Warning propagation | `DecompileResult.warnings` | Warning codes are stable identifiers |
 | Failure propagation | `DecompileResult.error` / exception mapping | No uncaught native exception reaches user |
 
@@ -623,10 +642,10 @@ Packaging and compliance:
   prunes that entire tree from Meson sdists, and the wheel never installs it.
   These repo-only commands are not end-user entry points.
 - Redistribution review passes only when `python tools/compliance.py` succeeds from the repo root.
-- The compliance audit verifies the vendored decompiler source attribution via the `third_party/ghidra` submodule, the `ghidra-sleigh` runtime dependency declaration, and the synthetic-fixture redistribution note in `tests/fixtures/README.md`.
+- The compliance audit verifies the vendored decompiler source attribution via the `third_party/ghidra` submodule, the `ghidra-sleigh` and `networkx` runtime dependency declarations, and the synthetic-fixture redistribution note in `tests/fixtures/README.md`.
 - Built wheel and sdist artifacts are audited with `python tools/artifacts.py`
   before tagging so release review can verify the current version metadata, the
-  `ghidra-sleigh` dependency, and the shipped `LICENSE` / `NOTICE`
+  `ghidra-sleigh` and `networkx` dependencies, and the shipped `LICENSE` / `NOTICE`
   files from the actual artifacts rather than by repo contents alone.
   Platform-specific wheels must also carry the `_flatline_native` extension.
 - `.github/workflows/release.yml` is the source-controlled publish pipeline for
@@ -640,7 +659,7 @@ Packaging and compliance:
   duplicate uploads are a hard failure, not a skipped publish.
 - The Tier-1 wheel builds must run an installed-wheel smoke check through
   `cibuildwheel` before publish, exercising the public API with omitted
-  `runtime_data_dir` so transitive `ghidra-sleigh` installation, default
+  `runtime_data_dir` so transitive runtime dependency installation, default
   runtime-data discovery, and the x86_64 `add(a,b)` fixture decompile are all
   validated together.
 - After publish, the release workflow must install the exact released version

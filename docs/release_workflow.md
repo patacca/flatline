@@ -1,17 +1,17 @@
 # Release Workflow
 
-This document records the current repo-side procedure for publishing the staged
-`0.1.1` release. The source-controlled manual checklist for the human gate
-lives in `docs/release_review.md`; any per-run review notes stay outside the
-repo. Historical note: `0.1.0` already established the initial public release
+This document records the repo-side procedure used for the published `0.1.1`
+release and remains the baseline for later `0.1.x` patch publishes. The
+source-controlled manual checklist for the human gate lives in
+`docs/release_review.md`; any per-run review notes stay outside the repo.
+Historical note: `0.1.0` already established the initial public release
 baseline, and the full Tier-1 workflow was rehearsed on TestPyPI as
-`0.1.1.dev1` before this repo bump to `0.1.1`.
+`0.1.1.dev1` before the final `0.1.1` PyPI publish on `2026-03-28`.
 
 ## Release Decision
 
-- Current staged release version: `0.1.1`
-- Recommended public version: `0.1.1`
-- Release decision: `pre_1_0_patch_release`
+- Published baseline version: `0.1.1`
+- Release classification: `pre_1_0_patch_release`
 
 Rationale:
 - `0.1.0` already established the initial public SemVer baseline for flatline.
@@ -20,9 +20,8 @@ Rationale:
 - The current delta is backward-compatible: host-support expansion, Tier-1
   wheel publication, and opt-in enriched output extend the contract without
   breaking existing callers.
-- The TestPyPI rehearsal already exercised the same release line as
-  `0.1.1.dev1`; this repo is now staged at the public `0.1.1` version ahead of
-  the final GitHub release and PyPI publish.
+- The TestPyPI rehearsal exercised the same release line as `0.1.1.dev1`
+  before the final GitHub release and PyPI publish of `0.1.1`.
 
 ## Readiness Check
 
@@ -36,12 +35,12 @@ python tools/compliance.py
 python tools/footprint.py
 ```
 
-`python tools/release.py` is the source-controlled readiness audit for the
-current production publish gate. It checks the current staged version
-(`0.1.1`), the release recommendation, the presence of the required release
-documents, and a clean git worktree so Meson cannot silently drop uncommitted
-changes from the sdist. The release/diagnostic helpers live under `tools/` and
-are repo-only; they are not part of the wheel or sdist payload.
+`python tools/release.py` is the source-controlled readiness audit used for the
+current patch-release publish path. It checks the configured version, the
+release recommendation, the presence of the required release documents, and a
+clean git worktree so Meson cannot silently drop uncommitted changes from the
+sdist. The release/diagnostic helpers live under `tools/` and are repo-only;
+they are not part of the wheel or sdist payload.
 
 ## Release Steps
 
@@ -53,12 +52,12 @@ are repo-only; they are not part of the wheel or sdist payload.
 5. Run `python tools/compliance.py`
 6. Run `python tools/footprint.py` and refresh `docs/footprint.md` if the
    installed-wheel baseline changed
-7. Keep `CHANGELOG.md` with an empty `## [Unreleased]` section above the dated
-   `## [0.1.1] - 2026-03-28` release entry
+7. Keep `CHANGELOG.md` with an empty `## [Unreleased]` section above the most
+   recent dated release entry
 8. Review `docs/release_notes.md`, `README.md`, and `docs/compliance.md` for
    any last release-facing drift
 9. Confirm `pyproject.toml`, `meson.build`, and `src/flatline/_version.py`
-   already agree on `0.1.1`
+   already agree on the current repo version
 10. Build artifacts with `python -m build`
 11. Audit the built sdist/wheel with
     `python tools/artifacts.py dist --repo-root . --require-pypi-metadata`
@@ -68,21 +67,20 @@ are repo-only; they are not part of the wheel or sdist payload.
 12. Run the manual checklist in `docs/release_review.md`; keep reviewed
     commit/artifact notes outside the repo and wait for explicit approval.
     Do not commit review notes.
-13. Create the release tag with `git tag v0.1.1`
-14. Push the release tag with `git push origin v0.1.1`
-15. Publish the GitHub release with `gh release create v0.1.1 --generate-notes`
+13. Create the release tag with `git tag v<current-version>`
+14. Push the release tag with `git push origin v<current-version>`
+15. Publish the GitHub release with `gh release create v<current-version> --generate-notes`
 16. Wait for the `release.published` workflow to finish, then verify the PyPI
     publish and the post-publish smoke matrix.
 
 ## Hold Point
 
-Do not run `git tag v0.1.1` or publish GitHub release `v0.1.1` until the
+Do not create the release tag or publish the matching GitHub release until the
 public artifact review is explicitly approved. `python tools/artifacts.py dist
 --repo-root . --require-pypi-metadata` provides deterministic artifact
-evidence for that review, and
-`docs/release_review.md` records the checklist criteria used for the final
-human sign-off. The operator reports approval out-of-band. Do not commit
-review notes to this repo.
+evidence for that review, and `docs/release_review.md` records the checklist
+criteria used for the final human sign-off. The operator reports approval
+out-of-band. Do not commit review notes to this repo.
 
 ## GitHub Actions Release Automation
 

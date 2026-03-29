@@ -23,6 +23,7 @@ def _write_minimal_compliant_repo(repo_root: Path) -> None:
                 'license-files = ["LICENSE", "NOTICE"]',
                 "dependencies = [",
                 '    "ghidra-sleigh",',
+                '    "networkx",',
                 "]",
                 "",
             ]

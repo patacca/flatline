@@ -12,9 +12,10 @@ from flatline import (
     ConfigurationError,
     DecompileRequest,
     DecompileResult,
-    EnrichedOutput,
+    Enriched,
     FunctionInfo,
     LanguageCompilerPair,
+    Pcode,
     PcodeOpInfo,
     VarnodeFlags,
     VarnodeInfo,
@@ -40,49 +41,87 @@ class _NativeSessionSuccessDouble:
     def decompile_function(self, request_payload: dict[str, Any]) -> dict[str, Any]:
         self.decompile_calls += 1
         self.last_request_payload = request_payload
-        enriched_output = None
-        if request_payload["include_enriched_output"]:
-            enriched_output = {
-                "pcode_ops": [
-                    {
-                        "id": 0,
-                        "opcode": "INT_ADD",
-                        "instruction_address": request_payload["function_address"],
-                        "sequence_time": 1,
-                        "sequence_order": 0,
-                        "input_varnode_ids": [0, 1],
-                        "output_varnode_id": 2,
-                    },
-                    {
-                        "id": 1,
-                        "opcode": "RETURN",
-                        "instruction_address": request_payload["function_address"] + 3,
-                        "sequence_time": 2,
-                        "sequence_order": 1,
-                        "input_varnode_ids": [2],
-                        "output_varnode_id": None,
-                    },
-                ],
-                "varnodes": [
-                    {
-                        "id": 2,
-                        "space": "unique",
-                        "offset": 0x100,
-                        "size": 4,
-                        "flags": {
-                            "is_constant": False,
-                            "is_input": False,
-                            "is_free": False,
-                            "is_implied": False,
-                            "is_explicit": True,
-                            "is_read_only": False,
-                            "is_persist": False,
-                            "is_addr_tied": False,
+        enriched = None
+        if request_payload["enriched"]:
+            enriched = {
+                "pcode": {
+                    "pcode_ops": [
+                        {
+                            "id": 0,
+                            "opcode": "INT_ADD",
+                            "instruction_address": request_payload["function_address"],
+                            "sequence_time": 1,
+                            "sequence_order": 0,
+                            "input_varnode_ids": [0, 1],
+                            "output_varnode_id": 2,
                         },
-                        "defining_op_id": 0,
-                        "use_op_ids": [1],
-                    }
-                ],
+                        {
+                            "id": 1,
+                            "opcode": "RETURN",
+                            "instruction_address": request_payload["function_address"] + 3,
+                            "sequence_time": 2,
+                            "sequence_order": 1,
+                            "input_varnode_ids": [2],
+                            "output_varnode_id": None,
+                        },
+                    ],
+                    "varnodes": [
+                        {
+                            "id": 0,
+                            "space": "register",
+                            "offset": 0x0,
+                            "size": 4,
+                            "flags": {
+                                "is_constant": False,
+                                "is_input": True,
+                                "is_free": False,
+                                "is_implied": False,
+                                "is_explicit": True,
+                                "is_read_only": False,
+                                "is_persist": False,
+                                "is_addr_tied": False,
+                            },
+                            "defining_op_id": None,
+                            "use_op_ids": [0],
+                        },
+                        {
+                            "id": 1,
+                            "space": "register",
+                            "offset": 0x8,
+                            "size": 4,
+                            "flags": {
+                                "is_constant": False,
+                                "is_input": True,
+                                "is_free": False,
+                                "is_implied": False,
+                                "is_explicit": True,
+                                "is_read_only": False,
+                                "is_persist": False,
+                                "is_addr_tied": False,
+                            },
+                            "defining_op_id": None,
+                            "use_op_ids": [0],
+                        },
+                        {
+                            "id": 2,
+                            "space": "unique",
+                            "offset": 0x100,
+                            "size": 4,
+                            "flags": {
+                                "is_constant": False,
+                                "is_input": False,
+                                "is_free": False,
+                                "is_implied": False,
+                                "is_explicit": True,
+                                "is_read_only": False,
+                                "is_persist": False,
+                                "is_addr_tied": False,
+                            },
+                            "defining_op_id": 0,
+                            "use_op_ids": [1],
+                        },
+                    ],
+                }
             }
         return {
             "c_code": "int add(int a, int b) { return a + b; }",
@@ -139,7 +178,7 @@ class _NativeSessionSuccessDouble:
                 "compiler_spec": request_payload["compiler_spec"],
                 "diagnostics": {},
             },
-            "enriched_output": enriched_output,
+            "enriched": enriched,
         }
 
 
@@ -180,12 +219,22 @@ class _NativeSessionInvalidSuccessShapeDouble:
         return None
 
 
-class _NativeSessionMissingEnrichedOutputDouble(_NativeSessionSuccessDouble):
-    """Native-session double that omits opt-in enriched output."""
+class _NativeSessionMissingEnrichedDouble(_NativeSessionSuccessDouble):
+    """Native-session double that omits opt-in enriched payloads."""
 
     def decompile_function(self, request_payload: dict[str, Any]) -> dict[str, Any]:
         result = super().decompile_function(request_payload)
-        result.pop("enriched_output", None)
+        result.pop("enriched", None)
+        return result
+
+
+class _NativeSessionMissingPcodeDouble(_NativeSessionSuccessDouble):
+    """Native-session double that returns enriched with pcode missing."""
+
+    def decompile_function(self, request_payload: dict[str, Any]) -> dict[str, Any]:
+        result = super().decompile_function(request_payload)
+        if result.get("enriched") is not None:
+            result["enriched"] = {"pcode": None}
         return result
 
 
@@ -394,7 +443,7 @@ def test_u011_bridge_serializes_explicit_tail_padding_values(
     assert native_session.last_request_payload["tail_padding"] is None
 
 
-def test_u028_bridge_session_adapts_enriched_output_when_requested(
+def test_u028_bridge_session_adapts_enriched_payload_when_requested(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
@@ -413,25 +462,26 @@ def test_u028_bridge_session_adapts_enriched_output_when_requested(
         function_address=0x1000,
         language_id="x86:LE:64:default",
         compiler_spec="gcc",
-        include_enriched_output=True,
+        enriched=True,
     )
     result = bridge_session.decompile_function(request)
 
     assert native_session.last_request_payload is not None
-    assert native_session.last_request_payload["include_enriched_output"] is True
-    assert isinstance(result.enriched_output, EnrichedOutput)
-    assert isinstance(result.enriched_output.pcode_ops[0], PcodeOpInfo)
-    assert isinstance(result.enriched_output.varnodes[0], VarnodeInfo)
-    assert isinstance(result.enriched_output.varnodes[0].flags, VarnodeFlags)
-    assert result.enriched_output.pcode_ops[0].opcode == "INT_ADD"
-    assert result.enriched_output.varnodes[0].use_op_ids == [1]
+    assert native_session.last_request_payload["enriched"] is True
+    assert isinstance(result.enriched, Enriched)
+    assert isinstance(result.enriched.pcode, Pcode)
+    assert isinstance(result.enriched.pcode.pcode_ops[0], PcodeOpInfo)
+    assert isinstance(result.enriched.pcode.varnodes[0], VarnodeInfo)
+    assert isinstance(result.enriched.pcode.varnodes[0].flags, VarnodeFlags)
+    assert result.enriched.pcode.pcode_ops[0].opcode == "INT_ADD"
+    assert result.enriched.pcode.get_varnode(2).use_op_ids == [1]
 
 
-def test_u028_bridge_rejects_missing_enriched_output_when_requested(
+def test_u028_bridge_rejects_missing_enriched_payload_when_requested(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """U-028: Opt-in enriched output must not silently disappear on success."""
-    native_module = _NativeModuleDouble(native_session=_NativeSessionMissingEnrichedOutputDouble())
+    native_module = _NativeModuleDouble(native_session=_NativeSessionMissingEnrichedDouble())
     monkeypatch.setattr(bridge_module.importlib, "import_module", lambda _: native_module)
 
     bridge_session = bridge_module.create_bridge_session()
@@ -441,14 +491,38 @@ def test_u028_bridge_rejects_missing_enriched_output_when_requested(
         function_address=0x1000,
         language_id="x86:LE:64:default",
         compiler_spec="gcc",
-        include_enriched_output=True,
+        enriched=True,
     )
 
     result = bridge_session.decompile_function(request)
 
     assert result.error is not None
     assert result.error.category == "internal_error"
-    assert result.enriched_output is None
+    assert result.enriched is None
+
+
+def test_u028_bridge_rejects_missing_pcode_when_enriched_requested(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """U-028: Enriched present but pcode missing must not silently pass."""
+    native_module = _NativeModuleDouble(native_session=_NativeSessionMissingPcodeDouble())
+    monkeypatch.setattr(bridge_module.importlib, "import_module", lambda _: native_module)
+
+    bridge_session = bridge_module.create_bridge_session()
+    request = DecompileRequest(
+        memory_image=b"\x90\xc3",
+        base_address=0x1000,
+        function_address=0x1000,
+        language_id="x86:LE:64:default",
+        compiler_spec="gcc",
+        enriched=True,
+    )
+
+    result = bridge_session.decompile_function(request)
+
+    assert result.error is not None
+    assert result.error.category == "internal_error"
+    assert result.enriched is None
 
 
 def test_u002_bridge_rejects_unsupported_target_without_native_fallback(

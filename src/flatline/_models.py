@@ -9,8 +9,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from functools import cached_property
 from os import fspath
 from typing import Any
+
+import networkx as nx
 
 from flatline._errors import InvalidArgumentError, UnsupportedTargetError
 
@@ -263,11 +266,87 @@ class FunctionInfo:
 
 
 @dataclass(frozen=True)
-class EnrichedOutput:
-    """Opt-in pcode and varnode graph extracted from the decompiler IR."""
+class Pcode:
+    """Opt-in pcode payload extracted from the decompiler IR."""
 
     pcode_ops: list[PcodeOpInfo]
     varnodes: list[VarnodeInfo]
+
+    def get_pcode_op(self, op_id: int) -> PcodeOpInfo:
+        """Return one pcode op by stable ID."""
+        _validate_lookup_id(op_id, "op_id")
+        try:
+            return self._pcode_ops_by_id[op_id]
+        except KeyError as exc:
+            raise InvalidArgumentError(f"unknown pcode op id: {op_id}") from exc
+
+    def get_varnode(self, varnode_id: int) -> VarnodeInfo:
+        """Return one varnode by stable ID."""
+        _validate_lookup_id(varnode_id, "varnode_id")
+        try:
+            return self._varnodes_by_id[varnode_id]
+        except KeyError as exc:
+            raise InvalidArgumentError(f"unknown varnode id: {varnode_id}") from exc
+
+    def to_graph(self) -> nx.MultiDiGraph:
+        """Return a traversable bipartite graph of pcode ops and varnodes."""
+        graph = nx.MultiDiGraph()
+        varnodes_by_id = self._varnodes_by_id
+
+        for pcode_op in self.pcode_ops:
+            graph.add_node(("op", pcode_op.id), kind="pcode_op", op=pcode_op)
+        for varnode in self.varnodes:
+            graph.add_node(("varnode", varnode.id), kind="varnode", varnode=varnode)
+
+        for pcode_op in self.pcode_ops:
+            op_node = ("op", pcode_op.id)
+            for input_index, varnode_id in enumerate(pcode_op.input_varnode_ids):
+                try:
+                    input_varnode = varnodes_by_id[varnode_id]
+                except KeyError:
+                    raise InvalidArgumentError(
+                        f"pcode op {pcode_op.id} references unknown input varnode {varnode_id}"
+                    ) from None
+                graph.add_edge(
+                    ("varnode", input_varnode.id),
+                    op_node,
+                    key=("input", input_index),
+                    kind="input",
+                    input_index=input_index,
+                )
+
+            if pcode_op.output_varnode_id is not None:
+                try:
+                    output_varnode = varnodes_by_id[pcode_op.output_varnode_id]
+                except KeyError:
+                    raise InvalidArgumentError(
+                        f"pcode op {pcode_op.id} references unknown output varnode"
+                        f" {pcode_op.output_varnode_id}"
+                    ) from None
+                graph.add_edge(
+                    op_node,
+                    ("varnode", output_varnode.id),
+                    key=("output", 0),
+                    kind="output",
+                    input_index=None,
+                )
+
+        return graph
+
+    @cached_property
+    def _pcode_ops_by_id(self) -> dict[int, PcodeOpInfo]:
+        return _index_pcode_ops(self.pcode_ops)
+
+    @cached_property
+    def _varnodes_by_id(self) -> dict[int, VarnodeInfo]:
+        return _index_varnodes(self.varnodes)
+
+
+@dataclass(frozen=True)
+class Enriched:
+    """Optional companion payload for enriched decompiler output."""
+
+    pcode: Pcode | None = None
 
 
 # --- Warning/Error items ---
@@ -397,6 +476,10 @@ class DecompileRequest:
             an [`AnalysisBudget`][flatline.AnalysisBudget] or a ``dict`` with a
             ``"max_instructions"`` key.  Defaults to
             ``AnalysisBudget(max_instructions=100000)``.
+        enriched: When ``True``, the result includes an
+            [`Enriched`][flatline.Enriched] companion payload with
+            post-simplification pcode and varnode graph data.
+            Defaults to ``False``.
         tail_padding: Optional byte pattern used to satisfy decoder
             lookahead reads that start within ``memory_image`` but extend
             past its tail. Defaults to ``b"\\x00"`` so exact function
@@ -417,7 +500,7 @@ class DecompileRequest:
     runtime_data_dir: str | None = None
     function_size_hint: int | None = None
     analysis_budget: AnalysisBudget | None = None
-    include_enriched_output: bool = False
+    enriched: bool = False
     tail_padding: bytes | None = b"\x00"
 
     def __post_init__(self) -> None:
@@ -427,8 +510,8 @@ class DecompileRequest:
             raise InvalidArgumentError("memory_image must not be empty")
         if not isinstance(self.language_id, str) or not self.language_id:
             raise InvalidArgumentError("language_id must be a non-empty string")
-        if not isinstance(self.include_enriched_output, bool):
-            raise InvalidArgumentError("include_enriched_output must be a bool")
+        if not isinstance(self.enriched, bool):
+            raise InvalidArgumentError("enriched must be a bool")
         if self.tail_padding is not None and not isinstance(self.tail_padding, (bytes, bytearray)):
             raise InvalidArgumentError("tail_padding must be bytes, bytearray, or None")
         if self.runtime_data_dir is not None:
@@ -457,6 +540,9 @@ class DecompileResult:
         metadata: Additional metadata with stable keys:
             ``"decompiler_version"``, ``"language_id"``,
             ``"compiler_spec"``, and ``"diagnostics"``.
+        enriched: Optional [`Enriched`][flatline.Enriched] companion
+            payload, populated only when ``DecompileRequest.enriched``
+            is ``True`` and decompilation succeeds.  ``None`` otherwise.
     """
 
     c_code: str | None
@@ -464,10 +550,33 @@ class DecompileResult:
     warnings: list[WarningItem]
     error: ErrorItem | None
     metadata: dict[str, Any]
-    enriched_output: EnrichedOutput | None = None
+    enriched: Enriched | None = None
 
 
 # --- Validation helpers (used by bridge, not user-facing) ---
+
+
+def _validate_lookup_id(value: int, field_name: str) -> None:
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise InvalidArgumentError(f"{field_name} must be an int")
+
+
+def _index_pcode_ops(pcode_ops: list[PcodeOpInfo]) -> dict[int, PcodeOpInfo]:
+    pcode_ops_by_id: dict[int, PcodeOpInfo] = {}
+    for pcode_op in pcode_ops:
+        if pcode_op.id in pcode_ops_by_id:
+            raise InvalidArgumentError(f"duplicate pcode op id: {pcode_op.id}")
+        pcode_ops_by_id[pcode_op.id] = pcode_op
+    return pcode_ops_by_id
+
+
+def _index_varnodes(varnodes: list[VarnodeInfo]) -> dict[int, VarnodeInfo]:
+    varnodes_by_id: dict[int, VarnodeInfo] = {}
+    for varnode in varnodes:
+        if varnode.id in varnodes_by_id:
+            raise InvalidArgumentError(f"duplicate varnode id: {varnode.id}")
+        varnodes_by_id[varnode.id] = varnode
+    return varnodes_by_id
 
 
 def _validate_compiler_spec(compiler_spec: str, known_specs: frozenset[str]) -> None:

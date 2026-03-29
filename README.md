@@ -145,6 +145,12 @@ decoder lookahead past the end of `memory_image` by default via
 `tail_padding=b"\x00"`; set `tail_padding=None` or `tail_padding=b""` only
 when you need strict tail-boundary failures.
 
+For opt-in IR analysis, request `enriched=True`. Successful results then expose
+`result.enriched.pcode`, which keeps the raw `pcode_ops` / `varnodes`, offers
+O(1) lookup via `get_pcode_op()` / `get_varnode()`, and can project a
+deterministic `networkx.MultiDiGraph` via `to_graph()` for traversal or
+downstream drawing.
+
 ## Development
 
 ```bash
@@ -225,7 +231,9 @@ The current P6 host-expansion feasibility record lives in
 
 The current public release is `0.1.1`. P6 and P6.5 are complete: supported
 platforms are Linux x86_64/aarch64, Windows x86_64, and macOS x86_64/arm64.
-P7 phase 1 has landed as opt-in enriched output.
+On the current repo head, P7 is also closed: opt-in enriched output now
+projects the exported pcode / varnode payload into a traversable graph via
+`result.enriched.pcode.to_graph()`.
 
 Release-facing guarantees and support-policy notes live in
 [docs/release_notes.md](docs/release_notes.md). `python tools/release.py`

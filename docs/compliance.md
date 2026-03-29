@@ -11,7 +11,7 @@ Mandatory release-time checks for redistribution:
    `pyproject.toml` declaring both through `license-files`.
 3. `NOTICE` must reference the upstream attribution file locations
    `third_party/ghidra/LICENSE` and `third_party/ghidra/NOTICE`.
-4. The default runtime dependency `ghidra-sleigh` must be declared in
+4. The runtime dependencies `ghidra-sleigh` and `networkx` must be declared in
    packaging metadata.
 5. Fixture redistribution stays documented through
    `tests/fixtures/README.md`; release review must keep that synthetic-fixture
@@ -37,13 +37,14 @@ footprint remains a separate P3 tracking item, now recorded through
 | `third_party/ghidra/NOTICE` | Repo | Upstream Ghidra attribution notice for the vendored decompiler source |
 | `tests/fixtures/README.md` | Repo | Synthetic-fixture redistribution note and fixture manifest |
 | `ghidra-sleigh` | Separate dependency | Default runtime-data companion package; review it as a declared dependency, not as a bundled flatline artifact |
+| `networkx` | Separate dependency | Public graph-projection dependency used by `Pcode.to_graph()`; review it as a declared dependency, not as a bundled flatline artifact |
 
 ## Release Checklist
 
 1. Activate the repo venv: `source .venv/bin/activate`
 2. Run the compliance audit: `python tools/compliance.py`
 3. Verify the audit reports the `third_party/ghidra` submodule is present
-   and the `ghidra-sleigh` dependency is declared
+   and the `ghidra-sleigh` / `networkx` dependencies are declared
 4. Preserve the root `LICENSE` and `NOTICE` files in release artifacts
 5. Preserve the `tests/fixtures/README.md` redistribution note
 6. Refresh `docs/footprint.md` from an installed-wheel environment with

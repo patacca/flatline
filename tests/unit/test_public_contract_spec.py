@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import networkx as nx
 import pytest
 
 from flatline import (
@@ -15,7 +16,11 @@ from flatline import (
     DecompileRequest,
     FlatlineError,
     InvalidArgumentError,
+    Pcode,
+    PcodeOpInfo,
     UnsupportedTargetError,
+    VarnodeFlags,
+    VarnodeInfo,
 )
 from flatline._models import _validate_compiler_spec
 
@@ -61,7 +66,7 @@ def test_u001_request_schema_required_fields():
     assert req.runtime_data_dir is None
     assert req.function_size_hint is None
     assert req.analysis_budget == AnalysisBudget()
-    assert req.include_enriched_output is False
+    assert req.enriched is False
     assert req.tail_padding == b"\x00"
 
 
@@ -192,4 +197,96 @@ def test_u006_analysis_budget_rejects_unsupported_fields_and_values():
 
     with pytest.raises(InvalidArgumentError) as exc_info:
         DecompileRequest(**base_kwargs, analysis_budget=object())
+    assert exc_info.value.category == "invalid_argument"
+
+
+def _build_pcode_fixture() -> Pcode:
+    return Pcode(
+        pcode_ops=[
+            PcodeOpInfo(
+                id=10,
+                opcode="INT_ADD",
+                instruction_address=0x1000,
+                sequence_time=0,
+                sequence_order=0,
+                input_varnode_ids=[1, 1],
+                output_varnode_id=3,
+            ),
+            PcodeOpInfo(
+                id=11,
+                opcode="RETURN",
+                instruction_address=0x1001,
+                sequence_time=1,
+                sequence_order=0,
+                input_varnode_ids=[3],
+                output_varnode_id=None,
+            ),
+        ],
+        varnodes=[
+            VarnodeInfo(
+                id=1,
+                space="register",
+                offset=0,
+                size=4,
+                flags=VarnodeFlags(False, True, False, False, True, False, False, False),
+                defining_op_id=None,
+                use_op_ids=[10],
+            ),
+            VarnodeInfo(
+                id=3,
+                space="unique",
+                offset=0x100,
+                size=4,
+                flags=VarnodeFlags(False, False, False, False, True, False, False, False),
+                defining_op_id=10,
+                use_op_ids=[11],
+            ),
+        ],
+    )
+
+
+def test_u029_pcode_lookup_and_graph_projection_are_deterministic() -> None:
+    """U-029: Pcode exposes id lookup and a deterministic multigraph projection."""
+    pcode = _build_pcode_fixture()
+
+    assert pcode.get_pcode_op(10).opcode == "INT_ADD"
+    assert pcode.get_varnode(3).defining_op_id == 10
+
+    graph = pcode.to_graph()
+    assert isinstance(graph, nx.MultiDiGraph)
+    assert graph.nodes[("op", 10)]["kind"] == "pcode_op"
+    assert graph.nodes[("op", 10)]["op"] == pcode.get_pcode_op(10)
+    assert graph.nodes[("varnode", 3)]["kind"] == "varnode"
+    assert graph.nodes[("varnode", 3)]["varnode"] == pcode.get_varnode(3)
+
+    duplicate_input_edges = graph.get_edge_data(("varnode", 1), ("op", 10))
+    assert duplicate_input_edges is not None
+    assert len(duplicate_input_edges) == 2
+    assert sorted(edge["input_index"] for edge in duplicate_input_edges.values()) == [0, 1]
+    assert all(edge["kind"] == "input" for edge in duplicate_input_edges.values())
+
+    output_edges = graph.get_edge_data(("op", 10), ("varnode", 3))
+    assert output_edges is not None
+    assert len(output_edges) == 1
+    assert next(iter(output_edges.values()))["kind"] == "output"
+
+
+def test_u029_pcode_lookup_rejects_invalid_ids() -> None:
+    """U-029: Pcode id lookup fails hard on malformed or missing ids."""
+    pcode = _build_pcode_fixture()
+
+    with pytest.raises(InvalidArgumentError) as exc_info:
+        pcode.get_pcode_op("bad")  # type: ignore[arg-type]
+    assert exc_info.value.category == "invalid_argument"
+
+    with pytest.raises(InvalidArgumentError) as exc_info:
+        pcode.get_pcode_op(999)
+    assert exc_info.value.category == "invalid_argument"
+
+    with pytest.raises(InvalidArgumentError) as exc_info:
+        pcode.get_varnode(True)  # type: ignore[arg-type]
+    assert exc_info.value.category == "invalid_argument"
+
+    with pytest.raises(InvalidArgumentError) as exc_info:
+        pcode.get_varnode(999)
     assert exc_info.value.category == "invalid_argument"

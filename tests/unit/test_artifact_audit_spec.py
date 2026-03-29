@@ -33,7 +33,7 @@ def _write_wheel(
     *,
     version: str = "0.1.0.dev0",
     platform_tag: str = "py3-none-any",
-    include_dependency: bool = True,
+    dependencies: Sequence[str] = ("ghidra-sleigh", "networkx"),
     include_license: bool = True,
     include_notice: bool = True,
     extra_members: Sequence[tuple[str, str]] = (),
@@ -45,8 +45,8 @@ def _write_wheel(
         "Name: flatline",
         f"Version: {version}",
     ]
-    if include_dependency:
-        metadata_lines.append("Requires-Dist: ghidra-sleigh")
+    for dependency in dependencies:
+        metadata_lines.append(f"Requires-Dist: {dependency}")
     metadata_lines.append("")
     metadata = "\n".join(metadata_lines)
 
@@ -66,7 +66,7 @@ def _write_sdist(
     dist_dir: Path,
     *,
     version: str = "0.1.0.dev0",
-    include_dependency: bool = True,
+    dependencies: Sequence[str] = ("ghidra-sleigh", "networkx"),
     include_license: bool = True,
     include_notice: bool = True,
     extra_members: Sequence[tuple[str, str]] = (),
@@ -78,8 +78,8 @@ def _write_sdist(
         "Name: flatline",
         f"Version: {version}",
     ]
-    if include_dependency:
-        metadata_lines.append("Requires-Dist: ghidra-sleigh")
+    for dependency in dependencies:
+        metadata_lines.append(f"Requires-Dist: {dependency}")
     metadata_lines.append("")
     metadata = "\n".join(metadata_lines)
 
@@ -117,7 +117,7 @@ def test_u022_built_release_artifact_audit_accepts_expected_wheel_and_sdist(
 
     assert report.is_valid
     assert report.expected_version == "0.1.0.dev0"
-    assert report.expected_dependency == "ghidra-sleigh"
+    assert report.expected_dependencies == ("ghidra-sleigh", "networkx")
     assert report.required_artifact_kinds == ("wheel", "sdist")
     assert report.wheel_artifacts == (str(wheel_path.resolve()),)
     assert report.sdist_artifacts == (str(sdist_path.resolve()),)
@@ -133,7 +133,7 @@ def test_u022_built_release_artifact_audit_rejects_notice_loss_and_metadata_drif
     dist_dir.mkdir(parents=True)
     _write_repo_version(repo_root)
     _write_wheel(dist_dir, include_notice=False)
-    _write_sdist(dist_dir, version="0.2.0.dev0", include_dependency=False)
+    _write_sdist(dist_dir, version="0.2.0.dev0", dependencies=("ghidra-sleigh",))
 
     report = audit_built_release_artifacts(repo_root)
 

@@ -20,13 +20,14 @@ from flatline._models import (
     CallSiteInfo,
     DecompileResult,
     DiagnosticFlags,
-    EnrichedOutput,
+    Enriched,
     ErrorItem,
     FunctionInfo,
     FunctionPrototype,
     JumpTableInfo,
     LanguageCompilerPair,
     ParameterInfo,
+    Pcode,
     PcodeOpInfo,
     StorageInfo,
     TypeInfo,
@@ -175,7 +176,7 @@ def _request_to_native_payload(request: DecompileRequest) -> dict[str, Any]:
         "runtime_data_dir": request.runtime_data_dir,
         "function_size_hint": request.function_size_hint,
         "analysis_budget": _analysis_budget_to_native_payload(request.analysis_budget),
-        "include_enriched_output": request.include_enriched_output,
+        "enriched": request.enriched,
         "tail_padding": None if request.tail_padding is None else bytes(request.tail_padding),
     }
 
@@ -226,20 +227,20 @@ def _coerce_decompile_result(raw_result: Any, request: DecompileRequest) -> Deco
     warnings = _coerce_warning_items(raw_map.get("warnings"))
     error = _coerce_error_item(raw_map.get("error"))
     metadata = _coerce_metadata(raw_map.get("metadata"), request)
-    enriched_output = _coerce_enriched_output(raw_map.get("enriched_output"))
+    enriched = _coerce_enriched(raw_map.get("enriched"))
 
     if error is not None:
         c_code = None
         function_info = None
-        enriched_output = None
+        enriched = None
     else:
         if c_code is None:
             raise InternalError("decompile_result.c_code must be set when error is None")
         if function_info is None:
             raise InternalError("decompile_result.function_info must be set when error is None")
-        if request.include_enriched_output and enriched_output is None:
+        if request.enriched and (enriched is None or enriched.pcode is None):
             raise InternalError(
-                "decompile_result.enriched_output must be set when include_enriched_output is True"
+                "decompile_result.enriched.pcode must be set when enriched is True"
             )
 
     return DecompileResult(
@@ -248,7 +249,7 @@ def _coerce_decompile_result(raw_result: Any, request: DecompileRequest) -> Deco
         warnings=warnings,
         error=error,
         metadata=metadata,
-        enriched_output=enriched_output,
+        enriched=enriched,
     )
 
 
@@ -347,16 +348,28 @@ def _coerce_function_info(raw_info: Any) -> FunctionInfo | None:
     )
 
 
-def _coerce_enriched_output(raw_enriched_output: Any) -> EnrichedOutput | None:
-    if raw_enriched_output is None:
+def _coerce_enriched(raw_enriched: Any) -> Enriched | None:
+    if raw_enriched is None:
         return None
-    if isinstance(raw_enriched_output, EnrichedOutput):
-        return raw_enriched_output
+    if isinstance(raw_enriched, Enriched):
+        return raw_enriched
 
-    enriched_map = _require_mapping(raw_enriched_output, "enriched_output")
-    return EnrichedOutput(
-        pcode_ops=_coerce_pcode_op_list(enriched_map.get("pcode_ops")),
-        varnodes=_coerce_varnode_info_list(enriched_map.get("varnodes")),
+    enriched_map = _require_mapping(raw_enriched, "enriched")
+    return Enriched(
+        pcode=_coerce_pcode(enriched_map.get("pcode")),
+    )
+
+
+def _coerce_pcode(raw_pcode: Any) -> Pcode | None:
+    if raw_pcode is None:
+        return None
+    if isinstance(raw_pcode, Pcode):
+        return raw_pcode
+
+    pcode_map = _require_mapping(raw_pcode, "pcode")
+    return Pcode(
+        pcode_ops=_coerce_pcode_op_list(pcode_map.get("pcode_ops")),
+        varnodes=_coerce_varnode_info_list(pcode_map.get("varnodes")),
     )
 
 
@@ -364,7 +377,7 @@ def _coerce_pcode_op_list(raw_pcode_ops: Any) -> list[PcodeOpInfo]:
     if raw_pcode_ops is None:
         return []
     if not _is_sequence_like(raw_pcode_ops):
-        raise InternalError("enriched_output.pcode_ops must be a sequence")
+        raise InternalError("pcode.pcode_ops must be a sequence")
     return [_coerce_pcode_op(item) for item in raw_pcode_ops]
 
 
@@ -401,7 +414,7 @@ def _coerce_varnode_info_list(raw_varnodes: Any) -> list[VarnodeInfo]:
     if raw_varnodes is None:
         return []
     if not _is_sequence_like(raw_varnodes):
-        raise InternalError("enriched_output.varnodes must be a sequence")
+        raise InternalError("pcode.varnodes must be a sequence")
     return [_coerce_varnode_info(item) for item in raw_varnodes]
 
 

@@ -8,6 +8,7 @@ downstream code depends on. No native bridge required.
 from __future__ import annotations
 
 import dataclasses
+import inspect
 
 from flatline import (
     CATEGORY_TO_EXCEPTION,
@@ -21,7 +22,7 @@ from flatline import (
     DecompileRequest,
     DecompileResult,
     DiagnosticFlags,
-    EnrichedOutput,
+    Enriched,
     ErrorItem,
     FlatlineError,
     FunctionInfo,
@@ -32,6 +33,7 @@ from flatline import (
     JumpTableInfo,
     LanguageCompilerPair,
     ParameterInfo,
+    Pcode,
     PcodeOpInfo,
     StorageInfo,
     TypeInfo,
@@ -59,7 +61,7 @@ def test_c001_result_schema_stability():
         "warnings",
         "error",
         "metadata",
-        "enriched_output",
+        "enriched",
     }
 
     # FunctionInfo required fields
@@ -247,6 +249,8 @@ def test_c004_structured_result_schema_stability():
         DiagnosticFlags,
         FunctionPrototype,
         FunctionInfo,
+        Enriched,
+        Pcode,
         WarningItem,
         ErrorItem,
         VersionInfo,
@@ -258,14 +262,17 @@ def test_c004_structured_result_schema_stability():
         assert cls.__dataclass_params__.frozen, f"{cls.__name__} must be frozen"
 
 
-def test_c007_enriched_output_schema_stability() -> None:
+def test_c007_enriched_schema_stability() -> None:
     """C-007: Enriched-output companion types keep stable field names."""
     request_fields = {f.name for f in dataclasses.fields(DecompileRequest)}
-    assert "include_enriched_output" in request_fields
+    assert "enriched" in request_fields
     assert "tail_padding" in request_fields
 
-    enriched_fields = {f.name for f in dataclasses.fields(EnrichedOutput)}
-    assert enriched_fields == {"pcode_ops", "varnodes"}
+    enriched_fields = {f.name for f in dataclasses.fields(Enriched)}
+    assert enriched_fields == {"pcode"}
+
+    pcode_container_fields = {f.name for f in dataclasses.fields(Pcode)}
+    assert pcode_container_fields == {"pcode_ops", "varnodes"}
 
     pcode_fields = {f.name for f in dataclasses.fields(PcodeOpInfo)}
     assert pcode_fields == {
@@ -300,3 +307,19 @@ def test_c007_enriched_output_schema_stability() -> None:
         "is_persist",
         "is_addr_tied",
     }
+
+
+def test_c008_pcode_graph_surface_stability() -> None:
+    """C-008: Pcode graph helpers keep stable names and parameters."""
+    assert callable(Pcode.get_pcode_op)
+    assert callable(Pcode.get_varnode)
+    assert callable(Pcode.to_graph)
+
+    get_op_sig = inspect.signature(Pcode.get_pcode_op)
+    assert tuple(get_op_sig.parameters) == ("self", "op_id")
+
+    get_varnode_sig = inspect.signature(Pcode.get_varnode)
+    assert tuple(get_varnode_sig.parameters) == ("self", "varnode_id")
+
+    graph_sig = inspect.signature(Pcode.to_graph)
+    assert tuple(graph_sig.parameters) == ("self",)

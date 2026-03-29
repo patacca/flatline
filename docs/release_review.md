@@ -1,8 +1,8 @@
 # Public Artifact Review Checklist
 
-This checklist is the source-controlled human gate for publishing the staged
-`0.1.1` release. Run it after the deterministic release helpers have passed and
-before creating `git tag v0.1.1` or publishing GitHub release `v0.1.1`. Keep
+This checklist is the source-controlled human gate for publishing the current
+`0.1.x` patch release. Run it after the deterministic release helpers have
+passed and before creating the matching git tag and GitHub release. Keep
 per-run review notes, reviewed commit hashes, and artifact filenames outside
 the repo; the checklist stays source-controlled, but the results do not.
 
@@ -20,14 +20,14 @@ the repo; the checklist stays source-controlled, but the results do not.
 
 ## Review Evidence
 
-- Confirm `python tools/release.py` still reports the expected current version
-  `0.1.1`, recommended release version `0.1.1`, and
-  `pre_1_0_patch_release` workflow classification.
+- Confirm `python tools/release.py` reports the expected current version,
+  recommended release version, and `pre_1_0_patch_release` workflow
+  classification for the patch release under review.
 - Confirm `tox` passed on the release matrix and no release-facing docs drifted
   while fixing the branch for release.
 - Confirm `python tools/compliance.py` passed and still reports the
-  `ghidra-sleigh` dependency plus the expected native-source attribution
-  references.
+  `ghidra-sleigh` / `networkx` dependencies plus the expected native-source
+  attribution references.
 - Confirm `python tools/footprint.py` matches `docs/footprint.md`, or the
   footprint baseline was intentionally refreshed in the same review.
 - Confirm `python -m build` produced exactly the current release artifacts that
@@ -45,8 +45,8 @@ the repo; the checklist stays source-controlled, but the results do not.
 
 ## Approval Signal
 
-- Do not create `git tag v0.1.1` until every checklist item passes.
-- Do not publish GitHub release `v0.1.1` until every checklist item passes.
+- Do not create the release tag until every checklist item passes.
+- Do not publish the matching GitHub release until every checklist item passes.
 - Keep any manual review notes outside the repo; do not commit them to
   `docs/release_review.md`.
 - Proceed only after the reviewer explicitly approves the release.

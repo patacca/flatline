@@ -17,6 +17,7 @@ REQUIRED_ARTIFACTS = (
     "third_party/ghidra/NOTICE",
     "tests/fixtures/README.md",
 )
+REQUIRED_DEPENDENCIES = ("ghidra-sleigh", "networkx")
 
 
 @dataclass(frozen=True)
@@ -124,13 +125,21 @@ def _audit_pyproject(project_table: dict[str, Any], issues: list[ComplianceIssue
         )
 
     dependencies = project_table.get("dependencies")
-    if not isinstance(dependencies, list) or not any(
-        isinstance(dep, str) and dep.startswith("ghidra-sleigh") for dep in dependencies
-    ):
+    if not isinstance(dependencies, list):
+        missing_dependencies = REQUIRED_DEPENDENCIES
+    else:
+        missing_dependencies = tuple(
+            dependency
+            for dependency in REQUIRED_DEPENDENCIES
+            if not any(isinstance(dep, str) and dep.startswith(dependency) for dep in dependencies)
+        )
+    if missing_dependencies:
         _append_issue(
             issues,
             "dependency_missing",
-            "pyproject.toml must declare `ghidra-sleigh` as a dependency.",
+            "pyproject.toml must declare these dependencies: "
+            + ", ".join(f"`{dependency}`" for dependency in missing_dependencies)
+            + ".",
         )
 
 

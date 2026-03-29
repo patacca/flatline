@@ -4,7 +4,7 @@ build-backend = "mesonpy"
 
 [project]
 name = "flatline"
-version = "0.1.1"
+version = "0.1.2.dev0"
 description = "Python wrapper around the Ghidra decompiler"
 readme = { file = "README.md", content-type = "text/markdown" }
 authors = [{ name = "patacca" }]
@@ -30,6 +30,7 @@ classifiers = [
 ]
 dependencies = [
     "ghidra-sleigh",
+    "networkx",
 ]
 
 [project.urls]
@@ -41,6 +42,7 @@ Changelog = "https://github.com/patacca/flatline/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 test = [
+    "networkx",
     "pytest >= 8.0",
     "PyYAML >= 6.0",
 ]
@@ -144,7 +146,7 @@ package = "skip"
 extras = []
 # Mirrors [project.optional-dependencies].test; duplicated because
 # package = "skip" prevents using extras.
-deps = ["pytest >= 8.0", "PyYAML >= 6.0"]
+deps = ["networkx", "pytest >= 8.0", "PyYAML >= 6.0"]
 set_env = {PYTHONPATH = "{toxinidir}/src:{toxinidir}/tools"}
 commands = [
     ["pytest",

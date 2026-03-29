@@ -32,18 +32,23 @@ class DefaultInstallFootprintReport:
     """Payload-footprint report for the default flatline install."""
 
     flatline_distribution: FootprintMeasurement
+    networkx_distribution: FootprintMeasurement
     ghidra_sleigh_distribution: FootprintMeasurement
     ghidra_sleigh_runtime_data: FootprintMeasurement
 
     @property
     def combined_distribution(self) -> FootprintMeasurement:
-        """Return the combined payload size of flatline + ghidra-sleigh."""
+        """Return the combined payload size of the default flatline install."""
         return FootprintMeasurement(
             size_bytes=(
-                self.flatline_distribution.size_bytes + self.ghidra_sleigh_distribution.size_bytes
+                self.flatline_distribution.size_bytes
+                + self.networkx_distribution.size_bytes
+                + self.ghidra_sleigh_distribution.size_bytes
             ),
             file_count=(
-                self.flatline_distribution.file_count + self.ghidra_sleigh_distribution.file_count
+                self.flatline_distribution.file_count
+                + self.networkx_distribution.file_count
+                + self.ghidra_sleigh_distribution.file_count
             ),
         )
 
@@ -61,7 +66,7 @@ def measure_default_install_footprint(
     distribution_loader: Callable[[str], object] = importlib_metadata.distribution,
     runtime_data_dir_resolver: Callable[[], str | Path] | None = None,
 ) -> DefaultInstallFootprintReport:
-    """Measure the default install payload for flatline and ghidra-sleigh.
+    """Measure the default install payload for flatline and its runtime dependencies.
 
     The measurement intentionally excludes interpreter-generated `__pycache__`
     entries so the reported payload stays stable across Python micro-version
@@ -71,12 +76,14 @@ def measure_default_install_footprint(
         runtime_data_dir_resolver = _default_runtime_data_dir_resolver
 
     flatline_distribution = _measure_distribution_payload(distribution_loader("flatline"))
+    networkx_distribution = _measure_distribution_payload(distribution_loader("networkx"))
     ghidra_sleigh_distribution = _measure_distribution_payload(
         distribution_loader("ghidra-sleigh")
     )
     ghidra_sleigh_runtime_data = _measure_directory_tree(Path(runtime_data_dir_resolver()))
     return DefaultInstallFootprintReport(
         flatline_distribution=flatline_distribution,
+        networkx_distribution=networkx_distribution,
         ghidra_sleigh_distribution=ghidra_sleigh_distribution,
         ghidra_sleigh_runtime_data=ghidra_sleigh_runtime_data,
     )
@@ -90,6 +97,7 @@ def format_default_install_footprint(report: DefaultInstallFootprintReport) -> s
         (
             "Default install footprint (payload files only; excludes __pycache__)",
             (f"- flatline distribution: {_format_measurement(report.flatline_distribution)}"),
+            (f"- networkx distribution: {_format_measurement(report.networkx_distribution)}"),
             (
                 "- ghidra-sleigh distribution: "
                 f"{_format_measurement(report.ghidra_sleigh_distribution)}"

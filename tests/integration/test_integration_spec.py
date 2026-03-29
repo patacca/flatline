@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import networkx as nx
 import pytest
 
 from flatline import VALID_WARNING_PHASES, DecompileRequest, DiagnosticFlags
@@ -36,7 +37,7 @@ def test_i001_known_function_success_path(native_runtime_data_dir: str) -> None:
 
     assert_successful_result(result)
     assert result.c_code.strip() != ""
-    assert result.enriched_output is None
+    assert result.enriched is None
     assert normalize_c_code(result.c_code) == fixture.normalized_c
 
 
@@ -153,52 +154,38 @@ def test_i007_warning_only_success_with_warning_structure(
         assert warning.phase in VALID_WARNING_PHASES
 
 
-def test_i008_opt_in_enriched_output_supports_use_def_analysis(
+def test_i008_opt_in_enriched_supports_graph_analysis(
     native_runtime_data_dir: str,
 ) -> None:
-    """I-008: Opt-in enriched output exposes a traversable use-def graph."""
+    """I-008: Opt-in enriched output exposes a traversable pcode graph."""
     fixture = get_native_fixture("fx_add_elf64")
 
     with open_native_session(native_runtime_data_dir) as session:
         result = session.decompile_function(
-            fixture.build_request(native_runtime_data_dir, include_enriched_output=True)
+            fixture.build_request(native_runtime_data_dir, enriched=True)
         )
 
     assert_successful_result(result)
-    assert result.enriched_output is not None
+    assert result.enriched is not None
+    assert result.enriched.pcode is not None
 
-    enriched_output = result.enriched_output
-    assert enriched_output.pcode_ops
-    assert enriched_output.varnodes
+    pcode = result.enriched.pcode
+    assert pcode.pcode_ops
+    assert pcode.varnodes
 
-    ops_by_id = {op.id: op for op in enriched_output.pcode_ops}
-    varnodes_by_id = {varnode.id: varnode for varnode in enriched_output.varnodes}
+    graph = pcode.to_graph()
+    assert isinstance(graph, nx.MultiDiGraph)
 
-    add_ops = [op for op in enriched_output.pcode_ops if op.opcode == "INT_ADD"]
-    return_ops = [op for op in enriched_output.pcode_ops if op.opcode == "RETURN"]
+    add_ops = [op for op in pcode.pcode_ops if op.opcode == "INT_ADD"]
+    return_ops = [op for op in pcode.pcode_ops if op.opcode == "RETURN"]
     assert len(add_ops) == 1
     assert return_ops
 
     add_output_id = add_ops[0].output_varnode_id
     assert add_output_id is not None
 
-    reachable_ops: set[int] = set()
-    pending_varnodes = [add_output_id]
-    seen_varnodes = {add_output_id}
-    while pending_varnodes:
-        current_varnode_id = pending_varnodes.pop()
-        current_varnode = varnodes_by_id[current_varnode_id]
-        for use_op_id in current_varnode.use_op_ids:
-            if use_op_id in reachable_ops:
-                continue
-            reachable_ops.add(use_op_id)
-            output_varnode_id = ops_by_id[use_op_id].output_varnode_id
-            if output_varnode_id is None or output_varnode_id in seen_varnodes:
-                continue
-            seen_varnodes.add(output_varnode_id)
-            pending_varnodes.append(output_varnode_id)
-
-    assert any(ops_by_id[op_id].opcode == "RETURN" for op_id in reachable_ops)
+    descendants = nx.descendants(graph, ("varnode", add_output_id))
+    assert any(("op", return_op.id) in descendants for return_op in return_ops)
 
 
 @pytest.mark.parametrize("fixture_id", TRIMMED_SLICE_FIXTURE_IDS)
