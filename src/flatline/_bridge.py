@@ -38,6 +38,7 @@ from flatline._models import (
 )
 from flatline._runtime_data import enumerate_runtime_data_language_compilers
 from flatline._version import DECOMPILER_VERSION
+from flatline._windows import configure_windows_native_dll_dirs
 
 if TYPE_CHECKING:
     from typing import Any
@@ -735,6 +736,10 @@ def create_bridge_session(runtime_data_dir: str | None = None) -> BridgeSession:
         normalized_runtime_data_dir = fspath(runtime_data_dir)
 
     runtime_data_pairs = enumerate_runtime_data_language_compilers(normalized_runtime_data_dir)
+    # Let the helper decide whether this install is a delvewheel-repaired Windows
+    # wheel with bundled DLLs or an unrepaired build (CI tests, local editable
+    # installs on Windows) that still needs local vcpkg zlib.
+    configure_windows_native_dll_dirs()
     try:
         native_bridge = importlib.import_module("flatline._flatline_native")
     except ImportError:

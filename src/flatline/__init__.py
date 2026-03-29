@@ -2,13 +2,6 @@
 
 from __future__ import annotations
 
-from flatline._windows import configure_windows_native_dll_dirs
-
-# Let the helper decide whether this install is a delvewheel-repaired Windows
-# wheel with bundled DLLs or an unrepaired build (CI tests, local editable
-# installs on Windows) that still needs local vcpkg zlib.
-configure_windows_native_dll_dirs()
-
 from flatline._errors import (
     CATEGORY_TO_EXCEPTION,
     ERROR_CATEGORIES,
