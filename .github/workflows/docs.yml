@@ -18,33 +18,41 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v6
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.13"
       - name: Install docs dependencies
         run: pip install mkdocs-material "mkdocstrings[python]" mike
-      - run: |
+      - name: Configure Git identity
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-      - name: Deploy docs
+      - name: Deploy release docs
+        if: github.event_name == 'release'
         env:
           PYTHONPATH: src
+          VERSION: ${{ github.event.release.tag_name }}
+          GH_PAGES_REMOTE: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
         run: |
-          if [ "${{ github.event_name }}" = "release" ]; then
-            VERSION="${{ github.event.release.tag_name }}"
+          mike deploy --update-aliases "$VERSION" latest
+          mike set-default latest
+          git push "$GH_PAGES_REMOTE" gh-pages
+      - name: Deploy manually requested docs version
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          PYTHONPATH: src
+          VERSION: ${{ inputs.version }}
+          SET_DEFAULT: ${{ inputs.set_default }}
+          GH_PAGES_REMOTE: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
+        run: |
+          if [ "$SET_DEFAULT" = "true" ]; then
             mike deploy --update-aliases "$VERSION" latest
             mike set-default latest
-            git push origin gh-pages
           else
-            VERSION="${{ inputs.version }}"
-            if [ "${{ inputs.set_default }}" = "true" ]; then
-              mike deploy --update-aliases "$VERSION" latest
-              mike set-default latest
-            else
-              mike deploy "$VERSION"
-            fi
-            git push origin gh-pages
+            mike deploy "$VERSION"
           fi
+          git push "$GH_PAGES_REMOTE" gh-pages
