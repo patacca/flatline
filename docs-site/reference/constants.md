@@ -1,8 +1,6 @@
 # Constants
 
-Stable public constants exported by the `flatline` package.  Error-related
-constants (`ERROR_CATEGORIES`, `CATEGORY_TO_EXCEPTION`) are documented in the
-[Error Taxonomy](errors.md).
+Stable public constants exported by the `flatline` package.
 
 ::: flatline.VALID_METATYPES
 
@@ -11,3 +9,7 @@ constants (`ERROR_CATEGORIES`, `CATEGORY_TO_EXCEPTION`) are documented in the
 ::: flatline.DECOMPILER_VERSION
 
 ::: flatline.__version__
+
+::: flatline.ERROR_CATEGORIES
+
+::: flatline.CATEGORY_TO_EXCEPTION

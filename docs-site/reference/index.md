@@ -30,4 +30,4 @@ symbol exported by the `flatline` package is documented here.
 | [`PcodeOpInfo`][flatline.PcodeOpInfo] | [Enriched Output](enriched.md) | One pcode operation |
 | [`VarnodeInfo`][flatline.VarnodeInfo] | [Enriched Output](enriched.md) | One varnode |
 | [`VarnodeFlags`][flatline.VarnodeFlags] | [Enriched Output](enriched.md) | Varnode boolean flags |
-| [`FlatlineError`][flatline.FlatlineError] | [Errors](errors.md) | Base exception and full error hierarchy |
+| [`FlatlineError`](errors.md) | [Errors](errors.md) | Base exception and full error hierarchy |
