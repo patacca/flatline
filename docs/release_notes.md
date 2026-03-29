@@ -12,7 +12,9 @@ line.
 
 - The public Python API is the stable contract: `DecompilerSession`,
   `decompile_function()`, `list_language_compilers()`, the frozen result value
-  types, and the six public error categories documented in `docs/specs.md`.
+  types, and the six public error categories exposed by the package:
+  `invalid_argument`, `unsupported_target`, `invalid_address`,
+  `decompile_failed`, `configuration_error`, and `internal_error`.
 - Successful decompiles always return populated `function_info` and `c_code`.
   Error results always return `error` plus `function_info=None` and
   `c_code=None`.
@@ -28,7 +30,8 @@ line.
 - Deterministic regression coverage is committed on Linux x86_64 for the
   fixture-backed confidence matrix: x86 (32/64), ARM64, RISC-V 64, and MIPS32.
 - Release history and per-version deltas belong in `CHANGELOG.md`. The
-  normative API and error-model rules remain in `docs/specs.md`.
+  lower-level API details live in the package surface and its maintained
+  contract tests; this file focuses on release-facing guarantees.
 
 ## Support Tiers
 

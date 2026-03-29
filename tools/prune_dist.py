@@ -25,6 +25,7 @@ _REMOVE_TOPLEVEL = {
 # Subdirectories inside docs/ to remove (AI prompts, internal dev docs).
 _REMOVE_DOCS_SUBDIRS = {
     "ai",
+    "archived",
 }
 
 # Individual doc files to remove (dev-only, not needed for source builds).
@@ -33,7 +34,6 @@ _REMOVE_DOCS_FILES = {
     "footprint.md",
     "release_review.md",
     "release_workflow.md",
-    "roadmap.md",
 }
 
 

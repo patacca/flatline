@@ -1,6 +1,6 @@
 """flatline data models.
 
-Frozen value types for the public API contract (specs.md section 3.3).
+Frozen value types for the public API contract.
 All structured result objects are pure Python frozen dataclasses.
 No native pointers or references survive past the bridge boundary.
 """
@@ -17,7 +17,7 @@ import networkx as nx
 
 from flatline._errors import InvalidArgumentError, UnsupportedTargetError
 
-# --- Stable enumerations (specs.md section 3.3) ---
+# --- Stable enumerations ---
 
 VALID_METATYPES: frozenset[str] = frozenset(
     {
@@ -583,7 +583,7 @@ def _validate_compiler_spec(compiler_spec: str, known_specs: frozenset[str]) -> 
     """Validate compiler_spec against a known set.
 
     Raises UnsupportedTargetError if not found. Never silently falls back
-    to a default compiler (specs.md section 3.4, section 4.4).
+    to a default compiler.
     """
     if compiler_spec not in known_specs:
         raise UnsupportedTargetError(f"Unknown compiler specification: {compiler_spec!r}")

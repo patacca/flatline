@@ -15,7 +15,7 @@ Product policy:
 
 | Phase | Focus | Entry criteria | Exit criteria |
 | --- | --- | --- | --- |
-| P0 | Spec lock | Inventory, MVP contract, experiment notes exist | `docs/specs.md` and this roadmap accepted; open questions tracked; structured result object definitions (fields, types, error model, ownership/lifetime) locked in `specs.md` §3.3 |
+| P0 | Spec lock | Inventory, MVP contract, experiment notes exist | `docs/archived/specs.md` and this roadmap accepted; open questions tracked; structured result object definitions (fields, types, error model, ownership/lifetime) locked in `specs.md` §3.3 |
 | P1 | Contract test harness | P0 complete | Definitions-only test suites and oracle strategy committed |
 | P2 | Linux MVP delivery | P1 complete | Linux host function decompilation contract satisfied for the fixture-backed confidence matrix (x86_64, x86_32, ARM64, RISC-V 64, MIPS32) and enumeration/error contract for all bundled ISAs |
 | P3 | Packaging + compliance hardening | P2 complete | Redistribution/compliance policy finalized; license notices/compliance checks pass; default-install support messaging matches the actual product UX |
@@ -40,8 +40,8 @@ Current status:
 
 ### M0: Planning closure
 - Inputs:
-  - `docs/specs.md`
-  - `docs/roadmap.md`
+  - `docs/archived/specs.md`
+  - `docs/archived/roadmap.md`
   - `tests/specs/*`
 - Exit checks:
   - Decision points resolved or explicitly deferred with owner/date.

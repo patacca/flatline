@@ -1,9 +1,8 @@
 """Bridge session abstraction and fallback implementation.
 
 Internal bridge-session boundary between the stable Python public API and the
-unstable native bridge implementation (specs.md section 6). The BridgeSession
-protocol and its implementations are private; only the public Python API is
-stable (specs.md section 3, ADR-002).
+replaceable native bridge implementation. The BridgeSession protocol and its
+implementations are private; only the public Python API is stable.
 """
 
 from __future__ import annotations

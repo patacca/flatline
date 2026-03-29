@@ -47,8 +47,10 @@ macOS x86_64/arm64, so those installs do not need a local compiler or build
 toolchain. If no wheel is available for your target, `pip` falls back to a
 source build.
 
-The platforms with published wheels are the supported platforms. Other
-platforms may still work via a source build, but they are best effort.
+Supported runtime hosts are Linux x86_64, Windows x86_64, and macOS arm64.
+Linux aarch64 and macOS x86_64 are published-wheel targets that remain
+installable, but they are still pending equivalent host-coverage promotion.
+Other platforms may still work via a source build, but they are best effort.
 
 ### Build from source or install from a local checkout
 
@@ -229,18 +231,19 @@ The current P6 host-expansion feasibility record lives in
 
 ## Project status
 
-The current public release is `0.1.1`. P6 and P6.5 are complete: supported
-platforms are Linux x86_64/aarch64, Windows x86_64, and macOS x86_64/arm64.
-On the current repo head, P7 is also closed: opt-in enriched output now
-projects the exported pcode / varnode payload into a traversable graph via
-`result.enriched.pcode.to_graph()`.
+The current public release is `0.1.1`. P6, P6.5, and P7 are closed in the repo
+history. Supported runtime hosts are Linux x86_64, Windows x86_64, and macOS
+arm64; Linux aarch64 and macOS x86_64 remain published-wheel targets pending
+equivalent host-coverage promotion. On the current repo head, opt-in enriched
+output projects the exported pcode / varnode payload into a traversable graph
+via `result.enriched.pcode.to_graph()`.
 
 Release-facing guarantees and support-policy notes live in
 [docs/release_notes.md](docs/release_notes.md). `python tools/release.py`
 audits the current release candidate, while
-[docs/wheel_matrix.md](docs/wheel_matrix.md),
-[docs/host_feasibility.md](docs/host_feasibility.md), and
-[docs/roadmap.md](docs/roadmap.md) remain the source-of-truth phase documents.
+[docs/wheel_matrix.md](docs/wheel_matrix.md) and
+[docs/host_feasibility.md](docs/host_feasibility.md) capture the current
+distribution and host-expansion evidence.
 
 ## Acknowledgments
 

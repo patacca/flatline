@@ -1,12 +1,12 @@
 """flatline error taxonomy.
 
-Stable exception hierarchy mapped from error categories (specs.md section 3.4).
+Stable exception hierarchy mapped from public error categories.
 Category names are contract-stable across minor/patch releases.
 """
 
 from __future__ import annotations
 
-# --- Stable error categories (specs.md section 3.4) ---
+# --- Stable error categories ---
 ERROR_CATEGORIES: frozenset[str] = frozenset(
     {
         "invalid_argument",

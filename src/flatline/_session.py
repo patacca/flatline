@@ -1,7 +1,7 @@
 """Public session lifecycle API for decompilation operations.
 
-Implements DecompilerSession (specs.md section 3.1) and the module-level
-convenience wrappers decompile_function / list_language_compilers (specs.md section 3.2).
+Implements DecompilerSession and the module-level convenience wrappers
+decompile_function / list_language_compilers.
 """
 
 from __future__ import annotations

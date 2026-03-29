@@ -5,7 +5,7 @@
 # Overview
 - `flatline`: pip-installable Python wrapper around Ghidra C++ decompiler (decompiler surface only).
 - Version `0.1.2.dev0` aligned in `pyproject.toml`, `meson.build`, `src/flatline/_version.py`; latest public release is `0.1.1`; repo now carries unreleased post-`0.1.1` work.
-- Roadmap: P6, P6.5, and P7 are closed; TestPyPI validated `0.1.1.dev1`, then production `0.1.1` published successfully on `2026-03-28`; enriched output now exposes `Enriched.pcode` plus `Pcode.to_graph()` for downstream graph traversal/drawing.
+- Status: P6, P6.5, and P7 are closed; TestPyPI validated `0.1.1.dev1`, then production `0.1.1` published successfully on `2026-03-28`; enriched output now exposes `Enriched.pcode` plus `Pcode.to_graph()` for downstream graph traversal/drawing.
 - Docs: GitHub Pages published at `https://patacca.github.io/flatline/` (root redirects to `latest/`); README documents both hosted and local MkDocs access.
 - Supported hosts: Linux x86_64, macOS arm64, Windows x86_64; Linux aarch64 + macOS x86_64 = published-wheel targets pending coverage lanes.
 - Wheels: 64-bit; manylinux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64; locked in `docs/wheel_matrix.md`.
@@ -33,7 +33,7 @@
 - Native: 82 upstream .cc via Meson into static `ghidra_decompiler` (zlib required); `SleighArchitecture` -> `LoadImage` -> action reset/perform -> `docFunction` -> `FunctionInfo`; P7 extracts opcode names via `get_opname(op.code())` + varnode use-def edges post-`Action::perform()`.
 
 # Conventions
-- Max ~700 lines/file. Spec-first/TDD. ASCII only in `.py`, `.cpp`, `.h`, `meson.build`.
+- Max ~700 lines/file. Contract-first/TDD. ASCII only in `.py`, `.cpp`, `.h`, `meson.build`.
 - Hard errors on invalid input; warnings on degraded success; no silent fallbacks.
 - Frozen value copies; no native pointers cross ABI.
 - Tests: structured format parsing, not grep; workflow tests only for durable release/support/native-build invariants, not for routine action pin rotations, SHA refreshes, or code-scanning remediations.
@@ -63,8 +63,9 @@
 - ADR-013: CPython >= 3.13, `cibuildwheel`; `manylinux_2_28`; macOS target `11.0`; 32-bit/musllinux/Win ARM64 deferred.
 
 # Source of truth
-- `docs/specs.md` -- API contract, models, errors
-- `docs/roadmap.md` -- P0-P7 (incl P6.5), M0-M6 (incl M5.5), risks, ADR backlog
+- `docs/design.md` -- durable design posture, boundaries, heuristics, and persistent risks worth keeping in day-to-day view. Must be kept up to date.
+- `docs/TODO.md` -- next-scope features, platform/ISA expansion items, and remaining open work
+- `docs/archived/` -- archived historical docs (former full specs / roadmap); still useful for specific historical needs, but not maintained and may be outdated
 - `docs/code_style.md` -- style guide
 - `CHANGELOG.md` -- release history
 - `docs/ai/planning.md` -- original brief
@@ -120,7 +121,7 @@
 - `third_party/ghidra` -- submodule.
 - `third_party/r2ghidra` -- read-only reference; ignored.
 
-# Key data models (from specs.md)
+# Key data models
 - `DecompileRequest` -- `memory_image`, `base_address`, `function_address`, `language_id`, `compiler_spec`, `runtime_data_dir`, `function_size_hint`, `analysis_budget`, `enriched`, `tail_padding`
 - `AnalysisBudget` -- `max_instructions`; default `100000`
 - `DecompileResult` -- decompiled C, `FunctionInfo`, warnings, error, metadata, optional `Enriched`

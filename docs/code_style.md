@@ -98,7 +98,9 @@ that tools cannot enforce.
   (`unit`, `contract`, `integration`, `regression`, `negative`).
 - **Naming:** `test_<catalog_id>_<short_description>` with a docstring that
   starts with the catalog ID (e.g., `"""U-001: ..."`).
-- **Spec references:** docstrings and inline comments cite `specs.md` sections.
+- **Contract references:** docstrings and inline comments should describe
+  behavior directly. Avoid routine citations to archived spec section numbers in
+  day-to-day code.
 - **Native-dependent tests:** tests that require the compiled bridge use
   `@pytest.mark.requires_native`. Collection-time skip logic in `tests/conftest.py`
   adds a clear actionable skip reason when `flatline._flatline_native` is unavailable.
@@ -107,8 +109,9 @@ that tools cannot enforce.
 
 ## File and section structure
 
-- Module docstring at top: one-line summary, then a paragraph linking to the
-  relevant spec section.
+- Module docstring at top: one-line summary, then a short paragraph describing
+  the relevant contract or design context when useful. Avoid pointing routine
+  docstrings at archived spec section numbers.
 - Logical sections separated by comment banners:
   ```python
   # --- Section name ---
