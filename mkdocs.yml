@@ -13,6 +13,9 @@ theme:
   features:
     - navigation.sections
     - navigation.expand
+    - navigation.tabs
+    - navigation.indexes
+    - toc.follow
     - content.code.copy
     - content.code.annotate
 
@@ -48,7 +51,11 @@ nav:
     - Analysis Budget: how-to/analysis-budget.md
   - API Reference:
     - reference/index.md
-    - API: reference/api.md
+    - Session: reference/session.md
+    - Request & Result: reference/request-result.md
+    - Data Models: reference/models.md
+    - Enriched Output: reference/enriched.md
+    - Constants: reference/constants.md
     - Errors: reference/errors.md
   - Explanation:
     - Architecture: explanation/architecture.md
