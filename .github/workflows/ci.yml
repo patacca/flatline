@@ -65,6 +65,19 @@ jobs:
           pip install ninja
           vcpkg install zlib:x64-windows
 
+      - name: Add vcpkg runtime DLLs to PATH
+        shell: pwsh
+        run: |
+          $vcpkgRoot = $env:VCPKG_INSTALLATION_ROOT
+          if (-not $vcpkgRoot) {
+            $vcpkgRoot = Split-Path -Parent (Get-Command vcpkg).Source
+          }
+          $dllDir = Join-Path $vcpkgRoot "installed\x64-windows\bin"
+          if (-not (Test-Path $dllDir)) {
+            throw "missing vcpkg DLL directory: $dllDir"
+          }
+          Add-Content -Path $env:GITHUB_PATH -Value $dllDir
+
       - name: Install tox
         run: pip install tox
 

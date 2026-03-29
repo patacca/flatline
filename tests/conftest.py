@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
+import os
 import pathlib
 
 import pytest
@@ -21,6 +22,7 @@ NATIVE_SKIP_REASON = (
     "requires native bridge extension; ensure the tox test env can build/install "
     "flatline with flatline._flatline_native importable and ghidra-sleigh available"
 )
+STRICT_NATIVE_ENV_VAR = "FLATLINE_REQUIRE_NATIVE_BRIDGE"
 
 
 def _native_bridge_available() -> bool:
@@ -49,6 +51,16 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
         "negative": "negative",
     }
     native_bridge_available = _native_bridge_available()
+    strict_native_required = os.environ.get(STRICT_NATIVE_ENV_VAR) == "1"
+    if strict_native_required and not native_bridge_available:
+        requires_native_items = [
+            item for item in items if item.get_closest_marker("requires_native")
+        ]
+        if requires_native_items:
+            raise pytest.UsageError(
+                "strict native test mode requires flatline._flatline_native to be importable; "
+                + NATIVE_SKIP_REASON
+            )
     for item in items:
         rel = pathlib.Path(item.fspath).relative_to(REPO_ROOT / "tests")
         top_dir = rel.parts[0] if rel.parts else ""

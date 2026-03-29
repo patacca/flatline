@@ -173,6 +173,7 @@ base_python = "python3.14"
 [tool.tox.env.py314-native]
 base_python = "python3.14"
 wheel_build_env = ".pkg-py314-native"
+set_env = {FLATLINE_REQUIRE_NATIVE_BRIDGE = "1"}
 
 [tool.tox.env.".pkg-py314-native"]
 base_python = "python3.14"
