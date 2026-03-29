@@ -5,8 +5,9 @@ interface for single-function decompilation with structured output -- no Ghidra
 installation required.
 
 Named after Dixie Flatline from William Gibson's *Neuromancer* (1984) -- a dead
-hacker's ROM construct, a consciousness extracted from hardware. A fitting
-metaphor for decompilation: extracting meaning from dead code.
+hacker's ROM construct, a consciousness extracted from hardware. In the same
+spirit, flatline brings Ghidra's decompiler into library form for extracting
+meaningful structure from binaries.
 
 ## Features
 
