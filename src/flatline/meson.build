@@ -6,6 +6,7 @@ py.install_sources(
   '_runtime_data.py',
   '_session.py',
   '_version.py',
+  '_windows.py',
   subdir: 'flatline',
 )
 
