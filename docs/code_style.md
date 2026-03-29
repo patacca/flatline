@@ -77,9 +77,6 @@ that tools cannot enforce.
   Python value copies.
 - Validation logic lives in `__post_init__` and raises the appropriate
   `FlatlineError` subclass.
-- Helper constructors for tests use `_stub_*` naming (e.g., `_stub_type`,
-  `_stub_prototype`).
-
 ### Error handling
 
 - Hard errors on invalid input; warnings on degraded success. No silent
