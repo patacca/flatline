@@ -37,10 +37,11 @@ python tools/footprint.py
 
 `python tools/release.py` is the source-controlled readiness audit used for the
 current patch-release publish path. It checks the configured version, the
-release recommendation, the presence of the required release documents, and a
-clean git worktree so Meson cannot silently drop uncommitted changes from the
-sdist. The release/diagnostic helpers live under `tools/` and are repo-only;
-they are not part of the wheel or sdist payload.
+release recommendation, the presence of the required release documents plus the
+root redistribution notices, and a clean git worktree so Meson cannot silently
+drop uncommitted changes from the sdist. The release/diagnostic helpers live
+under `tools/` and are repo-only; they are not part of the wheel or sdist
+payload.
 
 ## Release Steps
 
@@ -54,8 +55,8 @@ they are not part of the wheel or sdist payload.
    installed-wheel baseline changed
 7. Keep `CHANGELOG.md` with an empty `## [Unreleased]` section above the most
    recent dated release entry
-8. Review `docs/release_notes.md`, `README.md`, and `docs/compliance.md` for
-   any last release-facing drift
+8. Review `docs/release_notes.md`, `README.md`, and `NOTICE` for any last
+   release-facing drift
 9. Confirm `pyproject.toml`, `meson.build`, and `src/flatline/_version.py`
    already agree on the current repo version
 10. Build artifacts with `python -m build`

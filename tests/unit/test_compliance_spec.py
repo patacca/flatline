@@ -11,7 +11,6 @@ from flatline_dev.compliance import audit_release_compliance
 
 
 def _write_minimal_compliant_repo(repo_root: Path) -> None:
-    (repo_root / "docs").mkdir(parents=True)
     (repo_root / "tests" / "fixtures").mkdir(parents=True)
     (repo_root / "third_party" / "ghidra").mkdir(parents=True)
 
@@ -46,23 +45,6 @@ def _write_minimal_compliant_repo(repo_root: Path) -> None:
         "See NOTICE for release-time third-party attribution.\n",
         encoding="ascii",
     )
-    (repo_root / "docs" / "compliance.md").write_text(
-        "\n".join(
-            [
-                "# Compliance",
-                "",
-                "## ADR-007 Decision",
-                "",
-                "## Artifact Manifest",
-                "- Root notice file: NOTICE",
-                "",
-                "## Release Checklist",
-                "- Run `python tools/compliance.py` before release.",
-                "",
-            ]
-        ),
-        encoding="ascii",
-    )
     (repo_root / "tests" / "fixtures" / "README.md").write_text(
         (
             "License / redistribution note: all fixture bytes are redistributable "
@@ -91,7 +73,6 @@ def test_u017_release_compliance_audit_accepts_current_repo_manifest() -> None:
     assert report.required_artifacts == (
         "LICENSE",
         "NOTICE",
-        "docs/compliance.md",
         "third_party/ghidra/LICENSE",
         "third_party/ghidra/NOTICE",
         "tests/fixtures/README.md",

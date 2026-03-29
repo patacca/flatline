@@ -20,8 +20,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of helper-specific data-flow traversal APIs
 - Release compliance, built-artifact auditing, and footprint measurement now
   account for the `networkx` runtime dependency alongside `ghidra-sleigh`
+- Redistribution/compliance policy now lives in `NOTICE`, ADR-007, and the
+  release docs instead of a dedicated compliance manifest page
 - Roadmap, spec, and release-state docs now record that `0.1.1` was published
   on PyPI and that P7 is closed in the repo
+
+### Removed
+- `docs/compliance.md`, which duplicated ADR-007, `NOTICE`, and the release
+  checklists without being part of the shipped artifact contract
 
 ## [0.1.1] - 2026-03-28
 
@@ -75,8 +81,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for debuggability (ADR-006)
 - `configuration_error` category for user-fixable install, startup, and
   runtime-data failures (ADR-011)
-- Compliance process: `LICENSE` + `NOTICE` shipped in wheels/sdists, pinned-source
-  manifest in `docs/compliance.md`, and `python tools/compliance.py` audit (ADR-007)
+- Compliance process: `LICENSE` + `NOTICE` shipped in wheels/sdists, vendored
+  source attribution kept explicit, and `python tools/compliance.py` audit
+  (ADR-007)
 - Auto-discovery of `ghidra-sleigh` runtime data when `runtime_data_dir` is omitted,
   with a runtime warning on upstream pin drift (ADR-004)
 - Default-install footprint measurement via `python tools/footprint.py` with

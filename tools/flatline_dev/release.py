@@ -13,7 +13,8 @@ from pathlib import Path
 REQUIRED_ARTIFACTS = (
     "CHANGELOG.md",
     "README.md",
-    "docs/compliance.md",
+    "LICENSE",
+    "NOTICE",
     "docs/release_notes.md",
     "docs/release_review.md",
     "docs/release_workflow.md",
@@ -271,7 +272,8 @@ def audit_release_readiness(repo_root: str | Path) -> ReleaseReadinessReport:
     for relative_path, code in (
         ("CHANGELOG.md", "changelog_missing"),
         ("README.md", "readme_missing"),
-        ("docs/compliance.md", "compliance_doc_missing"),
+        ("LICENSE", "license_missing"),
+        ("NOTICE", "notice_missing"),
         ("docs/release_notes.md", "release_notes_missing"),
         ("docs/release_review.md", "release_review_missing"),
         ("docs/release_workflow.md", "release_workflow_missing"),

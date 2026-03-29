@@ -20,7 +20,7 @@
 - TestPyPI validated `2026-03-28` commit `299fae580bdb202e0c930878b33067d0eceef01a` run `23694378228`: 10 wheels + 1 sdist, full smoke pass.
 - Local clean-snapshot validation `2026-03-28`: `python tools/release.py`, `tox`, `tox -e dev`, `python tools/compliance.py`, `python tools/footprint.py`, `python -m build --outdir dist`, `python tools/artifacts.py dist --repo-root .`, and `python -m twine check dist/*` all passed under the pre-fix metadata gate; built artifacts still omitted the README-backed long description plus project URLs/classifiers/keywords.
 - `python tools/release.py`: derives current version/release recommendation from version files and rejects dirty worktrees. `python tools/artifacts.py dist`: metadata/LICENSE/NOTICE/dev-tool/native-ext audit; `--require-pypi-metadata` adds README long-description checks for release uploads.
-- Compliance: `LICENSE` + `NOTICE`, `docs/compliance.md`, `python tools/compliance.py`; default-install footprint is tracked in `docs/footprint.md` via `python tools/footprint.py`.
+- Compliance: root `LICENSE` + `NOTICE`, `third_party/ghidra/{LICENSE,NOTICE}`, `tests/fixtures/README.md`, and `python tools/compliance.py`; default-install footprint is tracked in `docs/footprint.md` via `python tools/footprint.py`.
 
 # Design posture
 - User-centered; prefer caller convenience.
@@ -57,7 +57,7 @@
 - `docs/ai/planning.md` -- original brief
 - `docs/ai/preplanning.md` -- discovery constraints
 - `docs/ai/refine_plan.md` -- refinement checklist
-- `docs/compliance.md` -- compliance manifest
+- `NOTICE` -- redistribution notice plus upstream/fixture attribution pointers
 - `docs/footprint.md` -- footprint baseline
 - `docs/host_feasibility.md` -- P6 platform audit
 - `docs/release_notes.md` -- `0.1.x` release-line contract, support tiers

@@ -144,7 +144,8 @@ fixtures, steps, assertions, oracle strategy, and determinism constraints.
 - Enriched pcode/varnode companion contract and extraction invariants: `docs/specs.md` §3.3 and `notes/api/decompiler_inventory.md` §3.
 - Diagnostic path-visibility policy and public warning/error surfaces: `docs/specs.md` §3.4 and §7.
 - Initial public release notes and support messaging: `docs/release_notes.md`.
-- Redistribution/compliance manifest and release audit: `docs/compliance.md`.
+- Redistribution/compliance policy and release audit: `NOTICE`,
+  `docs/adr/adr-007.md`, and `docs/release_workflow.md`.
 - Milestones and release gates for deterministic behavior: `docs/roadmap.md`.
 - Startup/minimal-load, known-function, invalid-address, and jump-table expectations are consolidated into this catalog from baseline experiment findings.
 - Error category definitions and stability rules: `docs/specs.md` §3.4.

@@ -12,7 +12,6 @@ from typing import Any
 REQUIRED_ARTIFACTS = (
     "LICENSE",
     "NOTICE",
-    "docs/compliance.md",
     "third_party/ghidra/LICENSE",
     "third_party/ghidra/NOTICE",
     "tests/fixtures/README.md",
@@ -156,7 +155,6 @@ def audit_release_compliance(repo_root: str | Path) -> ComplianceReport:
     for relative_path, code in (
         ("LICENSE", "license_file_missing"),
         ("NOTICE", "notice_file_missing"),
-        ("docs/compliance.md", "compliance_doc_missing"),
         ("third_party/ghidra/LICENSE", "ghidra_license_missing"),
         ("third_party/ghidra/NOTICE", "ghidra_notice_missing"),
         ("tests/fixtures/README.md", "fixture_manifest_missing"),
@@ -178,22 +176,6 @@ def audit_release_compliance(repo_root: str | Path) -> ComplianceReport:
             ),
             code="notice_missing_reference",
             label="NOTICE",
-            issues=issues,
-        )
-
-    compliance_doc_text = artifact_texts["docs/compliance.md"]
-    if compliance_doc_text is not None:
-        _require_fragments(
-            text=compliance_doc_text,
-            fragments=(
-                "ADR-007",
-                "Artifact Manifest",
-                "Release Checklist",
-                "python tools/compliance.py",
-                "NOTICE",
-            ),
-            code="compliance_doc_missing_reference",
-            label="docs/compliance.md",
             issues=issues,
         )
 
