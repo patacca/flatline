@@ -57,6 +57,7 @@
 - `docs/archived/` -- archived historical docs (former full specs / roadmap); files under this directory are read-only unless explicitly requested, the directory may still receive newly archived files, and the contents are not maintained and may be outdated
 - `docs/code_style.md` -- style guide
 - `CHANGELOG.md` -- release history
+- `mkdocs.yml` + `docs-site/` -- published documentation site structure and navigation
 - `docs/ai/planning.md` -- original brief
 - `docs/ai/preplanning.md` -- discovery constraints
 - `docs/ai/refine_plan.md` -- refinement checklist
@@ -64,14 +65,15 @@
 - `docs/footprint.md` -- footprint baseline
 - `docs/release_notes.md` -- `0.1.x` release-line contract, support tiers
 - `docs/release_review.md` -- artifact-review checklist
+- `docs/release_workflow.md` -- operator release workflow and promotion steps
 - `docs/adr/adr-013.md` -- wheel distribution policy
 
 # Repo structure (non-vendored)
-- Build: `pyproject.toml`, `.github/workflows/release.yml`, `meson.build`, `src/flatline/meson.build`, `meson_options.txt`
+- Build: `pyproject.toml`, `mkdocs.yml`, `.github/workflows/`, `meson.build`, `src/flatline/meson.build`, `meson_options.txt`
 - Package: `src/flatline/` -- `_session.py`, `bridge/`, `runtime/`, `models/`, `native/`, `_errors.py`, `_version.py`
 - Dev tools: `tools/flatline_dev/`; wrappers `tools/compliance.py`, `tools/footprint.py`, `tools/release.py`, `tools/artifacts.py`; excluded from wheels by `tools/prune_dist.py`
 - Tests: `tests/`, `tests/_native_fixtures.py`, `tests/fixtures/*.hex`, `tests/fixtures/sources/`
-- Docs: `docs/`, `docs/ai/`; `notes/api/decompiler_inventory.md`, `notes/r2ghidra/integration_map.md`
+- Docs: `docs/`, `docs-site/`, `docs/ai/`, `docs/plans/`; `notes/api/decompiler_inventory.md`, `notes/r2ghidra/integration_map.md`
 
 # Build & development commands
 - Activate venv: `source .venv/bin/activate`
@@ -93,8 +95,8 @@
 - Native tests: `tox -e py313,py314 -- -m requires_native`
 - Native forced bridge: `tox -e py314-native -- -m requires_native`
 - Single category: `tox -e py313,py314 -- -m unit` (also: `contract`, `integration`, `regression`, `negative`)
-- Single file: `tox -e py313,py314 -- tests/unit/test_models.py`
-- Single test: `tox -e py313,py314 -- tests/unit/test_models.py::test_name -v`
+- Single file: `tox -e py313,py314 -- tests/unit/test_bridge_adapter_spec.py`
+- Single test: `tox -e py313,py314 -- tests/unit/test_bridge_adapter_spec.py::test_name -v`
 
 # Tests
 - Native tests need `.sla` from `ghidra-sleigh`; coverage: DATA, x86, AARCH64, RISCV, MIPS.
