@@ -53,8 +53,6 @@ def _format_user_facing_error(
         "pass --runtime-data-dir if auto-discovery is unavailable, and "
         "verify the target/address flags."
     )
-
-
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="flatline-xray",
@@ -112,11 +110,11 @@ def _missing_required_args(args: argparse.Namespace) -> list[str]:
 
 
 def _main_with_args(args: argparse.Namespace) -> int:
-    _emit_capstone_note_once()
-
     if args.list_targets:
         print_target_pairs(args.runtime_data_dir)
         return 0
+
+    _emit_capstone_note_once()
 
     try:
         missing = _missing_required_args(args)
@@ -154,9 +152,8 @@ def _main_with_args(args: argparse.Namespace) -> int:
             source_label=str(target.memory_path),
         ).show()
     except Exception as exc:
-        input_path = args.memory_image
         print(
-            _format_user_facing_error(exc, input_path=input_path),
+            _format_user_facing_error(exc, input_path=args.memory_image),
             file=sys.stderr,
         )
         return 1
