@@ -6,14 +6,20 @@ move between code and GUI without changing the underlying contract.
 
 ## 1. Install the viewer
 
-Install flatline with the optional X-Ray extra:
+Install flatline normally to get the viewer:
+
+```bash
+pip install flatline
+```
+
+If you want richer assembly decoding, add the optional `xray` extra:
 
 ```bash
 pip install "flatline[xray]"
 ```
 
-If you only need the core library, `pip install flatline` is enough. The X-Ray
-extra adds optional disassembly support via `capstone`.
+The extra adds optional disassembly support via `capstone`. The viewer itself
+ships with plain `pip install flatline`.
 
 ## 2. Pick a target
 
@@ -104,4 +110,3 @@ pair that matches your architecture and runtime data.
 If runtime data is not being discovered automatically, pass
 `--runtime-data-dir /path/to/ghidra/runtime/data` so the viewer can find the
 Sleigh assets.
-

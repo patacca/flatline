@@ -28,8 +28,9 @@ This pulls in the `ghidra-sleigh` companion package, which ships the compiled
 Sleigh processor definitions that flatline needs at runtime. No separate
 download or path configuration is required.
 
-If you want the shipped interactive viewer as well, install the optional
-`xray` extra:
+`pip install flatline` already includes the shipped `flatline-xray` viewer.
+Install the optional `xray` extra only if you want richer assembly decoding via
+`capstone`:
 
 ```bash
 pip install "flatline[xray]"

@@ -26,7 +26,14 @@ It is useful for:
 
 ## Installation and runtime
 
-Install the viewer with the optional extra:
+Install flatline normally to get the viewer:
+
+```bash
+pip install flatline
+```
+
+Install the optional extra only when you want richer assembly decoding via
+`capstone`:
 
 ```bash
 pip install "flatline[xray]"
@@ -43,4 +50,3 @@ your platform and try again.
 ## Tutorial
 
 Start with the [step-by-step tutorial](tutorial.md).
-
