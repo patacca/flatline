@@ -36,6 +36,7 @@
 - ENFORCE max 600 lines/file outside explicit exceptions (e.g.: docs). Contract-first/TDD. ASCII only in `.py`, `.cpp`, `.h`, `meson.build`.
 - Add succinct comments and docs where needed to make code easier to navigate and understand; prefer intent/structure notes over boilerplate commentary.
 - ALWAYS use a clear tree structure and self-explanatory names for files, modules, classes, functions, and variables.
+- In Python, ALWAYS guard imports used only for type hints behind `if TYPE_CHECKING:`.
 - Hard errors on invalid input; warnings on degraded success; no silent fallbacks.
 - Frozen value copies; no native pointers cross ABI.
 - Tests: structured format parsing, not grep; workflow tests only for durable release/support/native-build invariants, not for routine action pin rotations, SHA refreshes, or code-scanning remediations.

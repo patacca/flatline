@@ -30,6 +30,8 @@ that tools cannot enforce.
 - Every module starts with `from __future__ import annotations`.
 - Standard library imports first, then third-party, then first-party — enforced
   by `isort`.
+- Each file must import or include every module/header/file it directly uses.
+  Never rely on transitive imports/includes from other files.
 - Public API symbols are re-exported from `src/flatline/__init__.py` and listed
   in `__all__`. Internal leaf modules may use a `_` prefix (for example
   `_errors.py`), while larger internal subsystems live in descriptive packages

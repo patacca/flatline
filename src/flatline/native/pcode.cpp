@@ -1,6 +1,3 @@
-#include "shared.h"
-
-#include <list>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
@@ -8,6 +5,7 @@
 #include "database.hh"
 #include "funcdata.hh"
 #include "opcodes.hh"
+#include "shared.h"
 #include "type.hh"
 
 namespace nb = nanobind;

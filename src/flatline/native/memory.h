@@ -1,10 +1,10 @@
 #pragma once
 
+#include <nanobind/nanobind.h>
+
 #include <cstdint>
 #include <optional>
 #include <string>
-
-#include <nanobind/nanobind.h>
 
 // Public helper kept for compatibility with existing tests and bindings.
 class MemoryLoadImageSkeleton {

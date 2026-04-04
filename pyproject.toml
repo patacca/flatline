@@ -48,6 +48,7 @@ test = [
 ]
 lint = [
     "ruff >= 0.9",
+    "clang-format >= 22.1.1",
 ]
 docs = [
     "mkdocs-material >= 9.0",
@@ -161,13 +162,13 @@ package = "skip"
 extras = []
 # Mirrors [project.optional-dependencies].lint; duplicated because
 # package = "skip" prevents using extras.
-deps = ["ruff >= 0.9"]
+deps = ["ruff >= 0.9", "clang-format >= 22.1.1"]
 commands = [
     ["ruff", "check", "src/", "tests/", "tools/"],
     ["ruff", "format", "--check", "src/", "tests/", "tools/"],
-    ["clang-format", "--dry-run", "-Werror", "src/flatline/native/module.cpp"],
+    ["python", "tools/flatline_dev/check_clang_format.py"],
 ]
-allowlist_externals = ["clang-format"]
+allowlist_externals = []
 
 [tool.tox.env.py313]
 base_python = "python3.13"

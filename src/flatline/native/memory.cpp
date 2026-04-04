@@ -32,9 +32,8 @@ MemoryLoadImageSkeleton::MemoryLoadImageSkeleton(std::uint64_t base_address,
 
 nanobind::bytes MemoryLoadImageSkeleton::read(std::uint64_t address, std::size_t size) const {
     std::uint64_t end = 0;
-    if (!flatline::native_bridge::checked_add_u64(base_address_,
-                                                  static_cast<std::uint64_t>(memory_image_.size()),
-                                                  &end)) {
+    if (!flatline::native_bridge::checked_add_u64(
+            base_address_, static_cast<std::uint64_t>(memory_image_.size()), &end)) {
         throw nanobind::value_error("memory_image bounds overflow");
     }
     std::uint64_t requested_end = 0;
@@ -54,9 +53,8 @@ nanobind::bytes MemoryLoadImageSkeleton::read(std::uint64_t address, std::size_t
         std::string output(size, '\0');
         const std::size_t available_size = static_cast<std::size_t>(end - address);
         std::memcpy(output.data(), memory_image_.data() + offset, available_size);
-        fill_buffer_from_pattern(
-            reinterpret_cast<std::uint8_t*>(output.data() + available_size),
-            size - available_size, *tail_padding_);
+        fill_buffer_from_pattern(reinterpret_cast<std::uint8_t*>(output.data() + available_size),
+                                 size - available_size, *tail_padding_);
         return nanobind::bytes(output.data(), size);
     }
     return nanobind::bytes(memory_image_.data() + offset, size);

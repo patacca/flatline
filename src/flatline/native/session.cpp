@@ -2,8 +2,6 @@
 
 #include <cstdint>
 #include <cstring>
-#include <iomanip>
-#include <memory>
 #include <mutex>
 #include <optional>
 #include <sstream>
@@ -16,10 +14,9 @@
 #include "database.hh"
 #include "funcdata.hh"
 #include "loadimage.hh"
+#include "shared.h"
 #include "sleigh_arch.hh"
 #include "xml.hh"
-
-#include "shared.h"
 
 namespace nb = nanobind;
 
@@ -293,17 +290,17 @@ nb::dict NativeSession::decompile_function(const nb::dict& request) const {
             output_stream.str(), function_info, warnings, fallback_decompiler_version,
             native_request.language_id, selected_compiler, diagnostics, enriched);
     } catch (const std::invalid_argument& error) {
-        return flatline::native_bridge::error_result(
-            "invalid_argument", error.what(), fallback_decompiler_version, fallback_language_id,
-            fallback_compiler_spec);
+        return flatline::native_bridge::error_result("invalid_argument", error.what(),
+                                                     fallback_decompiler_version,
+                                                     fallback_language_id, fallback_compiler_spec);
     } catch (const ghidra::DataUnavailError& error) {
         return flatline::native_bridge::error_result("invalid_address", error.explain,
-                                                      fallback_decompiler_version,
-                                                      fallback_language_id, fallback_compiler_spec);
+                                                     fallback_decompiler_version,
+                                                     fallback_language_id, fallback_compiler_spec);
     } catch (const ghidra::DecoderError& error) {
         return flatline::native_bridge::error_result("decompile_failed", error.explain,
-                                                      fallback_decompiler_version,
-                                                      fallback_language_id, fallback_compiler_spec);
+                                                     fallback_decompiler_version,
+                                                     fallback_language_id, fallback_compiler_spec);
     } catch (const ghidra::LowlevelError& error) {
         return flatline::native_bridge::error_result(
             flatline::native_bridge::classifier_for_lowlevel_error(error.explain), error.explain,

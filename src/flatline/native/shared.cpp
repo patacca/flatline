@@ -2,13 +2,8 @@
 
 #include <algorithm>
 #include <cstring>
-#include <list>
 #include <limits>
-#include <set>
-#include <sstream>
 #include <stdexcept>
-#include <typeinfo>
-#include <unordered_map>
 
 #include "comment.hh"
 #include "database.hh"
@@ -171,7 +166,8 @@ static nb::dict type_info_to_dict_impl(const ghidra::Datatype* datatype) {
     return type_info;
 }
 
-static nb::object storage_info_from_address_impl(const ghidra::Address& address, std::int64_t size) {
+static nb::object storage_info_from_address_impl(const ghidra::Address& address,
+                                                 std::int64_t size) {
     if (address.isInvalid() || address.getSpace() == nullptr || size <= 0) {
         return nb::none();
     }

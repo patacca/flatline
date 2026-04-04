@@ -1,10 +1,10 @@
 #pragma once
 
+#include <nanobind/nanobind.h>
+
 #include <string>
 #include <utility>
 #include <vector>
-
-#include <nanobind/nanobind.h>
 
 class NativeSession {
    public:

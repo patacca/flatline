@@ -1,11 +1,11 @@
 #pragma once
 
+#include <nanobind/nanobind.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <string>
-
-#include <nanobind/nanobind.h>
 
 namespace ghidra {
 class Address;
@@ -15,7 +15,7 @@ class FuncProto;
 class Funcdata;
 class PcodeOp;
 class Symbol;
-}
+}  // namespace ghidra
 
 namespace flatline::native_bridge {
 
@@ -44,21 +44,16 @@ nanobind::list jump_tables_to_list(ghidra::Funcdata& function);
 nanobind::list local_variables_to_list(const ghidra::Funcdata& function);
 nanobind::dict prototype_to_dict(const ghidra::FuncProto& prototype);
 nanobind::dict function_info_to_dict(ghidra::Funcdata& function);
-nanobind::dict metadata_dict(const std::string& decompiler_version,
-                             const std::string& language_id,
-                             const std::string& compiler_spec,
-                             const nanobind::dict& diagnostics);
+nanobind::dict metadata_dict(const std::string& decompiler_version, const std::string& language_id,
+                             const std::string& compiler_spec, const nanobind::dict& diagnostics);
 nanobind::dict error_result(const std::string& category, const std::string& message,
-                            const std::string& decompiler_version,
-                            const std::string& language_id,
+                            const std::string& decompiler_version, const std::string& language_id,
                             const std::string& compiler_spec);
 nanobind::dict success_result(const std::string& c_code, const nanobind::dict& function_info,
                               const nanobind::list& warnings,
                               const std::string& decompiler_version,
-                              const std::string& language_id,
-                              const std::string& compiler_spec,
-                              const nanobind::dict& diagnostics,
-                              const nanobind::object& enriched);
+                              const std::string& language_id, const std::string& compiler_spec,
+                              const nanobind::dict& diagnostics, const nanobind::object& enriched);
 nanobind::dict pcode_to_dict(const ghidra::Funcdata& function);
 std::string classifier_for_lowlevel_error(const std::string& message);
 void fill_repeating_bytes(std::uint8_t* ptr, std::size_t size, const std::string& pattern);
