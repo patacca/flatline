@@ -1,4 +1,4 @@
-#include "_flatline_native_session.h"
+#include "session.h"
 
 #include <cstdint>
 #include <cstring>
@@ -19,7 +19,7 @@
 #include "sleigh_arch.hh"
 #include "xml.hh"
 
-#include "_flatline_native_shared.h"
+#include "shared.h"
 
 namespace nb = nanobind;
 

@@ -36,7 +36,7 @@ def test_u018_default_install_footprint_uses_payload_files_only(tmp_path: Path) 
     runtime_data_dir = site_packages / "ghidra_sleigh" / "data"
 
     _write_sized_file(site_packages / "flatline" / "__init__.py", 11)
-    _write_sized_file(site_packages / "flatline" / "_bridge.py", 29)
+    _write_sized_file(site_packages / "flatline" / "bridge" / "core.py", 29)
     _write_sized_file(site_packages / "flatline" / "__pycache__" / "__init__.pyc", 999)
     _write_sized_file(site_packages / "flatline-0.1.0.dev0.dist-info" / "METADATA", 7)
 
@@ -57,7 +57,7 @@ def test_u018_default_install_footprint_uses_payload_files_only(tmp_path: Path) 
             site_packages,
             [
                 "flatline/__init__.py",
-                "flatline/_bridge.py",
+                "flatline/bridge/core.py",
                 "flatline/__pycache__/__init__.pyc",
                 "flatline-0.1.0.dev0.dist-info/METADATA",
             ],

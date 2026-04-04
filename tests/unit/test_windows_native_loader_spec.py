@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import flatline._bridge as bridge_module
-import flatline._windows as windows_module
 import tests.conftest as pytest_config
+from flatline.bridge import core as bridge_module
+from flatline.runtime import windows as windows_module
 
 
 def test_u030_windows_native_loader_registers_vcpkg_zlib_bin_dir(
@@ -80,7 +80,7 @@ def test_u030_windows_native_loader_skips_vcpkg_when_repaired_bundle_present(
 
     monkeypatch.setattr(windows_module.sys, "platform", "win32")
     monkeypatch.setenv("VCPKG_INSTALLATION_ROOT", str(vcpkg_root))
-    monkeypatch.setattr(windows_module, "__file__", str(package_dir / "_windows.py"))
+    monkeypatch.setattr(windows_module, "__file__", str(package_dir / "runtime" / "windows.py"))
     monkeypatch.setattr(
         windows_module.os,
         "add_dll_directory",

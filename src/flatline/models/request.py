@@ -8,8 +8,8 @@ from os import fspath
 from typing import Any
 
 from flatline._errors import InvalidArgumentError
-from flatline._models_enriched import Enriched
-from flatline._models_types import (
+from flatline.models.enriched import Enriched
+from flatline.models.types import (
     DEFAULT_MAX_INSTRUCTIONS,
     ErrorItem,
     FunctionInfo,

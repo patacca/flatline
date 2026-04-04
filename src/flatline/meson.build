@@ -1,17 +1,31 @@
 py.install_sources(
   '__init__.py',
-  '_bridge.py',
-  '_bridge_payloads.py',
   '_errors.py',
-  '_models.py',
-  '_models_enriched.py',
-  '_models_request.py',
-  '_models_types.py',
-  '_runtime_data.py',
   '_session.py',
   '_version.py',
-  '_windows.py',
   subdir: 'flatline',
+)
+
+py.install_sources(
+  'bridge/__init__.py',
+  'bridge/core.py',
+  'bridge/payloads.py',
+  subdir: 'flatline/bridge',
+)
+
+py.install_sources(
+  'models/__init__.py',
+  'models/enriched.py',
+  'models/request.py',
+  'models/types.py',
+  subdir: 'flatline/models',
+)
+
+py.install_sources(
+  'runtime/__init__.py',
+  'runtime/discovery.py',
+  'runtime/windows.py',
+  subdir: 'flatline/runtime',
 )
 
 cpp = meson.get_compiler('cpp')
@@ -244,11 +258,11 @@ if nanobind_available
   py.extension_module(
     '_flatline_native',
     [
-      '_flatline_native.cpp',
-      '_flatline_native_memory.cpp',
-      '_flatline_native_pcode.cpp',
-      '_flatline_native_session.cpp',
-      '_flatline_native_shared.cpp',
+      'native/module.cpp',
+      'native/memory.cpp',
+      'native/pcode.cpp',
+      'native/session.cpp',
+      'native/shared.cpp',
       nanobind_source_dir / 'nb_combined.cpp',
     ],
     cpp_args: native_bridge_cpp_args,

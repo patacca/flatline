@@ -35,7 +35,7 @@ Scan the entire repository (excluding `third_party/`) for:
 - **Stale content:** docs, comments, or configs that reference removed/renamed items, wrong flags,
   or outdated phase status.
 - **Duplicated definitions:** the same concept defined in multiple places with divergent values
-  (e.g., metatype enum in specs.md vs `_models.py`; error categories in specs.md vs `_errors.py`).
+  (e.g., metatype enum in specs.md vs `models/`; error categories in specs.md vs `_errors.py`).
 - **Code style violations** that ruff cannot catch (see `docs/code_style.md`):
   non-ASCII characters in source files, missing `from __future__ import annotations`, naming
   convention mismatches.

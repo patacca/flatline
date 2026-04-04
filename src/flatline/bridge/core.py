@@ -10,22 +10,24 @@ from __future__ import annotations
 import importlib
 from collections.abc import Sequence
 from os import fspath
-from typing import Any, TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
-from flatline._bridge_payloads import (
-    _configuration_error_result,
+from flatline._errors import ConfigurationError, InternalError
+from flatline.bridge.payloads import (
     _coerce_decompile_result,
     _coerce_language_compiler_pair,
+    _configuration_error_result,
     _internal_error_result,
     _request_to_native_payload,
     _unsupported_target_result,
 )
-from flatline._errors import ConfigurationError, InternalError
-from flatline._runtime_data import enumerate_runtime_data_language_compilers
-from flatline._windows import configure_windows_native_dll_dirs
+from flatline.runtime import (
+    configure_windows_native_dll_dirs,
+    enumerate_runtime_data_language_compilers,
+)
 
 if TYPE_CHECKING:
-    from flatline._models import DecompileRequest, DecompileResult, LanguageCompilerPair
+    from flatline.models import DecompileRequest, DecompileResult, LanguageCompilerPair
 
 
 class BridgeSession(Protocol):

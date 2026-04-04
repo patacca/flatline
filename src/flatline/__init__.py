@@ -13,7 +13,12 @@ from flatline._errors import (
     InvalidArgumentError,
     UnsupportedTargetError,
 )
-from flatline._models import (
+from flatline._session import DecompilerSession, decompile_function, list_language_compilers
+from flatline._version import (
+    DECOMPILER_VERSION,
+    __version__,
+)
+from flatline.models import (
     VALID_METATYPES,
     VALID_WARNING_PHASES,
     AnalysisBudget,
@@ -37,11 +42,6 @@ from flatline._models import (
     VarnodeInfo,
     VersionInfo,
     WarningItem,
-)
-from flatline._session import DecompilerSession, decompile_function, list_language_compilers
-from flatline._version import (
-    DECOMPILER_VERSION,
-    __version__,
 )
 
 

@@ -14,7 +14,7 @@ from pathlib import Path
 from xml.etree import ElementTree
 
 from flatline._errors import ConfigurationError
-from flatline._models import LanguageCompilerPair
+from flatline.models.types import LanguageCompilerPair
 
 _LANGUAGE_TAGS: frozenset[str] = frozenset(
     {

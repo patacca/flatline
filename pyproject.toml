@@ -165,7 +165,7 @@ deps = ["ruff >= 0.9"]
 commands = [
     ["ruff", "check", "src/", "tests/", "tools/"],
     ["ruff", "format", "--check", "src/", "tests/", "tools/"],
-    ["clang-format", "--dry-run", "-Werror", "src/flatline/_flatline_native.cpp"],
+    ["clang-format", "--dry-run", "-Werror", "src/flatline/native/module.cpp"],
 ]
 allowlist_externals = ["clang-format"]
 

@@ -27,13 +27,15 @@
 - Only test functional changes; packaging/release-metadata/CI-only fixes use direct build+artifact validation, not new tests, unless they change a durable release/support/native-build contract.
 
 # Architecture (3-layer adapter)
-- Public: `DecompilerSession` + one-shot wrappers `_session.py`; models `_models.py`; errors `_errors.py`.
+- Public: `DecompilerSession` + one-shot wrappers `_session.py`; models `models/`; errors `_errors.py`.
 - Enriched output: `Enriched` -> `Pcode`, plus `PcodeOpInfo`, `VarnodeInfo`, `VarnodeFlags`; opt-in; base contract lightweight when omitted; `Pcode` keeps raw exported values, O(1) ID lookup, and `to_graph()` returns a `networkx.MultiDiGraph`.
-- Bridge: nanobind `_flatline_native.cpp` + Python fallback `_bridge.py`; pre-validates language/compiler, `.ldefs` fallback; unstable internal.
+- Bridge: nanobind `native/module.cpp` + Python fallback `bridge/core.py`; pre-validates language/compiler, `.ldefs` fallback; unstable internal.
 - Native: 82 upstream .cc via Meson into static `ghidra_decompiler` (zlib required); `SleighArchitecture` -> `LoadImage` -> action reset/perform -> `docFunction` -> `FunctionInfo`; P7 extracts opcode names via `get_opname(op.code())` + varnode use-def edges post-`Action::perform()`.
 
 # Conventions
-- Max 600 lines/file outside explicit exceptions (for example `docs/archived/` read-only material). Contract-first/TDD. ASCII only in `.py`, `.cpp`, `.h`, `meson.build`.
+- ENFORCE max 600 lines/file outside explicit exceptions (e.g.: docs). Contract-first/TDD. ASCII only in `.py`, `.cpp`, `.h`, `meson.build`.
+- Add succinct comments and docs where needed to make code easier to navigate and understand; prefer intent/structure notes over boilerplate commentary.
+- ALWAYS use a clear tree structure and self-explanatory names for files, modules, classes, functions, and variables.
 - Hard errors on invalid input; warnings on degraded success; no silent fallbacks.
 - Frozen value copies; no native pointers cross ABI.
 - Tests: structured format parsing, not grep; workflow tests only for durable release/support/native-build invariants, not for routine action pin rotations, SHA refreshes, or code-scanning remediations.
@@ -65,7 +67,7 @@
 
 # Repo structure (non-vendored)
 - Build: `pyproject.toml`, `.github/workflows/release.yml`, `meson.build`, `src/flatline/meson.build`, `meson_options.txt`
-- Package: `src/flatline/` -- `_session.py`, `_bridge.py`, `_runtime_data.py`, `_flatline_native.cpp`, `_models.py`, `_errors.py`, `_version.py`
+- Package: `src/flatline/` -- `_session.py`, `bridge/`, `runtime/`, `models/`, `native/`, `_errors.py`, `_version.py`
 - Dev tools: `tools/flatline_dev/`; wrappers `tools/compliance.py`, `tools/footprint.py`, `tools/release.py`, `tools/artifacts.py`; excluded from wheels by `tools/prune_dist.py`
 - Tests: `tests/`, `tests/_native_fixtures.py`, `tests/fixtures/*.hex`, `tests/fixtures/sources/`
 - Docs: `docs/`, `docs/ai/`; `notes/api/decompiler_inventory.md`, `notes/r2ghidra/integration_map.md`

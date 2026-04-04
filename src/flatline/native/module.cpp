@@ -3,8 +3,8 @@
 
 #include <nanobind/nanobind.h>
 
-#include "_flatline_native_memory.h"
-#include "_flatline_native_session.h"
+#include "memory.h"
+#include "session.h"
 
 namespace nb = nanobind;
 

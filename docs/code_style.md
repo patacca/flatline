@@ -31,7 +31,9 @@ that tools cannot enforce.
 - Standard library imports first, then third-party, then first-party — enforced
   by `isort`.
 - Public API symbols are re-exported from `src/flatline/__init__.py` and listed
-  in `__all__`. Internal modules use a `_` prefix (`_models.py`, `_errors.py`).
+  in `__all__`. Internal leaf modules may use a `_` prefix (for example
+  `_errors.py`), while larger internal subsystems live in descriptive packages
+  such as `models/`, `bridge/`, and `runtime/`.
 
 ### Naming
 
@@ -64,7 +66,7 @@ that tools cannot enforce.
   from typing import TYPE_CHECKING
 
   if TYPE_CHECKING:
-      from flatline._models import DecompileRequest
+      from flatline.models import DecompileRequest
   ```
   **How to decide:** if removing the import causes a `NameError` at runtime
   (not just a type-checker complaint), it belongs at module level. Otherwise

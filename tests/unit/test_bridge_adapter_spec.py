@@ -17,9 +17,10 @@ from flatline import (
     VarnodeFlags,
     VarnodeInfo,
 )
-from flatline import _bridge as bridge_module
+from flatline.bridge import core as bridge_module
 
 from ._bridge_doubles import (
+    _make_runtime_data_fixture,
     _NativeModuleDouble,
     _NativeSessionEmptyEnumerationDouble,
     _NativeSessionFailureDouble,
@@ -27,7 +28,6 @@ from ._bridge_doubles import (
     _NativeSessionMissingEnrichedDouble,
     _NativeSessionMissingPcodeDouble,
     _NativeSessionSuccessDouble,
-    _make_runtime_data_fixture,
 )
 
 

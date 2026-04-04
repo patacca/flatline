@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from flatline._errors import ERROR_CATEGORIES, InternalError
-from flatline._models import (
+from flatline._version import DECOMPILER_VERSION
+from flatline.models import (
     VALID_WARNING_PHASES,
     AnalysisBudget,
     CallSiteInfo,
@@ -28,10 +29,9 @@ from flatline._models import (
     VarnodeInfo,
     WarningItem,
 )
-from flatline._version import DECOMPILER_VERSION
 
 if TYPE_CHECKING:
-    from flatline._models import DecompileRequest
+    from flatline.models import DecompileRequest
 
 
 def _request_to_native_payload(request: DecompileRequest) -> dict[str, Any]:

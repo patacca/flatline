@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
 MAX_LINES_PER_FILE = 600
 EXEMPT_PREFIXES = ("docs/archived/",)

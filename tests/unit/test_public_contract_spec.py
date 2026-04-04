@@ -22,7 +22,7 @@ from flatline import (
     VarnodeFlags,
     VarnodeInfo,
 )
-from flatline._models import _validate_compiler_spec
+from flatline.models import _validate_compiler_spec
 
 # ---------------------------------------------------------------------------
 # U-001: Request schema rejects missing required fields

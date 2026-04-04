@@ -9,13 +9,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from flatline._bridge import create_bridge_session
 from flatline._errors import InvalidArgumentError
-from flatline._runtime_data import resolve_session_runtime_data_dir
+from flatline.bridge import create_bridge_session
+from flatline.runtime import resolve_session_runtime_data_dir
 
 if TYPE_CHECKING:
-    from flatline._bridge import BridgeSession
-    from flatline._models import DecompileRequest, DecompileResult, LanguageCompilerPair
+    from flatline.bridge import BridgeSession
+    from flatline.models import DecompileRequest, DecompileResult, LanguageCompilerPair
 
 
 class DecompilerSession:

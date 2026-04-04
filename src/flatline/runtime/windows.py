@@ -18,8 +18,10 @@ _WINDOWS_DLL_DIRECTORY_HANDLE: object | None = None
 
 def _has_repaired_dll_bundle() -> bool:
     """Return whether a delvewheel-style bundled DLL directory is present."""
-    package_dir = pathlib.Path(__file__).resolve().parent
-    bundle_dir = package_dir.parent / f"{package_dir.name}.libs"
+    # `windows.py` lives under `flatline/runtime/`, but delvewheel places the
+    # sibling bundle next to the top-level `flatline/` package directory.
+    package_root = pathlib.Path(__file__).resolve().parents[1]
+    bundle_dir = package_root.parent / f"{package_root.name}.libs"
     if not bundle_dir.is_dir():
         return False
     return any(bundle_dir.glob("*.dll"))

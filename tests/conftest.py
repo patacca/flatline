@@ -9,7 +9,7 @@ import pathlib
 
 import pytest
 
-from flatline._windows import configure_windows_native_dll_dirs
+from flatline.runtime import configure_windows_native_dll_dirs
 from tests._native_fixtures import get_native_runtime_data_dir
 
 # ---------------------------------------------------------------------------

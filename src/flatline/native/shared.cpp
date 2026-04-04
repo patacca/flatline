@@ -1,4 +1,4 @@
-#include "_flatline_native_shared.h"
+#include "shared.h"
 
 #include <algorithm>
 #include <cstring>

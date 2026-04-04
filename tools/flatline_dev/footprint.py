@@ -8,7 +8,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
-from flatline._runtime_data import resolve_session_runtime_data_dir
+from flatline.runtime import resolve_session_runtime_data_dir
 
 _IGNORED_DISTRIBUTION_PARTS = frozenset({"__pycache__"})
 _IGNORED_DISTRIBUTION_SUFFIXES = frozenset({".pyc"})

@@ -8,7 +8,7 @@ from functools import cached_property
 import networkx as nx
 
 from flatline._errors import InvalidArgumentError
-from flatline._models_types import PcodeOpInfo, VarnodeInfo
+from flatline.models.types import PcodeOpInfo, VarnodeInfo
 
 
 @dataclass(frozen=True)
@@ -119,6 +119,6 @@ def _index_varnodes(varnodes: list[VarnodeInfo]) -> dict[int, VarnodeInfo]:
 
 
 __all__ = [
-    "Pcode",
     "Enriched",
+    "Pcode",
 ]

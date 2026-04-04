@@ -1,9 +1,9 @@
-#include "_flatline_native_memory.h"
+#include "memory.h"
 
 #include <cstring>
 #include <string>
 
-#include "_flatline_native_shared.h"
+#include "shared.h"
 
 namespace {
 
