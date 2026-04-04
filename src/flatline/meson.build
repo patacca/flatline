@@ -241,6 +241,10 @@ if nanobind_available
     '_flatline_native',
     [
       '_flatline_native.cpp',
+      '_flatline_native_memory.cpp',
+      '_flatline_native_pcode.cpp',
+      '_flatline_native_session.cpp',
+      '_flatline_native_shared.cpp',
       nanobind_source_dir / 'nb_combined.cpp',
     ],
     cpp_args: native_bridge_cpp_args,
