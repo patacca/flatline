@@ -28,6 +28,16 @@ py.install_sources(
   subdir: 'flatline/runtime',
 )
 
+py.install_sources(
+  'xray/__init__.py',
+  'xray/__main__.py',
+  'xray/_graph_window.py',
+  'xray/_inputs.py',
+  'xray/_inspector.py',
+  'xray/_layout.py',
+  subdir: 'flatline/xray',
+)
+
 cpp = meson.get_compiler('cpp')
 cpp_argument_syntax = cpp.get_argument_syntax()
 
