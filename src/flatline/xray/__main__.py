@@ -39,6 +39,22 @@ def _emit_capstone_note_once() -> None:
     _CAPSTONE_NOTE_EMITTED = True
 
 
+def _format_user_facing_error(
+    exc: Exception,
+    *,
+    input_path: Path | None = None,
+) -> str:
+    prefix = "flatline-xray could not start"
+    if input_path is not None:
+        prefix += f" for {input_path}"
+    return (
+        f"{prefix}: {exc}\n"
+        "Ensure ghidra-sleigh is installed (`pip install flatline`), "
+        "pass --runtime-data-dir if auto-discovery is unavailable, and "
+        "verify the target/address flags."
+    )
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="flatline-xray",
@@ -102,40 +118,48 @@ def _main_with_args(args: argparse.Namespace) -> int:
         print_target_pairs(args.runtime_data_dir)
         return 0
 
-    missing = _missing_required_args(args)
-    if missing:
-        print(
-            "flatline-xray requires "
-            + ", ".join(missing)
-            + " unless --list-targets is set.",
-            file=sys.stderr,
-        )
-        return 2
+    try:
+        missing = _missing_required_args(args)
+        if missing:
+            print(
+                "flatline-xray requires "
+                + ", ".join(missing)
+                + " unless --list-targets is set.",
+                file=sys.stderr,
+            )
+            return 2
 
-    target = MemoryImageTarget(
-        memory_path=args.memory_image,
-        base_address=args.base_address,
-        function_address=args.function_address,
-        language_id=args.language_id,
-        compiler_spec=args.compiler_spec,
-    )
-    request, result = decompile_target(target, runtime_data_dir=args.runtime_data_dir)
-    if result.error is not None:
+        target = MemoryImageTarget(
+            memory_path=args.memory_image,
+            base_address=args.base_address,
+            function_address=args.function_address,
+            language_id=args.language_id,
+            compiler_spec=args.compiler_spec,
+        )
+        request, result = decompile_target(target, runtime_data_dir=args.runtime_data_dir)
+        if result.error is not None:
+            print(
+                "flatline-xray could not decompile "
+                f"{target.memory_path}: {result.error.category}: {result.error.message}",
+                file=sys.stderr,
+            )
+            return 1
+
+        from flatline.xray._graph_window import XrayWindow
+
+        XrayWindow(
+            args.title,
+            result,
+            request=request,
+            source_label=str(target.memory_path),
+        ).show()
+    except Exception as exc:
+        input_path = args.memory_image
         print(
-            "flatline-xray could not decompile "
-            f"{target.memory_path}: {result.error.category}: {result.error.message}",
+            _format_user_facing_error(exc, input_path=input_path),
             file=sys.stderr,
         )
         return 1
-
-    from flatline.xray._graph_window import XrayWindow
-
-    XrayWindow(
-        args.title,
-        result,
-        request=request,
-        source_label=str(target.memory_path),
-    ).show()
     return 0
 
 
