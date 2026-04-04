@@ -5,8 +5,6 @@ instance should exist per process.
 
 from __future__ import annotations
 
-import sys
-
 try:
     import tkinter as tk
 except ImportError as exc:  # pragma: no cover - platform dependent
@@ -18,15 +16,12 @@ except ImportError as exc:  # pragma: no cover - platform dependent
         "  macOS Homebrew: brew install python-tk"
     ) from exc
 from flatline.xray._inputs import (
-    CAPSTONE_AVAILABLE,
-    _capstone_params,
     _opcode_color,
     _short_opcode,
     _varnode_badge,
     _varnode_color,
-    capstone,
+    disassemble_instruction_addresses,
 )
-
 from flatline.xray._inspector import op_text, summary_text, varnode_text
 from flatline.xray._layout import (
     VisualNode,
@@ -52,12 +47,14 @@ EDGE_OUTPUT = "#ff7b72"
 
 class XrayWindow(tk.Tk):
     """Interactive pcode graph viewer for one decompiled function."""
+
     _root_gap = 100.0
     _child_gap = 26.0
     _level_gap = 122.0
     _top_margin = 90.0
     _bottom_margin = 120.0
     _side_margin = 100.0
+
     def __init__(
         self,
         title: str,
@@ -228,27 +225,27 @@ class XrayWindow(tk.Tk):
         self.canvas.bind("<MouseWheel>", self._on_mouse_wheel)
         self.canvas.bind(
             "<Button-4>",
-            lambda event: self._do_zoom(self._zoom * 1.15, event)
-            if event.state & 0x4
-            else self.canvas.xview_scroll(-3, "units")
-            if event.state & 0x1
-            else self.canvas.yview_scroll(-3, "units"),
+            lambda event: (
+                self._do_zoom(self._zoom * 1.15, event)
+                if event.state & 0x4
+                else self.canvas.xview_scroll(-3, "units")
+                if event.state & 0x1
+                else self.canvas.yview_scroll(-3, "units")
+            ),
         )
         self.canvas.bind(
             "<Button-5>",
-            lambda event: self._do_zoom(self._zoom / 1.15, event)
-            if event.state & 0x4
-            else self.canvas.xview_scroll(3, "units")
-            if event.state & 0x1
-            else self.canvas.yview_scroll(3, "units"),
+            lambda event: (
+                self._do_zoom(self._zoom / 1.15, event)
+                if event.state & 0x4
+                else self.canvas.xview_scroll(3, "units")
+                if event.state & 0x1
+                else self.canvas.yview_scroll(3, "units")
+            ),
         )
         try:
-            self.canvas.bind(
-                "<Button-6>", lambda _event: self.canvas.xview_scroll(-3, "units")
-            )
-            self.canvas.bind(
-                "<Button-7>", lambda _event: self.canvas.xview_scroll(3, "units")
-            )
+            self.canvas.bind("<Button-6>", lambda _event: self.canvas.xview_scroll(-3, "units"))
+            self.canvas.bind("<Button-7>", lambda _event: self.canvas.xview_scroll(3, "units"))
         except tk.TclError:
             pass
         self.bind("<Control-equal>", lambda event: self._do_zoom(self._zoom * 1.15, event))
@@ -257,14 +254,17 @@ class XrayWindow(tk.Tk):
             lambda event: self._do_zoom(self._zoom / 1.15, event),
         )
         self.bind("<Control-0>", lambda _event: self._do_zoom(1.0))
+
     def show(self) -> None:
         self.mainloop()
+
     def _require_pcode(self, result):
         if result.error is not None:
             raise ValueError("XrayWindow requires a successful decompilation result")
         if result.enriched is None or result.enriched.pcode is None:
             raise ValueError("XrayWindow requires a result produced with enriched=True")
         return result.enriched.pcode
+
     def _result_label(self) -> str:
         if self.request is not None:
             compiler = self.request.compiler_spec or "default"
@@ -273,16 +273,19 @@ class XrayWindow(tk.Tk):
         language = metadata.get("language_id", "?")
         compiler = metadata.get("compiler_spec", "?")
         return f"{language} / {compiler}"
+
     def _fallback_address(self) -> int | None:
         if self.request is not None:
             return self.request.function_address
         info = self.result.function_info
         return info.entry_address if info is not None else None
+
     def _set_inspector_text(self, text: str) -> None:
         self.inspector.configure(state="normal")
         self.inspector.delete("1.0", tk.END)
         self.inspector.insert("1.0", text)
         self.inspector.configure(state="disabled")
+
     def _draw_depth_bands(self) -> None:
         for depth in range(self.max_depth + 1):
             y = self.virtual_height - self._bottom_margin - depth * self._level_gap
@@ -307,10 +310,12 @@ class XrayWindow(tk.Tk):
                 fill=MUTED,
                 font=("Helvetica", 10, "bold"),
             )
+
     def _draw_edges(self, node: VisualNode) -> None:
         for child in node.children:
             self._draw_edge(child, node)
             self._draw_edges(child)
+
     def _draw_edge(self, source: VisualNode, target: VisualNode) -> None:
         sx = source.x
         sy = source.y + node_pad(source, self.varnode_by_id)
@@ -335,6 +340,7 @@ class XrayWindow(tk.Tk):
             arrow=tk.LAST,
             arrowshape=(12, 14, 6),
         )
+
     def _draw_cross_edge(self, source: VisualNode, target: VisualNode) -> None:
         sx = source.x
         sy = source.y + node_pad(source, self.varnode_by_id)
@@ -358,6 +364,7 @@ class XrayWindow(tk.Tk):
             arrow=tk.LAST,
             arrowshape=(10, 12, 5),
         )
+
     def _draw_nodes(self, node: VisualNode) -> None:
         if node.actual[0] == "op":
             self._draw_op_node(node)
@@ -365,6 +372,7 @@ class XrayWindow(tk.Tk):
             self._draw_varnode_node(node)
         for child in node.children:
             self._draw_nodes(child)
+
     def _draw_op_node(self, node: VisualNode) -> None:
         op = self.op_by_id[node.actual[1]]
         size, _ = node_size(node, self.varnode_by_id)
@@ -404,6 +412,7 @@ class XrayWindow(tk.Tk):
             "<Button-1>",
             lambda _event, selected=node: self._show_node(selected),
         )
+
     def _draw_varnode_node(self, node: VisualNode) -> None:
         varnode = self.varnode_by_id[node.actual[1]]
         width, height = node_size(node, self.varnode_by_id)
@@ -477,6 +486,7 @@ class XrayWindow(tk.Tk):
             "<Button-1>",
             lambda _event, selected=node: self._show_node(selected),
         )
+
     def _show_node(self, node: VisualNode) -> None:
         if node.actual[0] == "op":
             op = self.op_by_id[node.actual[1]]
@@ -487,53 +497,26 @@ class XrayWindow(tk.Tk):
             text = varnode_text(varnode, self.op_by_id, depth=node.depth)
             address = (
                 self.op_by_id[varnode.defining_op_id].instruction_address
-                if varnode.defining_op_id is not None
-                and varnode.defining_op_id in self.op_by_id
+                if varnode.defining_op_id is not None and varnode.defining_op_id in self.op_by_id
                 else None
             )
         self._set_inspector_text(text)
         if address is not None:
             self._select_asm_address(address)
+
     def _disassemble(self) -> list[tuple[int, str]]:
-        insn_addrs = sorted({op.instruction_address for op in self.pcode.pcode_ops})
-        if not insn_addrs:
-            return []
-        memory_image: bytes | None = None
-        base_address = 0
-        language_id = ""
-        if self.request is not None:
-            memory_image = self.request.memory_image
-            base_address = self.request.base_address
-            language_id = self.request.language_id
-        else:
-            metadata = self.result.metadata or {}
-            language_id = metadata.get("language_id", "")
-            fallback_address = self._fallback_address()
-            if fallback_address is not None:
-                base_address = fallback_address
-        if memory_image is not None and capstone is not None:
-            params = _capstone_params(language_id)
-            if params is not None:
-                try:
-                    md = capstone.Cs(*params)
-                    addr_set = set(insn_addrs)
-                    disasm: dict[int, str] = {}
-                    for insn in md.disasm(memory_image, base_address):
-                        if insn.address in addr_set:
-                            disasm[insn.address] = f"{insn.mnemonic} {insn.op_str}".strip()
-                    return [
-                        (addr, f"0x{addr:x}:  {disasm[addr]}") if addr in disasm else (addr, f"0x{addr:x}:  ???")
-                        for addr in insn_addrs
-                    ]
-                except Exception as exc:
-                    print(f"capstone disassembly failed: {exc}", file=sys.stderr)
-            elif CAPSTONE_AVAILABLE:
-                print(f"no capstone mapping for language {language_id!r}", file=sys.stderr)
-        return [(addr, f"0x{addr:x}") for addr in insn_addrs]
+        return disassemble_instruction_addresses(
+            self.pcode.pcode_ops,
+            request=self.request,
+            metadata=self.result.metadata or {},
+            fallback_address=self._fallback_address(),
+        )
+
     def _on_asm_select(self, _event) -> None:
         sel = self.asm_listbox.curselection()
         addresses = {self._disasm[i][0] for i in sel}
         self._highlight_addresses(addresses)
+
     def _highlight_addresses(self, addresses: set[int]) -> None:
         for key in self._highlighted_keys:
             node = self._node_by_key[key]
@@ -557,6 +540,7 @@ class XrayWindow(tk.Tk):
                 self._highlighted_keys.add(node.key)
         for key in self._highlighted_keys:
             self.canvas.itemconfigure(f"shape-{key}", outline=ACCENT, width=3)
+
     def _select_asm_address(self, address: int) -> None:
         self.asm_listbox.selection_clear(0, tk.END)
         for index, (addr, _) in enumerate(self._disasm):
@@ -565,6 +549,7 @@ class XrayWindow(tk.Tk):
                 self.asm_listbox.see(index)
                 break
         self._highlight_addresses({address})
+
     def _on_mouse_wheel(self, event) -> None:
         if event.state & 0x4:
             factor = 1.15 if event.delta > 0 else 1 / 1.15
@@ -573,6 +558,7 @@ class XrayWindow(tk.Tk):
             self.canvas.xview_scroll(int(-event.delta / 120), "units")
         else:
             self.canvas.yview_scroll(int(-event.delta / 120), "units")
+
     def _do_zoom(self, new_zoom: float, event=None) -> None:
         new_zoom = max(0.15, min(5.0, new_zoom))
         if abs(new_zoom - self._zoom) < 0.001:
@@ -594,4 +580,6 @@ class XrayWindow(tk.Tk):
         if new_h > 0:
             self.canvas.yview_moveto((cy * ratio - widget_y) / new_h)
         self._zoom = new_zoom
+
+
 __all__ = ["XrayWindow"]

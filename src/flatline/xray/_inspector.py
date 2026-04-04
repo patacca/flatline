@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from flatline.models import FunctionInfo, PcodeOpInfo, VarnodeInfo
 
 
-def result_address(info: "FunctionInfo | None", fallback_address: int | None = None) -> str:
+def result_address(info: FunctionInfo | None, fallback_address: int | None = None) -> str:
     """Return the best available function address."""
 
     if info is not None:
@@ -76,7 +76,7 @@ def summary_text(
 
 
 def op_text(
-    op: "PcodeOpInfo",
+    op: PcodeOpInfo,
     varnode_by_id,
     *,
     depth: int,
@@ -113,7 +113,7 @@ def op_text(
 
 
 def varnode_text(
-    varnode: "VarnodeInfo",
+    varnode: VarnodeInfo,
     op_by_id,
     *,
     depth: int,
@@ -167,14 +167,14 @@ def varnode_text(
     )
 
 
-def varnode_brief(varnode: "VarnodeInfo") -> str:
+def varnode_brief(varnode: VarnodeInfo) -> str:
     """Render a compact one-line description of a varnode."""
 
     badge = _badge_for_varnode(varnode)
     return f"{badge} {varnode.space}@0x{varnode.offset:x} size={varnode.size}"
 
 
-def _badge_for_varnode(varnode: "VarnodeInfo") -> str:
+def _badge_for_varnode(varnode: VarnodeInfo) -> str:
     if varnode.flags.is_constant:
         return "CONST"
     if varnode.flags.is_input:

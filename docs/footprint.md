@@ -18,7 +18,7 @@ Reference command:
 - `python tools/footprint.py`
 
 Reference environment for the committed baseline:
-- Date: `2026-03-29`
+- Date: `2026-04-04`
 - Host: Linux x86_64
 - Python: `3.14.3`
 - Install shape: installed wheel in `.tox/py314`
@@ -29,21 +29,23 @@ Captured from `.tox/py314/bin/python tools/footprint.py`:
 
 | Component | Bytes | MiB | Files | Notes |
 | --- | ---: | ---: | ---: | --- |
-| `flatline` distribution | `6,187,987` | `5.90` | `17` | Installed wheel payload including the native extension in `.tox/py314` |
+| `flatline` distribution | `6,260,321` | `5.97` | `31` | Installed wheel payload including the native extension and shipped `flatline.xray` modules in `.tox/py314` |
 | `networkx` distribution | `7,081,035` | `6.75` | `603` | Graph-projection dependency payload required by `Pcode.to_graph()` |
 | `ghidra-sleigh` distribution | `24,810,933` | `23.66` | `848` | Companion runtime-data package payload |
 | `ghidra-sleigh` runtime data | `24,688,937` | `23.55` | `841` | Runtime-data subset inside the package |
-| Combined default install | `38,079,955` | `36.32` | `1,468` | `flatline` + `networkx` + `ghidra-sleigh` payloads |
+| Combined default install | `38,152,289` | `36.38` | `1,482` | `flatline` + `networkx` + `ghidra-sleigh` payloads |
 
-Runtime-data share of combined footprint: `64.8%`.
+Runtime-data share of combined footprint: `64.7%`.
 
 ## Product Interpretation
 
-- The current default-install baseline is about `36.32 MiB`, and the bundled
+- The current default-install baseline is about `36.38 MiB`, and the bundled
   runtime data still accounts for most of it.
 - The non-runtime share is materially higher than the earlier baseline because
   the installed wheel now includes the native extension and the public graph
   projection depends on `networkx`.
+- Shipping `flatline.xray` adds a small pure-Python increase to the default
+  install without changing the dependency baseline.
 - If future footprint growth makes the default unacceptable, any move to a
   reduced runtime-data build such as `all_processors=false` must be an explicit
   product/compliance decision recorded in the roadmap/specs, not silent default

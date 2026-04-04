@@ -6,6 +6,7 @@ environments and by CLI-only code paths.
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -83,7 +84,7 @@ def list_target_pairs(
 
 def format_target_pair(pair: LanguageCompilerPair) -> str:
     """Render one language/compiler pair for CLI display."""
-    return f"{pair.language_id} / {pair.compiler_spec}"
+    return f"{pair.language_id} {pair.compiler_spec}"
 
 
 def iter_target_lines(
@@ -98,6 +99,54 @@ def print_target_pairs(runtime_data_dir: str | Path | None = None) -> None:
     """Print discovered language/compiler pairs one per line."""
     for line in iter_target_lines(runtime_data_dir):
         print(line)
+
+
+def disassemble_instruction_addresses(
+    pcode_ops,
+    *,
+    request=None,
+    metadata=None,
+    fallback_address: int | None = None,
+) -> list[tuple[int, str]]:
+    """Render instruction lines for the assembly panel."""
+    insn_addrs = sorted({op.instruction_address for op in pcode_ops})
+    if not insn_addrs:
+        return []
+
+    memory_image: bytes | None = None
+    base_address = 0
+    language_id = ""
+    if request is not None:
+        memory_image = request.memory_image
+        base_address = request.base_address
+        language_id = request.language_id
+    else:
+        metadata = metadata or {}
+        language_id = metadata.get("language_id", "")
+        if fallback_address is not None:
+            base_address = fallback_address
+
+    if memory_image is not None and capstone is not None:
+        params = _capstone_params(language_id)
+        if params is not None:
+            try:
+                md = capstone.Cs(*params)
+                addr_set = set(insn_addrs)
+                disasm: dict[int, str] = {}
+                for insn in md.disasm(memory_image, base_address):
+                    if insn.address in addr_set:
+                        disasm[insn.address] = f"{insn.mnemonic} {insn.op_str}".strip()
+                return [
+                    (addr, f"0x{addr:x}:  {disasm[addr]}")
+                    if addr in disasm
+                    else (addr, f"0x{addr:x}:  ???")
+                    for addr in insn_addrs
+                ]
+            except Exception as exc:
+                print(f"capstone disassembly failed: {exc}", file=sys.stderr)
+        elif CAPSTONE_AVAILABLE:
+            print(f"no capstone mapping for language {language_id!r}", file=sys.stderr)
+    return [(addr, f"0x{addr:x}") for addr in insn_addrs]
 
 
 def _opcode_color(opcode: str) -> str:

@@ -6,6 +6,7 @@
 - `flatline`: pip-installable Python wrapper around Ghidra C++ decompiler (decompiler surface only).
 - Version `0.1.2.dev0` aligned in `pyproject.toml`, `meson.build`, `src/flatline/_version.py`; latest public release is `0.1.1`; repo now carries unreleased post-`0.1.1` work.
 - Status: P6, P6.5, and P7 are closed; TestPyPI validated `0.1.1.dev1`, then production `0.1.1` published successfully on `2026-03-28`; enriched output now exposes `Enriched.pcode` plus `Pcode.to_graph()` for downstream graph traversal/drawing.
+- Packaged utility: `src/flatline/xray/` ships `flatline-xray` / `python -m flatline.xray` as an alpha tkinter pcode viewer for caller-provided memory images; tkinter stays lazily imported and `flatline[xray]` adds optional `capstone` disassembly.
 - Docs: GitHub Pages published at `https://patacca.github.io/flatline/` (root redirects to `latest/`); README documents both hosted and local MkDocs access.
 - Supported hosts: Linux x86_64, macOS arm64, Windows x86_64; Linux aarch64 + macOS x86_64 = published-wheel targets pending coverage lanes.
 - Wheels: CPython 3.13/3.14, 64-bit only; manylinux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64; deferred targets: 32-bit, musllinux, Windows ARM64, macOS universal2; policy in `docs/adr/adr-013.md`.
@@ -70,7 +71,7 @@
 
 # Repo structure (non-vendored)
 - Build: `pyproject.toml`, `mkdocs.yml`, `.github/workflows/`, `meson.build`, `src/flatline/meson.build`, `meson_options.txt`
-- Package: `src/flatline/` -- `_session.py`, `bridge/`, `runtime/`, `models/`, `native/`, `_errors.py`, `_version.py`
+- Package: `src/flatline/` -- `_session.py`, `bridge/`, `runtime/`, `models/`, `native/`, `xray/`, `_errors.py`, `_version.py`
 - Dev tools: `tools/flatline_dev/`; wrappers `tools/compliance.py`, `tools/footprint.py`, `tools/release.py`, `tools/artifacts.py`; excluded from wheels by `tools/prune_dist.py`
 - Tests: `tests/`, `tests/_native_fixtures.py`, `tests/fixtures/*.hex`, `tests/fixtures/sources/`
 - Docs: `docs/`, `docs-site/`, `docs/ai/`, `docs/plans/`; `notes/api/decompiler_inventory.md`, `notes/r2ghidra/integration_map.md`

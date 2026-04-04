@@ -53,6 +53,8 @@ def _format_user_facing_error(
         "pass --runtime-data-dir if auto-discovery is unavailable, and "
         "verify the target/address flags."
     )
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="flatline-xray",
@@ -120,9 +122,7 @@ def _main_with_args(args: argparse.Namespace) -> int:
         missing = _missing_required_args(args)
         if missing:
             print(
-                "flatline-xray requires "
-                + ", ".join(missing)
-                + " unless --list-targets is set.",
+                "flatline-xray requires " + ", ".join(missing) + " unless --list-targets is set.",
                 file=sys.stderr,
             )
             return 2

@@ -6,9 +6,14 @@ deprecation notice.
 
 from __future__ import annotations
 
-from flatline.xray.__main__ import main
-
 __all__ = ["XrayWindow", "main"]
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Run the X-Ray CLI entry point without importing tkinter eagerly."""
+    from flatline.xray.__main__ import main as _main
+
+    return _main(argv)
 
 
 def __getattr__(name: str):

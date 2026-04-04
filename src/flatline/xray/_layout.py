@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -19,13 +19,13 @@ class VisualNode:
     key: str
     actual: NodeId
     depth: int
-    children: list["VisualNode"] = field(default_factory=list)
+    children: list[VisualNode] = field(default_factory=list)
     span: float = 0.0
     x: float = 0.0
     y: float = 0.0
 
 
-def sorted_ops(pcode_ops: Sequence["PcodeOpInfo"]) -> list["PcodeOpInfo"]:
+def sorted_ops(pcode_ops: Sequence[PcodeOpInfo]) -> list[PcodeOpInfo]:
     """Return pcode ops in stable visual order."""
 
     return sorted(
@@ -40,9 +40,9 @@ def sorted_ops(pcode_ops: Sequence["PcodeOpInfo"]) -> list["PcodeOpInfo"]:
 
 
 def sink_ops(
-    sorted_pcode_ops: Sequence["PcodeOpInfo"],
-    varnode_by_id: Mapping[int, "VarnodeInfo"],
-) -> list["PcodeOpInfo"]:
+    sorted_pcode_ops: Sequence[PcodeOpInfo],
+    varnode_by_id: Mapping[int, VarnodeInfo],
+) -> list[PcodeOpInfo]:
     """Return root candidates for the visual forest."""
 
     sinks: list[PcodeOpInfo] = []
@@ -60,9 +60,9 @@ def sink_ops(
 
 
 def build_visual_forest(
-    op_by_id: Mapping[int, "PcodeOpInfo"],
-    varnode_by_id: Mapping[int, "VarnodeInfo"],
-    sorted_pcode_ops: Sequence["PcodeOpInfo"],
+    op_by_id: Mapping[int, PcodeOpInfo],
+    varnode_by_id: Mapping[int, VarnodeInfo],
+    sorted_pcode_ops: Sequence[PcodeOpInfo],
 ) -> tuple[list[VisualNode], list[tuple[VisualNode, VisualNode]]]:
     """Build the visual forest plus any cross edges between reused nodes."""
 
@@ -261,9 +261,8 @@ def assign_forest_positions(
         if not node.children:
             return
 
-        children_width = (
-            sum(child.span for child in node.children)
-            + child_gap * (len(node.children) - 1)
+        children_width = sum(child.span for child in node.children) + child_gap * (
+            len(node.children) - 1
         )
         child_left = left + (node.span - children_width) / 2.0
         for child in node.children:
@@ -278,7 +277,7 @@ def assign_forest_positions(
 
 def node_size(
     node: VisualNode,
-    varnode_by_id: Mapping[int, "VarnodeInfo"],
+    varnode_by_id: Mapping[int, VarnodeInfo],
 ) -> tuple[float, float]:
     """Return the node size used by the drawing code."""
 
@@ -292,7 +291,7 @@ def node_size(
 
 def node_pad(
     node: VisualNode,
-    varnode_by_id: Mapping[int, "VarnodeInfo"],
+    varnode_by_id: Mapping[int, VarnodeInfo],
 ) -> float:
     """Return the node radius used for edge attachment."""
 
