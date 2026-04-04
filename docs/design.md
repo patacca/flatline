@@ -39,6 +39,8 @@ The main workflows to preserve in future design are:
 - Prefer explicit inputs, explicit validation, and explicit failure over hidden inference or silent fallback.
 - Keep defaults deterministic when callers omit optional configuration.
 - Preserve a lightweight baseline contract; richer analysis surfaces should be additive.
+- Treat shipped convenience utilities such as `flatline-xray` as additive
+  layers over the memory-image core, not as alternate input models.
 - Do not treat full upstream feature parity as a goal by default; additions should justify caller value.
 - Support broad ISA availability, but state confidence boundaries clearly.
 - Treat supported hosts, published wheels, fixture-backed ISAs, and best-effort ISAs as distinct concepts in both design and release messaging.
@@ -91,6 +93,8 @@ The main workflows to preserve in future design are:
 - When capability expands, keep the base workflow simple and make extra complexity explicit.
 - Support claims should follow evidence, not availability alone.
 - Footprint pressure should trigger an explicit product decision, not silent pruning of the default experience.
+- `flatline.xray` is an alpha API. Its constructor signature and UI behavior
+  may change between minor releases without deprecation.
 
 ## Persistent Risks Worth Remembering
 

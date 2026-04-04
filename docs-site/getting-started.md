@@ -4,6 +4,10 @@ This tutorial walks you through decompiling your first function with flatline.
 By the end you will know how to construct a request, read the structured result,
 and use a session for batch work.
 
+If you want to inspect the same memory-image contract in a GUI, see the
+[X-Ray tutorial](xray/tutorial.md) after you understand the core request
+model.
+
 ## What flatline needs
 
 flatline does not parse binary file formats. Instead it operates on a flat
@@ -215,3 +219,8 @@ with flatline.DecompilerSession() as session:
     function. The session pays the decompiler library initialization and
     runtime data discovery cost once, so batch calls avoid redundant
     startup work compared to creating a new one-shot session each time.
+
+## Next step
+
+- [X-Ray Tutorial](xray/tutorial.md) - use the shipped viewer with the same
+  caller-provided memory image and target selection.

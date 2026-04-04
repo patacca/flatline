@@ -1,0 +1,46 @@
+# X-Ray
+
+`flatline-xray` is the shipped interactive viewer for flatline's memory-image
+contract. It opens the same kind of request you use from Python, then adds a
+graph view, an assembly browser, and a node inspector on top of the recovered
+p-code.
+
+This is a convenience layer, not a separate product model. You still provide:
+
+- raw memory image bytes
+- a base address
+- a function address
+- target metadata (`language_id` and optional `compiler_spec`)
+
+## What it is for
+
+Use X-Ray when you want to inspect one function interactively instead of
+writing code around `DecompileResult` and `Enriched.pcode`.
+
+It is useful for:
+
+- first-pass reverse engineering on caller-provided bytes
+- visual inspection of p-code use-def structure
+- checking how the decompiler recovered a function before you embed the result
+  in tooling
+
+## Installation and runtime
+
+Install the viewer with the optional extra:
+
+```bash
+pip install "flatline[xray]"
+```
+
+That extra enables optional disassembly support via `capstone`. If `capstone`
+is missing, the viewer still runs and shows instruction addresses, but the
+assembly panel cannot render decoded instructions.
+
+`tkinter` is part of the standard library, but some Python distributions ship
+it separately. If the viewer says `tkinter` is missing, install the package for
+your platform and try again.
+
+## Tutorial
+
+Start with the [step-by-step tutorial](tutorial.md).
+

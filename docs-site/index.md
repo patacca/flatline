@@ -24,6 +24,9 @@ Python API.
 - **Auto-discovered runtime data** — Sleigh processor definitions ship via the
   companion `ghidra-sleigh` package and are discovered automatically; no manual
   path configuration is needed.
+- **Shipped X-Ray viewer** — `flatline-xray` is an optional interactive layer
+  for the same memory-image contract, adding graph inspection and assembly
+  browsing without changing the core API.
 
 ## Quick start
 
@@ -51,3 +54,5 @@ print(result.c_code)
 - [Installation](installation.md) — install flatline and verify the setup.
 - [Getting Started](getting-started.md) — a step-by-step tutorial covering the
   core workflow.
+- [X-Ray](xray/index.md) — learn the shipped viewer and how it fits the core
+  request model.

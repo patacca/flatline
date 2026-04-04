@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Enriched.pcode` and `Pcode.get_pcode_op()`, `Pcode.get_varnode()`, and
   `Pcode.to_graph()` for deterministic ID lookup and graph projection over the
   exported raw pcode / varnode payload
+- Shipped `flatline-xray` as an interactive pcode-graph viewer and function
+  inspector for caller-provided memory images
 
 ### Changed
 - The enriched-output contract now keeps pcode under its own future-proof

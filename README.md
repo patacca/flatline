@@ -89,6 +89,32 @@ pip install -e ".[dev]"
 `runtime_data_dir` is omitted. `runtime_data_dir` remains available as an
 explicit override for custom or reduced runtime-data roots.
 
+### Flatline X-Ray
+
+`flatline-xray` is the shipped interactive viewer for the same memory-image
+contract that powers the Python API. It is a convenience layer, not a separate
+input model: you still provide raw bytes, a base address, a function address,
+and target metadata.
+
+Install the optional disassembly helper when you want richer assembly output:
+
+```bash
+pip install "flatline[xray]"
+```
+
+`tkinter` is part of the Python standard library, but some Python installs do
+not include it. If `flatline-xray` reports that `tkinter` is missing, install
+the platform package for your Python distribution and rerun the tool.
+
+Run the viewer with:
+
+```bash
+flatline-xray --help
+```
+
+See the new [X-Ray docs](docs-site/xray/index.md) for the shipped utility and
+its tutorial.
+
 ### Native bridge
 
 Real decompilation requires the native bridge -- a compiled C++ extension

@@ -28,6 +28,18 @@ This pulls in the `ghidra-sleigh` companion package, which ships the compiled
 Sleigh processor definitions that flatline needs at runtime. No separate
 download or path configuration is required.
 
+If you want the shipped interactive viewer as well, install the optional
+`xray` extra:
+
+```bash
+pip install "flatline[xray]"
+```
+
+That extra adds optional disassembly support via `capstone`. `tkinter` is part
+of the Python standard library, but some distributions package it separately.
+If `flatline-xray` reports that `tkinter` is missing, install the platform
+package for your Python distribution and rerun the tool.
+
 ## Build from source
 
 Use this path when you want to work on flatline itself, run the test suite, or
@@ -70,3 +82,10 @@ If the native extension built correctly, `flatline.decompile_function` will
 produce real decompiled output. Without the native extension the API is fully
 importable but every decompile call returns a `configuration_error` result
 rather than C code.
+
+## Optional X-Ray viewer
+
+The shipped `flatline-xray` utility uses the same request fields as the core
+API: raw memory image bytes, base address, function address, and target
+selection. The viewer is documented in the [X-Ray section](xray/index.md), with
+a step-by-step tutorial at [X-Ray Tutorial](xray/tutorial.md).
