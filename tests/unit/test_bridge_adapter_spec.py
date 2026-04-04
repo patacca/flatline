@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any
-
 import pytest
 
 from flatline import (
@@ -21,302 +18,26 @@ from flatline import (
     VarnodeInfo,
 )
 from flatline import _bridge as bridge_module
-from flatline._version import DECOMPILER_VERSION
 
-
-class _NativeSessionSuccessDouble:
-    """Native-session test double with tuple/list return shapes."""
-
-    def __init__(self) -> None:
-        self.closed = False
-        self.last_request_payload: dict[str, Any] | None = None
-        self.decompile_calls = 0
-
-    def close(self) -> None:
-        self.closed = True
-
-    def list_language_compilers(self) -> list[tuple[str, str]]:
-        return [("x86:LE:64:default", "gcc")]
-
-    def decompile_function(self, request_payload: dict[str, Any]) -> dict[str, Any]:
-        self.decompile_calls += 1
-        self.last_request_payload = request_payload
-        enriched = None
-        if request_payload["enriched"]:
-            enriched = {
-                "pcode": {
-                    "pcode_ops": [
-                        {
-                            "id": 0,
-                            "opcode": "INT_ADD",
-                            "instruction_address": request_payload["function_address"],
-                            "sequence_time": 1,
-                            "sequence_order": 0,
-                            "input_varnode_ids": [0, 1],
-                            "output_varnode_id": 2,
-                        },
-                        {
-                            "id": 1,
-                            "opcode": "RETURN",
-                            "instruction_address": request_payload["function_address"] + 3,
-                            "sequence_time": 2,
-                            "sequence_order": 1,
-                            "input_varnode_ids": [2],
-                            "output_varnode_id": None,
-                        },
-                    ],
-                    "varnodes": [
-                        {
-                            "id": 0,
-                            "space": "register",
-                            "offset": 0x0,
-                            "size": 4,
-                            "flags": {
-                                "is_constant": False,
-                                "is_input": True,
-                                "is_free": False,
-                                "is_implied": False,
-                                "is_explicit": True,
-                                "is_read_only": False,
-                                "is_persist": False,
-                                "is_addr_tied": False,
-                            },
-                            "defining_op_id": None,
-                            "use_op_ids": [0],
-                        },
-                        {
-                            "id": 1,
-                            "space": "register",
-                            "offset": 0x8,
-                            "size": 4,
-                            "flags": {
-                                "is_constant": False,
-                                "is_input": True,
-                                "is_free": False,
-                                "is_implied": False,
-                                "is_explicit": True,
-                                "is_read_only": False,
-                                "is_persist": False,
-                                "is_addr_tied": False,
-                            },
-                            "defining_op_id": None,
-                            "use_op_ids": [0],
-                        },
-                        {
-                            "id": 2,
-                            "space": "unique",
-                            "offset": 0x100,
-                            "size": 4,
-                            "flags": {
-                                "is_constant": False,
-                                "is_input": False,
-                                "is_free": False,
-                                "is_implied": False,
-                                "is_explicit": True,
-                                "is_read_only": False,
-                                "is_persist": False,
-                                "is_addr_tied": False,
-                            },
-                            "defining_op_id": 0,
-                            "use_op_ids": [1],
-                        },
-                    ],
-                }
-            }
-        return {
-            "c_code": "int add(int a, int b) { return a + b; }",
-            "function_info": {
-                "name": "add",
-                "entry_address": 0x1000,
-                "size": 16,
-                "is_complete": True,
-                "prototype": {
-                    "calling_convention": "__cdecl",
-                    "parameters": [
-                        {
-                            "name": "a",
-                            "type": {"name": "int", "size": 4, "metatype": "int"},
-                            "index": 0,
-                            "storage": None,
-                        },
-                        {
-                            "name": "b",
-                            "type": {"name": "int", "size": 4, "metatype": "int"},
-                            "index": 1,
-                            "storage": None,
-                        },
-                    ],
-                    "return_type": {"name": "int", "size": 4, "metatype": "int"},
-                    "is_noreturn": False,
-                    "has_this_pointer": False,
-                    "has_input_errors": False,
-                    "has_output_errors": False,
-                },
-                "local_variables": [],
-                "call_sites": [],
-                "jump_tables": [],
-                "diagnostics": {
-                    "is_complete": True,
-                    "has_unreachable_blocks": False,
-                    "has_unimplemented": False,
-                    "has_bad_data": False,
-                    "has_no_code": False,
-                },
-                "varnode_count": 24,
-            },
-            "warnings": [
-                {
-                    "code": "analyze.W001",
-                    "message": "synthetic warning",
-                    "phase": "analyze",
-                }
-            ],
-            "error": None,
-            "metadata": {
-                "decompiler_version": DECOMPILER_VERSION,
-                "language_id": request_payload["language_id"],
-                "compiler_spec": request_payload["compiler_spec"],
-                "diagnostics": {},
-            },
-            "enriched": enriched,
-        }
-
-
-class _NativeSessionFailureDouble:
-    """Native-session test double that raises in decompile."""
-
-    def list_language_compilers(self) -> list[tuple[str, str]]:
-        return [("x86:LE:64:default", "gcc")]
-
-    def decompile_function(self, request_payload: dict[str, Any]) -> dict[str, Any]:
-        raise RuntimeError("native bridge failure at /tmp/native/session.log")
-
-    def close(self) -> None:
-        return None
-
-
-class _NativeSessionInvalidSuccessShapeDouble:
-    """Native-session test double returning a malformed success payload."""
-
-    def list_language_compilers(self) -> list[tuple[str, str]]:
-        return [("x86:LE:64:default", "gcc")]
-
-    def decompile_function(self, request_payload: dict[str, Any]) -> dict[str, Any]:
-        return {
-            "c_code": "int add(int a, int b) { return a + b; }",
-            "function_info": None,
-            "warnings": [],
-            "error": None,
-            "metadata": {
-                "decompiler_version": DECOMPILER_VERSION,
-                "language_id": request_payload["language_id"],
-                "compiler_spec": request_payload["compiler_spec"] or "",
-                "diagnostics": {},
-            },
-        }
-
-    def close(self) -> None:
-        return None
-
-
-class _NativeSessionMissingEnrichedDouble(_NativeSessionSuccessDouble):
-    """Native-session double that omits opt-in enriched payloads."""
-
-    def decompile_function(self, request_payload: dict[str, Any]) -> dict[str, Any]:
-        result = super().decompile_function(request_payload)
-        result.pop("enriched", None)
-        return result
-
-
-class _NativeSessionMissingPcodeDouble(_NativeSessionSuccessDouble):
-    """Native-session double that returns enriched with pcode missing."""
-
-    def decompile_function(self, request_payload: dict[str, Any]) -> dict[str, Any]:
-        result = super().decompile_function(request_payload)
-        if result.get("enriched") is not None:
-            result["enriched"] = {"pcode": None}
-        return result
-
-
-class _NativeSessionEmptyEnumerationDouble:
-    """Native-session double with empty enumeration output.
-
-    Used to verify runtime-data-backed fallback enumeration in bridge adapters.
-    """
-
-    def __init__(self) -> None:
-        self.decompile_calls = 0
-
-    def list_language_compilers(self) -> list[tuple[str, str]]:
-        return []
-
-    def decompile_function(self, request_payload: dict[str, Any]) -> dict[str, Any]:
-        self.decompile_calls += 1
-        return {
-            "c_code": None,
-            "function_info": None,
-            "warnings": [],
-            "error": {
-                "category": "internal_error",
-                "message": "native bridge skeleton: decompile pipeline not implemented",
-                "retryable": False,
-            },
-            "metadata": {
-                "decompiler_version": DECOMPILER_VERSION,
-                "language_id": request_payload["language_id"],
-                "compiler_spec": request_payload["compiler_spec"] or "",
-                "diagnostics": {},
-            },
-        }
-
-    def close(self) -> None:
-        return None
-
-
-class _NativeModuleDouble:
-    """Module-level test double exposing create_session."""
-
-    def __init__(self, native_session: Any) -> None:
-        self.native_session = native_session
-        self.runtime_data_dir: str | None = None
-
-    def create_session(self, runtime_data_dir: str | None = None) -> Any:
-        self.runtime_data_dir = runtime_data_dir
-        return self.native_session
-
-
-def _make_runtime_data_fixture(tmp_path: Path) -> Path:
-    """Create a synthetic runtime-data directory with one valid pair.
-
-    Includes one compiler entry whose backing spec file exists and one whose
-    spec file is missing, allowing existence filtering assertions.
-    """
-    runtime_dir = tmp_path / "runtime_data"
-    language_dir = runtime_dir / "languages"
-    language_dir.mkdir(parents=True)
-
-    (language_dir / "x86-gcc.cspec").write_text("<compiler_spec/>", encoding="ascii")
-    (language_dir / "x86.ldefs").write_text(
-        (
-            "<language_definitions>\n"
-            '  <language id="x86:LE:64:default">\n'
-            '    <compiler name="gcc" spec="x86-gcc.cspec"/>\n'
-            '    <compiler name="broken" spec="missing.cspec"/>\n'
-            "  </language>\n"
-            "</language_definitions>\n"
-        ),
-        encoding="ascii",
-    )
-    return runtime_dir
+from ._bridge_doubles import (
+    _NativeModuleDouble,
+    _NativeSessionEmptyEnumerationDouble,
+    _NativeSessionFailureDouble,
+    _NativeSessionInvalidSuccessShapeDouble,
+    _NativeSessionMissingEnrichedDouble,
+    _NativeSessionMissingPcodeDouble,
+    _NativeSessionSuccessDouble,
+    _make_runtime_data_fixture,
+)
 
 
 def test_u010_bridge_session_fallback_when_native_module_missing(
     monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
+    tmp_path,
 ) -> None:
     """U-010: Missing native extension falls back to deterministic Python bridge."""
 
-    def _raise_import_error(_: str) -> Any:
+    def _raise_import_error(_: str) -> object:
         raise ImportError("module not found")
 
     monkeypatch.setattr(bridge_module.importlib, "import_module", _raise_import_error)
@@ -329,7 +50,7 @@ def test_u010_bridge_session_fallback_when_native_module_missing(
 
 def test_u011_bridge_session_adapts_native_payloads(
     monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
+    tmp_path,
 ) -> None:
     """U-011: Native tuple/dict payloads are adapted to public model types."""
     native_session = _NativeSessionSuccessDouble()
@@ -377,7 +98,7 @@ def test_u011_bridge_session_adapts_native_payloads(
 
 def test_u011_bridge_serializes_explicit_analysis_budget(
     monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
+    tmp_path,
 ) -> None:
     """U-011: Explicit analysis budgets use the stable native payload shape."""
     native_session = _NativeSessionSuccessDouble()
@@ -406,7 +127,7 @@ def test_u011_bridge_serializes_explicit_analysis_budget(
 
 def test_u011_bridge_serializes_explicit_tail_padding_values(
     monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
+    tmp_path,
 ) -> None:
     """U-011: Tail padding uses the stable native payload shape."""
     native_session = _NativeSessionSuccessDouble()
@@ -445,7 +166,7 @@ def test_u011_bridge_serializes_explicit_tail_padding_values(
 
 def test_u028_bridge_session_adapts_enriched_payload_when_requested(
     monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
+    tmp_path,
 ) -> None:
     """U-028: Native enriched-output payloads adapt to public frozen model types."""
     native_session = _NativeSessionSuccessDouble()
@@ -621,11 +342,11 @@ def test_u012_bridge_session_normalizes_native_exceptions(monkeypatch: pytest.Mo
 
 def test_u013_bridge_enumerates_runtime_data_when_native_module_missing(
     monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
+    tmp_path,
 ) -> None:
     """U-013: Fallback bridge enumerates runtime-data language/compiler pairs."""
 
-    def _raise_import_error(_: str) -> Any:
+    def _raise_import_error(_: str) -> object:
         raise ImportError("module not found")
 
     monkeypatch.setattr(bridge_module.importlib, "import_module", _raise_import_error)
@@ -640,7 +361,7 @@ def test_u013_bridge_enumerates_runtime_data_when_native_module_missing(
 
 def test_u013_bridge_uses_runtime_data_when_native_enumeration_is_empty(
     monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
+    tmp_path,
 ) -> None:
     """U-013: Native adapter falls back to runtime-data enumeration when needed."""
     runtime_dir = _make_runtime_data_fixture(tmp_path)
@@ -669,11 +390,11 @@ def test_u013_bridge_uses_runtime_data_when_native_enumeration_is_empty(
 
 def test_u014_bridge_rejects_missing_runtime_data_dir(
     monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
+    tmp_path,
 ) -> None:
     """U-014: Session startup fails deterministically for missing runtime_data_dir."""
 
-    def _raise_import_error(_: str) -> Any:
+    def _raise_import_error(_: str) -> object:
         raise ImportError("module not found")
 
     monkeypatch.setattr(bridge_module.importlib, "import_module", _raise_import_error)

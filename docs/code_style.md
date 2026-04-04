@@ -112,6 +112,9 @@ that tools cannot enforce.
 - Module docstring at top: one-line summary, then a short paragraph describing
   the relevant contract or design context when useful. Avoid pointing routine
   docstrings at archived spec section numbers.
+- File size: keep tracked files at 600 lines or fewer. Rare exceptions require
+  an explicit rationale, and `docs/archived/` remains exempt because archived
+  material is read-only rather than maintained.
 - Logical sections separated by comment banners:
   ```python
   # --- Section name ---

@@ -1,8 +1,12 @@
 py.install_sources(
   '__init__.py',
   '_bridge.py',
+  '_bridge_payloads.py',
   '_errors.py',
   '_models.py',
+  '_models_enriched.py',
+  '_models_request.py',
+  '_models_types.py',
   '_runtime_data.py',
   '_session.py',
   '_version.py',

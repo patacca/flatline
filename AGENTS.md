@@ -33,7 +33,7 @@
 - Native: 82 upstream .cc via Meson into static `ghidra_decompiler` (zlib required); `SleighArchitecture` -> `LoadImage` -> action reset/perform -> `docFunction` -> `FunctionInfo`; P7 extracts opcode names via `get_opname(op.code())` + varnode use-def edges post-`Action::perform()`.
 
 # Conventions
-- Max ~700 lines/file. Contract-first/TDD. ASCII only in `.py`, `.cpp`, `.h`, `meson.build`.
+- Max 600 lines/file outside explicit exceptions (for example `docs/archived/` read-only material). Contract-first/TDD. ASCII only in `.py`, `.cpp`, `.h`, `meson.build`.
 - Hard errors on invalid input; warnings on degraded success; no silent fallbacks.
 - Frozen value copies; no native pointers cross ABI.
 - Tests: structured format parsing, not grep; workflow tests only for durable release/support/native-build invariants, not for routine action pin rotations, SHA refreshes, or code-scanning remediations.
