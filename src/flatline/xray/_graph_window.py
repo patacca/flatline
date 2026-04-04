@@ -2,8 +2,11 @@
 The flatline.xray API is alpha. XrayWindow subclasses ``tk.Tk``, so only one
 instance should exist per process.
 """
+
 from __future__ import annotations
+
 import sys
+
 try:
     import tkinter as tk
 except ImportError as exc:  # pragma: no cover - platform dependent
@@ -23,6 +26,7 @@ from flatline.xray._inputs import (
     _varnode_color,
     capstone,
 )
+
 from flatline.xray._inspector import op_text, summary_text, varnode_text
 from flatline.xray._layout import (
     VisualNode,
@@ -35,6 +39,7 @@ from flatline.xray._layout import (
     node_size,
     sorted_ops,
 )
+
 BACKGROUND = "#07111c"
 CANVAS_BG = "#08131f"
 PANEL_BG = "#0d1726"
@@ -43,6 +48,8 @@ MUTED = "#93a7c1"
 ACCENT = "#ffb703"
 EDGE_INPUT = "#54c6eb"
 EDGE_OUTPUT = "#ff7b72"
+
+
 class XrayWindow(tk.Tk):
     """Interactive pcode graph viewer for one decompiled function."""
     _root_gap = 100.0
@@ -97,14 +104,7 @@ class XrayWindow(tk.Tk):
             child_gap=self._child_gap,
             level_gap=self._level_gap,
         )
-        if self.request is not None:
-            compiler = self.request.compiler_spec or "default"
-            self.result_label = f"{self.request.language_id} / {compiler}"
-        else:
-            metadata = self.result.metadata or {}
-            language = metadata.get("language_id", "?")
-            compiler = metadata.get("compiler_spec", "?")
-            self.result_label = f"{language} / {compiler}"
+        self.result_label = self._result_label()
         self._node_by_key: dict[str, VisualNode] = {node.key: node for node in self.visual_nodes}
         self._disasm = self._disassemble()
         self._highlighted_keys: set[str] = set()
@@ -212,57 +212,50 @@ class XrayWindow(tk.Tk):
             self._draw_cross_edge(child, parent)
         for root in self.visual_roots:
             self._draw_nodes(root)
-        self.inspector.configure(state="normal")
-        self.inspector.delete("1.0", tk.END)
-        self.inspector.insert(
-            "1.0",
+        self._set_inspector_text(
             summary_text(
                 title,
                 result=result,
                 pcode=self.pcode,
                 target_label=self.result_label,
                 source_label=self.source_label,
-                fallback_address=(
-                    self.request.function_address
-                    if self.request is not None
-                    else self.result.function_info.entry_address
-                    if self.result.function_info is not None
-                    else None
-                ),
+                fallback_address=self._fallback_address(),
             )
         )
-        self.inspector.configure(state="disabled")
         self.canvas.configure(scrollregion=(0, 0, self.virtual_width, self.virtual_height))
         self.canvas.xview_moveto(0.0)
         self.canvas.yview_moveto(0.0)
         self.canvas.bind("<MouseWheel>", self._on_mouse_wheel)
         self.canvas.bind(
             "<Button-4>",
-            lambda event: (
-                self._do_zoom(self._zoom * 1.15, event)
-                if event.state & 0x4
-                else self.canvas.xview_scroll(-3, "units")
-                if event.state & 0x1
-                else self.canvas.yview_scroll(-3, "units")
-            ),
+            lambda event: self._do_zoom(self._zoom * 1.15, event)
+            if event.state & 0x4
+            else self.canvas.xview_scroll(-3, "units")
+            if event.state & 0x1
+            else self.canvas.yview_scroll(-3, "units"),
         )
         self.canvas.bind(
             "<Button-5>",
-            lambda event: (
-                self._do_zoom(self._zoom / 1.15, event)
-                if event.state & 0x4
-                else self.canvas.xview_scroll(3, "units")
-                if event.state & 0x1
-                else self.canvas.yview_scroll(3, "units")
-            ),
+            lambda event: self._do_zoom(self._zoom / 1.15, event)
+            if event.state & 0x4
+            else self.canvas.xview_scroll(3, "units")
+            if event.state & 0x1
+            else self.canvas.yview_scroll(3, "units"),
         )
         try:
-            self.canvas.bind("<Button-6>", lambda _event: self.canvas.xview_scroll(-3, "units"))
-            self.canvas.bind("<Button-7>", lambda _event: self.canvas.xview_scroll(3, "units"))
+            self.canvas.bind(
+                "<Button-6>", lambda _event: self.canvas.xview_scroll(-3, "units")
+            )
+            self.canvas.bind(
+                "<Button-7>", lambda _event: self.canvas.xview_scroll(3, "units")
+            )
         except tk.TclError:
             pass
         self.bind("<Control-equal>", lambda event: self._do_zoom(self._zoom * 1.15, event))
-        self.bind("<Control-minus>", lambda event: self._do_zoom(self._zoom / 1.15, event))
+        self.bind(
+            "<Control-minus>",
+            lambda event: self._do_zoom(self._zoom / 1.15, event),
+        )
         self.bind("<Control-0>", lambda _event: self._do_zoom(1.0))
     def show(self) -> None:
         self.mainloop()
@@ -272,6 +265,24 @@ class XrayWindow(tk.Tk):
         if result.enriched is None or result.enriched.pcode is None:
             raise ValueError("XrayWindow requires a result produced with enriched=True")
         return result.enriched.pcode
+    def _result_label(self) -> str:
+        if self.request is not None:
+            compiler = self.request.compiler_spec or "default"
+            return f"{self.request.language_id} / {compiler}"
+        metadata = self.result.metadata or {}
+        language = metadata.get("language_id", "?")
+        compiler = metadata.get("compiler_spec", "?")
+        return f"{language} / {compiler}"
+    def _fallback_address(self) -> int | None:
+        if self.request is not None:
+            return self.request.function_address
+        info = self.result.function_info
+        return info.entry_address if info is not None else None
+    def _set_inspector_text(self, text: str) -> None:
+        self.inspector.configure(state="normal")
+        self.inspector.delete("1.0", tk.END)
+        self.inspector.insert("1.0", text)
+        self.inspector.configure(state="disabled")
     def _draw_depth_bands(self) -> None:
         for depth in range(self.max_depth + 1):
             y = self.virtual_height - self._bottom_margin - depth * self._level_gap
@@ -388,7 +399,11 @@ class XrayWindow(tk.Tk):
             font=("Helvetica", 10, "bold"),
             tags=(tag,),
         )
-        self.canvas.tag_bind(tag, "<Button-1>", lambda _event, selected=node: self._show_node(selected))
+        self.canvas.tag_bind(
+            tag,
+            "<Button-1>",
+            lambda _event, selected=node: self._show_node(selected),
+        )
     def _draw_varnode_node(self, node: VisualNode) -> None:
         varnode = self.varnode_by_id[node.actual[1]]
         width, height = node_size(node, self.varnode_by_id)
@@ -416,7 +431,12 @@ class XrayWindow(tk.Tk):
                 x + half_w,
                 y + half_h,
             )
-            self.canvas.create_polygon(shadow_points, fill="#040a12", outline="", tags=(tag,))
+            self.canvas.create_polygon(
+                shadow_points,
+                fill="#040a12",
+                outline="",
+                tags=(tag,),
+            )
             self.canvas.create_polygon(
                 points,
                 fill=fill,
@@ -452,7 +472,11 @@ class XrayWindow(tk.Tk):
             font=("Helvetica", 9, "bold"),
             tags=(tag,),
         )
-        self.canvas.tag_bind(tag, "<Button-1>", lambda _event, selected=node: self._show_node(selected))
+        self.canvas.tag_bind(
+            tag,
+            "<Button-1>",
+            lambda _event, selected=node: self._show_node(selected),
+        )
     def _show_node(self, node: VisualNode) -> None:
         if node.actual[0] == "op":
             op = self.op_by_id[node.actual[1]]
@@ -463,13 +487,11 @@ class XrayWindow(tk.Tk):
             text = varnode_text(varnode, self.op_by_id, depth=node.depth)
             address = (
                 self.op_by_id[varnode.defining_op_id].instruction_address
-                if varnode.defining_op_id is not None and varnode.defining_op_id in self.op_by_id
+                if varnode.defining_op_id is not None
+                and varnode.defining_op_id in self.op_by_id
                 else None
             )
-        self.inspector.configure(state="normal")
-        self.inspector.delete("1.0", tk.END)
-        self.inspector.insert("1.0", text)
-        self.inspector.configure(state="disabled")
+        self._set_inspector_text(text)
         if address is not None:
             self._select_asm_address(address)
     def _disassemble(self) -> list[tuple[int, str]]:
