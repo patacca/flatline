@@ -201,6 +201,40 @@ def test_u028_bridge_session_adapts_enriched_payload_when_requested(
     assert result.enriched.pcode.get_varnode(2).use_op_ids == [1]
 
 
+def test_u040_bridge_populates_enriched_instructions(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
+) -> None:
+    native_session = _NativeSessionSuccessDouble()
+    native_module = _NativeModuleDouble(native_session=native_session)
+    monkeypatch.setattr(bridge_module.importlib, "import_module", lambda _: native_module)
+
+    runtime_dir = tmp_path / "runtime"
+    runtime_dir.mkdir()
+    bridge_session = bridge_module.create_bridge_session(runtime_data_dir=str(runtime_dir))
+
+    request = DecompileRequest(
+        memory_image=b"\x90\xc3",
+        base_address=0x1000,
+        function_address=0x1000,
+        language_id="x86:LE:64:default",
+        compiler_spec="gcc",
+        enriched=True,
+    )
+    result = bridge_session.decompile_function(request)
+
+    assert native_session.last_request_payload is not None
+    assert native_session.last_request_payload["enriched"] is True
+    assert result.enriched is not None
+    assert result.enriched.instructions is not None
+    assert result.enriched.instructions[0] == InstructionInfo(
+        address=0x1000,
+        length=3,
+        mnemonic="ADD",
+        operands="EAX, EBX",
+    )
+
+
 def test_u028_bridge_rejects_missing_enriched_payload_when_requested(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

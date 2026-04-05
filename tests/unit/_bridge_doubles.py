@@ -28,6 +28,14 @@ class _NativeSessionSuccessDouble:
         enriched = None
         if request_payload["enriched"]:
             enriched = {
+                "instructions": [
+                    {
+                        "address": request_payload["function_address"],
+                        "length": 3,
+                        "mnemonic": "ADD",
+                        "operands": "EAX, EBX",
+                    }
+                ],
                 "pcode": {
                     "pcode_ops": [
                         {
