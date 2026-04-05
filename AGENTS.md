@@ -31,7 +31,7 @@
 
 # Conventions
 - Max 600 lines/file (except docs). Contract-first/TDD. ASCII only in source/build files.
-- Succinct comments; prefer intent/structure notes over boilerplate.
+- Use code comments extensively to explain concepts, intent, and non-obvious logic; save re-derivation time and reduce documentation burden.
 - Clear tree structure and self-explanatory names for files, modules, classes, functions, variables.
 - Python: guard type-hint imports behind `if TYPE_CHECKING:`.
 - Hard errors on invalid input; warnings on degraded success; no silent fallbacks.
