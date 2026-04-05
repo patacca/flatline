@@ -45,6 +45,9 @@ coverage.xml
 .codex
 docs/tasks/
 
+# OMC tool state
+.omc/
+
 # IDE
 .vscode/
 .idea/
