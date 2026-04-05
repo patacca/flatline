@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import ast
 import importlib
+import inspect
 from collections.abc import Callable
 from types import SimpleNamespace
 from typing import Any, cast
@@ -68,6 +70,9 @@ def _make_window(monkeypatch: pytest.MonkeyPatch):
     window.sorted_ops = ordered_ops
     window.visual_roots = visual_roots
     window.visual_nodes = visual_nodes
+    window.max_depth = 0
+    window.virtual_width = 0
+    window.virtual_height = 0
     window._node_by_key = {node.key: node for node in visual_nodes}
     window._disasm = [(0x1000, "0x1000: ADD EAX, EBX"), (0x1003, "0x1003: RET")]
     window._highlighted_keys = set()
@@ -248,3 +253,60 @@ def test_selection_selected_and_related_states_are_visually_distinct(
         "outline": "#93a7c1",
         "width": 1,
     }
+
+
+def test_layout_integration_positions_nodes_within_canvas_bounds(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    window, XrayWindow = _make_window(monkeypatch)
+    layout = importlib.import_module("flatline.xray._layout")
+
+    max_depth = layout.measure_forest(
+        window.visual_roots,
+        lambda node: layout.node_size(node, window.op_by_id, window.varnode_by_id),
+        child_gap=XrayWindow._child_gap,
+    )
+    width, height = layout.compute_canvas_size(
+        window.visual_roots,
+        max_depth,
+        root_gap=XrayWindow._root_gap,
+        top_margin=XrayWindow._top_margin,
+        bottom_margin=XrayWindow._bottom_margin,
+        side_margin=XrayWindow._side_margin,
+        level_gap=XrayWindow._level_gap,
+    )
+    layout.assign_forest_positions(
+        window.visual_roots,
+        height,
+        side_margin=XrayWindow._side_margin,
+        bottom_margin=XrayWindow._bottom_margin,
+        root_gap=XrayWindow._root_gap,
+        child_gap=XrayWindow._child_gap,
+        level_gap=XrayWindow._level_gap,
+    )
+
+    for node in window.visual_nodes:
+        node_width, node_height = layout.node_size(node, window.op_by_id, window.varnode_by_id)
+        assert node_width / 2.0 <= node.x <= width - node_width / 2.0
+        assert node_height / 2.0 <= node.y <= height - node_height / 2.0
+
+
+def test_graph_window_and_canvas_do_not_bypass_layout_node_size_contract(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    graph_window = import_graph_window(monkeypatch)
+    canvas = importlib.import_module("flatline.xray._canvas")
+
+    graph_source = inspect.getsource(graph_window)
+    assert ".create_rectangle(" not in graph_source
+    assert ".create_text(" not in graph_source
+
+    canvas_source = inspect.getsource(canvas)
+    tree = ast.parse(canvas_source)
+    for function_name in ("draw_op_node", "draw_varnode_node"):
+        function = next(
+            node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == function_name
+        )
+        names = {node.id for node in ast.walk(function) if isinstance(node, ast.Name)}
+        assert "node_size" in names
+        assert "node_label_lines" in names

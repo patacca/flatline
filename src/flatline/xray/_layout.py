@@ -23,6 +23,8 @@ VARNODE_NODE_HEIGHT = 68.0
 OPCODE_MIN_WIDTH = 76.0
 CONSTANT_VARNODE_MIN_WIDTH = 74.0
 VARNODE_MIN_WIDTH = 68.0
+HORIZONTAL_NODE_GAP = 30.0
+VERTICAL_LEVEL_GAP = 132.0
 
 
 @dataclass
@@ -205,8 +207,8 @@ def measure_forest(
     roots: Sequence[VisualNode],
     node_size: Callable[[VisualNode], tuple[float, float]],
     *,
-    child_gap: float = 26.0,
-    node_width_pad: float = 26.0,
+    child_gap: float = HORIZONTAL_NODE_GAP,
+    node_width_pad: float = HORIZONTAL_NODE_GAP,
 ) -> int:
     """Measure spans for each node and return the maximum depth."""
 
@@ -238,7 +240,7 @@ def compute_canvas_size(
     top_margin: float = 90.0,
     bottom_margin: float = 120.0,
     side_margin: float = 100.0,
-    level_gap: float = 122.0,
+    level_gap: float = VERTICAL_LEVEL_GAP,
 ) -> tuple[int, int]:
     """Compute the virtual canvas size for the measured forest."""
 
@@ -263,8 +265,8 @@ def assign_forest_positions(
     side_margin: float = 100.0,
     bottom_margin: float = 120.0,
     root_gap: float = 100.0,
-    child_gap: float = 26.0,
-    level_gap: float = 122.0,
+    child_gap: float = HORIZONTAL_NODE_GAP,
+    level_gap: float = VERTICAL_LEVEL_GAP,
 ) -> None:
     """Assign x/y coordinates to the measured forest."""
 
@@ -370,6 +372,7 @@ __all__ = [
     "compute_canvas_size",
     "fit_opcode_label",
     "fit_varnode_badge",
+    "HORIZONTAL_NODE_GAP",
     "measure_forest",
     "node_label_lines",
     "node_pad",
@@ -378,4 +381,5 @@ __all__ = [
     "sink_ops",
     "sorted_ops",
     "varnode_badge",
+    "VERTICAL_LEVEL_GAP",
 ]

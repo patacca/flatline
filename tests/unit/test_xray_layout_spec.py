@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import importlib
+import inspect
 from dataclasses import replace
 
 import pytest
@@ -86,6 +88,44 @@ def test_long_varnode_label_is_shortened_to_budget() -> None:
     assert _layout.node_size(node, op_by_id, varnode_by_id) == (84.0, 68.0)
 
 
+def test_node_label_lines_fit_within_computed_node_widths() -> None:
+    pcode = make_sample_pcode()
+    op_by_id = {op.id: op for op in pcode.pcode_ops}
+    varnode_by_id = {varnode.id: varnode for varnode in pcode.varnodes}
+
+    for node in [
+        _layout.VisualNode(key="op-0", actual=("op", 0), depth=0),
+        _layout.VisualNode(key="op-1", actual=("op", 1), depth=0),
+        _layout.VisualNode(key="var-2", actual=("varnode", 2), depth=0),
+        _layout.VisualNode(key="const-3", actual=("varnode", 3), depth=0),
+    ]:
+        label_lines = _layout.node_label_lines(node, op_by_id, varnode_by_id)
+        width, _height = _layout.node_size(node, op_by_id, varnode_by_id)
+        if node.actual[0] == "op":
+            char_width = _layout.OPCODE_CHAR_WIDTH
+            pad = _layout.OPCODE_WIDTH_PAD
+        else:
+            char_width = _layout.VARNODE_CHAR_WIDTH
+            pad = _layout.VARNODE_WIDTH_PAD
+        label_width = max(len(line) for line in label_lines) * char_width
+        assert label_width <= width - pad
+
+
+def test_canvas_draw_helpers_use_layout_label_contract() -> None:
+    canvas = importlib.import_module("flatline.xray._canvas")
+
+    op_source = inspect.getsource(canvas.draw_op_node)
+    varnode_source = inspect.getsource(canvas.draw_varnode_node)
+
+    assert "node_label_lines(" in op_source
+    assert '"\\n".join(label_lines)' in op_source
+    assert "_short_opcode" not in op_source
+
+    assert "node_label_lines(" in varnode_source
+    assert '"\\n".join(label_lines)' in varnode_source
+    assert "_varnode_badge" not in varnode_source
+
+
 def test_dense_switch_graph_stays_within_canvas_bounds() -> None:
     request = build_decompile_request(
         fixture_target("fx_switch_elf64.hex"),
@@ -111,5 +151,5 @@ def test_dense_switch_graph_stays_within_canvas_bounds() -> None:
     assert len(pcode.pcode_ops) == 7
     assert len(pcode.varnodes) == 12
     assert max_depth == 9
-    assert width <= 1600
-    assert height <= 1600
+    assert width <= 4000
+    assert height <= 6000

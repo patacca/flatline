@@ -25,7 +25,9 @@ from ._canvas import (
 from ._inputs import disassemble_instruction_addresses
 from ._inspector import op_text, summary_text, varnode_text
 from ._layout import (
+    HORIZONTAL_NODE_GAP,
     VisualNode,
+    VERTICAL_LEVEL_GAP,
     assign_forest_positions,
     build_visual_forest,
     collect_visual_nodes,
@@ -40,8 +42,8 @@ class XrayWindow(tk.Tk):
     """Interactive pcode graph viewer for one decompiled function."""
 
     _root_gap = 100.0
-    _child_gap = 26.0
-    _level_gap = 122.0
+    _child_gap = HORIZONTAL_NODE_GAP
+    _level_gap = VERTICAL_LEVEL_GAP
     _top_margin = 90.0
     _bottom_margin = 120.0
     _side_margin = 100.0

@@ -12,12 +12,11 @@ from typing import TYPE_CHECKING
 import flatline.xray._theme as _theme
 from flatline.xray._inputs import (
     _opcode_color,
-    _short_opcode,
-    _varnode_badge,
     _varnode_color,
 )
 from flatline.xray._layout import (
     VisualNode,
+    node_label_lines,
     node_pad,
     node_size,
 )
@@ -181,6 +180,7 @@ def draw_op_node(
 ) -> None:
     """Draw a single op-node rectangle with shadow and click binding."""
     op = op_by_id[node.actual[1]]
+    label_lines = node_label_lines(node, op_by_id, varnode_by_id)
     width, height = node_size(node, op_by_id, varnode_by_id)
     half_w = width / 2.0
     half_h = height / 2.0
@@ -209,7 +209,7 @@ def draw_op_node(
     canvas.create_text(
         x,
         y,
-        text=f"{_short_opcode(op.opcode)}\n#{op.id}",
+        text="\n".join(label_lines),
         fill=_theme.TEXT_ON_NODE,
         font=_theme.NODE_FONT,
         tags=(tag,),
@@ -230,13 +230,13 @@ def draw_varnode_node(
 ) -> None:
     """Draw a single varnode oval (or triangle for constants) with click binding."""
     varnode = varnode_by_id[node.actual[1]]
+    label_lines = node_label_lines(node, op_by_id, varnode_by_id)
     width, height = node_size(node, op_by_id, varnode_by_id)
     half_w = width / 2.0
     half_h = height / 2.0
     x = node.x
     y = node.y
     tag = f"node-{node.key}"
-    label = f"{_varnode_badge(varnode)}\nv{varnode.id}"
     fill = _varnode_color(varnode)
     if varnode.flags.is_constant:
         shadow_points = (
@@ -291,7 +291,7 @@ def draw_varnode_node(
     canvas.create_text(
         x,
         y + (6 if varnode.flags.is_constant else 0),
-        text=label,
+        text="\n".join(label_lines),
         fill=_theme.TEXT_ON_NODE,
         font=_theme.VARNODE_FONT,
         tags=(tag,),
