@@ -6,14 +6,16 @@ from dataclasses import replace
 
 import pytest
 
-from flatline import decompile_function
-from flatline.xray import _layout
-from flatline.xray._inputs import build_decompile_request
 from tests._native_fixtures import get_native_runtime_data_dir
 
 from ._xray_support import fixture_target, make_sample_pcode
 
 pytestmark = pytest.mark.unit
+
+flatline = importlib.import_module("flatline")
+_layout = importlib.import_module("flatline.xray._layout")
+build_decompile_request = importlib.import_module("flatline.xray._inputs").build_decompile_request
+decompile_function = flatline.decompile_function
 
 
 def test_layout_orders_and_positions_fixture_pcode() -> None:
