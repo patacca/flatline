@@ -15,6 +15,7 @@ requires a C++20 compiler, Ninja, and zlib development headers.
 |---|---|
 | Ubuntu / Debian | `sudo apt-get install g++ ninja-build zlib1g-dev` |
 | Fedora / RHEL | `sudo dnf install gcc-c++ ninja-build zlib-devel` |
+| Arch Linux | `sudo pacman -S gcc ninja zlib` |
 | macOS | `brew install ninja zlib` (Xcode provides the compiler) |
 | Windows | Visual Studio with the C++ workload; `pip install ninja`; `vcpkg install zlib:x64-windows` |
 

@@ -19,44 +19,27 @@ meaningful structure from binaries.
 
 - **Single-function decompilation** -- pass a memory image, base address, and
   function entry point; get back structured C output with diagnostics.
-- **Multi-ISA** -- supports any Ghidra-supported target architecture. Priority
-  fixture-backed confidence for x86 (32/64), ARM64, RISC-V 64, and MIPS32;
-  other bundled ISAs remain best-effort.
-- **Packaged runtime data** -- compiled Sleigh runtime assets come from the
-  companion `ghidra-sleigh` package, so production installs do not depend on a
-  vendored `third_party/ghidra` tree.
+- **Multi-ISA** -- x86 (32/64), ARM64, RISC-V 64, and MIPS32 are
+  fixture-backed; all other Ghidra-supported architectures are available
+  best-effort.
+- **Enriched output** -- opt-in pcode IR with use-def edges and a
+  `networkx.MultiDiGraph` projection for data-flow analysis.
+- **Packaged runtime data** -- compiled Sleigh assets come from the companion
+  `ghidra-sleigh` package. No vendored Ghidra tree at runtime.
 - **Deterministic** -- repeated decompiles of the same input produce
   structurally equivalent output.
 
-## Requirements
-
-- Python 3.13+
-- Supported platforms: Linux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64
-
 ## Installation
-
-### Install from PyPI
 
 ```bash
 pip install flatline
 ```
 
-`pip install flatline` downloads a pre-built wheel when one is available.
-Wheels are currently published for Linux x86_64/aarch64, Windows x86_64, and
-macOS x86_64/arm64, so those installs do not need a local compiler or build
-toolchain. If no wheel is available for your target, `pip` falls back to a
-source build.
+Pre-built wheels are published for Linux x86_64/aarch64, Windows x86_64, and
+macOS x86_64/arm64 (Python 3.13+). If no wheel matches your platform, pip
+falls back to a source build.
 
-Supported runtime hosts are Linux x86_64, Windows x86_64, and macOS arm64.
-Linux aarch64 and macOS x86_64 are published-wheel targets that remain
-installable, but they are still pending equivalent host-coverage promotion.
-Other platforms may still work via a source build, but they are best effort.
-
-### Build from source or install from a local checkout
-
-Use this path when no pre-built wheel is available for your target, when you
-want to install from a local checkout, or when you want to force a native
-build.
+### Build from source
 
 Source builds require a C++20 compiler, Ninja, and zlib headers:
 
@@ -68,86 +51,17 @@ Source builds require a C++20 compiler, Ninja, and zlib headers:
 | macOS | `brew install ninja zlib` (Xcode provides the C++ compiler) |
 | Windows | Visual Studio with C++ workload; `pip install ninja`; `vcpkg install zlib:x64-windows` |
 
-Install from a local checkout:
-
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install .
 ```
 
-For development:
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-```
-
-`flatline` depends on `ghidra-sleigh` for its default runtime-data path, so
-`DecompilerSession` and the one-shot wrappers auto-discover runtime data when
-`runtime_data_dir` is omitted. `runtime_data_dir` remains available as an
-explicit override for custom or reduced runtime-data roots.
-
-### Flatline X-Ray
-
-`flatline-xray` is the shipped interactive viewer for the same memory-image
-contract that powers the Python API. It is a convenience layer, not a separate
-input model: you still provide raw bytes, a base address, a function address,
-and target metadata.
-
-Install the optional disassembly helper when you want richer assembly output:
-
-```bash
-pip install "flatline[xray]"
-```
-
-`tkinter` is part of the Python standard library, but some Python installs do
-not include it. If `flatline-xray` reports that `tkinter` is missing, install
-the platform package for your Python distribution and rerun the tool.
-
-Run the viewer with:
-
-```bash
-flatline-xray --help
-```
-
-See the new [X-Ray docs](docs-site/xray/index.md) for the shipped utility and
-its tutorial.
-
-### Native bridge
-
-Real decompilation requires the native bridge -- a compiled C++ extension
-(`flatline._flatline_native`) that links against the Ghidra decompiler library.
-The published wheels already include this extension.
-Without it the Python API is fully importable, but every `decompile_function`
-call returns a `configuration_error` result. `list_language_compilers` still
-returns runtime-data pairs discovered from the installed `ghidra-sleigh`
-package.
-
-The build has three modes, controlled by the `native_bridge` Meson option:
-
-| Mode | How to set | Behaviour |
-|------|------------|-----------|
-| `auto` (default) | omit the flag | Builds the extension when a C++20 compiler and Ninja are found; silently falls back to the pure-Python stub otherwise. |
-| `enabled` | `-Dnative_bridge=enabled` | Forces the native build; fails at install time if prerequisites are missing. Use this to validate the full decompilation stack. |
-| `disabled` | `-Dnative_bridge=disabled` | Skips the native build entirely. All decompilation calls return `configuration_error`. |
-
-Force the native build explicitly (requires a C++20 compiler and Ninja):
-
-```bash
-pip install -e ".[dev]" -Csetup-args=-Dnative_bridge=enabled
-```
-
-Disable the native build explicitly (pure-Python stub only):
-
-```bash
-pip install -e ".[dev]" -Csetup-args=-Dnative_bridge=disabled
-```
-
-Tests that require the native extension are marked `requires_native` and
-auto-skip with an actionable reason when `flatline._flatline_native` is not
-importable.
+The native C++ extension is built automatically when a compiler is found. The
+published wheels already include it. Without it the Python API is fully
+importable, but decompile calls return a `configuration_error` result. See the
+[installation guide](https://patacca.github.io/flatline/latest/installation/)
+for native bridge build modes and troubleshooting.
 
 ## Quick start
 
@@ -165,105 +79,78 @@ result = decompile_function(DecompileRequest(
 print(result.c_code)
 ```
 
-Pass `runtime_data_dir=...` only when you need to override the dependency-backed
-default runtime-data root.
+Runtime data is auto-discovered from `ghidra-sleigh`. Pass
+`runtime_data_dir=...` only when overriding the default root.
 
-Exact function slices do not need manual caller padding. Flatline zero-fills
-decoder lookahead past the end of `memory_image` by default via
-`tail_padding=b"\x00"`; set `tail_padding=None` or `tail_padding=b""` only
-when you need strict tail-boundary failures.
+Flatline zero-fills decoder lookahead past the end of `memory_image` by
+default (`tail_padding=b"\x00"`), so exact function slices work without
+manual caller padding.
 
-For opt-in IR analysis, request `enriched=True`. Successful results then expose
-`result.enriched.pcode`, which keeps the raw `pcode_ops` / `varnodes`, offers
-O(1) lookup via `get_pcode_op()` / `get_varnode()`, and can project a
-deterministic `networkx.MultiDiGraph` via `to_graph()` for traversal or
-downstream drawing.
+### Enriched output
+
+Request `enriched=True` to get the post-simplification pcode IR:
+
+```python
+result = decompile_function(DecompileRequest(
+    memory_image=raw_bytes,
+    base_address=0x400000,
+    function_address=0x401000,
+    language_id="x86:LE:64:default",
+    compiler_spec="gcc",
+    enriched=True,
+))
+
+pcode = result.enriched.pcode
+graph = pcode.to_graph()          # networkx.MultiDiGraph
+op = pcode.get_pcode_op(op_id)    # O(1) lookup
+vn = pcode.get_varnode(vn_id)     # O(1) lookup
+```
+
+See the [API reference](https://patacca.github.io/flatline/latest/reference/enriched/)
+for the full enriched-output contract.
+
+### Flatline X-Ray
+
+`flatline-xray` is a shipped interactive pcode viewer for caller-provided
+memory images:
+
+```bash
+pip install "flatline[xray]"     # adds optional capstone disassembly
+flatline-xray --help
+```
+
+See the [X-Ray docs](https://patacca.github.io/flatline/latest/xray/) for
+usage and tutorial.
 
 ## Development
 
 ```bash
-# Activate the venv (required for all commands)
-source .venv/bin/activate
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
 
-# Run tests + lint across configured environments
-tox
-
-# Run lint only
-tox -e lint
-
-# Run unit tests only
-tox -e py313,py314 -- -m unit
-
-# Run native-dependent tests (skipped automatically when the extension is absent)
-tox -e py313,py314 -- -m requires_native
+tox                                          # tests + lint
+tox -e lint                                  # lint only
+tox -e py313,py314 -- -m unit                # unit tests only
+tox -e py313,py314 -- -m requires_native     # native-dependent tests
 ```
 
-`tox` test envs build and install `flatline[test]` wheels inside `.tox/`, so
-the suite exercises the packaged artifact rather than `PYTHONPATH=src`.
-Repo-only release and diagnostic helpers live under `tools/` and are
-intentionally absent from wheel and sdist artifacts.
+Tox test envs build and install wheels, so the suite exercises the packaged
+artifact. Release and diagnostic helpers live under `tools/` and are excluded
+from distribution artifacts.
 
-## Documentation
-
-Documentation is available at <https://patacca.github.io/flatline/> or can be
-built locally from this checkout.
-
-Install the docs dependencies:
+### Building the docs locally
 
 ```bash
 pip install -e ".[docs]"
+PYTHONPATH=src mkdocs serve        # http://127.0.0.1:8000
 ```
 
-**Local preview:**
+Full documentation is at <https://patacca.github.io/flatline/>.
 
-```bash
-PYTHONPATH=src mkdocs serve
-```
+## Changelog
 
-Then open http://127.0.0.1:8000.
-
-**Build static site:**
-
-```bash
-PYTHONPATH=src mkdocs build
-```
-
-Output goes to `site/`.
-
-`PYTHONPATH=src` lets mkdocstrings import the pure-Python modules for API
-reference generation without requiring a native build.
-
-## Release Notes
-
-Project history lives in [CHANGELOG.md](CHANGELOG.md). Update it for every
-release using the Keep a Changelog structure already in the file.
-The release-facing contract guarantees, support tiers, known-variant limits,
-and upgrade policy for the public `0.1.x` line live in
-[docs/release_notes.md](docs/release_notes.md).
-The public artifact review checklist and manual approval hold point live in
-[docs/release_review.md](docs/release_review.md).
-Release publication workflow details live in
-[docs/release_workflow.md](docs/release_workflow.md).
-GitHub Actions release publishing lives in
-[.github/workflows/release.yml](.github/workflows/release.yml): published
-GitHub releases go to PyPI, while manual dispatch uploads to TestPyPI.
-Manual TestPyPI dispatches require a unique version and now fail on duplicate
-uploads instead of reusing an older TestPyPI artifact.
-Redistribution/compliance guidance lives in [NOTICE](NOTICE), with the durable
-policy captured in [docs/adr/adr-007.md](docs/adr/adr-007.md).
-
-## Project status
-
-The current public release is `0.1.1`. P6, P6.5, and P7 are closed in the repo
-history. Supported runtime hosts are Linux x86_64, Windows x86_64, and macOS
-arm64; Linux aarch64 and macOS x86_64 remain published-wheel targets pending
-equivalent host-coverage promotion. On the current repo head, opt-in enriched
-output projects the exported pcode / varnode payload into a traversable graph
-via `result.enriched.pcode.to_graph()`.
-
-Release-facing guarantees and support-policy notes live in
-[docs/release_notes.md](docs/release_notes.md). `python tools/release.py`
-audits the current release candidate.
+See [CHANGELOG.md](CHANGELOG.md). Release policy and support tiers are
+documented in [docs/release_notes.md](docs/release_notes.md).
 
 ## Acknowledgments
 
