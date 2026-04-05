@@ -90,7 +90,7 @@ def draw_edge(
     varnode_by_id: dict,
 ) -> None:
     """Draw a single smooth bezier edge from *source* to *target*."""
-    import tkinter as tk  # noqa: PLC0415  # local import keeps module headless-safe
+    import tkinter as tk
 
     sx = source.x
     sy = source.y + node_pad(source, op_by_id, varnode_by_id)
@@ -125,7 +125,7 @@ def draw_cross_edge(
     varnode_by_id: dict,
 ) -> None:
     """Draw a dashed cross-tree edge between *source* and *target*."""
-    import tkinter as tk  # noqa: PLC0415
+    import tkinter as tk
 
     sx = source.x
     sy = source.y + node_pad(source, op_by_id, varnode_by_id)

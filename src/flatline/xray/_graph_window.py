@@ -223,9 +223,19 @@ class XrayWindow(tk.Tk):
         # Add panes to PanedWindow: asm (left), graph (centre, dominant),
         # inspector (right).  stretch="always" on the graph pane means
         # extra width from window resizes goes to the graph first.
-        body.add(asm_frame, minsize=self._asm_min_width, width=self._asm_default_width, stretch="never")
+        body.add(
+            asm_frame,
+            minsize=self._asm_min_width,
+            width=self._asm_default_width,
+            stretch="never",
+        )
         body.add(canvas_frame, stretch="always")
-        body.add(sidebar, minsize=self._inspector_min_width, width=self._inspector_default_width, stretch="never")
+        body.add(
+            sidebar,
+            minsize=self._inspector_min_width,
+            width=self._inspector_default_width,
+            stretch="never",
+        )
         self._zoom = 1.0
         draw_depth_bands(
             self.canvas,

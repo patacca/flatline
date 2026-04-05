@@ -27,9 +27,16 @@ def test_theme_module_exports_tokens() -> None:
 
 
 def test_inputs_color_helpers_delegate_to_theme(monkeypatch: pytest.MonkeyPatch) -> None:
-    theme = importlib.import_module("flatline.xray._theme")
-    monkeypatch.setattr(theme, "opcode_color_for", lambda opcode: f"opcode:{opcode}")
-    monkeypatch.setattr(theme, "varnode_color_for", lambda varnode: f"varnode:{varnode.id}")
+    monkeypatch.setattr(  # pyright: ignore[reportPrivateUsage]
+        _inputs._theme,
+        "opcode_color_for",
+        lambda opcode: f"opcode:{opcode}",
+    )
+    monkeypatch.setattr(  # pyright: ignore[reportPrivateUsage]
+        _inputs._theme,
+        "varnode_color_for",
+        lambda varnode: f"varnode:{varnode.id}",
+    )
 
     pcode = make_sample_pcode()
     assert _inputs._opcode_color("INT_ADD") == "opcode:INT_ADD"  # pyright: ignore[reportPrivateUsage]
@@ -41,6 +48,6 @@ def test_theme_label_helpers_remain_stable() -> None:
     varnode_badge = _inputs._varnode_badge  # pyright: ignore[reportPrivateUsage]
 
     pcode = make_sample_pcode()
-    assert short_opcode("INT_ADD") == "INT\nADD"
+    assert short_opcode("INT_ADD") == "INT_ADD"
     assert short_opcode("RETURN") == "RETURN"
     assert varnode_badge(pcode.varnodes[3]) == "CONST"

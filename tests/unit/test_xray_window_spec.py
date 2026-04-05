@@ -129,16 +129,18 @@ def test_window_helper_rejects_unenriched_results(monkeypatch: pytest.MonkeyPatc
         _ = require_pcode(window, window.result)
 
 
-def test_graph_pane_default_proportions_give_graph_expand_priority(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_graph_pane_default_proportions_give_graph_expand_priority(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     graph_window = import_graph_window(monkeypatch)
     XrayWindow = graph_window.XrayWindow
 
-    assert XrayWindow._asm_default_width < XrayWindow._inspector_default_width or True
     total_fixed = XrayWindow._asm_default_width + XrayWindow._inspector_default_width
     window_width = 1500
     graph_budget = window_width - total_fixed
     assert graph_budget > total_fixed, (
-        "graph pane should have more horizontal budget than combined side panels at default 1500px width"
+        "graph pane should have more horizontal budget than combined side panels "
+        "at default 1500px width"
     )
 
 
@@ -177,11 +179,14 @@ def test_narrow_window_panels_retain_minimums(monkeypatch: pytest.MonkeyPatch) -
     assert asm_min >= 180, "asm pane must retain minimum even in narrow window"
     assert inspector_min >= 180, "inspector pane must retain minimum even in narrow window"
     assert graph_remaining >= 0, (
-        f"sum of minimums ({asm_min + inspector_min}) must not exceed narrow window width {narrow_width}"
+        f"sum of minimums ({asm_min + inspector_min}) must not exceed narrow window "
+        f"width {narrow_width}"
     )
 
 
-def test_selection_graph_node_click_syncs_inspector_and_assembly(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_selection_graph_node_click_syncs_inspector_and_assembly(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     window, XrayWindow = _make_window(monkeypatch)
 
     show_node = cast(Callable[[object, object], None], XrayWindow._show_node)  # pyright: ignore[reportPrivateUsage]
@@ -193,7 +198,9 @@ def test_selection_graph_node_click_syncs_inspector_and_assembly(monkeypatch: py
     assert window.canvas.configured[f"shape-{node.key}"]["outline"] == "#ffb703"
 
 
-def test_selection_assembly_select_highlights_related_nodes(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_selection_assembly_select_highlights_related_nodes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     window, XrayWindow = _make_window(monkeypatch)
 
     on_asm_select = cast(Callable[[object, object], None], XrayWindow._on_asm_select)  # pyright: ignore[reportPrivateUsage]
@@ -221,7 +228,9 @@ def test_selection_state_clears_on_reset(monkeypatch: pytest.MonkeyPatch) -> Non
     assert window.canvas.configured[f"shape-{node.key}"]["width"] == 2
 
 
-def test_selection_selected_and_related_states_are_visually_distinct(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_selection_selected_and_related_states_are_visually_distinct(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     window, XrayWindow = _make_window(monkeypatch)
 
     show_node = cast(Callable[[object, object], None], XrayWindow._show_node)  # pyright: ignore[reportPrivateUsage]
@@ -231,5 +240,11 @@ def test_selection_selected_and_related_states_are_visually_distinct(monkeypatch
     show_node(window, node)
 
     assert window.canvas.configured[f"shape-{node.key}"] == {"outline": "#ffb703", "width": 4}
-    assert window.canvas.configured[f"shape-{related_node.key}"] == {"outline": "#a07cdc", "width": 3}
-    assert window.canvas.configured[f"shape-{muted_node.key}"] == {"outline": "#93a7c1", "width": 1}
+    assert window.canvas.configured[f"shape-{related_node.key}"] == {
+        "outline": "#a07cdc",
+        "width": 3,
+    }
+    assert window.canvas.configured[f"shape-{muted_node.key}"] == {
+        "outline": "#93a7c1",
+        "width": 1,
+    }

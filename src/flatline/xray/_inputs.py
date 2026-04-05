@@ -10,10 +10,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import flatline.xray._theme as _theme
 from flatline import DecompileRequest, DecompileResult, decompile_function, list_language_compilers
 from flatline.models import LanguageCompilerPair
 from flatline.xray._layout import fit_opcode_label, fit_varnode_badge
-import flatline.xray._theme as _theme
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
