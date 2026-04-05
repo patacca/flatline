@@ -49,15 +49,37 @@ Execute the **production PyPI release workflow** for the current repo version. R
 ### Phase 2 -- Tag and release
 
 14. Prompt the operator to update the **Release Decision** section in `docs/release_workflow.md` with the version being released and its rationale. Commit the update.
-15. Create the release tag: `git tag v<version>`
-16. Push the tag: `git push origin v<version>`
-17. Create the GitHub release: `gh release create v<version> --generate-notes`
+15. Create the release tag locally: `git tag v<version>`
+16. **STOP.** Request explicit push approval from the operator with:
+
+```
+Ready to push tag v<version> to remote.
+
+  git push origin v<version>
+
+Please confirm you want to proceed with the push.
+Reply with "push approved" or "confirm push" to continue, or "cancel" to abort.
+```
+
+17. After explicit approval, instruct the operator to execute the push manually:
+
+```
+Please run the following command:
+
+  git push origin v<version>
+
+Let me know when complete.
+```
+
+**Do NOT execute `git push` yourself.** The operator runs this command manually.
+
+18. Create the GitHub release: `gh release create v<version> --generate-notes`
 
 ### Phase 3 -- CI verification
 
-18. Wait for the `release.yml` workflow triggered by `release.published` to complete. Monitor with `gh run list --workflow=release.yml --limit=1`.
-19. Verify all jobs passed: dev-checks, build-wheels (5 platforms), build-sdist, validate, publish, and smoke-published (10 matrix entries).
-20. Report the final CI status to the operator. If any job failed, link to the failed run.
+19. Wait for the `release.yml` workflow triggered by `release.published` to complete. Monitor with `gh run list --workflow=release.yml --limit=1`.
+20. Verify all jobs passed: dev-checks, build-wheels (5 platforms), build-sdist, validate, publish, and smoke-published (10 matrix entries).
+21. Report the final CI status to the operator. If any job failed, link to the failed run.
 
 ## Checks
 
