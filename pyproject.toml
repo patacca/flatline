@@ -4,7 +4,7 @@ build-backend = "mesonpy"
 
 [project]
 name = "flatline"
-version = "0.1.2.dev0"
+version = "0.1.2"
 description = "Python wrapper around the Ghidra decompiler"
 readme = { file = "README.md", content-type = "text/markdown" }
 authors = [{ name = "patacca" }]
