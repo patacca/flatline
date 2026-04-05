@@ -15,16 +15,16 @@ except ImportError as exc:  # pragma: no cover - platform dependent
         "  Fedora:         sudo dnf install python3-tkinter\n"
         "  macOS Homebrew: brew install python-tk"
     ) from exc
-import flatline.xray._theme as _theme
-from flatline.xray._canvas import (
+from . import _theme
+from ._canvas import (
     draw_cross_edge,
     draw_depth_bands,
     draw_edges,
     draw_nodes,
 )
-from flatline.xray._inputs import disassemble_instruction_addresses
-from flatline.xray._inspector import op_text, summary_text, varnode_text
-from flatline.xray._layout import (
+from ._inputs import disassemble_instruction_addresses
+from ._inspector import op_text, summary_text, varnode_text
+from ._layout import (
     VisualNode,
     assign_forest_positions,
     build_visual_forest,
@@ -105,7 +105,10 @@ class XrayWindow(tk.Tk):
         self.result_label = self._result_label()
         self._node_by_key: dict[str, VisualNode] = {node.key: node for node in self.visual_nodes}
         self._disasm = self._disassemble()
+        self._selected_key: str | None = None
         self._highlighted_keys: set[str] = set()
+        self._related_keys: set[str] = set()
+        self._muted_keys: set[str] = set()
         title_suffix = f" - {self.result_label}" if self.result_label else ""
         self.title(f"{title}{title_suffix}")
         self.geometry("1500x980")
@@ -163,12 +166,15 @@ class XrayWindow(tk.Tk):
             fg=_theme.TEXT,
             selectbackground=_theme.SELECTION_BACKGROUND,
             selectforeground=_theme.SELECTION_TEXT,
+            selectborderwidth=0,
             font=_theme.BODY_FONT,
             selectmode=tk.EXTENDED,
             activestyle="none",
+            exportselection=False,
             relief="flat",
             borderwidth=0,
             highlightthickness=0,
+            width=48,
         )
         asm_vscroll = tk.Scrollbar(asm_inner, orient="vertical", command=self.asm_listbox.yview)
         asm_hscroll = tk.Scrollbar(asm_inner, orient="horizontal", command=self.asm_listbox.xview)
@@ -251,23 +257,11 @@ class XrayWindow(tk.Tk):
         self.canvas.bind("<MouseWheel>", self._on_mouse_wheel)
         self.canvas.bind(
             "<Button-4>",
-            lambda event: (
-                self._do_zoom(self._zoom * 1.15, event)
-                if event.state & 0x4
-                else self.canvas.xview_scroll(-3, "units")
-                if event.state & 0x1
-                else self.canvas.yview_scroll(-3, "units")
-            ),
+            lambda event: self._handle_button_scroll(event, zoom_in=True),
         )
         self.canvas.bind(
             "<Button-5>",
-            lambda event: (
-                self._do_zoom(self._zoom / 1.15, event)
-                if event.state & 0x4
-                else self.canvas.xview_scroll(3, "units")
-                if event.state & 0x1
-                else self.canvas.yview_scroll(3, "units")
-            ),
+            lambda event: self._handle_button_scroll(event, zoom_in=False),
         )
         try:
             self.canvas.bind("<Button-6>", lambda _event: self.canvas.xview_scroll(-3, "units"))
@@ -312,7 +306,105 @@ class XrayWindow(tk.Tk):
         self.inspector.insert("1.0", text)
         self.inspector.configure(state="disabled")
 
+    def _default_outline(self, node: VisualNode) -> str:
+        return _theme.NODE_OUTLINE if node.actual[0] == "op" else _theme.NODE_OUTLINE_ALT
+
+    def _set_node_style(self, key: str, *, outline: str, width: int) -> None:
+        self.canvas.itemconfigure(f"shape-{key}", outline=outline, width=width)
+
+    def _clear_selection_state(self) -> None:
+        for node in self.visual_nodes:
+            self._set_node_style(node.key, outline=self._default_outline(node), width=2)
+        self._selected_key = None
+        self._highlighted_keys.clear()
+        self._related_keys.clear()
+        self._muted_keys.clear()
+
+    def _apply_selection_state(
+        self,
+        *,
+        selected_keys: set[str],
+        related_keys: set[str],
+    ) -> None:
+        self._clear_selection_state()
+        if not selected_keys and not related_keys:
+            return
+        self._selected_key = next(iter(selected_keys)) if len(selected_keys) == 1 else None
+        self._related_keys = set(related_keys)
+        self._highlighted_keys = set(selected_keys | related_keys)
+        self._muted_keys = {
+            node.key for node in self.visual_nodes if node.key not in self._highlighted_keys
+        }
+        for key in self._muted_keys:
+            self._set_node_style(key, outline=_theme.TEXT_MUTED, width=1)
+        for key in related_keys:
+            self._set_node_style(key, outline=_theme.EDGE_RELATED, width=3)
+        for key in selected_keys:
+            self._set_node_style(key, outline=_theme.SELECTION_OUTLINE, width=4)
+
+    def _related_keys_for_node(self, node: VisualNode) -> set[str]:
+        related_actuals: set[tuple[str, int]] = set()
+        if node.actual[0] == "op":
+            op = self.op_by_id[node.actual[1]]
+            related_actuals.update(("varnode", varnode_id) for varnode_id in op.input_varnode_ids)
+            if op.output_varnode_id is not None:
+                related_actuals.add(("varnode", op.output_varnode_id))
+        else:
+            varnode = self.varnode_by_id[node.actual[1]]
+            if varnode.defining_op_id is not None:
+                related_actuals.add(("op", varnode.defining_op_id))
+            related_actuals.update(("op", op_id) for op_id in varnode.use_op_ids)
+        return {
+            visual_node.key
+            for visual_node in self.visual_nodes
+            if visual_node.actual in related_actuals and visual_node.key != node.key
+        }
+
+    def _show_default_summary(self) -> None:
+        self._set_inspector_text(
+            summary_text(
+                self.window_title,
+                result=self.result,
+                pcode=self.pcode,
+                target_label=self.result_label,
+                source_label=self.source_label,
+                fallback_address=self._fallback_address(),
+            )
+        )
+
+    def _assembly_selection_text(
+        self,
+        *,
+        addresses: set[int],
+        selected_op_ids: set[int],
+        related_varnode_ids: set[int],
+    ) -> str:
+        address_lines = "\n".join(f"  - 0x{address:x}" for address in sorted(addresses))
+        op_lines = "\n".join(
+            f"  - op#{op.id}: {op.opcode}" for op in self.sorted_ops if op.id in selected_op_ids
+        )
+        varnode_lines = "\n".join(
+            f"  - v{varnode.id}: {varnode.space}@0x{varnode.offset:x}"
+            for varnode in self.pcode.varnodes
+            if varnode.id in related_varnode_ids
+        )
+        return "\n".join(
+            [
+                "Assembly selection",
+                "",
+                "Addresses:",
+                address_lines or "  - none",
+                "",
+                "Ops at selection:",
+                op_lines or "  - none",
+                "",
+                "Related varnodes:",
+                varnode_lines or "  - none",
+            ]
+        )
+
     def _show_node(self, node: VisualNode) -> None:
+        related_keys = self._related_keys_for_node(node)
         if node.actual[0] == "op":
             op = self.op_by_id[node.actual[1]]
             text = op_text(op, self.varnode_by_id, depth=node.depth)
@@ -326,8 +418,9 @@ class XrayWindow(tk.Tk):
                 else None
             )
         self._set_inspector_text(text)
+        self._apply_selection_state(selected_keys={node.key}, related_keys=related_keys)
         if address is not None:
-            self._select_asm_address(address)
+            self._select_asm_address(address, sync_graph=False)
 
     def _disassemble(self) -> list[tuple[int, str]]:
         return disassemble_instruction_addresses(
@@ -337,49 +430,70 @@ class XrayWindow(tk.Tk):
     def _on_asm_select(self, _event) -> None:
         sel = self.asm_listbox.curselection()
         addresses = {self._disasm[i][0] for i in sel}
-        self._highlight_addresses(addresses)
-
-    def _highlight_addresses(self, addresses: set[int]) -> None:
-        for key in self._highlighted_keys:
-            node = self._node_by_key[key]
-            default = _theme.NODE_OUTLINE if node.actual[0] == "op" else _theme.NODE_OUTLINE_ALT
-            self.canvas.itemconfigure(f"shape-{key}", outline=default, width=2)
-        self._highlighted_keys.clear()
+        selected_op_ids, related_varnode_ids = self._highlight_addresses(addresses)
         if not addresses:
+            self._show_default_summary()
             return
+        self._set_inspector_text(
+            self._assembly_selection_text(
+                addresses=addresses,
+                selected_op_ids=selected_op_ids,
+                related_varnode_ids=related_varnode_ids,
+            )
+        )
+
+    def _highlight_addresses(self, addresses: set[int]) -> tuple[set[int], set[int]]:
+        if not addresses:
+            self._clear_selection_state()
+            return set(), set()
+        selected_op_ids: set[int] = set()
+        selected_keys: set[str] = set()
         related_varnode_ids: set[int] = set()
         for node in self.visual_nodes:
             if node.actual[0] != "op":
                 continue
             op = self.op_by_id[node.actual[1]]
             if op.instruction_address in addresses:
-                self._highlighted_keys.add(node.key)
+                selected_op_ids.add(op.id)
+                selected_keys.add(node.key)
                 related_varnode_ids.update(op.input_varnode_ids)
                 if op.output_varnode_id is not None:
                     related_varnode_ids.add(op.output_varnode_id)
+        related_keys: set[str] = set()
         for node in self.visual_nodes:
             if node.actual[0] == "varnode" and node.actual[1] in related_varnode_ids:
-                self._highlighted_keys.add(node.key)
-        for key in self._highlighted_keys:
-            self.canvas.itemconfigure(f"shape-{key}", outline=_theme.SELECTION_OUTLINE, width=3)
+                related_keys.add(node.key)
+        self._apply_selection_state(selected_keys=selected_keys, related_keys=related_keys)
+        return selected_op_ids, related_varnode_ids
 
-    def _select_asm_address(self, address: int) -> None:
+    def _select_asm_address(self, address: int, *, sync_graph: bool = True) -> None:
         self.asm_listbox.selection_clear(0, tk.END)
         for index, (addr, _) in enumerate(self._disasm):
             if addr == address:
                 self.asm_listbox.selection_set(index)
                 self.asm_listbox.see(index)
                 break
-        self._highlight_addresses({address})
+        if sync_graph:
+            _ = self._highlight_addresses({address})
 
     def _on_mouse_wheel(self, event) -> None:
-        if event.state & 0x4:
+        state = int(getattr(event, "state", 0))
+        if state & 0x4:
             factor = 1.15 if event.delta > 0 else 1 / 1.15
             self._do_zoom(self._zoom * factor, event)
-        elif event.state & 0x1:
+        elif state & 0x1:
             self.canvas.xview_scroll(int(-event.delta / 120), "units")
         else:
             self.canvas.yview_scroll(int(-event.delta / 120), "units")
+
+    def _handle_button_scroll(self, event, *, zoom_in: bool) -> None:
+        state = int(getattr(event, "state", 0))
+        if state & 0x4:
+            self._do_zoom(self._zoom * (1.15 if zoom_in else 1 / 1.15), event)
+        elif state & 0x1:
+            self.canvas.xview_scroll(-3 if zoom_in else 3, "units")
+        else:
+            self.canvas.yview_scroll(-3 if zoom_in else 3, "units")
 
     def _do_zoom(self, new_zoom: float, event=None) -> None:
         new_zoom = max(0.15, min(5.0, new_zoom))

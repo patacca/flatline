@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from types import SimpleNamespace
+import importlib
 from collections.abc import Callable
-from typing import cast
+from types import SimpleNamespace
+from typing import Any, cast
 
 import pytest
 
@@ -11,9 +12,89 @@ from ._xray_support import fixture_request, import_graph_window, make_sample_res
 pytestmark = pytest.mark.unit
 
 
+class _CanvasStub:
+    def __init__(self) -> None:
+        self.configured: dict[str, dict[str, object]] = {}
+
+    def itemconfigure(self, tag: str, **kwargs: object) -> None:
+        self.configured.setdefault(tag, {}).update(kwargs)
+
+
+class _ListboxStub:
+    def __init__(self) -> None:
+        self.selected: list[int] = []
+        self.seen: list[int] = []
+
+    def curselection(self) -> tuple[int, ...]:
+        return tuple(self.selected)
+
+    def selection_clear(self, _start: object, _end: object) -> None:
+        self.selected.clear()
+
+    def selection_set(self, index: int) -> None:
+        if index not in self.selected:
+            self.selected.append(index)
+
+    def see(self, index: int) -> None:
+        self.seen.append(index)
+
+
+def _make_window(monkeypatch: pytest.MonkeyPatch):
+    graph_window = import_graph_window(monkeypatch)
+    layout = importlib.import_module("flatline.xray._layout")
+    XrayWindow = graph_window.XrayWindow
+    build_visual_forest = layout.build_visual_forest
+    collect_visual_nodes = layout.collect_visual_nodes
+    sorted_ops = layout.sorted_ops
+
+    result = make_sample_result()
+    pcode = result.enriched.pcode if result.enriched is not None else None
+    assert pcode is not None
+    op_by_id = {op.id: op for op in pcode.pcode_ops}
+    varnode_by_id = {varnode.id: varnode for varnode in pcode.varnodes}
+    ordered_ops = sorted_ops(pcode.pcode_ops)
+    visual_roots, _cross_edges = build_visual_forest(op_by_id, varnode_by_id, ordered_ops)
+    visual_nodes = collect_visual_nodes(visual_roots)
+
+    window = object.__new__(XrayWindow)
+    window.window_title = "Sample Xray"
+    window.result = result
+    window.request = fixture_request()
+    window.source_label = "fixture"
+    window.result_label = "x86:LE:64:default / gcc"
+    window.pcode = pcode
+    window.op_by_id = op_by_id
+    window.varnode_by_id = varnode_by_id
+    window.sorted_ops = ordered_ops
+    window.visual_roots = visual_roots
+    window.visual_nodes = visual_nodes
+    window._node_by_key = {node.key: node for node in visual_nodes}
+    window._disasm = [(0x1000, "0x1000: ADD EAX, EBX"), (0x1003, "0x1003: RET")]
+    window._highlighted_keys = set()
+    window._selected_key = None
+    window.canvas = _CanvasStub()
+    window.asm_listbox = _ListboxStub()
+    window._inspector_value = ""
+    window._related_keys = set()
+    window._muted_keys = set()
+
+    def set_inspector_text(text: str) -> None:
+        window._inspector_value = text
+
+    window._set_inspector_text = set_inspector_text
+    return window, XrayWindow
+
+
+def _node_for(window: Any, actual: tuple[str, int]):
+    for node in window.visual_nodes:
+        if node.actual == actual:
+            return node
+    raise AssertionError(f"missing visual node for {actual!r}")
+
+
 def test_window_helpers_work_without_creating_a_tk_root(monkeypatch: pytest.MonkeyPatch) -> None:
-    _ = import_graph_window(monkeypatch)
-    from flatline.xray._graph_window import XrayWindow
+    graph_window = import_graph_window(monkeypatch)
+    XrayWindow = graph_window.XrayWindow
 
     result = make_sample_result()
     request = fixture_request()
@@ -37,8 +118,8 @@ def test_window_helpers_work_without_creating_a_tk_root(monkeypatch: pytest.Monk
 
 
 def test_window_helper_rejects_unenriched_results(monkeypatch: pytest.MonkeyPatch) -> None:
-    _ = import_graph_window(monkeypatch)
-    from flatline.xray._graph_window import XrayWindow
+    graph_window = import_graph_window(monkeypatch)
+    XrayWindow = graph_window.XrayWindow
 
     require_pcode = cast(Callable[[object, object], object], XrayWindow._require_pcode)  # pyright: ignore[reportPrivateUsage]
     window = object.__new__(XrayWindow)
@@ -49,8 +130,8 @@ def test_window_helper_rejects_unenriched_results(monkeypatch: pytest.MonkeyPatc
 
 
 def test_graph_pane_default_proportions_give_graph_expand_priority(monkeypatch: pytest.MonkeyPatch) -> None:
-    _ = import_graph_window(monkeypatch)
-    from flatline.xray._graph_window import XrayWindow
+    graph_window = import_graph_window(monkeypatch)
+    XrayWindow = graph_window.XrayWindow
 
     assert XrayWindow._asm_default_width < XrayWindow._inspector_default_width or True
     total_fixed = XrayWindow._asm_default_width + XrayWindow._inspector_default_width
@@ -62,8 +143,8 @@ def test_graph_pane_default_proportions_give_graph_expand_priority(monkeypatch: 
 
 
 def test_minimum_asm_pane_width_is_enforced(monkeypatch: pytest.MonkeyPatch) -> None:
-    _ = import_graph_window(monkeypatch)
-    from flatline.xray._graph_window import XrayWindow
+    graph_window = import_graph_window(monkeypatch)
+    XrayWindow = graph_window.XrayWindow
 
     assert XrayWindow._asm_min_width >= 180, (
         f"asm minimum width {XrayWindow._asm_min_width} is below usable threshold 180"
@@ -74,8 +155,8 @@ def test_minimum_asm_pane_width_is_enforced(monkeypatch: pytest.MonkeyPatch) -> 
 
 
 def test_minimum_inspector_pane_width_is_enforced(monkeypatch: pytest.MonkeyPatch) -> None:
-    _ = import_graph_window(monkeypatch)
-    from flatline.xray._graph_window import XrayWindow
+    graph_window = import_graph_window(monkeypatch)
+    XrayWindow = graph_window.XrayWindow
 
     assert XrayWindow._inspector_min_width >= 180, (
         f"inspector minimum width {XrayWindow._inspector_min_width} is below usable threshold 180"
@@ -86,8 +167,8 @@ def test_minimum_inspector_pane_width_is_enforced(monkeypatch: pytest.MonkeyPatc
 
 
 def test_narrow_window_panels_retain_minimums(monkeypatch: pytest.MonkeyPatch) -> None:
-    _ = import_graph_window(monkeypatch)
-    from flatline.xray._graph_window import XrayWindow
+    graph_window = import_graph_window(monkeypatch)
+    XrayWindow = graph_window.XrayWindow
 
     narrow_width = 500
     asm_min = XrayWindow._asm_min_width
@@ -99,3 +180,56 @@ def test_narrow_window_panels_retain_minimums(monkeypatch: pytest.MonkeyPatch) -
         f"sum of minimums ({asm_min + inspector_min}) must not exceed narrow window width {narrow_width}"
     )
 
+
+def test_selection_graph_node_click_syncs_inspector_and_assembly(monkeypatch: pytest.MonkeyPatch) -> None:
+    window, XrayWindow = _make_window(monkeypatch)
+
+    show_node = cast(Callable[[object, object], None], XrayWindow._show_node)  # pyright: ignore[reportPrivateUsage]
+    node = _node_for(window, ("op", 0))
+    show_node(window, node)
+
+    assert "Op #0 - INT_ADD" in window._inspector_value
+    assert window.asm_listbox.selected == [0]
+    assert window.canvas.configured[f"shape-{node.key}"]["outline"] == "#ffb703"
+
+
+def test_selection_assembly_select_highlights_related_nodes(monkeypatch: pytest.MonkeyPatch) -> None:
+    window, XrayWindow = _make_window(monkeypatch)
+
+    on_asm_select = cast(Callable[[object, object], None], XrayWindow._on_asm_select)  # pyright: ignore[reportPrivateUsage]
+    window.asm_listbox.selected = [0]
+    on_asm_select(window, None)
+
+    op_node = _node_for(window, ("op", 0))
+    related_node = _node_for(window, ("varnode", 2))
+    assert "Assembly selection" in window._inspector_value
+    assert window.canvas.configured[f"shape-{op_node.key}"]["outline"] == "#ffb703"
+    assert window.canvas.configured[f"shape-{related_node.key}"]["outline"] == "#a07cdc"
+
+
+def test_selection_state_clears_on_reset(monkeypatch: pytest.MonkeyPatch) -> None:
+    window, XrayWindow = _make_window(monkeypatch)
+
+    show_node = cast(Callable[[object, object], None], XrayWindow._show_node)  # pyright: ignore[reportPrivateUsage]
+    clear_state = cast(Callable[[object], None], XrayWindow._clear_selection_state)  # pyright: ignore[reportPrivateUsage]
+    node = _node_for(window, ("op", 0))
+    show_node(window, node)
+    clear_state(window)
+
+    assert window._selected_key is None
+    assert window._highlighted_keys == set()
+    assert window.canvas.configured[f"shape-{node.key}"]["width"] == 2
+
+
+def test_selection_selected_and_related_states_are_visually_distinct(monkeypatch: pytest.MonkeyPatch) -> None:
+    window, XrayWindow = _make_window(monkeypatch)
+
+    show_node = cast(Callable[[object, object], None], XrayWindow._show_node)  # pyright: ignore[reportPrivateUsage]
+    node = _node_for(window, ("op", 0))
+    related_node = _node_for(window, ("varnode", 2))
+    muted_node = _node_for(window, ("op", 1))
+    show_node(window, node)
+
+    assert window.canvas.configured[f"shape-{node.key}"] == {"outline": "#ffb703", "width": 4}
+    assert window.canvas.configured[f"shape-{related_node.key}"] == {"outline": "#a07cdc", "width": 3}
+    assert window.canvas.configured[f"shape-{muted_node.key}"] == {"outline": "#93a7c1", "width": 1}

@@ -5,7 +5,7 @@ from typing import cast
 
 import pytest
 
-from flatline.xray import _inspector
+from flatline.xray import _inspector  # pyright: ignore[reportMissingImports]
 
 from ._xray_support import make_sample_result
 
@@ -36,24 +36,30 @@ def test_inspector_formats_summary_and_node_details() -> None:
         source_label="fx_add_elf64.hex",
         fallback_address=0x1000,
     )
+    assert "--- Function ---" in summary
     assert "Input:     fx_add_elf64.hex" in summary
     assert "Target:    x86:LE:64:default / gcc" in summary
-    assert "Function:  add" in summary
-    assert "Warnings:" in summary
-    assert "analyze: analyze.W001 | synthetic warning" in summary
+    assert "Language:  x86:LE:64:default" in summary
+    assert "Compiler:  gcc" in summary
+    assert "--- Recovered C ---" in summary
+    assert "--- Warnings ---" in summary
+    assert "[WARNING] analyze: analyze.W001 | synthetic warning" in summary
 
     op_text_result = op_text(pcode.pcode_ops[0], varnode_by_id, depth=1)
-    assert "Opcode:       INT_ADD" in op_text_result
-    assert "Inputs:" in op_text_result
+    assert "Op #0 - INT_ADD" in op_text_result
+    assert "--- Op Detail ---" in op_text_result
+    assert "--- Inputs ---" in op_text_result
     assert "v0: INPUT register@0x0 size=4" in op_text_result
-    assert "Output:" in op_text_result
+    assert "--- Output ---" in op_text_result
     assert "v2: TEMP unique@0x100 size=4" in op_text_result
 
     varnode_text_result = varnode_text(varnode_by_id[2], op_by_id, depth=2)
     assert "Varnode v2" in varnode_text_result
-    assert "Badge:        TEMP" in varnode_text_result
-    assert "Defined by:" in varnode_text_result
+    assert "--- Varnode Detail ---" in varnode_text_result
+    assert "--- Flags ---" in varnode_text_result
+    assert "Badge:       TEMP" in varnode_text_result
+    assert "--- Defined By ---" in varnode_text_result
     assert "op#0: INT_ADD" in varnode_text_result
-    assert "Used by:" in varnode_text_result
+    assert "--- Used By ---" in varnode_text_result
 
     assert _inspector.varnode_brief(varnode_by_id[3]) == "CONST ram@0x200 size=8"

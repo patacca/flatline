@@ -1,0 +1,22 @@
+.pkg-py314: _optional_hooks> python /home/patacca/patacca_git/flatline/.venv/lib/python3.14/site-packages/pyproject_api/_backend.py True mesonpy
+.pkg-py314: get_requires_for_build_wheel> python /home/patacca/patacca_git/flatline/.venv/lib/python3.14/site-packages/pyproject_api/_backend.py True mesonpy
+.pkg-py314: recreate env because dependencies removed: patchelf>=0.11.0
+.pkg-py314: remove tox env folder /home/patacca/patacca_git/flatline/.tox/.pkg-py314
+.pkg-py314: install_requires> python -I -m pip install 'meson-python>=0.17' 'meson>=1.6' 'nanobind>=2.0'
+.pkg-py314: build_wheel> python /home/patacca/patacca_git/flatline/.venv/lib/python3.14/site-packages/pyproject_api/_backend.py True mesonpy
+py314: install_package> python -I -m pip install --force-reinstall --no-deps /home/patacca/patacca_git/flatline/.tox/.tmp/package/226/flatline-0.1.2-cp314-cp314-linux_x86_64.whl
+py314: commands[0]> pytest tests/unit/test_xray_window_spec.py -k assembly -v
+============================= test session starts ==============================
+platform linux -- Python 3.14.3, pytest-9.0.2, pluggy-1.6.0 -- /home/patacca/patacca_git/flatline/.tox/py314/bin/python
+cachedir: .tox/py314/.pytest_cache
+rootdir: /home/patacca/patacca_git/flatline
+configfile: pyproject.toml
+collecting ... collected 10 items / 8 deselected / 2 selected
+
+tests/unit/test_xray_window_spec.py::test_selection_graph_node_click_syncs_inspector_and_assembly PASSED [ 50%]
+tests/unit/test_xray_window_spec.py::test_selection_assembly_select_highlights_related_nodes PASSED [100%]
+
+======================= 2 passed, 8 deselected in 0.02s ========================
+.pkg-py314: _exit> python /home/patacca/patacca_git/flatline/.venv/lib/python3.14/site-packages/pyproject_api/_backend.py True mesonpy
+  py314: OK (79.70=setup[79.39]+cmd[0.31] seconds)
+  congratulations :) (79.72 seconds)

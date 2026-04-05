@@ -6,7 +6,7 @@ import textwrap
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from flatline.models import FunctionInfo, PcodeOpInfo, VarnodeInfo
+    from ..models import FunctionInfo, PcodeOpInfo, VarnodeInfo
 
 
 def result_address(info: FunctionInfo | None, fallback_address: int | None = None) -> str:
@@ -31,44 +31,54 @@ def summary_text(
     """Render the summary panel text."""
 
     info = result.function_info
+    metadata = result.metadata or {}
     c_block = textwrap.fill(result.c_code or "<no C output>", width=42)
     warning_lines = (
         "\n".join(
-            f"  - {warning.phase}: {warning.code} | {warning.message}"
+            f"[WARNING] {warning.phase}: {warning.code} | {warning.message}"
             for warning in result.warnings
         )
         if result.warnings
-        else "  - none"
+        else "[WARNING] none"
     )
-    lines = [window_title, ""]
-    if source_label is not None:
-        lines.append(f"Input:     {source_label}")
+    lines = [window_title, "", "--- Function ---"]
     lines.extend(
         [
-            f"Target:    {target_label}",
-            f"Function:  {info.name if info is not None else 'unknown'}",
+            f"Name:      {info.name if info is not None else 'unknown'}",
             f"Address:   {result_address(info, fallback_address)}",
             f"Size:      {info.size if info is not None else '?'} bytes",
             f"Ops:       {len(pcode.pcode_ops)}",
             f"Varnodes:  {len(pcode.varnodes)}",
         ]
     )
+    lines.append("")
+    lines.append("--- Metadata ---")
+    if source_label is not None:
+        lines.append(f"Input:     {source_label}")
+    lines.extend(
+        [
+            f"Target:    {target_label}",
+            f"Language:  {metadata.get('language_id', 'unknown')}",
+            f"Compiler:  {metadata.get('compiler_spec', 'unknown')}",
+        ]
+    )
     lines.extend(
         [
             "",
-            "Recovered C:",
+            "--- Recovered C ---",
             c_block,
             "",
-            "Legend:",
+            "--- Legend ---",
             "  - squares: pcode ops",
             "  - circles: varnodes",
             "  - triangles: constants",
             "  - blue: inputs flowing into ops",
             "  - coral: outputs produced by ops",
             "",
-            "Warnings:",
+            "--- Warnings ---",
             warning_lines,
             "",
+            "--- Usage ---",
             "Click a node to inspect addresses, flags, and use-def links.",
         ]
     )
@@ -95,18 +105,19 @@ def op_text(
     )
     return "\n".join(
         [
-            f"P-code op #{op.id}",
+            f"Op #{op.id} - {op.opcode}",
             "",
-            f"Opcode:       {op.opcode}",
-            f"Tree depth:   {depth}",
-            f"Insn addr:    0x{op.instruction_address:x}",
-            f"Seq time:     {op.sequence_time}",
-            f"Seq order:    {op.sequence_order}",
+            "--- Op Detail ---",
+            f"Opcode:      {op.opcode}",
+            f"Tree depth:  {depth}",
+            f"Insn addr:   0x{op.instruction_address:x}",
+            f"Seq time:    {op.sequence_time}",
+            f"Seq order:   {op.sequence_order}",
             "",
-            "Inputs:",
+            "--- Inputs ---",
             "\n".join(input_lines) if input_lines else "  - none",
             "",
-            "Output:",
+            "--- Output ---",
             output_line,
         ]
     )
@@ -149,19 +160,20 @@ def varnode_text(
         [
             f"Varnode v{varnode.id}",
             "",
-            f"Badge:        {badge}",
-            f"Tree depth:   {depth}",
-            f"Space:        {varnode.space}",
-            f"Offset:       0x{varnode.offset:x}",
-            f"Size:         {varnode.size} bytes",
+            "--- Varnode Detail ---",
+            f"Badge:       {badge}",
+            f"Tree depth:  {depth}",
+            f"Space:       {varnode.space}",
+            f"Offset:      0x{varnode.offset:x}",
+            f"Size:        {varnode.size} bytes",
             "",
-            "Flags:",
+            "--- Flags ---",
             f"  - {', '.join(flag_lines) if flag_lines else 'none'}",
             "",
-            "Defined by:",
+            "--- Defined By ---",
             defining_line,
             "",
-            "Used by:",
+            "--- Used By ---",
             "\n".join(use_lines) if use_lines else "  - none",
         ]
     )
