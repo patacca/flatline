@@ -7,6 +7,9 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <vector>
+
+#include "translate.hh"
 
 namespace ghidra {
 class Address;
@@ -19,6 +22,37 @@ class Symbol;
 }  // namespace ghidra
 
 namespace flatline::native_bridge {
+
+struct InstructionEntry {
+    std::uint64_t address;
+    int length;
+    std::string mnemonic;
+    std::string operands;
+};
+
+class FlatlineAssemblyEmit : public ghidra::AssemblyEmit {
+   public:
+    void dump(const ghidra::Address& addr, const std::string& mnem,
+              const std::string& body) override {
+        entries_.push_back(InstructionEntry{
+            static_cast<std::uint64_t>(addr.getOffset()),
+            0,
+            mnem,
+            body,
+        });
+    }
+
+    void set_last_length(int length) {
+        if (!entries_.empty()) {
+            entries_.back().length = length;
+        }
+    }
+
+    const std::vector<InstructionEntry>& entries() const { return entries_; }
+
+   private:
+    std::vector<InstructionEntry> entries_;
+};
 
 struct NativeRequest {
     std::string memory_image;
@@ -56,6 +90,7 @@ nanobind::dict success_result(const std::string& c_code, const nanobind::dict& f
                               const std::string& language_id, const std::string& compiler_spec,
                               const nanobind::dict& diagnostics, const nanobind::object& enriched);
 nanobind::dict pcode_to_dict(const ghidra::Funcdata& function);
+nanobind::list instructions_to_list(const std::vector<InstructionEntry>& instructions);
 std::string classifier_for_lowlevel_error(const std::string& message);
 void fill_repeating_bytes(std::uint8_t* ptr, std::size_t size, const std::string& pattern);
 

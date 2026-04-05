@@ -270,6 +270,7 @@ if nanobind_available
     [
       'native/module.cpp',
       'native/memory.cpp',
+      'native/disasm.cpp',
       'native/pcode.cpp',
       'native/session.cpp',
       'native/shared.cpp',

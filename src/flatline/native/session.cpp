@@ -4,6 +4,7 @@
 #include <cstring>
 #include <mutex>
 #include <optional>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -16,6 +17,7 @@
 #include "loadimage.hh"
 #include "shared.h"
 #include "sleigh_arch.hh"
+#include "translate.hh"
 #include "xml.hh"
 
 namespace nb = nanobind;
@@ -276,6 +278,30 @@ nb::dict NativeSession::decompile_function(const nb::dict& request) const {
         if (native_request.enriched) {
             nb::dict enriched_dict;
             enriched_dict["pcode"] = flatline::native_bridge::pcode_to_dict(*function);
+
+            std::set<std::uint64_t> unique_addrs;
+            for (auto it = function->beginOpAlive(); it != function->endOpAlive(); ++it) {
+                unique_addrs.insert(static_cast<std::uint64_t>((*it)->getAddr().getOffset()));
+            }
+
+            flatline::native_bridge::FlatlineAssemblyEmit emit;
+            for (std::uint64_t offset : unique_addrs) {
+                try {
+                    ghidra::Address addr(architecture.getDefaultCodeSpace(), offset);
+                    int len = architecture.translate->printAssembly(emit, addr);
+                    emit.set_last_length(len);
+                } catch (const ghidra::BadDataError&) {
+                    nb::dict warning;
+                    warning["code"] = "enrich.W001";
+                    warning["message"] =
+                        "disassembly failed at address 0x" + std::to_string(offset);
+                    warning["phase"] = "analyze";
+                    warnings.append(warning);
+                }
+            }
+            enriched_dict["instructions"] =
+                flatline::native_bridge::instructions_to_list(emit.entries());
+
             enriched = enriched_dict;
         }
         if (status < 0) {
