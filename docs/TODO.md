@@ -13,6 +13,8 @@ All phases (P0-P7) and milestones (M0-M6) are closed; latest release is
 - [ ] **Multi-region memory input**: extend `DecompileRequest` with multi-region input and section metadata (readonly ranges, symbols).
 - [ ] **Batch decompilation APIs**: decompile many functions in one call with bounded resources.
 - [ ] **Enriched-output follow-ons**: CFG/basic-block exports, richer symbol/type links on pcode and varnodes, broader fixture coverage, and additional end-to-end downstream validations beyond the current use-def graph slice.
+- [ ] **Resolve fspec/iop varnode offsets**: at extraction time in the native bridge, recover the real callee address from `FuncCallSpecs::getFspecFromConst()` for `IPTR_FSPEC` varnodes (and analogously for `IPTR_IOP`), replacing the dangling C++ heap pointer currently exposed as the varnode offset.
+- [ ] **Resolve register-space offsets to symbolic names**: map `(space='register', offset, size)` varnodes to their architecture-specific register names (e.g. `x0`, `RAX`) using the Sleigh language spec at extraction time.
 
 ## Host and Platform Expansion
 
@@ -28,6 +30,10 @@ All phases (P0-P7) and milestones (M0-M6) are closed; latest release is
 
 - [ ] **Extended ISA fixture coverage**: non-priority Ghidra-supported ISAs beyond the current fixture-backed set (x86 32/64, ARM64, RISC-V 64, MIPS32).
 - [ ] **ISA variant fixtures**: ARM32/Thumb, RV32, MIPS64, microMIPS are best-effort with no dedicated fixtures.
+
+## Under Evaluation
+
+- [ ] **Custom decompilation pipeline control**: expose optional enrichment allowing callers to select which analysis actions/rules are included in the decompilation pipeline and optionally inject custom ones (leveraging Ghidra's ActionDatabase group-filtering and clone mechanism). Needs design evaluation before acceptance — not yet approved as future work.
 
 ## API and Contract Extensions
 
