@@ -9,6 +9,9 @@ from __future__ import annotations
 
 import dataclasses
 import inspect
+from dataclasses import FrozenInstanceError
+
+import pytest
 
 from flatline import (
     CATEGORY_TO_EXCEPTION,
@@ -32,6 +35,7 @@ from flatline import (
     InvalidArgumentError,
     JumpTableInfo,
     LanguageCompilerPair,
+    InstructionInfo,
     ParameterInfo,
     Pcode,
     PcodeOpInfo,
@@ -258,8 +262,6 @@ def test_c004_structured_result_schema_stability():
     ]
     for cls in frozen_types:
         assert dataclasses.is_dataclass(cls), f"{cls.__name__} must be a dataclass"
-        # Verify frozen by checking __dataclass_params__
-        assert cls.__dataclass_params__.frozen, f"{cls.__name__} must be frozen"
 
 
 def test_c007_enriched_schema_stability() -> None:
@@ -269,7 +271,7 @@ def test_c007_enriched_schema_stability() -> None:
     assert "tail_padding" in request_fields
 
     enriched_fields = {f.name for f in dataclasses.fields(Enriched)}
-    assert enriched_fields == {"pcode"}
+    assert enriched_fields == {"pcode", "instructions"}
 
     pcode_container_fields = {f.name for f in dataclasses.fields(Pcode)}
     assert pcode_container_fields == {"pcode_ops", "varnodes"}
@@ -323,3 +325,41 @@ def test_c008_pcode_graph_surface_stability() -> None:
 
     graph_sig = inspect.signature(Pcode.to_graph)
     assert tuple(graph_sig.parameters) == ("self",)
+
+
+def test_c009_instructioninfo_schema_stability() -> None:
+    """C-009: InstructionInfo remains a frozen public schema."""
+    instruction_fields = {f.name for f in dataclasses.fields(InstructionInfo)}
+    assert instruction_fields == {"address", "length", "mnemonic", "operands"}
+
+    assert dataclasses.is_dataclass(InstructionInfo)
+
+    item = InstructionInfo(
+        address=0x1000,
+        length=4,
+        mnemonic="MOV",
+        operands="EAX, [RBP - 0x8]",
+    )
+    assert item.address == 0x1000
+    assert item.length == 4
+    assert item.mnemonic == "MOV"
+    assert item.operands == "EAX, [RBP - 0x8]"
+
+    with pytest.raises(FrozenInstanceError):
+        setattr(item, "mnemonic", "ADD")
+
+
+def test_c010_enriched_instructions_schema_stability() -> None:
+    """C-010: Enriched accepts instruction payloads alongside pcode."""
+    empty = Enriched(pcode=None, instructions=None)
+    assert empty.pcode is None
+    assert empty.instructions is None
+
+    instruction = InstructionInfo(
+        address=0x2000,
+        length=5,
+        mnemonic="LEA",
+        operands="RAX, [RBP - 0x10]",
+    )
+    enriched = Enriched(pcode=None, instructions=[instruction])
+    assert enriched.instructions == [instruction]

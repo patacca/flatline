@@ -209,6 +209,16 @@ class PcodeOpInfo:
 
 
 @dataclass(frozen=True)
+class InstructionInfo:
+    """One disassembled instruction from the native disassembly pass."""
+
+    address: int
+    length: int
+    mnemonic: str
+    operands: str
+
+
+@dataclass(frozen=True)
 class VarnodeInfo:
     """One varnode in the enriched use-def graph."""
 
@@ -306,7 +316,7 @@ class VersionInfo:
     decompiler_version: str
 
 
-def _validate_compiler_spec(compiler_spec: str, known_specs: frozenset[str]) -> None:
+def _validate_compiler_spec(compiler_spec: str, known_specs: frozenset[str]) -> None:  # pyright: ignore[reportUnusedFunction]
     """Validate compiler_spec against a known set.
 
     Raises UnsupportedTargetError if not found. Never silently falls back
@@ -326,6 +336,7 @@ __all__ = [
     "FunctionInfo",
     "FunctionPrototype",
     "JumpTableInfo",
+    "InstructionInfo",
     "LanguageCompilerPair",
     "ParameterInfo",
     "PcodeOpInfo",

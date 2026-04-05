@@ -4,11 +4,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import cached_property
+from typing import TYPE_CHECKING
 
 import networkx as nx
 
 from flatline._errors import InvalidArgumentError
 from flatline.models.types import PcodeOpInfo, VarnodeInfo
+
+if TYPE_CHECKING:
+    from flatline.models.types import InstructionInfo
 
 
 @dataclass(frozen=True)
@@ -34,9 +38,9 @@ class Pcode:
         except KeyError as exc:
             raise InvalidArgumentError(f"unknown varnode id: {varnode_id}") from exc
 
-    def to_graph(self) -> nx.MultiDiGraph:
+    def to_graph(self) -> nx.MultiDiGraph[object]:
         """Return a traversable bipartite graph of pcode ops and varnodes."""
-        graph = nx.MultiDiGraph()
+        graph: nx.MultiDiGraph[object] = nx.MultiDiGraph()
         varnodes_by_id = self._varnodes_by_id
 
         for pcode_op in self.pcode_ops:
@@ -53,7 +57,7 @@ class Pcode:
                     raise InvalidArgumentError(
                         f"pcode op {pcode_op.id} references unknown input varnode {varnode_id}"
                     ) from None
-                graph.add_edge(
+                _ = graph.add_edge(
                     ("varnode", input_varnode.id),
                     op_node,
                     key=("input", input_index),
@@ -65,11 +69,9 @@ class Pcode:
                 try:
                     output_varnode = varnodes_by_id[pcode_op.output_varnode_id]
                 except KeyError:
-                    raise InvalidArgumentError(
-                        f"pcode op {pcode_op.id} references unknown output varnode "
-                        f"{pcode_op.output_varnode_id}"
-                    ) from None
-                graph.add_edge(
+                    message = f"pcode op {pcode_op.id} references unknown output varnode {pcode_op.output_varnode_id}"
+                    raise InvalidArgumentError(message) from None
+                _ = graph.add_edge(
                     op_node,
                     ("varnode", output_varnode.id),
                     key=("output", 0),
@@ -93,10 +95,11 @@ class Enriched:
     """Optional companion payload for enriched decompiler output."""
 
     pcode: Pcode | None = None
+    instructions: list[InstructionInfo] | None = None
 
 
 def _validate_lookup_id(value: int, field_name: str) -> None:
-    if not isinstance(value, int) or isinstance(value, bool):
+    if type(value) is not int:
         raise InvalidArgumentError(f"{field_name} must be an int")
 
 
