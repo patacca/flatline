@@ -54,3 +54,17 @@
 - `_canvas.py` now treats `_layout.node_label_lines()` plus `_layout.node_size()` as the single label-fit contract, so rendered text and node bounds stay in sync instead of drifting through ad-hoc shortening.
 - Exporting shared spacing constants from `_layout.py` lets `XrayWindow` reuse the same horizontal and vertical density knobs the layout engine measures against, which keeps spacing adjustments testable and centralized.
 - Headless guardrails are easiest to express as source-level contract tests: inspect `_canvas.py` for `node_label_lines`/`node_size` usage and keep `_graph_window.py` free of direct `create_rectangle`/`create_text` drawing calls.
+
+## Task 9 Learnings
+- Token-only approach for inactive edges: `EDGE_INACTIVE_COLOR` and `EDGE_INACTIVE_WIDTH` in `_theme.py` are used as the *default* draw values in `draw_edge()`. This reduces visual noise without requiring per-edge tags or a post-draw repaint pass, which would significantly complicate the stateless canvas drawing model.
+- The `EDGE_INPUT`/`EDGE_OUTPUT` palette is preserved in `_theme.py` as reserved tokens for a future active-edge re-coloring pass (if edge tags are ever added), and is documented with a comment in `_canvas.py`.
+- `_INITIAL_ZOOM` as a class constant (not instance variable) is the correct pattern for any contract-checkable value: headless tests can inspect class attributes without ever calling `__init__` or needing a Tk root.
+- `reset_view()` implements the full re-center contract (not just zoom reset): it calls `_do_zoom()` for the scale transform, then re-positions xview/yview via fractional xview_moveto arithmetic so the graph center is visible.
+- Initial viewport centering uses a half-window-width estimate (750px = half of 1500px default) since winfo_width() returns 1 before the window is mapped. For a production-quality centering, an `after()` callback triggered post-map would be needed, but the approximation is sufficient for the current use case.
+- ruff line-length (99 chars) needs care in test assertion messages: long assert strings with embedded attribute accesses can overflow; extract to local vars first.
+
+## Task 10 Learnings
+- Documentation for X-Ray should emphasize the **resizable panes** and **selection synchronization** as these are the primary workflow improvements.
+- Mentioning **Ctrl+0** for zoom reset provides a discoverable "home" button for users exploring large p-code graphs.
+- Section 5 of the tutorial is the most natural place to describe the interaction model between the three panels (Graph, Assembly, Inspector).
+- Keeping the CHANGELOG entries user-focused (describing the "what" and "why" of the UI refresh) rather than technical ensures it remains useful for the project's target audience.

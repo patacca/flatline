@@ -17,6 +17,14 @@ This is a convenience layer, not a separate product model. You still provide:
 Use X-Ray when you want to inspect one function interactively instead of
 writing code around `DecompileResult` and `Enriched.pcode`.
 
+The viewer features a three-panel layout designed for high-density analysis:
+
+- **Graph View** (Center): The dominant pane displaying p-code operations and varnode nodes. It supports interactive selection, highlighting, and zooming.
+- **Assembly Panel** (Left): Shows the decoded instructions for the function.
+- **Inspector Panel** (Right): Provides detailed metadata for the currently selected node or instruction.
+
+All panes are resizable by dragging the vertical dividers between them. The graph pane automatically expands to fill available space when the window is resized.
+
 It is useful for:
 
 - first-pass reverse engineering on caller-provided bytes

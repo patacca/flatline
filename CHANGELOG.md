@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- X-Ray viewer: refreshed UI with resizable panes, improved selection and highlight synchronization, cleaner node label fit, and reduced visual noise
+
 ## [0.1.2] - 2026-04-05
 
 ### Added

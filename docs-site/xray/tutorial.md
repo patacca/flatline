@@ -66,17 +66,20 @@ python -m flatline.xray demo.bin \
 
 ## 5. Read the panels
 
-After launch, the window shows three coordinated views:
+After launch, the window shows three coordinated views. You can resize these by dragging the vertical dividers between them.
 
-- The graph view shows p-code ops and varnodes as a tree with edges for
-  def-use relationships.
-- The assembly panel lists the recovered instruction addresses, and decoded
-  instructions from Ghidra's Sleigh disassembly.
-- The inspector panel shows details for the selected node, including flags,
-  use-def links, and address metadata.
+- **The graph view** (Center) shows p-code ops and varnodes with edges for def-use relationships.
+    - Click a node to focus it: this highlights the node, mutes unrelated nodes, and populates the inspector.
+    - The assembly panel automatically scrolls to the related instruction.
+    - Press **Ctrl+0** to reset the zoom and re-center the graph.
+- **The assembly panel** (Left) lists the recovered instruction addresses and decoded instructions.
+    - Selecting an assembly line highlights all related p-code nodes in the graph.
+- **The inspector panel** (Right) provides a structured view of the selected node's metadata:
+    - **Function & Metadata**: Address, size, and basic block info.
+    - **Recovered C**: The specific C-code fragment for this operation.
+    - **Usage**: Detailed use-def links and varnode flags.
 
-Click a node in the graph to focus its details. Select an assembly line to
-highlight the related p-code nodes.
+Clicking any element in one panel synchronizes the highlights and focus across all three views, ensuring you always have the full context for the current p-code operation.
 
 ## Troubleshooting
 
