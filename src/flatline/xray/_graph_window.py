@@ -26,8 +26,8 @@ from ._inputs import disassemble_instruction_addresses
 from ._inspector import op_text, summary_text, varnode_text
 from ._layout import (
     HORIZONTAL_NODE_GAP,
-    VisualNode,
     VERTICAL_LEVEL_GAP,
+    VisualNode,
     assign_forest_positions,
     build_visual_forest,
     collect_visual_nodes,

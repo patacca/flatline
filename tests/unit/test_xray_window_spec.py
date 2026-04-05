@@ -305,7 +305,9 @@ def test_graph_window_and_canvas_do_not_bypass_layout_node_size_contract(
     tree = ast.parse(canvas_source)
     for function_name in ("draw_op_node", "draw_varnode_node"):
         function = next(
-            node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == function_name
+            node
+            for node in tree.body
+            if isinstance(node, ast.FunctionDef) and node.name == function_name
         )
         names = {node.id for node in ast.walk(function) if isinstance(node, ast.Name)}
         assert "node_size" in names

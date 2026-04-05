@@ -364,6 +364,8 @@ def node_pad(
 
 
 __all__ = [
+    "HORIZONTAL_NODE_GAP",
+    "VERTICAL_LEVEL_GAP",
     "NodeId",
     "VisualNode",
     "assign_forest_positions",
@@ -372,7 +374,6 @@ __all__ = [
     "compute_canvas_size",
     "fit_opcode_label",
     "fit_varnode_badge",
-    "HORIZONTAL_NODE_GAP",
     "measure_forest",
     "node_label_lines",
     "node_pad",
@@ -381,5 +382,4 @@ __all__ = [
     "sink_ops",
     "sorted_ops",
     "varnode_badge",
-    "VERTICAL_LEVEL_GAP",
 ]

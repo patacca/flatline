@@ -49,3 +49,8 @@
 - Inspector text is easier to scan when the summary is split into `Function`, `Metadata`, `Recovered C`, `Warnings`, and `Usage` sections with explicit dividers.
 - Prefixing warning rows with `[WARNING]` makes degraded output stand out without needing non-ASCII symbols.
 - Assembly readability improves with persisted selection (`exportselection=False`) and a wider default listbox width so the left pane feels less cramped.
+
+## Task 7 Learnings
+- `_canvas.py` now treats `_layout.node_label_lines()` plus `_layout.node_size()` as the single label-fit contract, so rendered text and node bounds stay in sync instead of drifting through ad-hoc shortening.
+- Exporting shared spacing constants from `_layout.py` lets `XrayWindow` reuse the same horizontal and vertical density knobs the layout engine measures against, which keeps spacing adjustments testable and centralized.
+- Headless guardrails are easiest to express as source-level contract tests: inspect `_canvas.py` for `node_label_lines`/`node_size` usage and keep `_graph_window.py` free of direct `create_rectangle`/`create_text` drawing calls.
