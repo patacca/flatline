@@ -15,6 +15,7 @@ except ImportError as exc:  # pragma: no cover - platform dependent
         "  Fedora:         sudo dnf install python3-tkinter\n"
         "  macOS Homebrew: brew install python-tk"
     ) from exc
+import flatline.xray._theme as _theme
 from flatline.xray._inputs import (
     _opcode_color,
     _short_opcode,
@@ -34,15 +35,6 @@ from flatline.xray._layout import (
     node_size,
     sorted_ops,
 )
-
-BACKGROUND = "#07111c"
-CANVAS_BG = "#08131f"
-PANEL_BG = "#0d1726"
-TEXT = "#eef6ff"
-MUTED = "#93a7c1"
-ACCENT = "#ffb703"
-EDGE_INPUT = "#54c6eb"
-EDGE_OUTPUT = "#ff7b72"
 
 
 class XrayWindow(tk.Tk):
@@ -108,15 +100,15 @@ class XrayWindow(tk.Tk):
         title_suffix = f" - {self.result_label}" if self.result_label else ""
         self.title(f"{title}{title_suffix}")
         self.geometry("1500x980")
-        self.configure(bg=BACKGROUND)
-        header = tk.Frame(self, bg=BACKGROUND)
+        self.configure(bg=_theme.BACKGROUND)
+        header = tk.Frame(self, bg=_theme.BACKGROUND)
         header.pack(fill="x", padx=18, pady=(18, 10))
         tk.Label(
             header,
             text=title,
-            bg=BACKGROUND,
-            fg=ACCENT,
-            font=("Helvetica", 24, "bold"),
+            bg=_theme.BACKGROUND,
+            fg=_theme.SELECTION_OUTLINE,
+            font=_theme.TITLE_FONT,
         ).pack(anchor="w")
         subtitle = (
             f"{self.result_label} | tree view | "
@@ -125,54 +117,54 @@ class XrayWindow(tk.Tk):
         tk.Label(
             header,
             text=subtitle,
-            bg=BACKGROUND,
-            fg=MUTED,
-            font=("Helvetica", 11),
+            bg=_theme.BACKGROUND,
+            fg=_theme.TEXT_MUTED,
+            font=_theme.SUBTITLE_FONT,
         ).pack(anchor="w", pady=(4, 0))
-        body = tk.Frame(self, bg=BACKGROUND)
+        body = tk.Frame(self, bg=_theme.BACKGROUND)
         body.pack(fill="both", expand=True, padx=18, pady=(0, 18))
-        sidebar = tk.Frame(body, bg=PANEL_BG, width=360)
+        sidebar = tk.Frame(body, bg=_theme.PANEL_BG, width=360)
         sidebar.pack(side="right", fill="y", padx=(16, 0))
         sidebar.pack_propagate(False)
         tk.Label(
             sidebar,
             text="Inspector",
-            bg=PANEL_BG,
-            fg=TEXT,
-            font=("Helvetica", 14, "bold"),
+            bg=_theme.PANEL_BG,
+            fg=_theme.TEXT,
+            font=_theme.PANEL_TITLE_FONT,
         ).pack(anchor="w", padx=14, pady=(14, 8))
         self.inspector = tk.Text(
             sidebar,
-            bg=PANEL_BG,
-            fg=TEXT,
-            insertbackground=TEXT,
+            bg=_theme.PANEL_BG,
+            fg=_theme.TEXT,
+            insertbackground=_theme.TEXT,
             relief="flat",
             wrap="word",
             padx=14,
             pady=4,
-            font=("Courier", 10),
+            font=_theme.BODY_FONT,
         )
         self.inspector.pack(fill="both", expand=True)
         self.inspector.configure(state="disabled")
-        asm_frame = tk.Frame(body, bg=PANEL_BG, width=300)
+        asm_frame = tk.Frame(body, bg=_theme.PANEL_BG, width=300)
         asm_frame.pack(side="left", fill="y", padx=(0, 16))
         asm_frame.pack_propagate(False)
         tk.Label(
             asm_frame,
             text="Assembly",
-            bg=PANEL_BG,
-            fg=TEXT,
-            font=("Helvetica", 14, "bold"),
+            bg=_theme.PANEL_BG,
+            fg=_theme.TEXT,
+            font=_theme.PANEL_TITLE_FONT,
         ).pack(anchor="w", padx=14, pady=(14, 8))
-        asm_inner = tk.Frame(asm_frame, bg=PANEL_BG)
+        asm_inner = tk.Frame(asm_frame, bg=_theme.PANEL_BG)
         asm_inner.pack(fill="both", expand=True, padx=(14, 0))
         self.asm_listbox = tk.Listbox(
             asm_inner,
-            bg=PANEL_BG,
-            fg=TEXT,
-            selectbackground="#1e3a5f",
-            selectforeground=ACCENT,
-            font=("Courier", 10),
+            bg=_theme.PANEL_BG,
+            fg=_theme.TEXT,
+            selectbackground=_theme.SELECTION_BACKGROUND,
+            selectforeground=_theme.SELECTION_TEXT,
+            font=_theme.BODY_FONT,
             selectmode=tk.EXTENDED,
             activestyle="none",
             relief="flat",
@@ -190,9 +182,9 @@ class XrayWindow(tk.Tk):
         for _, line_text in self._disasm:
             self.asm_listbox.insert(tk.END, line_text)
         self.asm_listbox.bind("<<ListboxSelect>>", self._on_asm_select)
-        canvas_frame = tk.Frame(body, bg=BACKGROUND)
+        canvas_frame = tk.Frame(body, bg=_theme.BACKGROUND)
         canvas_frame.pack(side="left", fill="both", expand=True)
-        self.canvas = tk.Canvas(canvas_frame, bg=CANVAS_BG, highlightthickness=0)
+        self.canvas = tk.Canvas(canvas_frame, bg=_theme.CANVAS_BG, highlightthickness=0)
         x_scroll = tk.Scrollbar(canvas_frame, orient="horizontal", command=self.canvas.xview)
         y_scroll = tk.Scrollbar(canvas_frame, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(xscrollcommand=x_scroll.set, yscrollcommand=y_scroll.set)
@@ -290,8 +282,8 @@ class XrayWindow(tk.Tk):
         for depth in range(self.max_depth + 1):
             y = self.virtual_height - self._bottom_margin - depth * self._level_gap
             is_op_row = depth % 2 == 0
-            fill = "#122235" if is_op_row else "#0d2030"
-            outline = "#1a3551" if is_op_row else "#102739"
+            fill = _theme.DEPTH_BAND_OP_FILL if is_op_row else _theme.DEPTH_BAND_INPUT_FILL
+            outline = _theme.DEPTH_BAND_OP_OUTLINE if is_op_row else _theme.DEPTH_BAND_INPUT_OUTLINE
             label = "Ops" if is_op_row else "Inputs / values"
             self.canvas.create_rectangle(
                 40,
@@ -307,8 +299,8 @@ class XrayWindow(tk.Tk):
                 y - 40,
                 text=f"{label} row {depth}",
                 anchor="w",
-                fill=MUTED,
-                font=("Helvetica", 10, "bold"),
+                fill=_theme.TEXT_MUTED,
+                font=_theme.BAND_FONT,
             )
 
     def _draw_edges(self, node: VisualNode) -> None:
@@ -321,7 +313,7 @@ class XrayWindow(tk.Tk):
         sy = source.y + node_pad(source, self.varnode_by_id)
         tx = target.x
         ty = target.y - node_pad(target, self.varnode_by_id)
-        color = EDGE_INPUT if target.actual[0] == "op" else EDGE_OUTPUT
+        color = _theme.EDGE_INPUT if target.actual[0] == "op" else _theme.EDGE_OUTPUT
         width = 1.9 if target.actual[0] == "op" else 2.3
         span_y = ty - sy
         self.canvas.create_line(
@@ -356,7 +348,7 @@ class XrayWindow(tk.Tk):
             mid_y,
             tx,
             ty,
-            fill="#a07cdc",
+            fill=_theme.EDGE_RELATED,
             width=1.4,
             smooth=True,
             splinesteps=24,
@@ -385,7 +377,7 @@ class XrayWindow(tk.Tk):
             y - half + 4,
             x + half + 4,
             y + half + 4,
-            fill="#040a12",
+            fill=_theme.NODE_SHADOW,
             outline="",
             tags=(tag,),
         )
@@ -395,7 +387,7 @@ class XrayWindow(tk.Tk):
             x + half,
             y + half,
             fill=_opcode_color(op.opcode),
-            outline="#f8fbff",
+            outline=_theme.NODE_OUTLINE,
             width=2,
             tags=(tag, f"shape-{node.key}"),
         )
@@ -403,8 +395,8 @@ class XrayWindow(tk.Tk):
             x,
             y,
             text=f"{_short_opcode(op.opcode)}\n#{op.id}",
-            fill="#07111c",
-            font=("Helvetica", 10, "bold"),
+            fill=_theme.TEXT_ON_NODE,
+            font=_theme.NODE_FONT,
             tags=(tag,),
         )
         self.canvas.tag_bind(
@@ -442,14 +434,14 @@ class XrayWindow(tk.Tk):
             )
             self.canvas.create_polygon(
                 shadow_points,
-                fill="#040a12",
+                fill=_theme.NODE_SHADOW,
                 outline="",
                 tags=(tag,),
             )
             self.canvas.create_polygon(
                 points,
                 fill=fill,
-                outline="#f4fff8",
+                outline=_theme.NODE_OUTLINE_ALT,
                 width=2,
                 tags=(tag, f"shape-{node.key}"),
             )
@@ -459,7 +451,7 @@ class XrayWindow(tk.Tk):
                 y - half_h + 4,
                 x + half_w + 4,
                 y + half_h + 4,
-                fill="#040a12",
+                fill=_theme.NODE_SHADOW,
                 outline="",
                 tags=(tag,),
             )
@@ -469,7 +461,7 @@ class XrayWindow(tk.Tk):
                 x + half_w,
                 y + half_h,
                 fill=fill,
-                outline="#f4fff8",
+                outline=_theme.NODE_OUTLINE_ALT,
                 width=2,
                 tags=(tag, f"shape-{node.key}"),
             )
@@ -477,8 +469,8 @@ class XrayWindow(tk.Tk):
             x,
             y + (6 if varnode.flags.is_constant else 0),
             text=label,
-            fill="#07111c",
-            font=("Helvetica", 9, "bold"),
+            fill=_theme.TEXT_ON_NODE,
+            font=_theme.VARNODE_FONT,
             tags=(tag,),
         )
         self.canvas.tag_bind(
@@ -517,7 +509,7 @@ class XrayWindow(tk.Tk):
     def _highlight_addresses(self, addresses: set[int]) -> None:
         for key in self._highlighted_keys:
             node = self._node_by_key[key]
-            default = "#f8fbff" if node.actual[0] == "op" else "#f4fff8"
+            default = _theme.NODE_OUTLINE if node.actual[0] == "op" else _theme.NODE_OUTLINE_ALT
             self.canvas.itemconfigure(f"shape-{key}", outline=default, width=2)
         self._highlighted_keys.clear()
         if not addresses:
@@ -536,7 +528,7 @@ class XrayWindow(tk.Tk):
             if node.actual[0] == "varnode" and node.actual[1] in related_varnode_ids:
                 self._highlighted_keys.add(node.key)
         for key in self._highlighted_keys:
-            self.canvas.itemconfigure(f"shape-{key}", outline=ACCENT, width=3)
+            self.canvas.itemconfigure(f"shape-{key}", outline=_theme.SELECTION_OUTLINE, width=3)
 
     def _select_asm_address(self, address: int) -> None:
         self.asm_listbox.selection_clear(0, tk.END)

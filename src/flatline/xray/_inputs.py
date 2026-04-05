@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 from flatline import DecompileRequest, DecompileResult, decompile_function, list_language_compilers
 from flatline.models import LanguageCompilerPair
+import flatline.xray._theme as _theme
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -107,27 +108,11 @@ def disassemble_instruction_addresses(
 
 
 def _opcode_color(opcode: str) -> str:
-    if opcode.startswith(("INT_", "BOOL_", "FLOAT_")):
-        return "#ff9f68"
-    if opcode.startswith(("LOAD", "STORE")):
-        return "#f28482"
-    if opcode in {"BRANCH", "CBRANCH", "BRANCHIND"}:
-        return "#ffd166"
-    if opcode in {"CALL", "CALLIND", "RETURN"}:
-        return "#ff6b6b"
-    return "#8ecae6"
+    return _theme.opcode_color_for(opcode)
 
 
 def _varnode_color(varnode) -> str:
-    if varnode.flags.is_constant:
-        return "#ffd166"
-    if varnode.flags.is_input:
-        return "#72ddf7"
-    if varnode.flags.is_persist or varnode.flags.is_addr_tied:
-        return "#95d5b2"
-    if varnode.flags.is_read_only:
-        return "#caffbf"
-    return "#98f5e1"
+    return _theme.varnode_color_for(varnode)
 
 
 def _short_opcode(opcode: str) -> str:

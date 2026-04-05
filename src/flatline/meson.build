@@ -35,6 +35,7 @@ py.install_sources(
   'xray/_inputs.py',
   'xray/_inspector.py',
   'xray/_layout.py',
+  'xray/_theme.py',
   subdir: 'flatline/xray',
 )
 
