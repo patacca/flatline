@@ -34,7 +34,7 @@ NODE_VARNODE_CONSTANT = "#ffd166"
 
 EDGE_INPUT = "#54c6eb"
 EDGE_OUTPUT = "#ff7b72"
-EDGE_RELATED = "#a07cdc"
+EDGE_RELATED = "#ff4da6"
 
 SELECTION_BACKGROUND = "#1a4f80"
 SELECTION_OUTLINE = "#ffb703"
@@ -42,7 +42,7 @@ SELECTION_TEXT = SELECTION_OUTLINE
 # Glow halo drawn behind selected/related nodes — much more visible than outline alone.
 SELECTION_GLOW = SELECTION_OUTLINE
 SELECTION_GLOW_PAD = 8.0
-RELATED_GLOW = "#7c5cbf"
+RELATED_GLOW = "#ff6eb8"
 RELATED_GLOW_PAD = 6.0
 
 DEPTH_BAND_OP_FILL = "#122235"
