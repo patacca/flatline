@@ -189,7 +189,16 @@ def draw_op_node(
     x = node.x
     y = node.y
     tag = f"node-{node.key}"
-    # Selection glow — hidden by default, toggled on selection.
+    canvas.create_rectangle(
+        x - half_w + 4,
+        y - half_h + 4,
+        x + half_w + 4,
+        y + half_h + 4,
+        fill=_theme.NODE_SHADOW,
+        outline="",
+        tags=(tag,),
+    )
+    # Selection glow — hidden by default, covers shadow when revealed.
     glow_pad = _theme.SELECTION_GLOW_PAD
     canvas.create_rectangle(
         x - half_w - glow_pad,
@@ -200,15 +209,6 @@ def draw_op_node(
         outline="",
         state="hidden",
         tags=(f"glow-{node.key}", "glow"),
-    )
-    canvas.create_rectangle(
-        x - half_w + 4,
-        y - half_h + 4,
-        x + half_w + 4,
-        y + half_h + 4,
-        fill=_theme.NODE_SHADOW,
-        outline="",
-        tags=(tag,),
     )
     canvas.create_rectangle(
         x - half_w,
@@ -253,20 +253,6 @@ def draw_varnode_node(
     tag = f"node-{node.key}"
     fill = _varnode_color(varnode)
     if varnode.flags.is_constant:
-        # Selection glow — hidden triangle halo behind constant varnodes.
-        glow_pad = _theme.SELECTION_GLOW_PAD
-        canvas.create_polygon(
-            x,
-            y - half_h - glow_pad,
-            x - half_w - glow_pad,
-            y + half_h + glow_pad,
-            x + half_w + glow_pad,
-            y + half_h + glow_pad,
-            fill=_theme.SELECTION_GLOW,
-            outline="",
-            state="hidden",
-            tags=(f"glow-{node.key}", "glow"),
-        )
         shadow_points = (
             x,
             y - half_h + 4,
@@ -289,6 +275,20 @@ def draw_varnode_node(
             outline="",
             tags=(tag,),
         )
+        # Selection glow — hidden triangle, covers shadow when revealed.
+        glow_pad = _theme.SELECTION_GLOW_PAD
+        canvas.create_polygon(
+            x,
+            y - half_h - glow_pad,
+            x - half_w - glow_pad,
+            y + half_h + glow_pad,
+            x + half_w + glow_pad,
+            y + half_h + glow_pad,
+            fill=_theme.SELECTION_GLOW,
+            outline="",
+            state="hidden",
+            tags=(f"glow-{node.key}", "glow"),
+        )
         canvas.create_polygon(
             points,
             fill=fill,
@@ -297,7 +297,16 @@ def draw_varnode_node(
             tags=(tag, f"shape-{node.key}"),
         )
     else:
-        # Selection glow — hidden oval halo behind regular varnodes.
+        canvas.create_oval(
+            x - half_w + 4,
+            y - half_h + 4,
+            x + half_w + 4,
+            y + half_h + 4,
+            fill=_theme.NODE_SHADOW,
+            outline="",
+            tags=(tag,),
+        )
+        # Selection glow — hidden oval, covers shadow when revealed.
         glow_pad = _theme.SELECTION_GLOW_PAD
         canvas.create_oval(
             x - half_w - glow_pad,
@@ -308,15 +317,6 @@ def draw_varnode_node(
             outline="",
             state="hidden",
             tags=(f"glow-{node.key}", "glow"),
-        )
-        canvas.create_oval(
-            x - half_w + 4,
-            y - half_h + 4,
-            x + half_w + 4,
-            y + half_h + 4,
-            fill=_theme.NODE_SHADOW,
-            outline="",
-            tags=(tag,),
         )
         canvas.create_oval(
             x - half_w,
