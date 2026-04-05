@@ -11,13 +11,10 @@ import sys
 from pathlib import Path
 
 from flatline.xray._inputs import (
-    CAPSTONE_AVAILABLE,
     MemoryImageTarget,
     decompile_target,
     print_target_pairs,
 )
-
-_CAPSTONE_NOTE_EMITTED = False
 
 
 def _parse_address(value: str) -> int:
@@ -25,18 +22,6 @@ def _parse_address(value: str) -> int:
         return int(value, 0)
     except ValueError as exc:
         raise argparse.ArgumentTypeError(f"invalid address: {value!r}") from exc
-
-
-def _emit_capstone_note_once() -> None:
-    global _CAPSTONE_NOTE_EMITTED
-    if CAPSTONE_AVAILABLE or _CAPSTONE_NOTE_EMITTED:
-        return
-    print(
-        "Note: capstone not found; assembly panel will show addresses only.\n"
-        "      For disassembly: pip install flatline[xray]",
-        file=sys.stderr,
-    )
-    _CAPSTONE_NOTE_EMITTED = True
 
 
 def _format_user_facing_error(
@@ -115,8 +100,6 @@ def _main_with_args(args: argparse.Namespace) -> int:
     if args.list_targets:
         print_target_pairs(args.runtime_data_dir)
         return 0
-
-    _emit_capstone_note_once()
 
     try:
         missing = _missing_required_args(args)

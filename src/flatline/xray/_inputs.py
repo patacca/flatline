@@ -6,7 +6,6 @@ environments and by CLI-only code paths.
 
 from __future__ import annotations
 
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -17,13 +16,7 @@ from flatline.models import LanguageCompilerPair
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-
-try:
-    import capstone
-except ImportError:  # pragma: no cover - depends on optional dependency
-    capstone = None
-
-CAPSTONE_AVAILABLE = capstone is not None
+    from flatline.models.types import InstructionInfo
 
 
 @dataclass(frozen=True)
@@ -102,51 +95,15 @@ def print_target_pairs(runtime_data_dir: str | Path | None = None) -> None:
 
 
 def disassemble_instruction_addresses(
-    pcode_ops,
-    *,
-    request=None,
-    metadata=None,
-    fallback_address: int | None = None,
+    instructions: list[InstructionInfo] | None,
 ) -> list[tuple[int, str]]:
     """Render instruction lines for the assembly panel."""
-    insn_addrs = sorted({op.instruction_address for op in pcode_ops})
-    if not insn_addrs:
+    if not instructions:
         return []
-
-    memory_image: bytes | None = None
-    base_address = 0
-    language_id = ""
-    if request is not None:
-        memory_image = request.memory_image
-        base_address = request.base_address
-        language_id = request.language_id
-    else:
-        metadata = metadata or {}
-        language_id = metadata.get("language_id", "")
-        if fallback_address is not None:
-            base_address = fallback_address
-
-    if memory_image is not None and capstone is not None:
-        params = _capstone_params(language_id)
-        if params is not None:
-            try:
-                md = capstone.Cs(*params)
-                addr_set = set(insn_addrs)
-                disasm: dict[int, str] = {}
-                for insn in md.disasm(memory_image, base_address):
-                    if insn.address in addr_set:
-                        disasm[insn.address] = f"{insn.mnemonic} {insn.op_str}".strip()
-                return [
-                    (addr, f"0x{addr:x}:  {disasm[addr]}")
-                    if addr in disasm
-                    else (addr, f"0x{addr:x}:  ???")
-                    for addr in insn_addrs
-                ]
-            except Exception as exc:
-                print(f"capstone disassembly failed: {exc}", file=sys.stderr)
-        elif CAPSTONE_AVAILABLE:
-            print(f"no capstone mapping for language {language_id!r}", file=sys.stderr)
-    return [(addr, f"0x{addr:x}") for addr in insn_addrs]
+    return [
+        (instr.address, f"0x{instr.address:x}:  {instr.mnemonic} {instr.operands}".strip())
+        for instr in instructions
+    ]
 
 
 def _opcode_color(opcode: str) -> str:
@@ -195,42 +152,3 @@ def _varnode_badge(varnode) -> str:
         return "TEMP"
     return varnode.space[:6].upper()
 
-
-def _capstone_params(language_id: str):
-    if capstone is None:
-        return None
-
-    parts = language_id.split(":")
-    arch_name = parts[0].upper()
-    endian = parts[1] if len(parts) > 1 else "LE"
-    bits = int(parts[2]) if len(parts) > 2 else 64
-
-    mapping = {
-        "X86": (capstone.CS_ARCH_X86, {32: capstone.CS_MODE_32, 64: capstone.CS_MODE_64}),
-        "AARCH64": (capstone.CS_ARCH_ARM64, {64: capstone.CS_MODE_ARM}),
-        "ARM": (capstone.CS_ARCH_ARM, {32: capstone.CS_MODE_ARM}),
-        "MIPS": (
-            capstone.CS_ARCH_MIPS,
-            {32: capstone.CS_MODE_MIPS32, 64: capstone.CS_MODE_MIPS64},
-        ),
-    }
-
-    riscv_arch = getattr(capstone, "CS_ARCH_RISCV", None)
-    if riscv_arch is not None:
-        mapping["RISCV"] = (
-            riscv_arch,
-            {
-                32: getattr(capstone, "CS_MODE_RISCV32", 0),
-                64: getattr(capstone, "CS_MODE_RISCV64", 0),
-            },
-        )
-
-    entry = mapping.get(arch_name)
-    if entry is None:
-        return None
-
-    cs_arch, mode_map = entry
-    cs_mode = mode_map.get(bits, next(iter(mode_map.values())))
-    if endian == "BE":
-        cs_mode |= capstone.CS_MODE_BIG_ENDIAN
-    return cs_arch, cs_mode

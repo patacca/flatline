@@ -506,10 +506,7 @@ class XrayWindow(tk.Tk):
 
     def _disassemble(self) -> list[tuple[int, str]]:
         return disassemble_instruction_addresses(
-            self.pcode.pcode_ops,
-            request=self.request,
-            metadata=self.result.metadata or {},
-            fallback_address=self._fallback_address(),
+            self.result.enriched.instructions if self.result.enriched is not None else None
         )
 
     def _on_asm_select(self, _event) -> None:
