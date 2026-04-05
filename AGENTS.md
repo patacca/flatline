@@ -1,6 +1,7 @@
 # Maintenance
 - Update only when repo instructions or durable project facts change; do not touch this file for routine code, CI, dependency-pin, or scanner-remediation edits.
 - Prefer short commit message. One line if possible.
+- **NEVER use `git add -f` / `--force` to override `.gitignore`.** If a path is gitignored, it stays gitignored.
 
 # Overview
 - `flatline`: pip-installable Python wrapper around Ghidra C++ decompiler (surface only).
