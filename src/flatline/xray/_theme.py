@@ -44,6 +44,13 @@ DEPTH_BAND_OP_FILL = "#122235"
 DEPTH_BAND_INPUT_FILL = "#0d2030"
 DEPTH_BAND_OP_OUTLINE = "#1a3551"
 DEPTH_BAND_INPUT_OUTLINE = "#102739"
+# Muted label color for depth band row labels — less prominent than active text.
+DEPTH_BAND_COLOR = "#0f1f30"
+
+# Inactive (unselected, unrelated) edge visual tokens.
+# Thinner and darker so active edges dominate when a node is selected.
+EDGE_INACTIVE_COLOR = "#2a5a7a"
+EDGE_INACTIVE_WIDTH = 1.0
 
 TITLE_FONT = ("Helvetica", 24, "bold")
 SUBTITLE_FONT = ("Helvetica", 11)
@@ -100,10 +107,13 @@ __all__ = [
     "BODY_FONT",
     "CANVAS_BG",
     "CHROME",
+    "DEPTH_BAND_COLOR",
     "DEPTH_BAND_INPUT_FILL",
     "DEPTH_BAND_INPUT_OUTLINE",
     "DEPTH_BAND_OP_FILL",
     "DEPTH_BAND_OP_OUTLINE",
+    "EDGE_INACTIVE_COLOR",
+    "EDGE_INACTIVE_WIDTH",
     "EDGE_INPUT",
     "EDGE_OUTPUT",
     "EDGE_RELATED",

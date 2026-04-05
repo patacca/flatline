@@ -95,8 +95,10 @@ def draw_edge(
     sy = source.y + node_pad(source, op_by_id, varnode_by_id)
     tx = target.x
     ty = target.y - node_pad(target, op_by_id, varnode_by_id)
-    color = _theme.EDGE_INPUT if target.actual[0] == "op" else _theme.EDGE_OUTPUT
-    width = 1.9 if target.actual[0] == "op" else 2.3
+    # Inactive edge tokens keep edges subdued so node highlights dominate.
+    # The EDGE_INPUT/EDGE_OUTPUT palette is reserved for future active-edge re-coloring.
+    color = _theme.EDGE_INACTIVE_COLOR
+    width = _theme.EDGE_INACTIVE_WIDTH
     span_y = ty - sy
     canvas.create_line(
         sx,

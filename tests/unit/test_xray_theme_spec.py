@@ -51,3 +51,18 @@ def test_theme_label_helpers_remain_stable() -> None:
     assert short_opcode("INT_ADD") == "INT_ADD"
     assert short_opcode("RETURN") == "RETURN"
     assert varnode_badge(pcode.varnodes[3]) == "CONST"
+
+
+def test_theme_has_depth_band_and_inactive_edge_tokens() -> None:
+    module = importlib.import_module("flatline.xray._theme")
+
+    assert hasattr(module, "DEPTH_BAND_COLOR"), "DEPTH_BAND_COLOR token missing from _theme"
+    assert isinstance(module.DEPTH_BAND_COLOR, str) and module.DEPTH_BAND_COLOR.startswith("#")
+
+    assert hasattr(module, "EDGE_INACTIVE_COLOR"), "EDGE_INACTIVE_COLOR token missing from _theme"
+    inactive_color = module.EDGE_INACTIVE_COLOR
+    assert isinstance(inactive_color, str) and inactive_color.startswith("#")
+
+    assert hasattr(module, "EDGE_INACTIVE_WIDTH"), "EDGE_INACTIVE_WIDTH token missing from _theme"
+    assert isinstance(module.EDGE_INACTIVE_WIDTH, (int, float))
+    assert module.EDGE_INACTIVE_WIDTH > 0

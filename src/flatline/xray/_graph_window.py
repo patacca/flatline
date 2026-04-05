@@ -58,6 +58,10 @@ class XrayWindow(tk.Tk):
     _asm_min_width = 180
     _inspector_min_width = 180
 
+    # Zoom level when the window opens (or after reset_view()).
+    # Exposed as a class constant so headless tests can verify determinism.
+    _INITIAL_ZOOM = 1.0
+
     def __init__(
         self,
         title: str,
@@ -238,7 +242,7 @@ class XrayWindow(tk.Tk):
             width=self._inspector_default_width,
             stretch="never",
         )
-        self._zoom = 1.0
+        self._zoom = self._INITIAL_ZOOM
         draw_depth_bands(
             self.canvas,
             self.max_depth,
@@ -264,7 +268,9 @@ class XrayWindow(tk.Tk):
             )
         )
         self.canvas.configure(scrollregion=(0, 0, self.virtual_width, self.virtual_height))
-        self.canvas.xview_moveto(0.0)
+        # Center the graph horizontally; start at the top so the first ops are visible.
+        x_center = max(0.0, (self.virtual_width / 2.0 - 750) / max(self.virtual_width, 1))
+        self.canvas.xview_moveto(x_center)
         self.canvas.yview_moveto(0.0)
         self.canvas.bind("<MouseWheel>", self._on_mouse_wheel)
         self.canvas.bind(
@@ -285,7 +291,7 @@ class XrayWindow(tk.Tk):
             "<Control-minus>",
             lambda event: self._do_zoom(self._zoom / 1.15, event),
         )
-        self.bind("<Control-0>", lambda _event: self._do_zoom(1.0))
+        self.bind("<Control-0>", lambda _event: self.reset_view())
 
     def show(self) -> None:
         self.mainloop()
@@ -528,6 +534,14 @@ class XrayWindow(tk.Tk):
         if new_h > 0:
             self.canvas.yview_moveto((cy * ratio - widget_y) / new_h)
         self._zoom = new_zoom
+
+    def reset_view(self) -> None:
+        """Reset zoom to the initial level and re-center the viewport."""
+        self._do_zoom(self._INITIAL_ZOOM)
+        w = self.virtual_width * self._zoom
+        x_center = max(0.0, (w / 2.0 - self.canvas.winfo_width() / 2.0) / max(w, 1))
+        self.canvas.xview_moveto(x_center)
+        self.canvas.yview_moveto(0.0)
 
 
 __all__ = ["XrayWindow"]

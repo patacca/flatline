@@ -312,3 +312,21 @@ def test_graph_window_and_canvas_do_not_bypass_layout_node_size_contract(
         names = {node.id for node in ast.walk(function) if isinstance(node, ast.Name)}
         assert "node_size" in names
         assert "node_label_lines" in names
+
+
+def test_initial_zoom_constant_defined(monkeypatch: pytest.MonkeyPatch) -> None:
+    graph_window = import_graph_window(monkeypatch)
+    XrayWindow = graph_window.XrayWindow
+
+    assert hasattr(XrayWindow, "_INITIAL_ZOOM"), "_INITIAL_ZOOM class constant is missing"
+    assert isinstance(XrayWindow._INITIAL_ZOOM, float), "_INITIAL_ZOOM must be a float"
+    assert XrayWindow._INITIAL_ZOOM > 0.0, "_INITIAL_ZOOM must be a positive value"
+
+
+def test_viewport_reset_method_exists(monkeypatch: pytest.MonkeyPatch) -> None:
+    graph_window = import_graph_window(monkeypatch)
+    XrayWindow = graph_window.XrayWindow
+
+    assert callable(getattr(XrayWindow, "reset_view", None)), (
+        "XrayWindow must expose a callable reset_view() method"
+    )
