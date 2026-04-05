@@ -48,6 +48,9 @@ docs/tasks/
 # OMC tool state
 .omc/
 
+# Sisyphus work plans
+.sisyphus/
+
 # IDE
 .vscode/
 .idea/
