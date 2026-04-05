@@ -189,6 +189,18 @@ def draw_op_node(
     x = node.x
     y = node.y
     tag = f"node-{node.key}"
+    # Selection glow — hidden by default, toggled on selection.
+    glow_pad = _theme.SELECTION_GLOW_PAD
+    canvas.create_rectangle(
+        x - half_w - glow_pad,
+        y - half_h - glow_pad,
+        x + half_w + glow_pad,
+        y + half_h + glow_pad,
+        fill=_theme.SELECTION_GLOW,
+        outline="",
+        state="hidden",
+        tags=(f"glow-{node.key}", "glow"),
+    )
     canvas.create_rectangle(
         x - half_w + 4,
         y - half_h + 4,
@@ -241,6 +253,20 @@ def draw_varnode_node(
     tag = f"node-{node.key}"
     fill = _varnode_color(varnode)
     if varnode.flags.is_constant:
+        # Selection glow — hidden triangle halo behind constant varnodes.
+        glow_pad = _theme.SELECTION_GLOW_PAD
+        canvas.create_polygon(
+            x,
+            y - half_h - glow_pad,
+            x - half_w - glow_pad,
+            y + half_h + glow_pad,
+            x + half_w + glow_pad,
+            y + half_h + glow_pad,
+            fill=_theme.SELECTION_GLOW,
+            outline="",
+            state="hidden",
+            tags=(f"glow-{node.key}", "glow"),
+        )
         shadow_points = (
             x,
             y - half_h + 4,
@@ -271,6 +297,18 @@ def draw_varnode_node(
             tags=(tag, f"shape-{node.key}"),
         )
     else:
+        # Selection glow — hidden oval halo behind regular varnodes.
+        glow_pad = _theme.SELECTION_GLOW_PAD
+        canvas.create_oval(
+            x - half_w - glow_pad,
+            y - half_h - glow_pad,
+            x + half_w + glow_pad,
+            y + half_h + glow_pad,
+            fill=_theme.SELECTION_GLOW,
+            outline="",
+            state="hidden",
+            tags=(f"glow-{node.key}", "glow"),
+        )
         canvas.create_oval(
             x - half_w + 4,
             y - half_h + 4,
@@ -303,3 +341,18 @@ def draw_varnode_node(
         "<Button-1>",
         lambda _event, selected=node: on_click(selected),
     )
+
+
+# ---------------------------------------------------------------------------
+# Selection glow helpers
+# ---------------------------------------------------------------------------
+
+
+def show_node_glow(canvas: tk.Canvas, key: str, color: str) -> None:
+    """Reveal the pre-drawn glow halo behind a node and set its color."""
+    canvas.itemconfigure(f"glow-{key}", fill=color, state="normal")
+
+
+def hide_all_glows(canvas: tk.Canvas) -> None:
+    """Hide every glow halo on the canvas."""
+    canvas.itemconfigure("glow", state="hidden")

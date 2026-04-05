@@ -147,9 +147,14 @@ def test_dense_switch_graph_stays_within_canvas_bounds() -> None:
         lambda node: _layout.node_size(node, op_by_id, varnode_by_id),
     )
     width, height = _layout.compute_canvas_size(roots, max_depth)
+    _layout.assign_forest_positions(roots, height)
 
     assert len(pcode.pcode_ops) == 7
     assert len(pcode.varnodes) == 12
     assert max_depth == 9
     assert width <= 4000
     assert height <= 6000
+    for node in _layout.collect_visual_nodes(roots):
+        node_width, node_height = _layout.node_size(node, op_by_id, varnode_by_id)
+        assert node_width / 2.0 <= node.x <= width - node_width / 2.0
+        assert node_height / 2.0 <= node.y <= height - node_height / 2.0

@@ -21,6 +21,8 @@ from ._canvas import (
     draw_depth_bands,
     draw_edges,
     draw_nodes,
+    hide_all_glows,
+    show_node_glow,
 )
 from ._inputs import disassemble_instruction_addresses
 from ._inspector import op_text, summary_text, varnode_text
@@ -331,6 +333,7 @@ class XrayWindow(tk.Tk):
         self.canvas.itemconfigure(f"shape-{key}", outline=outline, width=width)
 
     def _clear_selection_state(self) -> None:
+        hide_all_glows(self.canvas)
         for node in self.visual_nodes:
             self._set_node_style(node.key, outline=self._default_outline(node), width=2)
         self._selected_key = None
@@ -357,8 +360,10 @@ class XrayWindow(tk.Tk):
             self._set_node_style(key, outline=_theme.TEXT_MUTED, width=1)
         for key in related_keys:
             self._set_node_style(key, outline=_theme.EDGE_RELATED, width=3)
+            show_node_glow(self.canvas, key, _theme.RELATED_GLOW)
         for key in selected_keys:
             self._set_node_style(key, outline=_theme.SELECTION_OUTLINE, width=4)
+            show_node_glow(self.canvas, key, _theme.SELECTION_GLOW)
 
     def _related_keys_for_node(self, node: VisualNode) -> set[str]:
         related_actuals: set[tuple[str, int]] = set()

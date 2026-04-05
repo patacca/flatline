@@ -224,13 +224,17 @@ def test_selection_state_clears_on_reset(monkeypatch: pytest.MonkeyPatch) -> Non
 
     show_node = cast(Callable[[object, object], None], XrayWindow._show_node)  # pyright: ignore[reportPrivateUsage]
     clear_state = cast(Callable[[object], None], XrayWindow._clear_selection_state)  # pyright: ignore[reportPrivateUsage]
+    related_node = _node_for(window, ("varnode", 2))
     node = _node_for(window, ("op", 0))
     show_node(window, node)
     clear_state(window)
 
     assert window._selected_key is None
     assert window._highlighted_keys == set()
+    assert window._related_keys == set()
+    assert window._muted_keys == set()
     assert window.canvas.configured[f"shape-{node.key}"]["width"] == 2
+    assert window.canvas.configured[f"shape-{related_node.key}"]["width"] == 2
 
 
 def test_selection_selected_and_related_states_are_visually_distinct(
