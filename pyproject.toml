@@ -44,9 +44,6 @@ Changelog = "https://github.com/patacca/flatline/blob/main/CHANGELOG.md"
 flatline-xray = "flatline.xray.__main__:_cli_entry"
 
 [project.optional-dependencies]
-xray = [
-    "capstone",
-]
 test = [
     "networkx",
     "pytest >= 8.0",

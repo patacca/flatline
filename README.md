@@ -115,9 +115,11 @@ for the full enriched-output contract.
 memory images:
 
 ```bash
-pip install "flatline[xray]"     # adds optional capstone disassembly
 flatline-xray --help
 ```
+
+The viewer uses Ghidra's Sleigh disassembly natively, so no extra install is
+needed for decoded instructions.
 
 See the [X-Ray docs](https://patacca.github.io/flatline/latest/xray/) for
 usage and tutorial.

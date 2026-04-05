@@ -12,14 +12,8 @@ Install flatline normally to get the viewer:
 pip install flatline
 ```
 
-If you want richer assembly decoding, add the optional `xray` extra:
-
-```bash
-pip install "flatline[xray]"
-```
-
-The extra adds optional disassembly support via `capstone`. The viewer itself
-ships with plain `pip install flatline`.
+The viewer uses Ghidra's Sleigh disassembly natively, so `pip install flatline`
+is enough for decoded instructions.
 
 ## 2. Pick a target
 
@@ -77,23 +71,12 @@ After launch, the window shows three coordinated views:
 - The graph view shows p-code ops and varnodes as a tree with edges for
   def-use relationships.
 - The assembly panel lists the recovered instruction addresses, and decoded
-  instructions when `capstone` is installed.
+  instructions from Ghidra's Sleigh disassembly.
 - The inspector panel shows details for the selected node, including flags,
   use-def links, and address metadata.
 
 Click a node in the graph to focus its details. Select an assembly line to
 highlight the related p-code nodes.
-
-## 6. Understand degraded success
-
-If `capstone` is not installed, X-Ray still opens. The assembly panel falls
-back to addresses only, and the viewer prints a startup note that suggests:
-
-```bash
-pip install "flatline[xray]"
-```
-
-That is expected degraded behavior, not a failure.
 
 ## Troubleshooting
 

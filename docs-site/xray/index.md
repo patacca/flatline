@@ -32,16 +32,8 @@ Install flatline normally to get the viewer:
 pip install flatline
 ```
 
-Install the optional extra only when you want richer assembly decoding via
-`capstone`:
-
-```bash
-pip install "flatline[xray]"
-```
-
-That extra enables optional disassembly support via `capstone`. If `capstone`
-is missing, the viewer still runs and shows instruction addresses, but the
-assembly panel cannot render decoded instructions.
+The viewer uses Ghidra's Sleigh disassembly natively, so no extra install is
+needed for decoded instructions.
 
 `tkinter` is part of the standard library, but some Python distributions ship
 it separately. If the viewer says `tkinter` is missing, install the package for

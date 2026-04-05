@@ -30,15 +30,9 @@ Sleigh processor definitions that flatline needs at runtime. No separate
 download or path configuration is required.
 
 `pip install flatline` already includes the shipped `flatline-xray` viewer.
-Install the optional `xray` extra only if you want richer assembly decoding via
-`capstone`:
-
-```bash
-pip install "flatline[xray]"
-```
-
-That extra adds optional disassembly support via `capstone`. `tkinter` is part
-of the Python standard library, but some distributions package it separately.
+The viewer uses Ghidra's Sleigh disassembly natively, so no extra install is
+needed for decoded instructions. `tkinter` is part of the Python standard
+library, but some distributions package it separately.
 If `flatline-xray` reports that `tkinter` is missing, install the platform
 package for your Python distribution and rerun the tool.
 
