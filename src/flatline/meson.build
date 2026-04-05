@@ -31,6 +31,7 @@ py.install_sources(
 py.install_sources(
   'xray/__init__.py',
   'xray/__main__.py',
+  'xray/_canvas.py',
   'xray/_graph_window.py',
   'xray/_inputs.py',
   'xray/_inspector.py',

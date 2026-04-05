@@ -16,13 +16,13 @@ except ImportError as exc:  # pragma: no cover - platform dependent
         "  macOS Homebrew: brew install python-tk"
     ) from exc
 import flatline.xray._theme as _theme
-from flatline.xray._inputs import (
-    _opcode_color,
-    _short_opcode,
-    _varnode_badge,
-    _varnode_color,
-    disassemble_instruction_addresses,
+from flatline.xray._canvas import (
+    draw_cross_edge,
+    draw_depth_bands,
+    draw_edges,
+    draw_nodes,
 )
+from flatline.xray._inputs import disassemble_instruction_addresses
 from flatline.xray._inspector import op_text, summary_text, varnode_text
 from flatline.xray._layout import (
     VisualNode,
@@ -31,7 +31,6 @@ from flatline.xray._layout import (
     collect_visual_nodes,
     compute_canvas_size,
     measure_forest,
-    node_pad,
     node_size,
     sorted_ops,
 )
@@ -72,7 +71,7 @@ class XrayWindow(tk.Tk):
         self.visual_nodes = collect_visual_nodes(self.visual_roots)
         self.max_depth = measure_forest(
             self.visual_roots,
-            lambda node: node_size(node, self.varnode_by_id),
+            lambda node: node_size(node, self.op_by_id, self.varnode_by_id),
             child_gap=self._child_gap,
         )
         self.virtual_width, self.virtual_height = compute_canvas_size(
@@ -194,13 +193,20 @@ class XrayWindow(tk.Tk):
         canvas_frame.grid_rowconfigure(0, weight=1)
         canvas_frame.grid_columnconfigure(0, weight=1)
         self._zoom = 1.0
-        self._draw_depth_bands()
+        draw_depth_bands(
+            self.canvas,
+            self.max_depth,
+            self.virtual_width,
+            self.virtual_height,
+            self._bottom_margin,
+            self._level_gap,
+        )
         for root in self.visual_roots:
-            self._draw_edges(root)
+            draw_edges(self.canvas, root, self.op_by_id, self.varnode_by_id)
         for parent, child in self._cross_edges:
-            self._draw_cross_edge(child, parent)
+            draw_cross_edge(self.canvas, child, parent, self.op_by_id, self.varnode_by_id)
         for root in self.visual_roots:
-            self._draw_nodes(root)
+            draw_nodes(self.canvas, root, self.op_by_id, self.varnode_by_id, self._show_node)
         self._set_inspector_text(
             summary_text(
                 title,
@@ -277,207 +283,6 @@ class XrayWindow(tk.Tk):
         self.inspector.delete("1.0", tk.END)
         self.inspector.insert("1.0", text)
         self.inspector.configure(state="disabled")
-
-    def _draw_depth_bands(self) -> None:
-        for depth in range(self.max_depth + 1):
-            y = self.virtual_height - self._bottom_margin - depth * self._level_gap
-            is_op_row = depth % 2 == 0
-            fill = _theme.DEPTH_BAND_OP_FILL if is_op_row else _theme.DEPTH_BAND_INPUT_FILL
-            outline = _theme.DEPTH_BAND_OP_OUTLINE if is_op_row else _theme.DEPTH_BAND_INPUT_OUTLINE
-            label = "Ops" if is_op_row else "Inputs / values"
-            self.canvas.create_rectangle(
-                40,
-                y - 56,
-                self.virtual_width - 40,
-                y + 56,
-                fill=fill,
-                outline=outline,
-                width=1,
-            )
-            self.canvas.create_text(
-                62,
-                y - 40,
-                text=f"{label} row {depth}",
-                anchor="w",
-                fill=_theme.TEXT_MUTED,
-                font=_theme.BAND_FONT,
-            )
-
-    def _draw_edges(self, node: VisualNode) -> None:
-        for child in node.children:
-            self._draw_edge(child, node)
-            self._draw_edges(child)
-
-    def _draw_edge(self, source: VisualNode, target: VisualNode) -> None:
-        sx = source.x
-        sy = source.y + node_pad(source, self.varnode_by_id)
-        tx = target.x
-        ty = target.y - node_pad(target, self.varnode_by_id)
-        color = _theme.EDGE_INPUT if target.actual[0] == "op" else _theme.EDGE_OUTPUT
-        width = 1.9 if target.actual[0] == "op" else 2.3
-        span_y = ty - sy
-        self.canvas.create_line(
-            sx,
-            sy,
-            sx,
-            sy + span_y * 0.35,
-            tx,
-            sy + span_y * 0.65,
-            tx,
-            ty,
-            fill=color,
-            width=width,
-            smooth=True,
-            splinesteps=24,
-            arrow=tk.LAST,
-            arrowshape=(12, 14, 6),
-        )
-
-    def _draw_cross_edge(self, source: VisualNode, target: VisualNode) -> None:
-        sx = source.x
-        sy = source.y + node_pad(source, self.varnode_by_id)
-        tx = target.x
-        ty = target.y - node_pad(target, self.varnode_by_id)
-        mid_y = (sy + ty) / 2.0
-        self.canvas.create_line(
-            sx,
-            sy,
-            sx,
-            mid_y,
-            tx,
-            mid_y,
-            tx,
-            ty,
-            fill=_theme.EDGE_RELATED,
-            width=1.4,
-            smooth=True,
-            splinesteps=24,
-            dash=(6, 4),
-            arrow=tk.LAST,
-            arrowshape=(10, 12, 5),
-        )
-
-    def _draw_nodes(self, node: VisualNode) -> None:
-        if node.actual[0] == "op":
-            self._draw_op_node(node)
-        else:
-            self._draw_varnode_node(node)
-        for child in node.children:
-            self._draw_nodes(child)
-
-    def _draw_op_node(self, node: VisualNode) -> None:
-        op = self.op_by_id[node.actual[1]]
-        size, _ = node_size(node, self.varnode_by_id)
-        half = size / 2.0
-        x = node.x
-        y = node.y
-        tag = f"node-{node.key}"
-        self.canvas.create_rectangle(
-            x - half + 4,
-            y - half + 4,
-            x + half + 4,
-            y + half + 4,
-            fill=_theme.NODE_SHADOW,
-            outline="",
-            tags=(tag,),
-        )
-        self.canvas.create_rectangle(
-            x - half,
-            y - half,
-            x + half,
-            y + half,
-            fill=_opcode_color(op.opcode),
-            outline=_theme.NODE_OUTLINE,
-            width=2,
-            tags=(tag, f"shape-{node.key}"),
-        )
-        self.canvas.create_text(
-            x,
-            y,
-            text=f"{_short_opcode(op.opcode)}\n#{op.id}",
-            fill=_theme.TEXT_ON_NODE,
-            font=_theme.NODE_FONT,
-            tags=(tag,),
-        )
-        self.canvas.tag_bind(
-            tag,
-            "<Button-1>",
-            lambda _event, selected=node: self._show_node(selected),
-        )
-
-    def _draw_varnode_node(self, node: VisualNode) -> None:
-        varnode = self.varnode_by_id[node.actual[1]]
-        width, height = node_size(node, self.varnode_by_id)
-        half_w = width / 2.0
-        half_h = height / 2.0
-        x = node.x
-        y = node.y
-        tag = f"node-{node.key}"
-        label = f"{_varnode_badge(varnode)}\nv{varnode.id}"
-        fill = _varnode_color(varnode)
-        if varnode.flags.is_constant:
-            shadow_points = (
-                x,
-                y - half_h + 4,
-                x - half_w + 4,
-                y + half_h + 4,
-                x + half_w + 4,
-                y + half_h + 4,
-            )
-            points = (
-                x,
-                y - half_h,
-                x - half_w,
-                y + half_h,
-                x + half_w,
-                y + half_h,
-            )
-            self.canvas.create_polygon(
-                shadow_points,
-                fill=_theme.NODE_SHADOW,
-                outline="",
-                tags=(tag,),
-            )
-            self.canvas.create_polygon(
-                points,
-                fill=fill,
-                outline=_theme.NODE_OUTLINE_ALT,
-                width=2,
-                tags=(tag, f"shape-{node.key}"),
-            )
-        else:
-            self.canvas.create_oval(
-                x - half_w + 4,
-                y - half_h + 4,
-                x + half_w + 4,
-                y + half_h + 4,
-                fill=_theme.NODE_SHADOW,
-                outline="",
-                tags=(tag,),
-            )
-            self.canvas.create_oval(
-                x - half_w,
-                y - half_h,
-                x + half_w,
-                y + half_h,
-                fill=fill,
-                outline=_theme.NODE_OUTLINE_ALT,
-                width=2,
-                tags=(tag, f"shape-{node.key}"),
-            )
-        self.canvas.create_text(
-            x,
-            y + (6 if varnode.flags.is_constant else 0),
-            text=label,
-            fill=_theme.TEXT_ON_NODE,
-            font=_theme.VARNODE_FONT,
-            tags=(tag,),
-        )
-        self.canvas.tag_bind(
-            tag,
-            "<Button-1>",
-            lambda _event, selected=node: self._show_node(selected),
-        )
 
     def _show_node(self, node: VisualNode) -> None:
         if node.actual[0] == "op":
