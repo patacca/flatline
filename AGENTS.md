@@ -78,7 +78,7 @@
 - Audit: `python tools/compliance.py`, `python tools/release.py`, `python tools/footprint.py`.
 - Artifacts: `python tools/artifacts.py dist`.
 - Tox: `tox` (py313, py314, lint); `tox -e py314-native` (native bridge).
-- **MUST run full tox before claiming any feature complete**: `tox -e py314` (py313 unavailable in dev env); do NOT substitute with `pytest` alone — tox builds the wheel, isolates deps, and runs the full suite.
+- **MUST run full tox before claiming any feature complete**: `tox`
 - Tests: `tox -e py313,py314 -- -m <unit|contract|integration|regression|negative>`.
 - Native tests: `tox -e py313,py314 -- -m requires_native`.
 - Single file: `tox -e py313,py314 -- tests/unit/test_bridge_adapter_spec.py`.
