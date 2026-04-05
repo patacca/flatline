@@ -1,12 +1,8 @@
 # Release Workflow
 
-This document records the repo-side procedure used for the published `0.1.1`
-release and remains the baseline for later `0.1.x` patch publishes. The
-source-controlled manual checklist for the human gate lives in
-`docs/release_review.md`; any per-run review notes stay outside the repo.
-Historical note: `0.1.0` already established the initial public release
-baseline, and the full Tier-1 workflow was rehearsed on TestPyPI as
-`0.1.1.dev1` before the final `0.1.1` PyPI publish on `2026-03-28`.
+Operator procedure for `0.1.x` patch publishes, baselined on the `0.1.1`
+release. The human approval checklist lives in `docs/release_review.md`;
+per-run review notes stay outside the repo.
 
 ## Release Decision
 
@@ -25,8 +21,6 @@ Rationale:
 
 ## Readiness Check
 
-Activate the repo venv first, then verify the documented release state:
-
 ```bash
 source .venv/bin/activate
 python tools/release.py
@@ -34,14 +28,6 @@ tox
 python tools/compliance.py
 python tools/footprint.py
 ```
-
-`python tools/release.py` is the source-controlled readiness audit used for the
-current patch-release publish path. It checks the configured version, the
-release recommendation, the presence of the required release documents plus the
-root redistribution notices, and a clean git worktree so Meson cannot silently
-drop uncommitted changes from the sdist. The release/diagnostic helpers live
-under `tools/` and are repo-only; they are not part of the wheel or sdist
-payload.
 
 ## Release Steps
 
@@ -61,12 +47,8 @@ payload.
 10. Build artifacts with `python -m build`
 11. Audit the built sdist/wheel with
     `python tools/artifacts.py dist --repo-root . --require-pypi-metadata`
-    so the current version, dependency metadata, shipped `LICENSE` / `NOTICE`
-    files, and README-backed long description metadata are verified from the
-    actual release artifacts
-12. Run the manual checklist in `docs/release_review.md`; keep reviewed
-    commit/artifact notes outside the repo and wait for explicit approval.
-    Do not commit review notes.
+12. Run the manual checklist in `docs/release_review.md` and wait for explicit
+    approval before proceeding. Do not commit review notes.
 13. Create the release tag with `git tag v<current-version>`
 14. Push the release tag with `git push origin v<current-version>`
 15. Publish the GitHub release with `gh release create v<current-version> --generate-notes`
@@ -75,12 +57,8 @@ payload.
 
 ## Hold Point
 
-Do not create the release tag or publish the matching GitHub release until the
-public artifact review is explicitly approved. `python tools/artifacts.py dist
---repo-root . --require-pypi-metadata` provides deterministic artifact
-evidence for that review, and `docs/release_review.md` records the checklist
-criteria used for the final human sign-off. The operator reports approval
-out-of-band. Do not commit review notes to this repo.
+Do not create the release tag or publish the GitHub release until the review
+checklist in `docs/release_review.md` is explicitly approved out-of-band.
 
 ## GitHub Actions Release Automation
 
@@ -105,6 +83,3 @@ out-of-band. Do not commit review notes to this repo.
   platform/arch/Python combination so the published wheel path, transitive
   `ghidra-sleigh` dependency, and omitted-`runtime_data_dir` UX are all
   exercised from the package index rather than only from local build artifacts.
-- The manual review gate in this document and `docs/release_review.md` still
-  happens before creating and publishing the GitHub release that triggers the
-  production publish.

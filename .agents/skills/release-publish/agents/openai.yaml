@@ -1,0 +1,4 @@
+interface:
+  display_name: "Release Publish"
+  short_description: "Run the production PyPI release workflow"
+  default_prompt: "Use $release-publish to execute the production release workflow for this repo with readiness gates, human approval, and CI verification."
