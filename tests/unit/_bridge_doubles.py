@@ -113,7 +113,7 @@ class _NativeSessionSuccessDouble:
                             "use_op_ids": [1],
                         },
                     ],
-                }
+                },
             }
         return {
             "c_code": "int add(int a, int b) { return a + b; }",

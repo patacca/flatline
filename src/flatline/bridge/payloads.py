@@ -8,10 +8,26 @@ from typing import TYPE_CHECKING, Any
 from flatline._errors import ERROR_CATEGORIES, InternalError
 from flatline._version import DECOMPILER_VERSION
 from flatline.models import (
-    VALID_WARNING_PHASES, AnalysisBudget, CallSiteInfo, DecompileResult,
-    DiagnosticFlags, Enriched, ErrorItem, FunctionInfo, FunctionPrototype,
-    InstructionInfo, JumpTableInfo, LanguageCompilerPair, ParameterInfo, Pcode,
-    PcodeOpInfo, StorageInfo, TypeInfo, VariableInfo, VarnodeFlags, VarnodeInfo,
+    VALID_WARNING_PHASES,
+    AnalysisBudget,
+    CallSiteInfo,
+    DecompileResult,
+    DiagnosticFlags,
+    Enriched,
+    ErrorItem,
+    FunctionInfo,
+    FunctionPrototype,
+    InstructionInfo,
+    JumpTableInfo,
+    LanguageCompilerPair,
+    ParameterInfo,
+    Pcode,
+    PcodeOpInfo,
+    StorageInfo,
+    TypeInfo,
+    VariableInfo,
+    VarnodeFlags,
+    VarnodeInfo,
     WarningItem,
 )
 
@@ -165,17 +181,10 @@ def _coerce_metadata(raw_metadata: Any, request: DecompileRequest) -> dict[str, 
         compiler_spec = request.compiler_spec or ""
 
     metadata["decompiler_version"] = _require_str(
-        decompiler_version,
-        "metadata.decompiler_version",
+        decompiler_version, "metadata.decompiler_version"
     )
-    metadata["language_id"] = _require_str(
-        language_id,
-        "metadata.language_id",
-    )
-    metadata["compiler_spec"] = _require_str(
-        compiler_spec,
-        "metadata.compiler_spec",
-    )
+    metadata["language_id"] = _require_str(language_id, "metadata.language_id")
+    metadata["compiler_spec"] = _require_str(compiler_spec, "metadata.compiler_spec")
     metadata["diagnostics"] = dict(diagnostics)
     return metadata
 
@@ -208,9 +217,18 @@ def _coerce_enriched(raw_enriched: Any) -> Enriched | None:
         return raw_enriched
 
     enriched_map = _require_mapping(raw_enriched, "enriched")
+    raw_instructions = enriched_map.get("instructions")
+    if raw_instructions is not None:
+        if not _is_sequence_like(raw_instructions):
+            raise InternalError("enriched.instructions must be a sequence")
+        instructions: list[InstructionInfo] | None = [
+            _coerce_instruction_info(item) for item in raw_instructions
+        ]
+    else:
+        instructions = None
     return Enriched(
         pcode=_coerce_pcode(enriched_map.get("pcode")),
-        instructions=_coerce_instructions(enriched_map.get("instructions")),
+        instructions=instructions,
     )
 
 
@@ -225,14 +243,6 @@ def _coerce_pcode(raw_pcode: Any) -> Pcode | None:
         pcode_ops=_coerce_pcode_op_list(pcode_map.get("pcode_ops")),
         varnodes=_coerce_varnode_info_list(pcode_map.get("varnodes")),
     )
-
-
-def _coerce_instructions(raw_instructions: Any) -> list[InstructionInfo] | None:
-    if raw_instructions is None:
-        return None
-    if not _is_sequence_like(raw_instructions):
-        raise InternalError("enriched.instructions must be a sequence")
-    return [_coerce_instruction_info(item) for item in raw_instructions]
 
 
 def _coerce_pcode_op_list(raw_pcode_ops: Any) -> list[PcodeOpInfo]:
@@ -325,15 +335,9 @@ def _coerce_varnode_flags(raw_flags: Any) -> VarnodeFlags:
         is_free=_require_bool(flags_map.get("is_free"), "varnode.flags.is_free"),
         is_implied=_require_bool(flags_map.get("is_implied"), "varnode.flags.is_implied"),
         is_explicit=_require_bool(flags_map.get("is_explicit"), "varnode.flags.is_explicit"),
-        is_read_only=_require_bool(
-            flags_map.get("is_read_only"),
-            "varnode.flags.is_read_only",
-        ),
+        is_read_only=_require_bool(flags_map.get("is_read_only"), "varnode.flags.is_read_only"),
         is_persist=_require_bool(flags_map.get("is_persist"), "varnode.flags.is_persist"),
-        is_addr_tied=_require_bool(
-            flags_map.get("is_addr_tied"),
-            "varnode.flags.is_addr_tied",
-        ),
+        is_addr_tied=_require_bool(flags_map.get("is_addr_tied"), "varnode.flags.is_addr_tied"),
     )
 
 
@@ -344,28 +348,23 @@ def _coerce_function_prototype(raw_prototype: Any) -> FunctionPrototype:
     calling_convention = prototype_map.get("calling_convention")
     if calling_convention is not None:
         calling_convention = _require_str(
-            calling_convention,
-            "function_prototype.calling_convention",
+            calling_convention, "function_prototype.calling_convention"
         )
     return FunctionPrototype(
         calling_convention=calling_convention,
         parameters=_coerce_parameter_info_list(prototype_map.get("parameters")),
         return_type=_coerce_type_info(prototype_map.get("return_type")),
         is_noreturn=_require_bool(
-            prototype_map.get("is_noreturn"),
-            "function_prototype.is_noreturn",
+            prototype_map.get("is_noreturn"), "function_prototype.is_noreturn"
         ),
         has_this_pointer=_require_bool(
-            prototype_map.get("has_this_pointer"),
-            "function_prototype.has_this_pointer",
+            prototype_map.get("has_this_pointer"), "function_prototype.has_this_pointer"
         ),
         has_input_errors=_require_bool(
-            prototype_map.get("has_input_errors"),
-            "function_prototype.has_input_errors",
+            prototype_map.get("has_input_errors"), "function_prototype.has_input_errors"
         ),
         has_output_errors=_require_bool(
-            prototype_map.get("has_output_errors"),
-            "function_prototype.has_output_errors",
+            prototype_map.get("has_output_errors"), "function_prototype.has_output_errors"
         ),
     )
 

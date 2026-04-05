@@ -151,4 +151,3 @@ def _varnode_badge(varnode) -> str:
     if varnode.space == "unique":
         return "TEMP"
     return varnode.space[:6].upper()
-

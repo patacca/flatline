@@ -69,7 +69,10 @@ class Pcode:
                 try:
                     output_varnode = varnodes_by_id[pcode_op.output_varnode_id]
                 except KeyError:
-                    message = f"pcode op {pcode_op.id} references unknown output varnode {pcode_op.output_varnode_id}"
+                    message = (
+                        f"pcode op {pcode_op.id} references unknown output varnode"
+                        f" {pcode_op.output_varnode_id}"
+                    )
                     raise InvalidArgumentError(message) from None
                 _ = graph.add_edge(
                     op_node,

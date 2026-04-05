@@ -30,12 +30,12 @@ from flatline import (
     FlatlineError,
     FunctionInfo,
     FunctionPrototype,
+    InstructionInfo,
     InternalError,
     InvalidAddressError,
     InvalidArgumentError,
     JumpTableInfo,
     LanguageCompilerPair,
-    InstructionInfo,
     ParameterInfo,
     Pcode,
     PcodeOpInfo,
@@ -346,7 +346,7 @@ def test_c009_instructioninfo_schema_stability() -> None:
     assert item.operands == "EAX, [RBP - 0x8]"
 
     with pytest.raises(FrozenInstanceError):
-        setattr(item, "mnemonic", "ADD")
+        item.mnemonic = "ADD"
 
 
 def test_c010_enriched_instructions_schema_stability() -> None:

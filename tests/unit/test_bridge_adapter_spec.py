@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import pytest
 
-from flatline._errors import InternalError
 from flatline import (
     AnalysisBudget,
     ConfigurationError,
@@ -12,13 +11,14 @@ from flatline import (
     DecompileResult,
     Enriched,
     FunctionInfo,
-    LanguageCompilerPair,
     InstructionInfo,
+    LanguageCompilerPair,
     Pcode,
     PcodeOpInfo,
     VarnodeFlags,
     VarnodeInfo,
 )
+from flatline._errors import InternalError
 from flatline.bridge import core as bridge_module
 from flatline.bridge.payloads import _coerce_enriched, _coerce_instruction_info
 
@@ -331,9 +331,7 @@ def test_u030_bridge_rejects_malformed_instruction_payloads() -> None:
             }
         )
 
-    enriched = _coerce_enriched(
-        {"pcode": None, "instructions": None}
-    )
+    enriched = _coerce_enriched({"pcode": None, "instructions": None})
     assert enriched is not None
     assert enriched.instructions is None
 
