@@ -8,25 +8,10 @@ from typing import TYPE_CHECKING, Any
 from flatline._errors import ERROR_CATEGORIES, InternalError
 from flatline._version import DECOMPILER_VERSION
 from flatline.models import (
-    VALID_WARNING_PHASES,
-    AnalysisBudget,
-    CallSiteInfo,
-    DecompileResult,
-    DiagnosticFlags,
-    Enriched,
-    ErrorItem,
-    FunctionInfo,
-    FunctionPrototype,
-    JumpTableInfo,
-    LanguageCompilerPair,
-    ParameterInfo,
-    Pcode,
-    PcodeOpInfo,
-    StorageInfo,
-    TypeInfo,
-    VariableInfo,
-    VarnodeFlags,
-    VarnodeInfo,
+    VALID_WARNING_PHASES, AnalysisBudget, CallSiteInfo, DecompileResult,
+    DiagnosticFlags, Enriched, ErrorItem, FunctionInfo, FunctionPrototype,
+    InstructionInfo, JumpTableInfo, LanguageCompilerPair, ParameterInfo, Pcode,
+    PcodeOpInfo, StorageInfo, TypeInfo, VariableInfo, VarnodeFlags, VarnodeInfo,
     WarningItem,
 )
 
@@ -225,6 +210,7 @@ def _coerce_enriched(raw_enriched: Any) -> Enriched | None:
     enriched_map = _require_mapping(raw_enriched, "enriched")
     return Enriched(
         pcode=_coerce_pcode(enriched_map.get("pcode")),
+        instructions=_coerce_instructions(enriched_map.get("instructions")),
     )
 
 
@@ -239,6 +225,14 @@ def _coerce_pcode(raw_pcode: Any) -> Pcode | None:
         pcode_ops=_coerce_pcode_op_list(pcode_map.get("pcode_ops")),
         varnodes=_coerce_varnode_info_list(pcode_map.get("varnodes")),
     )
+
+
+def _coerce_instructions(raw_instructions: Any) -> list[InstructionInfo] | None:
+    if raw_instructions is None:
+        return None
+    if not _is_sequence_like(raw_instructions):
+        raise InternalError("enriched.instructions must be a sequence")
+    return [_coerce_instruction_info(item) for item in raw_instructions]
 
 
 def _coerce_pcode_op_list(raw_pcode_ops: Any) -> list[PcodeOpInfo]:
@@ -275,6 +269,18 @@ def _coerce_pcode_op(raw_pcode_op: Any) -> PcodeOpInfo:
         sequence_order=_require_int(pcode_map.get("sequence_order"), "pcode_op.sequence_order"),
         input_varnode_ids=input_varnode_ids,
         output_varnode_id=output_varnode_id,
+    )
+
+
+def _coerce_instruction_info(raw: Any) -> InstructionInfo:
+    if isinstance(raw, InstructionInfo):
+        return raw
+    raw_map = _require_mapping(raw, "instruction_info")
+    return InstructionInfo(
+        address=_require_int(raw_map.get("address"), "instruction_info.address"),
+        length=_require_int(raw_map.get("length"), "instruction_info.length"),
+        mnemonic=_require_str(raw_map.get("mnemonic"), "instruction_info.mnemonic"),
+        operands=_require_str(raw_map.get("operands"), "instruction_info.operands"),
     )
 
 

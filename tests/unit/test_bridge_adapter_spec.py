@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from flatline._errors import InternalError
 from flatline import (
     AnalysisBudget,
     ConfigurationError,
@@ -12,12 +13,14 @@ from flatline import (
     Enriched,
     FunctionInfo,
     LanguageCompilerPair,
+    InstructionInfo,
     Pcode,
     PcodeOpInfo,
     VarnodeFlags,
     VarnodeInfo,
 )
 from flatline.bridge import core as bridge_module
+from flatline.bridge.payloads import _coerce_enriched, _coerce_instruction_info
 
 from ._bridge_doubles import (
     _make_runtime_data_fixture,
@@ -244,6 +247,61 @@ def test_u028_bridge_rejects_missing_pcode_when_enriched_requested(
     assert result.error is not None
     assert result.error.category == "internal_error"
     assert result.enriched is None
+
+
+def test_u029_bridge_coerces_instruction_payloads() -> None:
+    instruction = _coerce_instruction_info(
+        {
+            "address": 4096,
+            "length": 3,
+            "mnemonic": "MOV",
+            "operands": "eax, ebx",
+        }
+    )
+    assert isinstance(instruction, InstructionInfo)
+    assert instruction == InstructionInfo(
+        address=4096,
+        length=3,
+        mnemonic="MOV",
+        operands="eax, ebx",
+    )
+
+    passthrough = InstructionInfo(address=8192, length=4, mnemonic="ADD", operands="eax, ecx")
+    assert _coerce_instruction_info(passthrough) is passthrough
+
+    enriched = _coerce_enriched(
+        {
+            "pcode": None,
+            "instructions": [
+                {
+                    "address": 4096,
+                    "length": 3,
+                    "mnemonic": "MOV",
+                    "operands": "eax, ebx",
+                }
+            ],
+        }
+    )
+    assert enriched is not None
+    assert enriched.instructions is not None
+    assert enriched.instructions[0] == instruction
+
+
+def test_u030_bridge_rejects_malformed_instruction_payloads() -> None:
+    with pytest.raises(InternalError):
+        _coerce_instruction_info(
+            {
+                "length": 3,
+                "mnemonic": "MOV",
+                "operands": "eax, ebx",
+            }
+        )
+
+    enriched = _coerce_enriched(
+        {"pcode": None, "instructions": None}
+    )
+    assert enriched is not None
+    assert enriched.instructions is None
 
 
 def test_u002_bridge_rejects_unsupported_target_without_native_fallback(
