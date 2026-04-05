@@ -46,6 +46,16 @@ class XrayWindow(tk.Tk):
     _bottom_margin = 120.0
     _side_margin = 100.0
 
+    # Default pane widths and minimum bounds.
+    # The graph pane gets expand=True priority (all remaining space).
+    # Side panels use fixed initial widths; PanedWindow enforces the minimums.
+    # Minimums are exposed as class attributes so tests can verify enforcement
+    # without creating a real display.
+    _asm_default_width = 220
+    _inspector_default_width = 280
+    _asm_min_width = 180
+    _inspector_min_width = 180
+
     def __init__(
         self,
         title: str,
@@ -101,7 +111,7 @@ class XrayWindow(tk.Tk):
         self.geometry("1500x980")
         self.configure(bg=_theme.BACKGROUND)
         header = tk.Frame(self, bg=_theme.BACKGROUND)
-        header.pack(fill="x", padx=18, pady=(18, 10))
+        header.pack(fill="x", padx=14, pady=(10, 6))
         tk.Label(
             header,
             text=title,
@@ -120,33 +130,23 @@ class XrayWindow(tk.Tk):
             fg=_theme.TEXT_MUTED,
             font=_theme.SUBTITLE_FONT,
         ).pack(anchor="w", pady=(4, 0))
-        body = tk.Frame(self, bg=_theme.BACKGROUND)
-        body.pack(fill="both", expand=True, padx=18, pady=(0, 18))
-        sidebar = tk.Frame(body, bg=_theme.PANEL_BG, width=360)
-        sidebar.pack(side="right", fill="y", padx=(16, 0))
-        sidebar.pack_propagate(False)
-        tk.Label(
-            sidebar,
-            text="Inspector",
-            bg=_theme.PANEL_BG,
-            fg=_theme.TEXT,
-            font=_theme.PANEL_TITLE_FONT,
-        ).pack(anchor="w", padx=14, pady=(14, 8))
-        self.inspector = tk.Text(
-            sidebar,
-            bg=_theme.PANEL_BG,
-            fg=_theme.TEXT,
-            insertbackground=_theme.TEXT,
-            relief="flat",
-            wrap="word",
-            padx=14,
-            pady=4,
-            font=_theme.BODY_FONT,
+        # Body: PanedWindow for user-resizable panes.
+        # Orient=horizontal: [asm | graph | inspector] left-to-right.
+        # The graph pane gets sashpad/weight so it absorbs extra space.
+        # minsize on each side pane prevents collapse below usable width.
+        # Note: PanedWindow.add() uses pack geometry internally; do NOT
+        # also call .pack()/.grid() on the added child frames directly —
+        # PanedWindow owns geometry management for its direct children.
+        body = tk.PanedWindow(
+            self,
+            orient="horizontal",
+            bg=_theme.BACKGROUND,
+            sashrelief="flat",
+            sashwidth=6,
+            handlesize=0,
         )
-        self.inspector.pack(fill="both", expand=True)
-        self.inspector.configure(state="disabled")
-        asm_frame = tk.Frame(body, bg=_theme.PANEL_BG, width=300)
-        asm_frame.pack(side="left", fill="y", padx=(0, 16))
+        body.pack(fill="both", expand=True, padx=14, pady=(0, 14))
+        asm_frame = tk.Frame(body, bg=_theme.PANEL_BG, width=self._asm_default_width)
         asm_frame.pack_propagate(False)
         tk.Label(
             asm_frame,
@@ -181,8 +181,8 @@ class XrayWindow(tk.Tk):
         for _, line_text in self._disasm:
             self.asm_listbox.insert(tk.END, line_text)
         self.asm_listbox.bind("<<ListboxSelect>>", self._on_asm_select)
+        # Graph pane: fills all remaining space (stretch="always" + no fixed width).
         canvas_frame = tk.Frame(body, bg=_theme.BACKGROUND)
-        canvas_frame.pack(side="left", fill="both", expand=True)
         self.canvas = tk.Canvas(canvas_frame, bg=_theme.CANVAS_BG, highlightthickness=0)
         x_scroll = tk.Scrollbar(canvas_frame, orient="horizontal", command=self.canvas.xview)
         y_scroll = tk.Scrollbar(canvas_frame, orient="vertical", command=self.canvas.yview)
@@ -192,6 +192,34 @@ class XrayWindow(tk.Tk):
         x_scroll.grid(row=1, column=0, sticky="ew")
         canvas_frame.grid_rowconfigure(0, weight=1)
         canvas_frame.grid_columnconfigure(0, weight=1)
+        sidebar = tk.Frame(body, bg=_theme.PANEL_BG, width=self._inspector_default_width)
+        sidebar.pack_propagate(False)
+        tk.Label(
+            sidebar,
+            text="Inspector",
+            bg=_theme.PANEL_BG,
+            fg=_theme.TEXT,
+            font=_theme.PANEL_TITLE_FONT,
+        ).pack(anchor="w", padx=14, pady=(14, 8))
+        self.inspector = tk.Text(
+            sidebar,
+            bg=_theme.PANEL_BG,
+            fg=_theme.TEXT,
+            insertbackground=_theme.TEXT,
+            relief="flat",
+            wrap="word",
+            padx=14,
+            pady=4,
+            font=_theme.BODY_FONT,
+        )
+        self.inspector.pack(fill="both", expand=True)
+        self.inspector.configure(state="disabled")
+        # Add panes to PanedWindow: asm (left), graph (centre, dominant),
+        # inspector (right).  stretch="always" on the graph pane means
+        # extra width from window resizes goes to the graph first.
+        body.add(asm_frame, minsize=self._asm_min_width, width=self._asm_default_width, stretch="never")
+        body.add(canvas_frame, stretch="always")
+        body.add(sidebar, minsize=self._inspector_min_width, width=self._inspector_default_width, stretch="never")
         self._zoom = 1.0
         draw_depth_bands(
             self.canvas,
