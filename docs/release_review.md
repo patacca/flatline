@@ -28,8 +28,6 @@ the repo; the checklist stays source-controlled, but the results do not.
 - Confirm `python tools/compliance.py` passed and still reports the
   `ghidra-sleigh` / `networkx` dependencies plus the expected native-source
   attribution references.
-- Confirm `python tools/footprint.py` matches `docs/footprint.md`, or the
-  footprint baseline was intentionally refreshed in the same review.
 - Confirm `python -m build` produced exactly the current release artifacts that
   are under review.
 - Confirm `python tools/artifacts.py dist --repo-root . --require-pypi-metadata`

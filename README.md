@@ -250,9 +250,7 @@ GitHub releases go to PyPI, while manual dispatch uploads to TestPyPI.
 Manual TestPyPI dispatches require a unique version and now fail on duplicate
 uploads instead of reusing an older TestPyPI artifact.
 Redistribution/compliance guidance lives in [NOTICE](NOTICE), with the durable
-policy captured in [docs/adr/adr-007.md](docs/adr/adr-007.md). The current
-default-install footprint baseline and size-policy note live in
-[docs/footprint.md](docs/footprint.md).
+policy captured in [docs/adr/adr-007.md](docs/adr/adr-007.md).
 
 ## Project status
 

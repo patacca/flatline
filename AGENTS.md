@@ -21,7 +21,7 @@
 - TestPyPI validated `2026-03-28` commit `299fae580bdb202e0c930878b33067d0eceef01a` run `23694378228`: 10 wheels + 1 sdist, full smoke pass.
 - Local clean-snapshot validation `2026-03-28`: `python tools/release.py`, `tox`, `tox -e dev`, `python tools/compliance.py`, `python tools/footprint.py`, `python -m build --outdir dist`, `python tools/artifacts.py dist --repo-root .`, and `python -m twine check dist/*` all passed under the pre-fix metadata gate; built artifacts still omitted the README-backed long description plus project URLs/classifiers/keywords.
 - `python tools/release.py`: derives current version/release recommendation from version files and rejects dirty worktrees. `python tools/artifacts.py dist`: metadata/LICENSE/NOTICE/dev-tool/native-ext audit; `--require-pypi-metadata` adds README long-description checks for release uploads.
-- Compliance: root `LICENSE` + `NOTICE`, `third_party/ghidra/{LICENSE,NOTICE}`, `tests/fixtures/README.md`, and `python tools/compliance.py`; default-install footprint is tracked in `docs/footprint.md` via `python tools/footprint.py`.
+- Compliance: root `LICENSE` + `NOTICE`, `third_party/ghidra/{LICENSE,NOTICE}`, `tests/fixtures/README.md`, and `python tools/compliance.py`; run `python tools/footprint.py` for a current default-install footprint measurement.
 
 # Design posture
 - User-centered; prefer caller convenience.
@@ -55,15 +55,14 @@
 - `docs/design.md` -- durable design posture, boundaries, heuristics, and persistent risks worth keeping in day-to-day view. Must be kept up to date.
 - `docs/adr/` -- accepted architecture decision records; canonical rationale for settled design and release-policy choices.
 - `docs/TODO.md` -- next-scope features, platform/ISA expansion items, and remaining open work
-- `docs/archived/` -- archived historical docs (former full specs / roadmap); files under this directory are read-only unless explicitly requested, the directory may still receive newly archived files, and the contents are not maintained and may be outdated
+- `docs/archived/` -- archived historical docs (former full specs / roadmap); files under this directory are **permanently read-only** — **NEVER modify any existing file under `docs/archived/`**; the only permitted operation is adding a new file to the directory; contents are not maintained and may be outdated
 - `docs/code_style.md` -- style guide
-- `CHANGELOG.md` -- release history
+- `CHANGELOG.md` -- release history; **NEVER modify any entry under a dated release heading (e.g. `## [0.1.1]`, `## [0.1.0]`)**; only the `## [Unreleased]` section may be edited
 - `mkdocs.yml` + `docs-site/` -- published documentation site structure and navigation
 - `docs/ai/planning.md` -- original brief
 - `docs/ai/preplanning.md` -- discovery constraints
 - `docs/ai/refine_plan.md` -- refinement checklist
 - `NOTICE` -- redistribution notice plus upstream/fixture attribution pointers
-- `docs/footprint.md` -- footprint baseline
 - `docs/release_notes.md` -- `0.1.x` release-line contract, support tiers
 - `docs/release_review.md` -- artifact-review checklist
 - `docs/release_workflow.md` -- operator release workflow and promotion steps

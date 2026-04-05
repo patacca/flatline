@@ -51,8 +51,7 @@ payload.
 3. Run `python tools/release.py`
 4. Run `tox`
 5. Run `python tools/compliance.py`
-6. Run `python tools/footprint.py` and refresh `docs/footprint.md` if the
-   installed-wheel baseline changed
+6. Run `python tools/footprint.py` as an informational footprint measurement
 7. Keep `CHANGELOG.md` with an empty `## [Unreleased]` section above the most
    recent dated release entry
 8. Review `docs/release_notes.md`, `README.md`, and `NOTICE` for any last

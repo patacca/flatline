@@ -1,3 +1,7 @@
+> **Archived.** This is a historical baseline snapshot captured for the 0.1.1
+> release. It is not maintained. Run `python tools/footprint.py` for current
+> measurements.
+
 # Default-Install Footprint
 
 ## Scope

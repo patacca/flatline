@@ -31,7 +31,6 @@ _REMOVE_DOCS_SUBDIRS = {
 # Individual doc files to remove (dev-only, not needed for source builds).
 _REMOVE_DOCS_FILES = {
     "code_style.md",
-    "footprint.md",
     "release_review.md",
     "release_workflow.md",
 }
