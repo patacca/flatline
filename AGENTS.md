@@ -93,6 +93,7 @@
 - Runtime: `test_native_bridge_runtime_spec.py`, `test_runtime_data_spec.py`, `test_public_contract_spec.py`, `test_bridge_adapter_spec.py`.
 - Dev-tool: `test_compliance_spec.py`, `test_footprint_spec.py`, `test_artifact_audit_spec.py`; skip under wheel installs via `pytest.importorskip`.
 - Integration: switch-site baseline + p95 budgets; `fx_add_elf64` graph reachability.
+- **NEVER write tautological tests**: tests that merely restate the implementation without asserting meaningful behavior.
 
 # Vendored upstream
 - `third_party/ghidra` (submodule).
