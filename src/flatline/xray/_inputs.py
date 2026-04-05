@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 from flatline import DecompileRequest, DecompileResult, decompile_function, list_language_compilers
 from flatline.models import LanguageCompilerPair
+from flatline.xray._layout import fit_opcode_label, fit_varnode_badge
 import flatline.xray._theme as _theme
 
 if TYPE_CHECKING:
@@ -116,23 +117,8 @@ def _varnode_color(varnode) -> str:
 
 
 def _short_opcode(opcode: str) -> str:
-    if "_" in opcode:
-        head, tail = opcode.split("_", 1)
-        return f"{head}\n{tail}"
-    if len(opcode) > 10:
-        return f"{opcode[:10]}\n{opcode[10:16]}"
-    return opcode
+    return fit_opcode_label(opcode)
 
 
 def _varnode_badge(varnode) -> str:
-    if varnode.flags.is_constant:
-        return "CONST"
-    if varnode.flags.is_input:
-        return "INPUT"
-    if varnode.space == "register":
-        return "REG"
-    if varnode.space == "ram":
-        return "RAM"
-    if varnode.space == "unique":
-        return "TEMP"
-    return varnode.space[:6].upper()
+    return fit_varnode_badge(varnode)

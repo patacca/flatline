@@ -11,6 +11,19 @@ if TYPE_CHECKING:
 
 NodeId = tuple[str, int]
 
+LABEL_ELLIPSIS = "..."
+OPCODE_LABEL_MAX_CHARS = 7
+VARNODE_LABEL_MAX_CHARS = 8
+OPCODE_CHAR_WIDTH = 8.0
+VARNODE_CHAR_WIDTH = 8.0
+OPCODE_WIDTH_PAD = 28.0
+VARNODE_WIDTH_PAD = 20.0
+OPCODE_NODE_HEIGHT = 76.0
+VARNODE_NODE_HEIGHT = 68.0
+OPCODE_MIN_WIDTH = 76.0
+CONSTANT_VARNODE_MIN_WIDTH = 74.0
+VARNODE_MIN_WIDTH = 68.0
+
 
 @dataclass
 class VisualNode:
@@ -275,27 +288,77 @@ def assign_forest_positions(
         left += root.span + root_gap
 
 
+def shorten_label(text: str, max_chars: int) -> str:
+    if max_chars <= 0:
+        raise ValueError("max_chars must be positive")
+    if len(text) <= max_chars:
+        return text
+    if max_chars <= len(LABEL_ELLIPSIS):
+        return text[:max_chars]
+    return f"{text[: max_chars - len(LABEL_ELLIPSIS)]}{LABEL_ELLIPSIS}"
+
+
+def fit_opcode_label(opcode: str, max_chars: int = OPCODE_LABEL_MAX_CHARS) -> str:
+    return shorten_label(opcode, max_chars)
+
+
+def varnode_badge(varnode) -> str:
+    if varnode.flags.is_constant:
+        return "CONST"
+    if varnode.flags.is_input:
+        return "INPUT"
+    if varnode.space == "register":
+        return "REGISTER"
+    if varnode.space == "ram":
+        return "RAM"
+    if varnode.space == "unique":
+        return "TEMP"
+    return varnode.space.upper()
+
+
+def fit_varnode_badge(varnode, max_chars: int = VARNODE_LABEL_MAX_CHARS) -> str:
+    return shorten_label(varnode_badge(varnode), max_chars)
+
+
+def node_label_lines(
+    node: VisualNode,
+    op_by_id: Mapping[int, PcodeOpInfo],
+    varnode_by_id: Mapping[int, VarnodeInfo],
+) -> tuple[str, ...]:
+    if node.actual[0] == "op":
+        op = op_by_id[node.actual[1]]
+        return (*fit_opcode_label(op.opcode).splitlines(), f"#{op.id}")
+    varnode = varnode_by_id[node.actual[1]]
+    return (fit_varnode_badge(varnode), f"v{varnode.id}")
+
+
 def node_size(
     node: VisualNode,
+    op_by_id: Mapping[int, PcodeOpInfo],
     varnode_by_id: Mapping[int, VarnodeInfo],
 ) -> tuple[float, float]:
     """Return the node size used by the drawing code."""
 
+    label_lines = node_label_lines(node, op_by_id, varnode_by_id)
+    label_width = max(len(line) for line in label_lines)
     if node.actual[0] == "op":
-        return (76.0, 76.0)
+        width = max(OPCODE_MIN_WIDTH, label_width * OPCODE_CHAR_WIDTH + OPCODE_WIDTH_PAD)
+        return (width, OPCODE_NODE_HEIGHT)
     varnode = varnode_by_id[node.actual[1]]
+    width = max(label_width * VARNODE_CHAR_WIDTH + VARNODE_WIDTH_PAD, VARNODE_MIN_WIDTH)
     if varnode.flags.is_constant:
-        return (74.0, 68.0)
-    return (68.0, 68.0)
+        return (max(width, CONSTANT_VARNODE_MIN_WIDTH), VARNODE_NODE_HEIGHT)
+    return (width, VARNODE_NODE_HEIGHT)
 
 
 def node_pad(
     node: VisualNode,
+    op_by_id: Mapping[int, PcodeOpInfo],
     varnode_by_id: Mapping[int, VarnodeInfo],
 ) -> float:
     """Return the node radius used for edge attachment."""
 
-    return node_size(node, varnode_by_id)[1] / 2.0
+    return node_size(node, op_by_id, varnode_by_id)[1] / 2.0
 
 
 __all__ = [
@@ -305,9 +368,14 @@ __all__ = [
     "build_visual_forest",
     "collect_visual_nodes",
     "compute_canvas_size",
+    "fit_opcode_label",
+    "fit_varnode_badge",
+    "node_label_lines",
     "measure_forest",
     "node_pad",
     "node_size",
+    "shorten_label",
     "sink_ops",
     "sorted_ops",
+    "varnode_badge",
 ]
