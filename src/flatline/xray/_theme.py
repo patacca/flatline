@@ -39,7 +39,7 @@ EDGE_RELATED = "#ff4da6"
 SELECTION_BACKGROUND = "#1a4f80"
 SELECTION_OUTLINE = "#ffb703"
 SELECTION_TEXT = SELECTION_OUTLINE
-# Glow halo drawn behind selected/related nodes — much more visible than outline alone.
+# Glow halo drawn behind selected/related nodes -- much more visible than outline alone.
 SELECTION_GLOW = SELECTION_OUTLINE
 SELECTION_GLOW_PAD = 8.0
 RELATED_GLOW = "#ff6eb8"
@@ -49,7 +49,7 @@ DEPTH_BAND_OP_FILL = "#122235"
 DEPTH_BAND_INPUT_FILL = "#0d2030"
 DEPTH_BAND_OP_OUTLINE = "#1a3551"
 DEPTH_BAND_INPUT_OUTLINE = "#102739"
-# Muted label color for depth band row labels — less prominent than active text.
+# Muted label color for depth band row labels -- less prominent than active text.
 DEPTH_BAND_COLOR = "#0f1f30"
 
 # Inactive (unselected, unrelated) edge visual tokens.

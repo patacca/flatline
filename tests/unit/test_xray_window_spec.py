@@ -207,6 +207,7 @@ def test_selection_assembly_select_highlights_related_nodes(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     window, XrayWindow = _make_window(monkeypatch)
+    theme = importlib.import_module("flatline.xray._theme")
 
     on_asm_select = cast(Callable[[object, object], None], XrayWindow._on_asm_select)  # pyright: ignore[reportPrivateUsage]
     window.asm_listbox.selected = [0]
@@ -216,7 +217,7 @@ def test_selection_assembly_select_highlights_related_nodes(
     related_node = _node_for(window, ("varnode", 2))
     assert "Assembly selection" in window._inspector_value
     assert window.canvas.configured[f"shape-{op_node.key}"]["outline"] == "#ffb703"
-    assert window.canvas.configured[f"shape-{related_node.key}"]["outline"] == "#a07cdc"
+    assert window.canvas.configured[f"shape-{related_node.key}"]["outline"] == theme.EDGE_RELATED
 
 
 def test_selection_state_clears_on_reset(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -241,6 +242,7 @@ def test_selection_selected_and_related_states_are_visually_distinct(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     window, XrayWindow = _make_window(monkeypatch)
+    theme = importlib.import_module("flatline.xray._theme")
 
     show_node = cast(Callable[[object, object], None], XrayWindow._show_node)  # pyright: ignore[reportPrivateUsage]
     node = _node_for(window, ("op", 0))
@@ -250,7 +252,7 @@ def test_selection_selected_and_related_states_are_visually_distinct(
 
     assert window.canvas.configured[f"shape-{node.key}"] == {"outline": "#ffb703", "width": 4}
     assert window.canvas.configured[f"shape-{related_node.key}"] == {
-        "outline": "#a07cdc",
+        "outline": theme.EDGE_RELATED,
         "width": 3,
     }
     assert window.canvas.configured[f"shape-{muted_node.key}"] == {

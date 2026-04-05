@@ -198,7 +198,7 @@ def draw_op_node(
         outline="",
         tags=(tag,),
     )
-    # Selection glow — hidden by default, covers shadow when revealed.
+    # Selection glow -- hidden by default, covers shadow when revealed.
     glow_pad = _theme.SELECTION_GLOW_PAD
     canvas.create_rectangle(
         x - half_w - glow_pad,
@@ -275,7 +275,7 @@ def draw_varnode_node(
             outline="",
             tags=(tag,),
         )
-        # Selection glow — hidden triangle, covers shadow when revealed.
+        # Selection glow -- hidden triangle, covers shadow when revealed.
         glow_pad = _theme.SELECTION_GLOW_PAD
         canvas.create_polygon(
             x,
@@ -306,7 +306,7 @@ def draw_varnode_node(
             outline="",
             tags=(tag,),
         )
-        # Selection glow — hidden oval, covers shadow when revealed.
+        # Selection glow -- hidden oval, covers shadow when revealed.
         glow_pad = _theme.SELECTION_GLOW_PAD
         canvas.create_oval(
             x - half_w - glow_pad,

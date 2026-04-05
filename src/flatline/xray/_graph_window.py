@@ -146,7 +146,7 @@ class XrayWindow(tk.Tk):
         # The graph pane gets sashpad/weight so it absorbs extra space.
         # minsize on each side pane prevents collapse below usable width.
         # Note: PanedWindow.add() uses pack geometry internally; do NOT
-        # also call .pack()/.grid() on the added child frames directly —
+        # also call .pack()/.grid() on the added child frames directly --
         # PanedWindow owns geometry management for its direct children.
         body = tk.PanedWindow(
             self,
