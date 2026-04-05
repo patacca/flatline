@@ -8,7 +8,7 @@
 - Latest public release: `0.1.1`.
 - Enriched output: `Enriched.pcode` + `Pcode.to_graph()` for graph traversal/drawing.
 - Utility: `src/flatline/xray/` ships `flatline-xray` / `python -m flatline.xray` (tkinter pcode viewer).
-- `flatline[xray]` adds optional `capstone` disassembly; `tkinter` is lazily imported.
+- `flatline[xray]` extra removed; xray uses Ghidra Sleigh natively; `tkinter` is lazily imported.
 - Docs: `https://patacca.github.io/flatline/`; README covers local MkDocs access.
 - Hosts: Linux x86_64, macOS arm64, Windows x86_64 (Tier 1); Linux aarch64, macOS x86_64 (Pending).
 - Wheels: CPython 3.13/3.14, 64-bit; manylinux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64.
@@ -78,6 +78,7 @@
 - Audit: `python tools/compliance.py`, `python tools/release.py`, `python tools/footprint.py`.
 - Artifacts: `python tools/artifacts.py dist`.
 - Tox: `tox` (py313, py314, lint); `tox -e py314-native` (native bridge).
+- **MUST run full tox before claiming any feature complete**: `tox -e py314` (py313 unavailable in dev env); do NOT substitute with `pytest` alone — tox builds the wheel, isolates deps, and runs the full suite.
 - Tests: `tox -e py313,py314 -- -m <unit|contract|integration|regression|negative>`.
 - Native tests: `tox -e py313,py314 -- -m requires_native`.
 - Single file: `tox -e py313,py314 -- tests/unit/test_bridge_adapter_spec.py`.
@@ -86,7 +87,7 @@
 # Tests
 - Native tests require `.sla` from `ghidra-sleigh`; covers DATA, x86, AARCH64, RISCV, MIPS.
 - Category markers auto-applied via `tests/conftest.py`.
-- Specs: `tests/specs/test_catalog.md` (47 defs, 5 categories), `tests/specs/fixtures.md` (10 fixtures).
+- Specs: `tests/specs/test_catalog.md` (52 defs, 5 categories), `tests/specs/fixtures.md` (10 fixtures).
 - Workflow: `test_ci_workflow_spec.py`, `test_native_tox_env_spec.py`, `test_release_ci_workflow_spec.py`.
 - Runtime: `test_native_bridge_runtime_spec.py`, `test_runtime_data_spec.py`, `test_public_contract_spec.py`, `test_bridge_adapter_spec.py`.
 - Dev-tool: `test_compliance_spec.py`, `test_footprint_spec.py`, `test_artifact_audit_spec.py`; skip under wheel installs via `pytest.importorskip`.
@@ -105,7 +106,7 @@
 - `TypeInfo`: name, size, metatype.
 - `DiagnosticFlags`: is_complete, has_unreachable_blocks, has_unimplemented, has_bad_data, has_no_code.
 - `LanguageCompilerPair`: `language_id`, `compiler_spec`.
-- `Enriched`: `pcode`.
+- `Enriched`: `pcode`, `instructions`.
 - `Pcode`: `pcode_ops`, `varnodes`; `get_pcode_op()`, `get_varnode()`, `to_graph()`.
 - `PcodeOpInfo`: `id`, `opcode`, `instruction_address`, `sequence_time`, `sequence_order`, `input_varnode_ids`, `output_varnode_id`.
 - `VarnodeInfo`: `id`, `space`, `offset`, `size`, `flags`, `defining_op_id`, `use_op_ids`.
