@@ -264,3 +264,131 @@ def test_i010_external_call_slice_respects_tail_padding_toggle(
     assert strict_result.error.category == "invalid_address"
     assert strict_result.function_info is None
     assert strict_result.c_code is None
+
+
+def test_i011_cbranch_target_addresses_on_warning_fixture(
+    native_runtime_data_dir: str,
+) -> None:
+    """I-011: CBRANCH ops expose true/false target addresses on warning fixture."""
+    fixture = get_native_fixture("fx_warning_elf64")
+
+    with open_native_session(native_runtime_data_dir) as session:
+        result = session.decompile_function(
+            fixture.build_request(native_runtime_data_dir, enriched=True)
+        )
+
+    assert_successful_result(result)
+    assert result.enriched is not None
+    assert result.enriched.pcode is not None
+
+    pcode = result.enriched.pcode
+    cbranch_ops = [op for op in pcode.pcode_ops if op.opcode == "CBRANCH"]
+
+    assert len(cbranch_ops) >= 1, "Expected at least one CBRANCH op in warning fixture"
+
+    for op in cbranch_ops:
+        assert op.true_target_address is not None, (
+            f"CBRANCH op {op.id} missing true_target_address"
+        )
+        assert op.false_target_address is not None, (
+            f"CBRANCH op {op.id} missing false_target_address"
+        )
+        assert op.true_target_address != op.false_target_address, (
+            f"CBRANCH op {op.id} has identical true/false targets"
+        )
+
+    non_cbranch_ops = [op for op in pcode.pcode_ops if op.opcode != "CBRANCH"]
+    for op in non_cbranch_ops:
+        assert op.true_target_address is None, (
+            f"Non-CBRANCH op {op.id} ({op.opcode}) has non-None true_target_address"
+        )
+        assert op.false_target_address is None, (
+            f"Non-CBRANCH op {op.id} ({op.opcode}) has non-None false_target_address"
+        )
+
+
+def test_i012_fspec_iop_fields_on_external_call_fixture(
+    native_runtime_data_dir: str,
+) -> None:
+    """I-012: FSPEC varnodes expose call_site_index; IOP varnodes expose target_op_id."""
+    fixture = get_native_fixture("fx_external_call_arm64")
+
+    with open_native_session(native_runtime_data_dir) as session:
+        result = session.decompile_function(
+            fixture.build_request(native_runtime_data_dir, enriched=True)
+        )
+
+    assert_successful_result(result)
+    assert result.enriched is not None
+    assert result.enriched.pcode is not None
+
+    pcode = result.enriched.pcode
+
+    # Find fspec varnodes (call-site references)
+    fspec_varnodes = [vn for vn in pcode.varnodes if vn.space == "fspec"]
+    if fspec_varnodes:
+        for vn in fspec_varnodes:
+            assert vn.call_site_index is not None, f"fspec varnode {vn.id} missing call_site_index"
+            assert vn.offset == 0, f"fspec varnode {vn.id} should have offset=0"
+            # Cross-validate: call_site_index must be valid
+            assert vn.call_site_index < len(result.function_info.call_sites), (
+                f"call_site_index {vn.call_site_index} out of range "
+                f"(only {len(result.function_info.call_sites)} call sites)"
+            )
+
+    # Find iop varnodes (internal op pointers)
+    iop_varnodes = [vn for vn in pcode.varnodes if vn.space == "iop"]
+    if iop_varnodes:
+        for vn in iop_varnodes:
+            assert vn.target_op_id is not None, f"iop varnode {vn.id} missing target_op_id"
+            assert vn.offset == 0, f"iop varnode {vn.id} should have offset=0"
+            # Cross-validate: target_op_id must resolve
+            target_op = pcode.get_pcode_op(vn.target_op_id)
+            assert target_op is not None, (
+                f"target_op_id {vn.target_op_id} does not resolve to valid pcode op"
+            )
+
+
+def test_i013_backward_compatibility_new_fields_default_none(
+    native_runtime_data_dir: str,
+) -> None:
+    """I-013: New enrichment fields default to None on simple fixture without calls/branches."""
+    fixture = get_native_fixture("fx_add_elf64")
+
+    with open_native_session(native_runtime_data_dir) as session:
+        result = session.decompile_function(
+            fixture.build_request(native_runtime_data_dir, enriched=True)
+        )
+
+    assert_successful_result(result)
+    assert result.enriched is not None
+    assert result.enriched.pcode is not None
+
+    pcode = result.enriched.pcode
+
+    # Simple add function has no calls, no indirect ops, no conditional branches
+    fspec_varnodes = [vn for vn in pcode.varnodes if vn.space == "fspec"]
+    iop_varnodes = [vn for vn in pcode.varnodes if vn.space == "iop"]
+    cbranch_ops = [op for op in pcode.pcode_ops if op.opcode == "CBRANCH"]
+
+    assert len(fspec_varnodes) == 0, "Simple add function should have no fspec varnodes"
+    assert len(iop_varnodes) == 0, "Simple add function should have no iop varnodes"
+    assert len(cbranch_ops) == 0, "Simple add function should have no CBRANCH ops"
+
+    # All varnodes must have new fields as None
+    for vn in pcode.varnodes:
+        assert vn.call_site_index is None, (
+            f"varnode {vn.id} in space '{vn.space}' has non-None call_site_index"
+        )
+        assert vn.target_op_id is None, (
+            f"varnode {vn.id} in space '{vn.space}' has non-None target_op_id"
+        )
+
+    # All ops must have target addresses as None
+    for op in pcode.pcode_ops:
+        assert op.true_target_address is None, (
+            f"op {op.id} ({op.opcode}) has non-None true_target_address"
+        )
+        assert op.false_target_address is None, (
+            f"op {op.id} ({op.opcode}) has non-None false_target_address"
+        )
