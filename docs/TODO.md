@@ -43,6 +43,7 @@ All phases (P0-P7) and milestones (M0-M6) are closed; latest release is
 - [ ] **TypeInfo sub-type details**: struct fields, pointer target, array element type; flat `name`/`size`/`metatype` was sufficient for MVP.
 - [ ] **Parallel decompilation**: requires explicit session isolation policy; not exposed in current API.
 - [ ] **General-purpose logging sink**: P2 emits diagnostics only through `RuntimeWarning` and structured `WarningItem`/`ErrorItem`; no user-configurable logging or redaction controls.
+- [ ] **Bitwise flag properties**: replace `is_*` boolean attributes (e.g., `is_constant`, `is_input`) with a single `flags` bitfield and property-based access for more idiomatic Python usage and efficient flag checks.
 
 ## Risks Still Open
 
