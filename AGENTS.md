@@ -5,8 +5,8 @@
 
 # Overview
 - `flatline`: pip-installable Python wrapper around Ghidra C++ decompiler (surface only).
-- Version `0.1.2.dev0` in `pyproject.toml`, `meson.build`, `src/flatline/_version.py`.
-- Latest public release: `0.1.1`.
+- Version `0.1.3.dev0` in `pyproject.toml`, `meson.build`, `src/flatline/_version.py`.
+- Latest public release: `0.1.2`.
 - Enriched output: `Enriched.pcode` + `Pcode.to_graph()` for graph traversal/drawing.
 - Utility: `src/flatline/xray/` ships `flatline-xray` / `python -m flatline.xray` (tkinter pcode viewer).
 - `flatline[xray]` extra removed; xray uses Ghidra Sleigh natively; `tkinter` is lazily imported.

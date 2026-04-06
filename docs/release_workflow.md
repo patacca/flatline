@@ -1,12 +1,12 @@
 # Release Workflow
 
-Operator procedure for `0.1.x` patch publishes, baselined on the `0.1.1`
+Operator procedure for `0.1.x` patch publishes, baselined on the `0.1.2`
 release. The human approval checklist lives in `docs/release_review.md`;
 per-run review notes stay outside the repo.
 
 ## Release Decision
 
-- Published baseline version: `0.1.1`
+- Published baseline version: `0.1.2`
 - Release classification: `pre_1_0_patch_release`
 
 Rationale:
@@ -16,8 +16,8 @@ Rationale:
 - The current delta is backward-compatible: host-support expansion, Tier-1
   wheel publication, and opt-in enriched output extend the contract without
   breaking existing callers.
-- The TestPyPI rehearsal exercised the same release line as `0.1.1.dev1`
-  before the final GitHub release and PyPI publish of `0.1.1`.
+- The latest completed publish on this line was `0.1.2`; the next release
+  should repeat the same readiness gates before tagging and publishing.
 
 ## Readiness Check
 

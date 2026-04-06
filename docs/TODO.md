@@ -5,7 +5,7 @@ and specification docs were archived.
 For current design posture, use `docs/design.md`. For historical full-detail
 context, use `docs/archived/`.
 All phases (P0-P7) and milestones (M0-M6) are closed; latest release is
-`0.1.1`.
+`0.1.2`.
 
 ## Next-Scope Features
 

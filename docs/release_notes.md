@@ -80,8 +80,7 @@ Support-tier interpretation:
   ships one vendored Ghidra decompiler revision. Any compatible `ghidra-sleigh`
   version provides the default runtime data.
 - Flatline remains on a public `0.1.x` pre-1.0 line. The latest published
-  release on that line is `0.1.1`, after validating the same release line on
-  TestPyPI as `0.1.1.dev1`.
+  release on that line is `0.1.2`.
 - Version classification rules for the current line are:
   - `MAJOR`: breaking public Python API or contract changes.
   - `MINOR`: a deliberate release-line reset (for example `0.2.0`) when the
