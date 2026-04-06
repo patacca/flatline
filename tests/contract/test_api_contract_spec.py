@@ -285,6 +285,8 @@ def test_c007_enriched_schema_stability() -> None:
         "sequence_order",
         "input_varnode_ids",
         "output_varnode_id",
+        "true_target_address",
+        "false_target_address",
     }
 
     varnode_fields = {f.name for f in dataclasses.fields(VarnodeInfo)}
@@ -296,6 +298,8 @@ def test_c007_enriched_schema_stability() -> None:
         "flags",
         "defining_op_id",
         "use_op_ids",
+        "call_site_index",
+        "target_op_id",
     }
 
     flag_fields = {f.name for f in dataclasses.fields(VarnodeFlags)}

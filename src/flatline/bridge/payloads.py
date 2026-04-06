@@ -55,9 +55,7 @@ def _analysis_budget_to_native_payload(
 ) -> dict[str, int] | None:
     if budget is None:
         return None
-    return {
-        "max_instructions": budget.max_instructions,
-    }
+    return {"max_instructions": budget.max_instructions}
 
 
 def _coerce_language_compiler_pair(raw_item: Any) -> LanguageCompilerPair:
@@ -217,15 +215,12 @@ def _coerce_enriched(raw_enriched: Any) -> Enriched | None:
         return raw_enriched
 
     enriched_map = _require_mapping(raw_enriched, "enriched")
+    instructions: list[InstructionInfo] | None = None
     raw_instructions = enriched_map.get("instructions")
     if raw_instructions is not None:
         if not _is_sequence_like(raw_instructions):
             raise InternalError("enriched.instructions must be a sequence")
-        instructions: list[InstructionInfo] | None = [
-            _coerce_instruction_info(item) for item in raw_instructions
-        ]
-    else:
-        instructions = None
+        instructions = [_coerce_instruction_info(item) for item in raw_instructions]
     return Enriched(
         pcode=_coerce_pcode(enriched_map.get("pcode")),
         instructions=instructions,
@@ -264,21 +259,31 @@ def _coerce_pcode_op(raw_pcode_op: Any) -> PcodeOpInfo:
         _require_int(varnode_id, "pcode_op.input_varnode_ids[]")
         for varnode_id in raw_input_varnode_ids
     ]
-    output_varnode_id = pcode_map.get("output_varnode_id")
-    if output_varnode_id is not None:
-        output_varnode_id = _require_int(output_varnode_id, "pcode_op.output_varnode_id")
+    output_varnode_id = _require_optional_int(
+        pcode_map.get("output_varnode_id"),
+        "pcode_op.output_varnode_id",
+    )
+    true_target_address = _require_optional_int(
+        pcode_map.get("true_target_address"),
+        "pcode_op.true_target_address",
+    )
+    false_target_address = _require_optional_int(
+        pcode_map.get("false_target_address"),
+        "pcode_op.false_target_address",
+    )
 
     return PcodeOpInfo(
         id=_require_int(pcode_map.get("id"), "pcode_op.id"),
         opcode=_require_str(pcode_map.get("opcode"), "pcode_op.opcode"),
         instruction_address=_require_int(
-            pcode_map.get("instruction_address"),
-            "pcode_op.instruction_address",
+            pcode_map.get("instruction_address"), "pcode_op.instruction_address"
         ),
         sequence_time=_require_int(pcode_map.get("sequence_time"), "pcode_op.sequence_time"),
         sequence_order=_require_int(pcode_map.get("sequence_order"), "pcode_op.sequence_order"),
         input_varnode_ids=input_varnode_ids,
         output_varnode_id=output_varnode_id,
+        true_target_address=true_target_address,
+        false_target_address=false_target_address,
     )
 
 
@@ -310,9 +315,13 @@ def _coerce_varnode_info(raw_varnode: Any) -> VarnodeInfo:
     if not _is_sequence_like(raw_use_op_ids):
         raise InternalError("varnode.use_op_ids must be a sequence")
     use_op_ids = [_require_int(op_id, "varnode.use_op_ids[]") for op_id in raw_use_op_ids]
-    defining_op_id = varnode_map.get("defining_op_id")
-    if defining_op_id is not None:
-        defining_op_id = _require_int(defining_op_id, "varnode.defining_op_id")
+    defining_op_id = _require_optional_int(
+        varnode_map.get("defining_op_id"), "varnode.defining_op_id"
+    )
+    call_site_index = _require_optional_int(
+        varnode_map.get("call_site_index"), "varnode.call_site_index"
+    )
+    target_op_id = _require_optional_int(varnode_map.get("target_op_id"), "varnode.target_op_id")
 
     return VarnodeInfo(
         id=_require_int(varnode_map.get("id"), "varnode.id"),
@@ -322,6 +331,8 @@ def _coerce_varnode_info(raw_varnode: Any) -> VarnodeInfo:
         flags=_coerce_varnode_flags(varnode_map.get("flags")),
         defining_op_id=defining_op_id,
         use_op_ids=use_op_ids,
+        call_site_index=call_site_index,
+        target_op_id=target_op_id,
     )
 
 
@@ -345,13 +356,11 @@ def _coerce_function_prototype(raw_prototype: Any) -> FunctionPrototype:
     if isinstance(raw_prototype, FunctionPrototype):
         return raw_prototype
     prototype_map = _require_mapping(raw_prototype, "function_prototype")
-    calling_convention = prototype_map.get("calling_convention")
-    if calling_convention is not None:
-        calling_convention = _require_str(
-            calling_convention, "function_prototype.calling_convention"
-        )
     return FunctionPrototype(
-        calling_convention=calling_convention,
+        calling_convention=_require_optional_str(
+            prototype_map.get("calling_convention"),
+            "function_prototype.calling_convention",
+        ),
         parameters=_coerce_parameter_info_list(prototype_map.get("parameters")),
         return_type=_coerce_type_info(prototype_map.get("return_type")),
         is_noreturn=_require_bool(
@@ -448,15 +457,14 @@ def _coerce_call_site(raw_call_site: Any) -> CallSiteInfo:
     if isinstance(raw_call_site, CallSiteInfo):
         return raw_call_site
     call_site_map = _require_mapping(raw_call_site, "call_site")
-    target_address = call_site_map.get("target_address")
-    if target_address is not None:
-        target_address = _require_int(target_address, "call_site.target_address")
     return CallSiteInfo(
         instruction_address=_require_int(
-            call_site_map.get("instruction_address"),
-            "call_site.instruction_address",
+            call_site_map.get("instruction_address"), "call_site.instruction_address"
         ),
-        target_address=target_address,
+        target_address=_require_optional_int(
+            call_site_map.get("target_address"),
+            "call_site.target_address",
+        ),
     )
 
 
@@ -480,8 +488,7 @@ def _coerce_jump_table(raw_jump_table: Any) -> JumpTableInfo:
     ]
     return JumpTableInfo(
         switch_address=_require_int(
-            jump_table_map.get("switch_address"),
-            "jump_table.switch_address",
+            jump_table_map.get("switch_address"), "jump_table.switch_address"
         ),
         target_count=_require_int(jump_table_map.get("target_count"), "jump_table.target_count"),
         target_addresses=target_addresses,
@@ -511,30 +518,15 @@ def _coerce_diagnostic_flags(raw_diagnostics: Any) -> DiagnosticFlags:
 
 
 def _internal_error_result(request: DecompileRequest, message: str) -> DecompileResult:
-    return _error_result(
-        request,
-        category="internal_error",
-        message=message,
-        retryable=False,
-    )
+    return _error_result(request, category="internal_error", message=message, retryable=False)
 
 
 def _unsupported_target_result(request: DecompileRequest, message: str) -> DecompileResult:
-    return _error_result(
-        request,
-        category="unsupported_target",
-        message=message,
-        retryable=False,
-    )
+    return _error_result(request, category="unsupported_target", message=message, retryable=False)
 
 
 def _configuration_error_result(request: DecompileRequest, message: str) -> DecompileResult:
-    return _error_result(
-        request,
-        category="configuration_error",
-        message=message,
-        retryable=False,
-    )
+    return _error_result(request, category="configuration_error", message=message, retryable=False)
 
 
 def _error_result(
@@ -585,6 +577,14 @@ def _require_int(raw_value: Any, field_name: str) -> int:
     if not isinstance(raw_value, int) or isinstance(raw_value, bool):
         raise InternalError(f"{field_name} must be an integer")
     return raw_value
+
+
+def _require_optional_int(raw_value: Any, field_name: str) -> int | None:
+    return None if raw_value is None else _require_int(raw_value, field_name)
+
+
+def _require_optional_str(raw_value: Any, field_name: str) -> str | None:
+    return None if raw_value is None else _require_str(raw_value, field_name)
 
 
 def _require_bool(raw_value: Any, field_name: str) -> bool:

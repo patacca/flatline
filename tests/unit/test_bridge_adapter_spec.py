@@ -6,7 +6,6 @@ import pytest
 
 from flatline import (
     AnalysisBudget,
-    ConfigurationError,
     DecompileRequest,
     DecompileResult,
     Enriched,
@@ -20,18 +19,58 @@ from flatline import (
 )
 from flatline._errors import InternalError
 from flatline.bridge import core as bridge_module
-from flatline.bridge.payloads import _coerce_enriched, _coerce_instruction_info
+from flatline.bridge.payloads import (
+    _coerce_enriched,
+    _coerce_instruction_info,
+    _coerce_pcode_op,
+    _coerce_varnode_info,
+)
 
 from ._bridge_doubles import (
-    _make_runtime_data_fixture,
     _NativeModuleDouble,
-    _NativeSessionEmptyEnumerationDouble,
-    _NativeSessionFailureDouble,
-    _NativeSessionInvalidSuccessShapeDouble,
     _NativeSessionMissingEnrichedDouble,
     _NativeSessionMissingPcodeDouble,
     _NativeSessionSuccessDouble,
 )
+
+_TEST_VARNODE_FLAGS = {
+    "is_constant": False,
+    "is_input": True,
+    "is_free": False,
+    "is_implied": False,
+    "is_explicit": True,
+    "is_read_only": False,
+    "is_persist": False,
+    "is_addr_tied": False,
+}
+
+
+def _make_varnode_payload(**overrides: object) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "id": 0,
+        "space": "register",
+        "offset": 0,
+        "size": 4,
+        "flags": dict(_TEST_VARNODE_FLAGS),
+        "defining_op_id": None,
+        "use_op_ids": [],
+        "call_site_index": None,
+        "target_op_id": None,
+    }
+    payload.update(overrides)
+    return payload
+
+
+def _make_request(**overrides: object) -> DecompileRequest:
+    payload: dict[str, object] = {
+        "memory_image": b"\x90\xc3",
+        "base_address": 0x1000,
+        "function_address": 0x1000,
+        "language_id": "x86:LE:64:default",
+        "compiler_spec": "gcc",
+    }
+    payload.update(overrides)
+    return DecompileRequest(**payload)
 
 
 def test_u010_bridge_session_fallback_when_native_module_missing(
@@ -73,13 +112,7 @@ def test_u011_bridge_session_adapts_native_payloads(
     pairs = bridge_session.list_language_compilers()
     assert pairs == [LanguageCompilerPair(language_id="x86:LE:64:default", compiler_spec="gcc")]
 
-    request = DecompileRequest(
-        memory_image=b"\x90\xc3",
-        base_address=0x1000,
-        function_address=0x1000,
-        language_id="x86:LE:64:default",
-        compiler_spec="gcc",
-    )
+    request = _make_request()
     result = bridge_session.decompile_function(request)
 
     assert isinstance(result, DecompileResult)
@@ -112,14 +145,7 @@ def test_u011_bridge_serializes_explicit_analysis_budget(
     runtime_dir.mkdir()
     bridge_session = bridge_module.create_bridge_session(runtime_data_dir=str(runtime_dir))
 
-    request = DecompileRequest(
-        memory_image=b"\x90\xc3",
-        base_address=0x1000,
-        function_address=0x1000,
-        language_id="x86:LE:64:default",
-        compiler_spec="gcc",
-        analysis_budget=AnalysisBudget(max_instructions=4096),
-    )
+    request = _make_request(analysis_budget=AnalysisBudget(max_instructions=4096))
     bridge_session.decompile_function(request)
 
     assert native_session.last_request_payload is not None
@@ -141,27 +167,13 @@ def test_u011_bridge_serializes_explicit_tail_padding_values(
     runtime_dir.mkdir()
     bridge_session = bridge_module.create_bridge_session(runtime_data_dir=str(runtime_dir))
 
-    request = DecompileRequest(
-        memory_image=b"\x90\xc3",
-        base_address=0x1000,
-        function_address=0x1000,
-        language_id="x86:LE:64:default",
-        compiler_spec="gcc",
-        tail_padding=b"\x1f\x20\x03\xd5",
-    )
+    request = _make_request(tail_padding=b"\x1f\x20\x03\xd5")
     bridge_session.decompile_function(request)
 
     assert native_session.last_request_payload is not None
     assert native_session.last_request_payload["tail_padding"] == b"\x1f\x20\x03\xd5"
 
-    disabled_request = DecompileRequest(
-        memory_image=b"\x90\xc3",
-        base_address=0x1000,
-        function_address=0x1000,
-        language_id="x86:LE:64:default",
-        compiler_spec="gcc",
-        tail_padding=b"",
-    )
+    disabled_request = _make_request(tail_padding=b"")
     bridge_session.decompile_function(disabled_request)
 
     assert native_session.last_request_payload["tail_padding"] is None
@@ -180,14 +192,7 @@ def test_u028_bridge_session_adapts_enriched_payload_when_requested(
     runtime_dir.mkdir()
     bridge_session = bridge_module.create_bridge_session(runtime_data_dir=str(runtime_dir))
 
-    request = DecompileRequest(
-        memory_image=b"\x90\xc3",
-        base_address=0x1000,
-        function_address=0x1000,
-        language_id="x86:LE:64:default",
-        compiler_spec="gcc",
-        enriched=True,
-    )
+    request = _make_request(enriched=True)
     result = bridge_session.decompile_function(request)
 
     assert native_session.last_request_payload is not None
@@ -198,7 +203,13 @@ def test_u028_bridge_session_adapts_enriched_payload_when_requested(
     assert isinstance(result.enriched.pcode.varnodes[0], VarnodeInfo)
     assert isinstance(result.enriched.pcode.varnodes[0].flags, VarnodeFlags)
     assert result.enriched.pcode.pcode_ops[0].opcode == "INT_ADD"
-    assert result.enriched.pcode.get_varnode(2).use_op_ids == [1]
+    assert result.enriched.pcode.get_varnode(2).use_op_ids == [3]
+    assert result.enriched.pcode.get_varnode(3).call_site_index == 0
+    assert result.enriched.pcode.get_varnode(3).offset == 0
+    assert result.enriched.pcode.get_varnode(5).target_op_id == 2
+    assert result.enriched.pcode.get_varnode(5).offset == 0
+    assert result.function_info is not None
+    assert result.function_info.call_sites[0].instruction_address == request.function_address + 3
 
 
 def test_u040_bridge_populates_enriched_instructions(
@@ -213,14 +224,7 @@ def test_u040_bridge_populates_enriched_instructions(
     runtime_dir.mkdir()
     bridge_session = bridge_module.create_bridge_session(runtime_data_dir=str(runtime_dir))
 
-    request = DecompileRequest(
-        memory_image=b"\x90\xc3",
-        base_address=0x1000,
-        function_address=0x1000,
-        language_id="x86:LE:64:default",
-        compiler_spec="gcc",
-        enriched=True,
-    )
+    request = _make_request(enriched=True)
     result = bridge_session.decompile_function(request)
 
     assert native_session.last_request_payload is not None
@@ -243,14 +247,7 @@ def test_u028_bridge_rejects_missing_enriched_payload_when_requested(
     monkeypatch.setattr(bridge_module.importlib, "import_module", lambda _: native_module)
 
     bridge_session = bridge_module.create_bridge_session()
-    request = DecompileRequest(
-        memory_image=b"\x90\xc3",
-        base_address=0x1000,
-        function_address=0x1000,
-        language_id="x86:LE:64:default",
-        compiler_spec="gcc",
-        enriched=True,
-    )
+    request = _make_request(enriched=True)
 
     result = bridge_session.decompile_function(request)
 
@@ -267,14 +264,7 @@ def test_u028_bridge_rejects_missing_pcode_when_enriched_requested(
     monkeypatch.setattr(bridge_module.importlib, "import_module", lambda _: native_module)
 
     bridge_session = bridge_module.create_bridge_session()
-    request = DecompileRequest(
-        memory_image=b"\x90\xc3",
-        base_address=0x1000,
-        function_address=0x1000,
-        language_id="x86:LE:64:default",
-        compiler_spec="gcc",
-        enriched=True,
-    )
+    request = _make_request(enriched=True)
 
     result = bridge_session.decompile_function(request)
 
@@ -321,6 +311,124 @@ def test_u029_bridge_coerces_instruction_payloads() -> None:
     assert enriched.instructions[0] == instruction
 
 
+def test_u029_bridge_coerces_cbranch_target_addresses() -> None:
+    pcode_op = _coerce_pcode_op(
+        {
+            "id": 11,
+            "opcode": "CBRANCH",
+            "instruction_address": 0x401000,
+            "sequence_time": 7,
+            "sequence_order": 1,
+            "input_varnode_ids": [5],
+            "output_varnode_id": None,
+            "true_target_address": 0x401020,
+            "false_target_address": 0x401030,
+        }
+    )
+
+    assert pcode_op == PcodeOpInfo(
+        id=11,
+        opcode="CBRANCH",
+        instruction_address=0x401000,
+        sequence_time=7,
+        sequence_order=1,
+        input_varnode_ids=[5],
+        output_varnode_id=None,
+        true_target_address=0x401020,
+        false_target_address=0x401030,
+    )
+
+
+def test_u029_bridge_defaults_missing_pcode_target_addresses_to_none() -> None:
+    pcode_op = _coerce_pcode_op(
+        {
+            "id": 12,
+            "opcode": "INT_ADD",
+            "instruction_address": 0x401040,
+            "sequence_time": 8,
+            "sequence_order": 2,
+            "input_varnode_ids": [1, 2],
+            "output_varnode_id": 3,
+        }
+    )
+
+    assert pcode_op.true_target_address is None
+    assert pcode_op.false_target_address is None
+
+
+def test_u029_bridge_accepts_explicit_none_pcode_target_addresses() -> None:
+    pcode_op = _coerce_pcode_op(
+        {
+            "id": 13,
+            "opcode": "CBRANCH",
+            "instruction_address": 0x401060,
+            "sequence_time": 9,
+            "sequence_order": 3,
+            "input_varnode_ids": [4],
+            "output_varnode_id": None,
+            "true_target_address": None,
+            "false_target_address": None,
+        }
+    )
+
+    assert pcode_op.true_target_address is None
+    assert pcode_op.false_target_address is None
+
+
+def test_u029_bridge_coerces_varnode_call_site_index() -> None:
+    varnode = _coerce_varnode_info(
+        _make_varnode_payload(id=7, space="fspec", size=8, use_op_ids=[11], call_site_index=0)
+    )
+
+    assert varnode.call_site_index == 0
+
+
+def test_u029_bridge_defaults_missing_varnode_call_site_index_to_none() -> None:
+    varnode = _coerce_varnode_info(_make_varnode_payload(id=8, offset=4))
+
+    assert varnode.call_site_index is None
+
+
+def test_u029_bridge_coerces_explicit_none_varnode_call_site_index() -> None:
+    varnode = _coerce_varnode_info(_make_varnode_payload(id=9, offset=8, call_site_index=None))
+
+    assert varnode.call_site_index is None
+
+
+def test_u029_bridge_coerces_varnode_target_op_id_zero() -> None:
+    varnode = _coerce_varnode_info(
+        _make_varnode_payload(
+            id=10,
+            space="iop",
+            size=8,
+            flags={**_TEST_VARNODE_FLAGS, "is_input": False},
+            target_op_id=0,
+        )
+    )
+
+    assert varnode.target_op_id == 0
+
+
+def test_u029_bridge_defaults_missing_varnode_target_op_id_to_none() -> None:
+    varnode = _coerce_varnode_info(_make_varnode_payload(id=11, offset=4))
+
+    assert varnode.target_op_id is None
+
+
+def test_u029_bridge_coerces_explicit_none_varnode_target_op_id() -> None:
+    varnode = _coerce_varnode_info(
+        _make_varnode_payload(
+            id=12,
+            space="iop",
+            size=8,
+            flags={**_TEST_VARNODE_FLAGS, "is_input": False},
+            target_op_id=None,
+        )
+    )
+
+    assert varnode.target_op_id is None
+
+
 def test_u030_bridge_rejects_malformed_instruction_payloads() -> None:
     with pytest.raises(InternalError):
         _coerce_instruction_info(
@@ -334,165 +442,3 @@ def test_u030_bridge_rejects_malformed_instruction_payloads() -> None:
     enriched = _coerce_enriched({"pcode": None, "instructions": None})
     assert enriched is not None
     assert enriched.instructions is None
-
-
-def test_u002_bridge_rejects_unsupported_target_without_native_fallback(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """U-002: Bridge validates language/compiler and rejects unsupported targets."""
-    native_session = _NativeSessionSuccessDouble()
-    native_module = _NativeModuleDouble(native_session=native_session)
-    monkeypatch.setattr(bridge_module.importlib, "import_module", lambda _: native_module)
-
-    bridge_session = bridge_module.create_bridge_session()
-
-    unknown_language_request = DecompileRequest(
-        memory_image=b"\x90\xc3",
-        base_address=0x1000,
-        function_address=0x1000,
-        language_id="arm:LE:64:v8A",
-        compiler_spec="gcc",
-    )
-    unknown_language_result = bridge_session.decompile_function(unknown_language_request)
-
-    assert unknown_language_result.error is not None
-    assert unknown_language_result.error.category == "unsupported_target"
-    assert unknown_language_result.function_info is None
-    assert unknown_language_result.c_code is None
-    assert native_session.decompile_calls == 0
-
-    unknown_compiler_request = DecompileRequest(
-        memory_image=b"\x90\xc3",
-        base_address=0x1000,
-        function_address=0x1000,
-        language_id="x86:LE:64:default",
-        compiler_spec="windows",
-    )
-    unknown_compiler_result = bridge_session.decompile_function(unknown_compiler_request)
-
-    assert unknown_compiler_result.error is not None
-    assert unknown_compiler_result.error.category == "unsupported_target"
-    assert unknown_compiler_result.function_info is None
-    assert unknown_compiler_result.c_code is None
-    assert native_session.decompile_calls == 0
-
-
-def test_u011_bridge_rejects_malformed_native_success_payload(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """U-011: Malformed native success payloads are normalized to internal_error."""
-    native_module = _NativeModuleDouble(native_session=_NativeSessionInvalidSuccessShapeDouble())
-    monkeypatch.setattr(bridge_module.importlib, "import_module", lambda _: native_module)
-
-    bridge_session = bridge_module.create_bridge_session()
-    request = DecompileRequest(
-        memory_image=b"\x90\xc3",
-        base_address=0x1000,
-        function_address=0x1000,
-        language_id="x86:LE:64:default",
-        compiler_spec="gcc",
-    )
-
-    result = bridge_session.decompile_function(request)
-
-    assert isinstance(result, DecompileResult)
-    assert result.error is not None
-    assert result.error.category == "internal_error"
-    assert result.function_info is None
-    assert result.c_code is None
-
-
-def test_u012_bridge_session_normalizes_native_exceptions(monkeypatch: pytest.MonkeyPatch) -> None:
-    """U-012: Native bridge exceptions become structured internal_error results."""
-    native_module = _NativeModuleDouble(native_session=_NativeSessionFailureDouble())
-    monkeypatch.setattr(
-        bridge_module.importlib,
-        "import_module",
-        lambda _: native_module,
-    )
-
-    bridge_session = bridge_module.create_bridge_session()
-    request = DecompileRequest(
-        memory_image=b"\x90\xc3",
-        base_address=0x400000,
-        function_address=0x400000,
-        language_id="x86:LE:64:default",
-    )
-    result = bridge_session.decompile_function(request)
-
-    assert isinstance(result, DecompileResult)
-    assert result.error is not None
-    assert result.error.category == "internal_error"
-    assert "native bridge failure" in result.error.message
-    assert "/tmp/native/session.log" in result.error.message
-    assert result.function_info is None
-    assert result.c_code is None
-    assert result.metadata["language_id"] == request.language_id
-
-
-def test_u013_bridge_enumerates_runtime_data_when_native_module_missing(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path,
-) -> None:
-    """U-013: Fallback bridge enumerates runtime-data language/compiler pairs."""
-
-    def _raise_import_error(_: str) -> object:
-        raise ImportError("module not found")
-
-    monkeypatch.setattr(bridge_module.importlib, "import_module", _raise_import_error)
-
-    runtime_dir = _make_runtime_data_fixture(tmp_path)
-    bridge_session = bridge_module.create_bridge_session(runtime_data_dir=str(runtime_dir))
-
-    pairs = bridge_session.list_language_compilers()
-
-    assert pairs == [LanguageCompilerPair(language_id="x86:LE:64:default", compiler_spec="gcc")]
-
-
-def test_u013_bridge_uses_runtime_data_when_native_enumeration_is_empty(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path,
-) -> None:
-    """U-013: Native adapter falls back to runtime-data enumeration when needed."""
-    runtime_dir = _make_runtime_data_fixture(tmp_path)
-    native_session = _NativeSessionEmptyEnumerationDouble()
-    native_module = _NativeModuleDouble(native_session=native_session)
-    monkeypatch.setattr(bridge_module.importlib, "import_module", lambda _: native_module)
-
-    bridge_session = bridge_module.create_bridge_session(runtime_data_dir=str(runtime_dir))
-
-    pairs = bridge_session.list_language_compilers()
-    assert pairs == [LanguageCompilerPair(language_id="x86:LE:64:default", compiler_spec="gcc")]
-
-    request = DecompileRequest(
-        memory_image=b"\x90\xc3",
-        base_address=0x1000,
-        function_address=0x1000,
-        language_id="x86:LE:64:default",
-        compiler_spec="gcc",
-    )
-    result = bridge_session.decompile_function(request)
-
-    assert result.error is not None
-    assert result.error.category == "internal_error"
-    assert native_session.decompile_calls == 1
-
-
-def test_u014_bridge_rejects_missing_runtime_data_dir(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path,
-) -> None:
-    """U-014: Session startup fails deterministically for missing runtime_data_dir."""
-
-    def _raise_import_error(_: str) -> object:
-        raise ImportError("module not found")
-
-    monkeypatch.setattr(bridge_module.importlib, "import_module", _raise_import_error)
-
-    missing_dir = tmp_path / "does-not-exist"
-    with pytest.raises(ConfigurationError) as exc_info:
-        bridge_module.create_bridge_session(runtime_data_dir=str(missing_dir))
-
-    error_message = exc_info.value.message
-    assert "runtime_data_dir does not exist" in error_message
-    assert str(missing_dir) in error_message

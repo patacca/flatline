@@ -2,7 +2,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include "block.hh"
 #include "database.hh"
+#include "fspec.hh"
 #include "funcdata.hh"
 #include "opcodes.hh"
 #include "shared.h"
@@ -91,8 +93,10 @@ static nb::dict varnode_flags_to_dict(const ghidra::Varnode& varnode) {
     return flags;
 }
 
-static nb::dict pcode_op_to_dict(const ghidra::PcodeOp& op, const EnrichedIndex& index) {
+static nb::dict pcode_op_to_dict(const ghidra::PcodeOp& op, const EnrichedIndex& index,
+                                 const ghidra::Funcdata& function) {
     nb::dict pcode_op;
+    (void)function;
     const auto op_id = lookup_pcode_op_id(index, &op);
     if (!op_id.has_value()) {
         throw std::runtime_error("enriched output missing PcodeOp id");
@@ -122,10 +126,44 @@ static nb::dict pcode_op_to_dict(const ghidra::PcodeOp& op, const EnrichedIndex&
     } else {
         pcode_op["output_varnode_id"] = nb::none();
     }
+
+    if (op.code() == ghidra::CPUI_CBRANCH) {
+        const ghidra::BlockBasic* parent = op.getParent();
+        if (parent != nullptr && parent->sizeOut() == 2) {
+            const bool invert = op.isBooleanFlip() != op.isFallthruTrue();
+
+            const ghidra::FlowBlock* out0 = parent->getOut(0);
+            const ghidra::FlowBlock* out1 = parent->getOut(1);
+
+            const ghidra::FlowBlock* true_block = invert ? out0 : out1;
+            const ghidra::FlowBlock* false_block = invert ? out1 : out0;
+
+            if (true_block != nullptr && !true_block->getStart().isInvalid()) {
+                pcode_op["true_target_address"] =
+                    static_cast<std::uint64_t>(true_block->getStart().getOffset());
+            } else {
+                pcode_op["true_target_address"] = nb::none();
+            }
+            if (false_block != nullptr && !false_block->getStart().isInvalid()) {
+                pcode_op["false_target_address"] =
+                    static_cast<std::uint64_t>(false_block->getStart().getOffset());
+            } else {
+                pcode_op["false_target_address"] = nb::none();
+            }
+        } else {
+            pcode_op["true_target_address"] = nb::none();
+            pcode_op["false_target_address"] = nb::none();
+        }
+    } else {
+        pcode_op["true_target_address"] = nb::none();
+        pcode_op["false_target_address"] = nb::none();
+    }
+
     return pcode_op;
 }
 
-static nb::dict varnode_to_dict(const ghidra::Varnode& varnode, const EnrichedIndex& index) {
+static nb::dict varnode_to_dict(const ghidra::Varnode& varnode, const EnrichedIndex& index,
+                                const ghidra::Funcdata& function) {
     nb::dict varnode_item;
     const auto varnode_id = lookup_varnode_id(index, &varnode);
     if (!varnode_id.has_value()) {
@@ -148,6 +186,48 @@ static nb::dict varnode_to_dict(const ghidra::Varnode& varnode, const EnrichedIn
     varnode_item["size"] = varnode.getSize();
     varnode_item["flags"] = varnode_flags_to_dict(varnode);
 
+    if (space != nullptr && space->getType() == ghidra::IPTR_FSPEC) {
+        varnode_item["offset"] = static_cast<std::uint64_t>(0);
+        const auto raw_offset = varnode.getOffset();
+        if (raw_offset != 0) {
+            ghidra::FuncCallSpecs* fspec = ghidra::FuncCallSpecs::getFspecFromConst(
+                ghidra::Address(const_cast<ghidra::AddrSpace*>(space), raw_offset));
+            if (fspec != nullptr) {
+                const int call_count = function.numCalls();
+                for (int index = 0; index < call_count; ++index) {
+                    if (function.getCallSpecs(index) == fspec) {
+                        varnode_item["call_site_index"] = static_cast<std::uint64_t>(index);
+                        break;
+                    }
+                }
+            }
+        }
+        if (!varnode_item.contains("call_site_index")) {
+            varnode_item["call_site_index"] = nb::none();
+        }
+    } else {
+        varnode_item["call_site_index"] = nb::none();
+    }
+
+    if (space != nullptr && space->getType() == ghidra::IPTR_IOP) {
+        varnode_item["offset"] = static_cast<std::uint64_t>(0);
+        const auto raw_offset = varnode.getOffset();
+        if (raw_offset != 0) {
+            const ghidra::PcodeOp* target_op = ghidra::PcodeOp::getOpFromConst(
+                ghidra::Address(const_cast<ghidra::AddrSpace*>(space), raw_offset));
+            const auto target_op_id = lookup_pcode_op_id(index, target_op);
+            if (target_op_id.has_value()) {
+                varnode_item["target_op_id"] = target_op_id.value();
+            } else {
+                varnode_item["target_op_id"] = nb::none();
+            }
+        } else {
+            varnode_item["target_op_id"] = nb::none();
+        }
+    } else {
+        varnode_item["target_op_id"] = nb::none();
+    }
+
     const auto defining_op_id = lookup_pcode_op_id(index, varnode.getDef());
     if (defining_op_id.has_value()) {
         varnode_item["defining_op_id"] = defining_op_id.value();
@@ -164,12 +244,12 @@ nb::dict pcode_to_dict(const ghidra::Funcdata& function) {
     const EnrichedIndex index = build_enriched_index(function);
     nb::list pcode_ops;
     for (const ghidra::PcodeOp* op : index.pcode_ops) {
-        pcode_ops.append(pcode_op_to_dict(*op, index));
+        pcode_ops.append(pcode_op_to_dict(*op, index, function));
     }
 
     nb::list varnodes;
     for (const ghidra::Varnode* varnode : index.varnodes) {
-        varnodes.append(varnode_to_dict(*varnode, index));
+        varnodes.append(varnode_to_dict(*varnode, index, function));
     }
 
     nb::dict pcode;
