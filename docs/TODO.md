@@ -34,6 +34,8 @@ All phases (P0-P7) and milestones (M0-M6) are closed; latest release is
 ## Under Evaluation
 
 - [ ] **Custom decompilation pipeline control**: expose optional enrichment allowing callers to select which analysis actions/rules are included in the decompilation pipeline and optionally inject custom ones (leveraging Ghidra's ActionDatabase group-filtering and clone mechanism). Needs design evaluation before acceptance — not yet approved as future work.
+- [ ] **xray selection highlighting**: when selecting asm instructions, avoid overlay borders on nodes; instead use grey-opaque background filling covering everything except selected nodes and edges. Improves visual focus on selected elements.
+- [ ] **xray disassembly accuracy**: the assembly panel currently shows instructions at addresses derived from post-simplification pcode (`Function::beginOpAlive()`), not a complete linear disassembly of the binary function. This means: (1) dead-code-eliminated instructions are missing, and (2) the presented assembly reflects the decompiler's internal IR state rather than the raw binary. Options: (a) document the current behavior clearly in xray docs as "pcode-derived assembly" vs "raw disassembly", or (b) implement proper linear disassembly via Sleigh for the full function address range and offer a toggle between both views.
 
 ## API and Contract Extensions
 
