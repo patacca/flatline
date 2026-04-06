@@ -11,3 +11,4 @@ How-to guides are problem-oriented recipes. Each guide walks through solving a s
 | [Session Management](session-management.md) | Using context managers and long-lived sessions for efficient batch decompilation. |
 | [Handle Errors](handle-errors.md) | Catching specific error categories, interpreting `DecompileResult.error`, and distinguishing user-fixable from internal errors. |
 | [Analysis Budget](analysis-budget.md) | Tuning `max_instructions` to handle complex or large functions within resource bounds. |
+| [Enriched Output](enriched-output.md) | Accessing p-code IR, resolving fspec/IOP varnodes, and inspecting CBRANCH branch targets. |

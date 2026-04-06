@@ -52,6 +52,7 @@ nav:
     - Session Management: how-to/session-management.md
     - Handle Errors: how-to/handle-errors.md
     - Analysis Budget: how-to/analysis-budget.md
+    - Enriched Output: how-to/enriched-output.md
   - API Reference:
     - reference/index.md
     - Session: reference/session.md
