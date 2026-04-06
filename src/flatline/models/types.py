@@ -197,7 +197,14 @@ class VarnodeFlags:
 
 @dataclass(frozen=True)
 class PcodeOpInfo:
-    """One post-simplification pcode operation."""
+    """One post-simplification pcode operation.
+
+    Attributes:
+        true_target_address: Start address of the basic block entered when a
+            CBRANCH condition evaluates true, or ``None`` for non-CBRANCH ops.
+        false_target_address: Start address of the basic block entered when a
+            CBRANCH condition evaluates false, or ``None`` for non-CBRANCH ops.
+    """
 
     id: int
     opcode: str
@@ -206,6 +213,8 @@ class PcodeOpInfo:
     sequence_order: int
     input_varnode_ids: list[int]
     output_varnode_id: int | None = None
+    true_target_address: int | None = None
+    false_target_address: int | None = None
 
 
 @dataclass(frozen=True)
@@ -220,7 +229,40 @@ class InstructionInfo:
 
 @dataclass(frozen=True)
 class VarnodeInfo:
-    """One varnode in the enriched use-def graph."""
+    """One varnode in the enriched use-def graph.
+
+    Attributes:
+        id: Unique identifier for this varnode within the pcode graph.
+        space: Address space name. Determines the interpretation of
+            ``offset``:
+
+            - ``"const"``: ``offset`` is the literal constant value.
+            - ``"register"``: ``offset`` is the register number in the
+              processor specification.
+            - ``"unique"``: ``offset`` is an internal temporary allocation
+              ID (opaque).
+            - ``"ram"``: ``offset`` is the virtual memory address.
+            - ``"fspec"``: Call-spec reference. ``offset`` is set to ``0``;
+              use ``call_site_index`` instead.
+            - ``"iop"``: Internal op pointer. ``offset`` is set to ``0``;
+              use ``target_op_id`` instead.
+            - ``"join"``: Split/merged variable storage (opaque).
+            - ``"stack"``: ``offset`` is the stack-frame offset.
+
+        offset: Location within the address space. For ``"fspec"`` and
+            ``"iop"`` spaces, this is set to ``0`` and the dedicated fields
+            ``call_site_index`` / ``target_op_id`` carry the meaningful value.
+        size: Size in bytes.
+        flags: Boolean flags describing varnode properties. See
+            :class:`VarnodeFlags`.
+        defining_op_id: ID of the pcode op that produces this varnode, or
+            ``None`` for inputs/constants.
+        use_op_ids: IDs of pcode ops that consume this varnode.
+        call_site_index: Index into the function's call sites for ``"fspec"``
+            varnodes. ``None`` for other spaces.
+        target_op_id: ID of the target pcode op for ``"iop"`` varnodes.
+            ``None`` for other spaces.
+    """
 
     id: int
     space: str
@@ -229,6 +271,8 @@ class VarnodeInfo:
     flags: VarnodeFlags
     defining_op_id: int | None
     use_op_ids: list[int]
+    call_site_index: int | None = None
+    target_op_id: int | None = None
 
 
 @dataclass(frozen=True)
