@@ -70,7 +70,7 @@
 - Docs: `docs/`, `docs-site/`, `docs/ai/`, `docs/plans/`, `notes/`.
 
 # Build & development commands
-- Venv: `source .venv/bin/activate`.
+- **Run ALL Python commands inside the venv**: `source .venv/bin/activate` first, then `python`, `pip`, `tox`, etc. No exceptions.
 - Editable: `pip install -e ".[dev]"`.
 - Native: `pip install -e ".[dev]" -Csetup-args=-Dnative_bridge=enabled`.
 - Build types: `-Csetup-args=-Dbuildtype=<debug|release|debugoptimized>`.
