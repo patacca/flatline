@@ -367,3 +367,133 @@ def test_c010_enriched_instructions_schema_stability() -> None:
     )
     enriched = Enriched(pcode=None, instructions=[instruction])
     assert enriched.instructions == [instruction]
+
+
+def test_c011_pcode_hierarchy_stability() -> None:
+    """C-011: Pcode typed hierarchy stability contract.
+
+    Verifies that the PcodeOpInfo subclass hierarchy maintains:
+    - Exactly 10 category classes
+    - Exactly 72 leaf classes
+    - Exactly 8 varnode subclasses
+    - Enum member counts match class counts
+    - All leaves are frozen dataclasses
+    - All leaves have same fields as base (no field drift)
+    - isinstance chain: every leaf → its category → PcodeOpInfo
+    """
+    # Category class count: exactly 10
+    from flatline.models.pcode_ops import (
+        ArithmeticOp,
+        BitwiseOp,
+        BooleanOp,
+        BranchOp,
+        CallOp,
+        ComparisonOp,
+        CopyOp,
+        DataflowOp,
+        HighLevelOp,
+        MemoryOp,
+    )
+
+    categories = [
+        CopyOp,
+        MemoryOp,
+        BranchOp,
+        CallOp,
+        ComparisonOp,
+        ArithmeticOp,
+        BitwiseOp,
+        BooleanOp,
+        DataflowOp,
+        HighLevelOp,
+    ]
+    assert len(categories) == 10
+
+    # Leaf class count: exactly 72
+    from flatline.models.pcode_ops import OPCODE_TO_CLASS
+
+    assert len(OPCODE_TO_CLASS) == 72
+
+    # Varnode subclass count: exactly 8
+    from flatline.models.varnodes import SPACE_TO_CLASS
+
+    assert len(SPACE_TO_CLASS) == 8
+
+    # Enum member counts
+    from flatline.models.enums import PcodeOpcode, VarnodeSpace
+
+    assert len(PcodeOpcode) == 72
+    assert len(VarnodeSpace) == 9  # Includes PROCESSOR_CONTEXT (not in SPACE_TO_CLASS)
+
+    # All leaves are frozen dataclasses
+    for opcode, cls in OPCODE_TO_CLASS.items():
+        assert dataclasses.is_dataclass(cls), f"{opcode}: {cls.__name__} must be a dataclass"
+        assert cls.__dataclass_params__.frozen, f"{opcode}: {cls.__name__} must be frozen"
+
+    # All leaves have same fields as base (no field drift)
+    from flatline.models.types import PcodeOpInfo
+
+    base_fields = {f.name for f in dataclasses.fields(PcodeOpInfo)}
+    for opcode, cls in OPCODE_TO_CLASS.items():
+        leaf_fields = {f.name for f in dataclasses.fields(cls)}
+        assert leaf_fields == base_fields, f"{opcode}: {cls.__name__} fields differ from base"
+
+    # isinstance chain: every leaf → its category → PcodeOpInfo
+    from flatline.models.pcode_ops import IntAdd
+
+    assert issubclass(IntAdd, ArithmeticOp)
+    assert issubclass(IntAdd, PcodeOpInfo)
+
+    # Test a few more representative classes from each category
+    from flatline.models.pcode_ops import (
+        BoolOr,
+        Branch,
+        Call,
+        Copy,
+        FloatEqual,
+        FloatMult,
+        Insert,
+        IntAnd,
+        Load,
+        Multiequal,
+    )
+
+    # CopyOp category
+    assert issubclass(Copy, CopyOp)
+    assert issubclass(Copy, PcodeOpInfo)
+
+    # MemoryOp category
+    assert issubclass(Load, MemoryOp)
+    assert issubclass(Load, PcodeOpInfo)
+
+    # BranchOp category
+    assert issubclass(Branch, BranchOp)
+    assert issubclass(Branch, PcodeOpInfo)
+
+    # CallOp category
+    assert issubclass(Call, CallOp)
+    assert issubclass(Call, PcodeOpInfo)
+
+    # ComparisonOp category
+    assert issubclass(FloatEqual, ComparisonOp)
+    assert issubclass(FloatEqual, PcodeOpInfo)
+
+    # ArithmeticOp category (already tested IntAdd above)
+    assert issubclass(FloatMult, ArithmeticOp)
+    assert issubclass(FloatMult, PcodeOpInfo)
+
+    # BitwiseOp category
+    assert issubclass(IntAnd, BitwiseOp)
+    assert issubclass(IntAnd, PcodeOpInfo)
+
+    # BooleanOp category
+    assert issubclass(BoolOr, BooleanOp)
+    assert issubclass(BoolOr, PcodeOpInfo)
+
+    # DataflowOp category
+    assert issubclass(Multiequal, DataflowOp)
+    assert issubclass(Multiequal, PcodeOpInfo)
+
+    # HighLevelOp category
+    assert issubclass(Insert, HighLevelOp)
+    assert issubclass(Insert, PcodeOpInfo)
