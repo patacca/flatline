@@ -17,14 +17,12 @@ from flatline import (
     InstructionInfo,
     ParameterInfo,
     Pcode,
-    PcodeOpInfo,
     TypeInfo,
     VarnodeFlags,
-    VarnodeInfo,
     WarningItem,
 )
 from flatline.models.pcode_ops import IntAdd, Return
-from flatline.models.varnodes import RegisterVarnode, UniqueVarnode, RamVarnode
+from flatline.models.varnodes import RamVarnode, RegisterVarnode, UniqueVarnode
 from flatline.xray._inputs import MemoryImageTarget, build_decompile_request
 
 FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures"
