@@ -104,6 +104,10 @@ pcode = result.enriched.pcode
 graph = pcode.to_graph()          # networkx.MultiDiGraph
 op = pcode.get_pcode_op(op_id)    # O(1) lookup
 vn = pcode.get_varnode(vn_id)     # O(1) lookup
+
+# Clean filtering using the typed hierarchy
+from flatline.models.pcode_ops import BranchOp
+branches = [op for op in pcode.pcode_ops if isinstance(op, BranchOp)]
 ```
 
 See the [API reference](https://patacca.github.io/flatline/latest/reference/enriched/)
