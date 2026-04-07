@@ -23,6 +23,8 @@ from flatline import (
     VarnodeInfo,
     WarningItem,
 )
+from flatline.models.pcode_ops import IntAdd, Return
+from flatline.models.varnodes import RegisterVarnode, UniqueVarnode, RamVarnode
 from flatline.xray._inputs import MemoryImageTarget, build_decompile_request
 
 FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures"
@@ -106,7 +108,7 @@ def make_sample_pcode() -> Pcode:
     )
     return Pcode(
         pcode_ops=[
-            PcodeOpInfo(
+            IntAdd(
                 id=0,
                 opcode="INT_ADD",
                 instruction_address=0x1000,
@@ -115,7 +117,7 @@ def make_sample_pcode() -> Pcode:
                 input_varnode_ids=[0, 1],
                 output_varnode_id=2,
             ),
-            PcodeOpInfo(
+            Return(
                 id=1,
                 opcode="RETURN",
                 instruction_address=0x1003,
@@ -126,7 +128,7 @@ def make_sample_pcode() -> Pcode:
             ),
         ],
         varnodes=[
-            VarnodeInfo(
+            RegisterVarnode(
                 id=0,
                 space="register",
                 offset=0x0,
@@ -135,7 +137,7 @@ def make_sample_pcode() -> Pcode:
                 defining_op_id=None,
                 use_op_ids=[0],
             ),
-            VarnodeInfo(
+            RegisterVarnode(
                 id=1,
                 space="register",
                 offset=0x8,
@@ -144,7 +146,7 @@ def make_sample_pcode() -> Pcode:
                 defining_op_id=None,
                 use_op_ids=[0],
             ),
-            VarnodeInfo(
+            UniqueVarnode(
                 id=2,
                 space="unique",
                 offset=0x100,
@@ -153,7 +155,7 @@ def make_sample_pcode() -> Pcode:
                 defining_op_id=0,
                 use_op_ids=[1],
             ),
-            VarnodeInfo(
+            RamVarnode(
                 id=3,
                 space="ram",
                 offset=0x200,
