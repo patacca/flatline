@@ -16,9 +16,27 @@ py.install_sources(
 py.install_sources(
   'models/__init__.py',
   'models/enriched.py',
+  'models/enums.py',
   'models/request.py',
   'models/types.py',
+  'models/varnodes.py',
   subdir: 'flatline/models',
+)
+
+py.install_sources(
+  'models/pcode_ops/__init__.py',
+  'models/pcode_ops/_base.py',
+  'models/pcode_ops/arithmetic.py',
+  'models/pcode_ops/bitwise.py',
+  'models/pcode_ops/boolean.py',
+  'models/pcode_ops/branch.py',
+  'models/pcode_ops/call.py',
+  'models/pcode_ops/comparison.py',
+  'models/pcode_ops/copy.py',
+  'models/pcode_ops/dataflow.py',
+  'models/pcode_ops/highlevel.py',
+  'models/pcode_ops/memory.py',
+  subdir: 'flatline/models/pcode_ops',
 )
 
 py.install_sources(

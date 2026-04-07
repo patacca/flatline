@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from flatline._errors import UnsupportedTargetError
+from flatline.models.enums import PcodeOpcode, VarnodeSpace
 
 VALID_METATYPES: frozenset[str] = frozenset(
     {
@@ -207,7 +208,7 @@ class PcodeOpInfo:
     """
 
     id: int
-    opcode: str
+    opcode: PcodeOpcode
     instruction_address: int
     sequence_time: int
     sequence_order: int
@@ -215,6 +216,10 @@ class PcodeOpInfo:
     output_varnode_id: int | None = None
     true_target_address: int | None = None
     false_target_address: int | None = None
+
+    def __post_init__(self) -> None:
+        if isinstance(self.opcode, str):
+            object.__setattr__(self, "opcode", PcodeOpcode(self.opcode))
 
 
 @dataclass(frozen=True)
@@ -233,39 +238,40 @@ class VarnodeInfo:
 
     Attributes:
         id: Unique identifier for this varnode within the pcode graph.
-        space: Address space name. Determines the interpretation of
-            ``offset``:
+        space: Address space name from :class:`VarnodeSpace`. Determines the
+            interpretation of ``offset``:
 
-            - ``"const"``: ``offset`` is the literal constant value.
-            - ``"register"``: ``offset`` is the register number in the
-              processor specification.
-            - ``"unique"``: ``offset`` is an internal temporary allocation
-              ID (opaque).
-            - ``"ram"``: ``offset`` is the virtual memory address.
-            - ``"fspec"``: Call-spec reference. ``offset`` is set to ``0``;
-              use ``call_site_index`` instead.
-            - ``"iop"``: Internal op pointer. ``offset`` is set to ``0``;
-              use ``target_op_id`` instead.
-            - ``"join"``: Split/merged variable storage (opaque).
-            - ``"stack"``: ``offset`` is the stack-frame offset.
+            - :attr:`VarnodeSpace.CONST`: ``offset`` is the literal constant value.
+            - :attr:`VarnodeSpace.REGISTER`: ``offset`` is the register number in
+              the processor specification.
+            - :attr:`VarnodeSpace.UNIQUE`: ``offset`` is an internal temporary
+              allocation ID (opaque).
+            - :attr:`VarnodeSpace.RAM`: ``offset`` is the virtual memory address.
+            - :attr:`VarnodeSpace.FSPEC`: Call-spec reference. ``offset`` is set
+              to ``0``; use ``call_site_index`` instead.
+            - :attr:`VarnodeSpace.IOP`: Internal op pointer. ``offset`` is set
+              to ``0``; use ``target_op_id`` instead.
+            - :attr:`VarnodeSpace.JOIN`: Split/merged variable storage (opaque).
+            - :attr:`VarnodeSpace.STACK`: ``offset`` is the stack-frame offset.
 
-        offset: Location within the address space. For ``"fspec"`` and
-            ``"iop"`` spaces, this is set to ``0`` and the dedicated fields
-            ``call_site_index`` / ``target_op_id`` carry the meaningful value.
+        offset: Location within the address space. For :attr:`VarnodeSpace.FSPEC`
+            and :attr:`VarnodeSpace.IOP` spaces, this is set to ``0`` and the
+            dedicated fields ``call_site_index`` / ``target_op_id`` carry the
+            meaningful value.
         size: Size in bytes.
         flags: Boolean flags describing varnode properties. See
             :class:`VarnodeFlags`.
         defining_op_id: ID of the pcode op that produces this varnode, or
             ``None`` for inputs/constants.
         use_op_ids: IDs of pcode ops that consume this varnode.
-        call_site_index: Index into the function's call sites for ``"fspec"``
+        call_site_index: Index into the function's call sites for
+            :attr:`VarnodeSpace.FSPEC` varnodes. ``None`` for other spaces.
+        target_op_id: ID of the target pcode op for :attr:`VarnodeSpace.IOP`
             varnodes. ``None`` for other spaces.
-        target_op_id: ID of the target pcode op for ``"iop"`` varnodes.
-            ``None`` for other spaces.
     """
 
     id: int
-    space: str
+    space: VarnodeSpace
     offset: int
     size: int
     flags: VarnodeFlags
@@ -273,6 +279,10 @@ class VarnodeInfo:
     use_op_ids: list[int]
     call_site_index: int | None = None
     target_op_id: int | None = None
+
+    def __post_init__(self) -> None:
+        if isinstance(self.space, str):
+            object.__setattr__(self, "space", VarnodeSpace(self.space))
 
 
 @dataclass(frozen=True)
