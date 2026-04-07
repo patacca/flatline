@@ -5,6 +5,8 @@ from __future__ import annotations
 import textwrap
 from typing import TYPE_CHECKING
 
+from flatline.models.enums import VarnodeSpace
+
 if TYPE_CHECKING:
     from ..models import FunctionInfo, PcodeOpInfo, VarnodeInfo
 
@@ -191,11 +193,11 @@ def _badge_for_varnode(varnode: VarnodeInfo) -> str:
         return "CONST"
     if varnode.flags.is_input:
         return "INPUT"
-    if varnode.space == "register":
+    if varnode.space == VarnodeSpace.REGISTER:
         return "REG"
-    if varnode.space == "ram":
+    if varnode.space == VarnodeSpace.RAM:
         return "RAM"
-    if varnode.space == "unique":
+    if varnode.space == VarnodeSpace.UNIQUE:
         return "TEMP"
     return varnode.space[:6].upper()
 

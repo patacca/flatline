@@ -6,6 +6,8 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
+from flatline.models.enums import VarnodeSpace
+
 if TYPE_CHECKING:
     from flatline.models import PcodeOpInfo, VarnodeInfo
 
@@ -309,11 +311,11 @@ def varnode_badge(varnode) -> str:
         return "CONST"
     if varnode.flags.is_input:
         return "INPUT"
-    if varnode.space == "register":
+    if varnode.space == VarnodeSpace.REGISTER:
         return "REGISTER"
-    if varnode.space == "ram":
+    if varnode.space == VarnodeSpace.RAM:
         return "RAM"
-    if varnode.space == "unique":
+    if varnode.space == VarnodeSpace.UNIQUE:
         return "TEMP"
     return varnode.space.upper()
 

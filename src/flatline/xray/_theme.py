@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from flatline.models.enums import PcodeOpcode
+
 STATE_NORMAL = "normal"
 STATE_SELECTED = "selected"
 STATE_RELATED = "related"
@@ -87,9 +89,9 @@ def opcode_color_for(opcode: str) -> str:
         return NODE_OPCODE_WARNING
     if opcode.startswith(("LOAD", "STORE")):
         return NODE_OPCODE_MEMORY
-    if opcode in {"BRANCH", "CBRANCH", "BRANCHIND"}:
+    if opcode in {PcodeOpcode.BRANCH, PcodeOpcode.CBRANCH, PcodeOpcode.BRANCHIND}:
         return NODE_OPCODE_FLOW
-    if opcode in {"CALL", "CALLIND", "RETURN"}:
+    if opcode in {PcodeOpcode.CALL, PcodeOpcode.CALLIND, PcodeOpcode.RETURN}:
         return NODE_OPCODE_CALL
     return NODE_OPCODE_DEFAULT
 
