@@ -13,6 +13,8 @@
 | `fx_external_call_arm64` | Memory image (AArch64) | Exact-slice tail-padding coverage with out-of-span call targets | Raw memory extracted from hand-written ARM64 assembly; integration trims the main function so call targets resolve outside the supplied span |
 | `fx_add_riscv64` | Memory image (RISC-V 64) | Multi-ISA known-function path (RISC-V) | Raw memory extracted from simple arithmetic function; RISC-V 64-bit |
 | `fx_add_mips32` | Memory image (MIPS32) | Multi-ISA known-function path (MIPS) | Raw memory extracted from simple arithmetic function; MIPS 32-bit |
+| `fx_delay_slot_branch_mips32` | Memory image (MIPS32) | Placeholder-op alias regression for `BUILD` -> `MULTIEQUAL` | Raw memory extracted from hand-written MIPS branch-delay-slot assembly that survives simplification with a merge node |
+| `fx_delay_slot_call_mips32` | Memory image (MIPS32) | Placeholder-op alias regression for `DELAY_SLOT` -> `INDIRECT` | Raw memory extracted from hand-written MIPS call-delay-slot assembly that preserves an indirect side-effect op |
 | `fx_add_elf32` | Memory image (x86_32) | x86 32-bit bitwidth coverage | Raw memory extracted from simple arithmetic function ELF; x86 32-bit; validates x86 family has both 32-bit and 64-bit fixture coverage |
 | `fx_warning_elf64` | Memory image (x86_64) | Warning-inducing decompilation | Raw memory extracted from function with unreachable blocks, unimplemented instructions, or other warning-triggering patterns; used to validate warning-only success path and WarningItem structure |
 

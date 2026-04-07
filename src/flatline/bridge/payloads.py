@@ -38,6 +38,19 @@ from flatline.models.varnodes import SPACE_TO_CLASS
 if TYPE_CHECKING:
     from flatline.models import DecompileRequest
 
+_PCODE_OPCODE_ALIASES: dict[str, str] = {
+    "BUILD": PcodeOpcode.MULTIEQUAL,
+    "DELAY_SLOT": PcodeOpcode.INDIRECT,
+    "LABEL": PcodeOpcode.PTRADD,
+    "LABELBUILD": PcodeOpcode.PTRADD,
+    "CROSSBUILD": PcodeOpcode.PTRSUB,
+    "MACROBUILD": PcodeOpcode.CAST,
+}
+
+
+def _normalize_pcode_opcode(opcode_str: str) -> str:
+    return _PCODE_OPCODE_ALIASES.get(opcode_str, opcode_str)
+
 
 def _request_to_native_payload(request: DecompileRequest) -> dict[str, Any]:
     return {
@@ -276,9 +289,10 @@ def _coerce_pcode_op(raw_pcode_op: Any) -> PcodeOpInfo:
         "pcode_op.false_target_address",
     )
 
-    opcode_str = _require_str(pcode_map.get("opcode"), "pcode_op.opcode")
+    raw_opcode_str = _require_str(pcode_map.get("opcode"), "pcode_op.opcode")
+    opcode_str = _normalize_pcode_opcode(raw_opcode_str)
     if opcode_str not in OPCODE_TO_CLASS:
-        raise ValueError(f"Unknown pcode opcode '{opcode_str}'. Update flatline.")
+        raise ValueError(f"Unknown pcode opcode '{raw_opcode_str}'. Update flatline.")
     return OPCODE_TO_CLASS[opcode_str](
         id=_require_int(pcode_map.get("id"), "pcode_op.id"),
         opcode=PcodeOpcode(opcode_str),

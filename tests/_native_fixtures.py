@@ -87,6 +87,8 @@ FIXTURE_IDS: tuple[str, ...] = (
     "fx_add_arm64",
     "fx_add_riscv64",
     "fx_add_mips32",
+    "fx_delay_slot_branch_mips32",
+    "fx_delay_slot_call_mips32",
     "fx_switch_elf64",
     "fx_warning_elf64",
 )
@@ -208,6 +210,40 @@ _FIXTURES: dict[str, NativeFixture] = {
         expected_return_type_metatype="int",
         expected_varnode_count=4,
         warm_p95_budget_seconds=0.05,
+    ),
+    "fx_delay_slot_branch_mips32": NativeFixture(
+        fixture_id="fx_delay_slot_branch_mips32",
+        language_id="MIPS:LE:32:default",
+        compiler_spec="default",
+        hex_filename="fx_delay_slot_branch_mips32.hex",
+        sha256="198de2137d3d572ba8622ad4d0457de36860fec1df8c6aedc6c32249e52f441e",
+        normalized_c=(
+            "xunknown4 func_1000 ( int4 param_1 , int4 param_2 ) { xunknown4 xVar1 ; "
+            "xVar1 = 7 ; if ( param_1 != param_2 ) { xVar1 = 3 ; } return xVar1 ; }"
+        ),
+        expected_function_size=20,
+        expected_param_count=2,
+        expected_return_type_name="xunknown4",
+        expected_return_type_size=4,
+        expected_return_type_metatype="unknown",
+        expected_varnode_count=10,
+    ),
+    "fx_delay_slot_call_mips32": NativeFixture(
+        fixture_id="fx_delay_slot_call_mips32",
+        language_id="MIPS:LE:32:default",
+        compiler_spec="default",
+        hex_filename="fx_delay_slot_call_mips32.hex",
+        sha256="46076c1c22e3a29df631ded86bb8d8190338c620f538a65a09cfbf5e73e4bf39",
+        normalized_c=(
+            "xunknown4 func_1000 ( void ) { xunknown4 xVar1 ; xunknown4 * unaff_gp ; "
+            "xVar1 = 9 ; ( * ( code * ) * unaff_gp ) ( 9 ) ; return xVar1 ; }"
+        ),
+        expected_function_size=24,
+        expected_param_count=0,
+        expected_return_type_name="xunknown4",
+        expected_return_type_size=4,
+        expected_return_type_metatype="unknown",
+        expected_varnode_count=11,
     ),
     "fx_switch_elf64": NativeFixture(
         fixture_id="fx_switch_elf64",

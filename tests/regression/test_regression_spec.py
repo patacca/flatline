@@ -6,6 +6,7 @@ from math import ceil
 from time import perf_counter
 
 import pytest
+from flatline.models.enums import PcodeOpcode
 
 from tests._native_fixtures import (
     MULTI_ISA_FIXTURE_IDS,
@@ -92,3 +93,66 @@ def test_r004_multi_isa_regression_baselines(
     assert_successful_result(result)
     assert normalize_c_code(result.c_code) == fixture.normalized_c
     assert result.function_info.varnode_count == fixture.expected_varnode_count
+
+
+def test_r005_delay_slot_branch_alias_regression_guard(native_runtime_data_dir: str) -> None:
+    fixture = get_native_fixture("fx_delay_slot_branch_mips32")
+
+    with open_native_session(native_runtime_data_dir) as session:
+        result = session.decompile_function(
+            fixture.build_request(native_runtime_data_dir, enriched=True)
+        )
+
+    assert_successful_result(result)
+    assert normalize_c_code(result.c_code) == fixture.normalized_c
+    assert result.function_info.varnode_count == fixture.expected_varnode_count
+    assert result.enriched is not None
+    assert result.enriched.pcode is not None
+
+    multiequal_ops = [
+        op for op in result.enriched.pcode.pcode_ops if op.opcode == PcodeOpcode.MULTIEQUAL
+    ]
+    opcode_sequence = [op.opcode for op in result.enriched.pcode.pcode_ops]
+
+    assert multiequal_ops, "Expected a canonical MULTIEQUAL op from BUILD alias handling"
+    assert len(multiequal_ops) == 1
+    assert opcode_sequence == [
+        PcodeOpcode.INT_NOTEQUAL,
+        PcodeOpcode.COPY,
+        PcodeOpcode.CBRANCH,
+        PcodeOpcode.COPY,
+        PcodeOpcode.RETURN,
+        PcodeOpcode.MULTIEQUAL,
+    ]
+
+
+def test_r006_delay_slot_call_alias_regression_guard(native_runtime_data_dir: str) -> None:
+    fixture = get_native_fixture("fx_delay_slot_call_mips32")
+
+    with open_native_session(native_runtime_data_dir) as session:
+        result = session.decompile_function(
+            fixture.build_request(native_runtime_data_dir, enriched=True)
+        )
+
+    assert_successful_result(result)
+    assert normalize_c_code(result.c_code) == fixture.normalized_c
+    assert result.function_info.varnode_count == fixture.expected_varnode_count
+    assert result.enriched is not None
+    assert result.enriched.pcode is not None
+
+    indirect_ops = [
+        op for op in result.enriched.pcode.pcode_ops if op.opcode == PcodeOpcode.INDIRECT
+    ]
+    opcode_sequence = [op.opcode for op in result.enriched.pcode.pcode_ops]
+
+    assert indirect_ops, "Expected a canonical INDIRECT op from DELAY_SLOT alias handling"
+    assert len(indirect_ops) == 1
+    assert opcode_sequence == [
+        PcodeOpcode.LOAD,
+        PcodeOpcode.CAST,
+        PcodeOpcode.COPY,
+        PcodeOpcode.CALLIND,
+        PcodeOpcode.INDIRECT,
+        PcodeOpcode.COPY,
+        PcodeOpcode.RETURN,
+    ]

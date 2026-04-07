@@ -26,7 +26,15 @@ from flatline.bridge.payloads import (
     _coerce_varnode_info,
 )
 from flatline.models.enums import PcodeOpcode, VarnodeSpace
-from flatline.models.pcode_ops import Cbranch, IntAdd
+from flatline.models.pcode_ops import (
+    Cast,
+    Cbranch,
+    Indirect,
+    IntAdd,
+    Multiequal,
+    Ptradd,
+    Ptrsub,
+)
 from flatline.models.varnodes import FspecVarnode, IopVarnode, RegisterVarnode
 
 from ._bridge_doubles import (
@@ -492,6 +500,38 @@ def test_u031_bridge_rejects_unknown_pcode_opcode() -> None:
                 "output_varnode_id": None,
             }
         )
+
+
+@pytest.mark.parametrize(
+    ("raw_opcode", "canonical_opcode", "expected_type"),
+    [
+        ("BUILD", PcodeOpcode.MULTIEQUAL, Multiequal),
+        ("DELAY_SLOT", PcodeOpcode.INDIRECT, Indirect),
+        ("LABEL", PcodeOpcode.PTRADD, Ptradd),
+        ("LABELBUILD", PcodeOpcode.PTRADD, Ptradd),
+        ("CROSSBUILD", PcodeOpcode.PTRSUB, Ptrsub),
+        ("MACROBUILD", PcodeOpcode.CAST, Cast),
+    ],
+)
+def test_u031_bridge_canonicalizes_placeholder_pcode_aliases(
+    raw_opcode: str,
+    canonical_opcode: PcodeOpcode,
+    expected_type: type[PcodeOpInfo],
+) -> None:
+    pcode_op = _coerce_pcode_op(
+        {
+            "id": 1,
+            "opcode": raw_opcode,
+            "instruction_address": 0x401000,
+            "sequence_time": 0,
+            "sequence_order": 0,
+            "input_varnode_ids": [],
+            "output_varnode_id": None,
+        }
+    )
+
+    assert isinstance(pcode_op, expected_type)
+    assert pcode_op.opcode is canonical_opcode
 
 
 def test_u032_bridge_rejects_unknown_varnode_space() -> None:

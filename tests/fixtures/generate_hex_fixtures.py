@@ -138,6 +138,18 @@ def main() -> None:
     )
     _build_text_fixture("fx_add_mips32.s", "mipsel-linux-gnu", "fx_add_mips32", check=args.check)
     _build_text_fixture(
+        "fx_delay_slot_branch_mips32.s",
+        "mipsel-linux-gnu",
+        "fx_delay_slot_branch_mips32",
+        check=args.check,
+    )
+    _build_text_fixture(
+        "fx_delay_slot_call_mips32.s",
+        "mipsel-linux-gnu",
+        "fx_delay_slot_call_mips32",
+        check=args.check,
+    )
+    _build_text_fixture(
         "fx_warning_elf64.s",
         "x86_64-linux-gnu",
         "fx_warning_elf64",
