@@ -25,6 +25,9 @@ from flatline.bridge.payloads import (
     _coerce_pcode_op,
     _coerce_varnode_info,
 )
+from flatline.models.enums import PcodeOpcode, VarnodeSpace
+from flatline.models.pcode_ops import Cbranch, IntAdd
+from flatline.models.varnodes import FspecVarnode, IopVarnode, RegisterVarnode
 
 from ._bridge_doubles import (
     _NativeModuleDouble,
@@ -326,17 +329,20 @@ def test_u029_bridge_coerces_cbranch_target_addresses() -> None:
         }
     )
 
-    assert pcode_op == PcodeOpInfo(
-        id=11,
-        opcode="CBRANCH",
-        instruction_address=0x401000,
-        sequence_time=7,
-        sequence_order=1,
-        input_varnode_ids=[5],
-        output_varnode_id=None,
-        true_target_address=0x401020,
-        false_target_address=0x401030,
-    )
+    # Verify subclass type
+    assert isinstance(pcode_op, Cbranch)
+    # Verify opcode is enum
+    assert isinstance(pcode_op.opcode, PcodeOpcode)
+    assert pcode_op.opcode == PcodeOpcode.CBRANCH
+    # Verify base fields
+    assert pcode_op.id == 11
+    assert pcode_op.instruction_address == 0x401000
+    assert pcode_op.sequence_time == 7
+    assert pcode_op.sequence_order == 1
+    assert pcode_op.input_varnode_ids == [5]
+    assert pcode_op.output_varnode_id is None
+    assert pcode_op.true_target_address == 0x401020
+    assert pcode_op.false_target_address == 0x401030
 
 
 def test_u029_bridge_defaults_missing_pcode_target_addresses_to_none() -> None:
@@ -352,6 +358,12 @@ def test_u029_bridge_defaults_missing_pcode_target_addresses_to_none() -> None:
         }
     )
 
+    # Verify subclass type
+    assert isinstance(pcode_op, IntAdd)
+    # Verify opcode is enum
+    assert isinstance(pcode_op.opcode, PcodeOpcode)
+    assert pcode_op.opcode == PcodeOpcode.INT_ADD
+    # Verify target addresses default to None
     assert pcode_op.true_target_address is None
     assert pcode_op.false_target_address is None
 
@@ -371,6 +383,8 @@ def test_u029_bridge_accepts_explicit_none_pcode_target_addresses() -> None:
         }
     )
 
+    # Verify subclass type
+    assert isinstance(pcode_op, Cbranch)
     assert pcode_op.true_target_address is None
     assert pcode_op.false_target_address is None
 
@@ -380,18 +394,27 @@ def test_u029_bridge_coerces_varnode_call_site_index() -> None:
         _make_varnode_payload(id=7, space="fspec", size=8, use_op_ids=[11], call_site_index=0)
     )
 
+    # Verify subclass type
+    assert isinstance(varnode, FspecVarnode)
+    # Verify space is enum
+    assert isinstance(varnode.space, VarnodeSpace)
+    assert varnode.space == VarnodeSpace.FSPEC
     assert varnode.call_site_index == 0
 
 
 def test_u029_bridge_defaults_missing_varnode_call_site_index_to_none() -> None:
     varnode = _coerce_varnode_info(_make_varnode_payload(id=8, offset=4))
 
+    # Verify subclass type (default space is "register")
+    assert isinstance(varnode, RegisterVarnode)
     assert varnode.call_site_index is None
 
 
 def test_u029_bridge_coerces_explicit_none_varnode_call_site_index() -> None:
     varnode = _coerce_varnode_info(_make_varnode_payload(id=9, offset=8, call_site_index=None))
 
+    # Verify subclass type (default space is "register")
+    assert isinstance(varnode, RegisterVarnode)
     assert varnode.call_site_index is None
 
 
@@ -406,12 +429,19 @@ def test_u029_bridge_coerces_varnode_target_op_id_zero() -> None:
         )
     )
 
+    # Verify subclass type
+    assert isinstance(varnode, IopVarnode)
+    # Verify space is enum
+    assert isinstance(varnode.space, VarnodeSpace)
+    assert varnode.space == VarnodeSpace.IOP
     assert varnode.target_op_id == 0
 
 
 def test_u029_bridge_defaults_missing_varnode_target_op_id_to_none() -> None:
     varnode = _coerce_varnode_info(_make_varnode_payload(id=11, offset=4))
 
+    # Verify subclass type (default space is "register")
+    assert isinstance(varnode, RegisterVarnode)
     assert varnode.target_op_id is None
 
 
@@ -426,6 +456,8 @@ def test_u029_bridge_coerces_explicit_none_varnode_target_op_id() -> None:
         )
     )
 
+    # Verify subclass type
+    assert isinstance(varnode, IopVarnode)
     assert varnode.target_op_id is None
 
 
@@ -442,3 +474,29 @@ def test_u030_bridge_rejects_malformed_instruction_payloads() -> None:
     enriched = _coerce_enriched({"pcode": None, "instructions": None})
     assert enriched is not None
     assert enriched.instructions is None
+
+
+def test_u031_bridge_rejects_unknown_pcode_opcode() -> None:
+    with pytest.raises(
+        ValueError,
+        match=r"Unknown pcode opcode 'UNKNOWN_OPCODE'. Update flatline.",
+    ):
+        _coerce_pcode_op(
+            {
+                "id": 1,
+                "opcode": "UNKNOWN_OPCODE",
+                "instruction_address": 0x401000,
+                "sequence_time": 0,
+                "sequence_order": 0,
+                "input_varnode_ids": [],
+                "output_varnode_id": None,
+            }
+        )
+
+
+def test_u032_bridge_rejects_unknown_varnode_space() -> None:
+    with pytest.raises(
+        ValueError,
+        match=r"Unknown varnode space 'unknown_space'. Update flatline.",
+    ):
+        _coerce_varnode_info(_make_varnode_payload(id=1, space="unknown_space", size=4))

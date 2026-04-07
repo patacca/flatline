@@ -16,10 +16,8 @@ from flatline._errors import ConfigurationError, InternalError
 from flatline.bridge.payloads import (
     _coerce_decompile_result,
     _coerce_language_compiler_pair,
-    _configuration_error_result,
-    _internal_error_result,
+    _error_result,
     _request_to_native_payload,
-    _unsupported_target_result,
 )
 from flatline.runtime import (
     configure_windows_native_dll_dirs,
@@ -70,11 +68,18 @@ class _FallbackBridgeSession:
 
     def decompile_function(self, request: DecompileRequest) -> DecompileResult:
         if self._closed:
-            return _internal_error_result(request, "bridge session is closed")
+            return _error_result(
+                request,
+                category="internal_error",
+                message="bridge session is closed",
+                retryable=False,
+            )
 
-        return _configuration_error_result(
+        return _error_result(
             request,
-            "native bridge is not implemented in this build",
+            category="configuration_error",
+            message="native bridge is not implemented in this build",
+            retryable=False,
         )
 
 
@@ -116,9 +121,11 @@ class _NativeBridgeSession:
             raw_result = self._native_session.decompile_function(request_payload)
             return _coerce_decompile_result(raw_result, request)
         except Exception as exc:
-            return _internal_error_result(
+            return _error_result(
                 request,
-                f"native decompile failed: {exc}",
+                category="internal_error",
+                message=f"native decompile failed: {exc}",
+                retryable=False,
             )
 
     def _validate_target_selection(self, request: DecompileRequest) -> DecompileResult | None:
@@ -131,21 +138,25 @@ class _NativeBridgeSession:
 
         available_compilers = compilers_by_language.get(request.language_id)
         if available_compilers is None:
-            return _unsupported_target_result(
+            return _error_result(
                 request,
-                f"unsupported language_id: {request.language_id!r}",
+                category="unsupported_target",
+                message=f"unsupported language_id: {request.language_id!r}",
+                retryable=False,
             )
 
         if request.compiler_spec is None:
             return None
 
         if request.compiler_spec not in available_compilers:
-            return _unsupported_target_result(
+            return _error_result(
                 request,
-                (
+                category="unsupported_target",
+                message=(
                     f"unsupported compiler_spec {request.compiler_spec!r} "
                     f"for language_id {request.language_id!r}"
                 ),
+                retryable=False,
             )
 
         return None

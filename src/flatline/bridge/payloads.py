@@ -22,14 +22,18 @@ from flatline.models import (
     LanguageCompilerPair,
     ParameterInfo,
     Pcode,
+    PcodeOpcode,
     PcodeOpInfo,
     StorageInfo,
     TypeInfo,
     VariableInfo,
     VarnodeFlags,
     VarnodeInfo,
+    VarnodeSpace,
     WarningItem,
 )
+from flatline.models.pcode_ops import OPCODE_TO_CLASS
+from flatline.models.varnodes import SPACE_TO_CLASS
 
 if TYPE_CHECKING:
     from flatline.models import DecompileRequest
@@ -272,9 +276,12 @@ def _coerce_pcode_op(raw_pcode_op: Any) -> PcodeOpInfo:
         "pcode_op.false_target_address",
     )
 
-    return PcodeOpInfo(
+    opcode_str = _require_str(pcode_map.get("opcode"), "pcode_op.opcode")
+    if opcode_str not in OPCODE_TO_CLASS:
+        raise ValueError(f"Unknown pcode opcode '{opcode_str}'. Update flatline.")
+    return OPCODE_TO_CLASS[opcode_str](
         id=_require_int(pcode_map.get("id"), "pcode_op.id"),
-        opcode=_require_str(pcode_map.get("opcode"), "pcode_op.opcode"),
+        opcode=PcodeOpcode(opcode_str),
         instruction_address=_require_int(
             pcode_map.get("instruction_address"), "pcode_op.instruction_address"
         ),
@@ -323,9 +330,12 @@ def _coerce_varnode_info(raw_varnode: Any) -> VarnodeInfo:
     )
     target_op_id = _require_optional_int(varnode_map.get("target_op_id"), "varnode.target_op_id")
 
-    return VarnodeInfo(
+    space_str = _require_str(varnode_map.get("space"), "varnode.space")
+    if space_str not in SPACE_TO_CLASS:
+        raise ValueError(f"Unknown varnode space '{space_str}'. Update flatline.")
+    return SPACE_TO_CLASS[space_str](
         id=_require_int(varnode_map.get("id"), "varnode.id"),
-        space=_require_str(varnode_map.get("space"), "varnode.space"),
+        space=VarnodeSpace(space_str),
         offset=_require_int(varnode_map.get("offset"), "varnode.offset"),
         size=_require_int(varnode_map.get("size"), "varnode.size"),
         flags=_coerce_varnode_flags(varnode_map.get("flags")),
@@ -515,18 +525,6 @@ def _coerce_diagnostic_flags(raw_diagnostics: Any) -> DiagnosticFlags:
         ),
         has_no_code=_require_bool(diagnostics_map.get("has_no_code"), "diagnostics.has_no_code"),
     )
-
-
-def _internal_error_result(request: DecompileRequest, message: str) -> DecompileResult:
-    return _error_result(request, category="internal_error", message=message, retryable=False)
-
-
-def _unsupported_target_result(request: DecompileRequest, message: str) -> DecompileResult:
-    return _error_result(request, category="unsupported_target", message=message, retryable=False)
-
-
-def _configuration_error_result(request: DecompileRequest, message: str) -> DecompileResult:
-    return _error_result(request, category="configuration_error", message=message, retryable=False)
 
 
 def _error_result(
