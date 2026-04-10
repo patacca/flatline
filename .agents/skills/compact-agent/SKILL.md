@@ -1,6 +1,6 @@
 ---
 name: compact-agent
-description: Compress or rewrite `AGENTS.md` and similar repo-memory instruction files into a minimum-token form without losing operational facts. Use when Codex needs to shrink prompt memory, refresh repo instructions after changes, or convert verbose maintenance docs into compact bullet-only guidance while preserving section order, exact commands, file paths, version pins, enums, error categories, ADR outcomes, and immediate next steps.
+description: Compress/rewrite AGENTS.md into minimum-token form without losing operational facts. Use when needing to shrink prompt memory, refreshing repo instructions after changes, compacting into bullet-only guidance while preserving section order, exact commands, file paths, version pins, ADR outcomes.
 ---
 
 # Compact Agent
