@@ -2,7 +2,7 @@
 .set noreorder
 .globl fx_delay_slot_call_mips32
 fx_delay_slot_call_mips32:
-    jal helper
+    bal helper
     addiu $4, $0, 9
     move $2, $4
     jr $31

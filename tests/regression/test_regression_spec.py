@@ -148,10 +148,8 @@ def test_r006_delay_slot_call_alias_regression_guard(native_runtime_data_dir: st
     assert indirect_ops, "Expected a canonical INDIRECT op from DELAY_SLOT alias handling"
     assert len(indirect_ops) == 1
     assert opcode_sequence == [
-        PcodeOpcode.LOAD,
-        PcodeOpcode.CAST,
         PcodeOpcode.COPY,
-        PcodeOpcode.CALLIND,
+        PcodeOpcode.CALL,
         PcodeOpcode.INDIRECT,
         PcodeOpcode.COPY,
         PcodeOpcode.RETURN,

@@ -233,17 +233,17 @@ _FIXTURES: dict[str, NativeFixture] = {
         language_id="MIPS:LE:32:default",
         compiler_spec="default",
         hex_filename="fx_delay_slot_call_mips32.hex",
-        sha256="46076c1c22e3a29df631ded86bb8d8190338c620f538a65a09cfbf5e73e4bf39",
+        sha256="37e4b6f93519354ca88ac34c6ce8cd3191e52121f57b8583e5b741f947a2dac3",
         normalized_c=(
-            "xunknown4 func_1000 ( void ) { xunknown4 xVar1 ; xunknown4 * unaff_gp ; "
-            "xVar1 = 9 ; ( * ( code * ) * unaff_gp ) ( 9 ) ; return xVar1 ; }"
+            "xunknown4 func_1000 ( void ) { xunknown4 xVar1 ; xVar1 = 9 ; "
+            "func_0x00001014 ( 9 ) ; return xVar1 ; }"
         ),
-        expected_function_size=24,
+        expected_function_size=20,
         expected_param_count=0,
         expected_return_type_name="xunknown4",
         expected_return_type_size=4,
         expected_return_type_metatype="unknown",
-        expected_varnode_count=11,
+        expected_varnode_count=8,
     ),
     "fx_switch_elf64": NativeFixture(
         fixture_id="fx_switch_elf64",
