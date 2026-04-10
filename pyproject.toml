@@ -99,6 +99,7 @@ select = [
 ]
 
 [tool.ruff.lint.isort]
+combine-as-imports = true
 known-first-party = ["flatline", "flatline_dev"]
 
 # -- meson-python ----------------------------------------------------------

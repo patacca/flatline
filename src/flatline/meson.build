@@ -8,6 +8,7 @@ py.install_sources(
 
 py.install_sources(
   'bridge/__init__.py',
+  'bridge/_coercion_utils.py',
   'bridge/core.py',
   'bridge/payloads.py',
   subdir: 'flatline/bridge',

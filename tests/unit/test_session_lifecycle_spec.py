@@ -11,8 +11,8 @@ from flatline import (
     ErrorItem,
     InvalidArgumentError,
     LanguageCompilerPair,
+    _session as session_module,
 )
-from flatline import _session as session_module
 from flatline._version import DECOMPILER_VERSION
 
 

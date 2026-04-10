@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 
 from flatline import ConfigurationError, LanguageCompilerPair
-from flatline.runtime import discovery as runtime_data_module
 from flatline.runtime import (
+    discovery as runtime_data_module,
     enumerate_runtime_data_language_compilers,
     resolve_session_runtime_data_dir,
 )

@@ -6,8 +6,8 @@ from math import ceil
 from time import perf_counter
 
 import pytest
-from flatline.models.enums import PcodeOpcode
 
+from flatline.models.enums import PcodeOpcode
 from tests._native_fixtures import (
     MULTI_ISA_FIXTURE_IDS,
     PERFORMANCE_FIXTURE_IDS,

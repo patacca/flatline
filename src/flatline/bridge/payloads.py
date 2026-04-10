@@ -2,11 +2,20 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
 from flatline._errors import ERROR_CATEGORIES, InternalError
 from flatline._version import DECOMPILER_VERSION
+from flatline.bridge._coercion_utils import (
+    is_sequence_like as _is_sequence_like,
+    require_bool as _require_bool,
+    require_int as _require_int,
+    require_mapping as _require_mapping,
+    require_optional_int as _require_optional_int,
+    require_optional_str as _require_optional_str,
+    require_str as _require_str,
+)
 from flatline.models import (
     VALID_WARNING_PHASES,
     AnalysisBudget,
@@ -277,16 +286,13 @@ def _coerce_pcode_op(raw_pcode_op: Any) -> PcodeOpInfo:
         for varnode_id in raw_input_varnode_ids
     ]
     output_varnode_id = _require_optional_int(
-        pcode_map.get("output_varnode_id"),
-        "pcode_op.output_varnode_id",
+        pcode_map.get("output_varnode_id"), "pcode_op.output_varnode_id"
     )
     true_target_address = _require_optional_int(
-        pcode_map.get("true_target_address"),
-        "pcode_op.true_target_address",
+        pcode_map.get("true_target_address"), "pcode_op.true_target_address"
     )
     false_target_address = _require_optional_int(
-        pcode_map.get("false_target_address"),
-        "pcode_op.false_target_address",
+        pcode_map.get("false_target_address"), "pcode_op.false_target_address"
     )
 
     raw_opcode_str = _require_str(pcode_map.get("opcode"), "pcode_op.opcode")
@@ -486,8 +492,7 @@ def _coerce_call_site(raw_call_site: Any) -> CallSiteInfo:
             call_site_map.get("instruction_address"), "call_site.instruction_address"
         ),
         target_address=_require_optional_int(
-            call_site_map.get("target_address"),
-            "call_site.target_address",
+            call_site_map.get("target_address"), "call_site.target_address"
         ),
     )
 
@@ -526,16 +531,13 @@ def _coerce_diagnostic_flags(raw_diagnostics: Any) -> DiagnosticFlags:
     return DiagnosticFlags(
         is_complete=_require_bool(diagnostics_map.get("is_complete"), "diagnostics.is_complete"),
         has_unreachable_blocks=_require_bool(
-            diagnostics_map.get("has_unreachable_blocks"),
-            "diagnostics.has_unreachable_blocks",
+            diagnostics_map.get("has_unreachable_blocks"), "diagnostics.has_unreachable_blocks"
         ),
         has_unimplemented=_require_bool(
-            diagnostics_map.get("has_unimplemented"),
-            "diagnostics.has_unimplemented",
+            diagnostics_map.get("has_unimplemented"), "diagnostics.has_unimplemented"
         ),
         has_bad_data=_require_bool(
-            diagnostics_map.get("has_bad_data"),
-            "diagnostics.has_bad_data",
+            diagnostics_map.get("has_bad_data"), "diagnostics.has_bad_data"
         ),
         has_no_code=_require_bool(diagnostics_map.get("has_no_code"), "diagnostics.has_no_code"),
     )
@@ -571,39 +573,3 @@ def _default_error_metadata(request: DecompileRequest) -> dict[str, Any]:
         "compiler_spec": request.compiler_spec or "",
         "diagnostics": {},
     }
-
-
-def _require_mapping(raw_value: Any, field_name: str) -> Mapping[str, Any]:
-    if not isinstance(raw_value, Mapping):
-        raise InternalError(f"{field_name} must be a mapping")
-    return raw_value
-
-
-def _require_str(raw_value: Any, field_name: str) -> str:
-    if not isinstance(raw_value, str):
-        raise InternalError(f"{field_name} must be a string")
-    return raw_value
-
-
-def _require_int(raw_value: Any, field_name: str) -> int:
-    if not isinstance(raw_value, int) or isinstance(raw_value, bool):
-        raise InternalError(f"{field_name} must be an integer")
-    return raw_value
-
-
-def _require_optional_int(raw_value: Any, field_name: str) -> int | None:
-    return None if raw_value is None else _require_int(raw_value, field_name)
-
-
-def _require_optional_str(raw_value: Any, field_name: str) -> str | None:
-    return None if raw_value is None else _require_str(raw_value, field_name)
-
-
-def _require_bool(raw_value: Any, field_name: str) -> bool:
-    if not isinstance(raw_value, bool):
-        raise InternalError(f"{field_name} must be a bool")
-    return raw_value
-
-
-def _is_sequence_like(raw_value: Any) -> bool:
-    return isinstance(raw_value, Sequence) and not isinstance(raw_value, (str, bytes, bytearray))
