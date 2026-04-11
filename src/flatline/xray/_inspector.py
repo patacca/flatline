@@ -6,6 +6,8 @@ import textwrap
 from typing import TYPE_CHECKING
 
 from flatline.models.enums import VarnodeSpace
+from flatline.models.pcode_ops.branch import Cbranch
+from flatline.models.varnodes import FspecVarnode, IopVarnode
 
 if TYPE_CHECKING:
     from ..models import FunctionInfo, PcodeOpInfo, VarnodeInfo
@@ -105,24 +107,32 @@ def op_text(
         if op.output_varnode_id in varnode_by_id
         else "  - none"
     )
-    return "\n".join(
-        [
-            f"Op #{op.id} - {op.opcode}",
-            "",
-            "--- Op Detail ---",
-            f"Opcode:      {op.opcode}",
-            f"Tree depth:  {depth}",
-            f"Insn addr:   0x{op.instruction_address:x}",
-            f"Seq time:    {op.sequence_time}",
-            f"Seq order:   {op.sequence_order}",
-            "",
-            "--- Inputs ---",
-            "\n".join(input_lines) if input_lines else "  - none",
-            "",
-            "--- Output ---",
-            output_line,
-        ]
-    )
+    lines = [
+        f"Op #{op.id} - {op.opcode}",
+        "",
+        "--- Op Detail ---",
+        f"Opcode:      {op.opcode}",
+        f"Tree depth:  {depth}",
+        f"Insn addr:   0x{op.instruction_address:x}",
+        f"Seq time:    {op.sequence_time}",
+        f"Seq order:   {op.sequence_order}",
+        "",
+        "--- Inputs ---",
+        "\n".join(input_lines) if input_lines else "  - none",
+        "",
+        "--- Output ---",
+        output_line,
+    ]
+
+    if isinstance(op, Cbranch):
+        lines.append("")
+        lines.append("--- Branch Targets ---")
+        true_addr = op.true_target_address
+        lines.append(f"True target:  0x{true_addr:x}" if true_addr is not None else "True target:  none")
+        false_addr = op.false_target_address
+        lines.append(f"False target: 0x{false_addr:x}" if false_addr is not None else "False target: none")
+
+    return "\n".join(lines)
 
 
 def varnode_text(
@@ -158,27 +168,37 @@ def varnode_text(
         if varnode.defining_op_id in op_by_id
         else "  - none"
     )
-    return "\n".join(
-        [
-            f"Varnode v{varnode.id}",
-            "",
-            "--- Varnode Detail ---",
-            f"Badge:       {badge}",
-            f"Tree depth:  {depth}",
-            f"Space:       {varnode.space}",
-            f"Offset:      0x{varnode.offset:x}",
-            f"Size:        {varnode.size} bytes",
-            "",
-            "--- Flags ---",
-            f"  - {', '.join(flag_lines) if flag_lines else 'none'}",
-            "",
-            "--- Defined By ---",
-            defining_line,
-            "",
-            "--- Used By ---",
-            "\n".join(use_lines) if use_lines else "  - none",
-        ]
-    )
+    lines = [
+        f"Varnode v{varnode.id}",
+        "",
+        "--- Varnode Detail ---",
+        f"Badge:       {badge}",
+        f"Tree depth:  {depth}",
+        f"Space:       {varnode.space}",
+        f"Offset:      0x{varnode.offset:x}",
+        f"Size:        {varnode.size} bytes",
+        "",
+        "--- Flags ---",
+        f"  - {', '.join(flag_lines) if flag_lines else 'none'}",
+        "",
+        "--- Defined By ---",
+        defining_line,
+        "",
+        "--- Used By ---",
+        "\n".join(use_lines) if use_lines else "  - none",
+    ]
+
+    if isinstance(varnode, IopVarnode):
+        lines.append("")
+        lines.append("--- IOP Target ---")
+        lines.append(f"Target op:   #{varnode.target_op_id}" if varnode.target_op_id is not None else "Target op:   none")
+
+    if isinstance(varnode, FspecVarnode):
+        lines.append("")
+        lines.append("--- Call Site ---")
+        lines.append(f"Site index:  {varnode.call_site_index}" if varnode.call_site_index is not None else "Site index:  none")
+
+    return "\n".join(lines)
 
 
 def varnode_brief(varnode: VarnodeInfo) -> str:
