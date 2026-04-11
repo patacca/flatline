@@ -19,7 +19,7 @@ except ImportError as exc:  # pragma: no cover - platform dependent
     ) from exc
 
 if TYPE_CHECKING:
-    from flatline.models.types import FunctionInfo
+    from ..models.types import FunctionInfo
 
 from . import _theme
 from ._canvas import (
@@ -29,6 +29,17 @@ from ._canvas import (
     draw_nodes,
     hide_all_glows,
     show_node_glow,
+)
+from ._cpg_overlay import (
+    build_address_to_roots,
+    build_checkbox_panel,
+    build_opid_to_root,
+    collect_cbranch_edges,
+    collect_fspec_edges,
+    collect_iop_edges,
+    draw_cbranch_edges,
+    draw_fspec_edges,
+    draw_iop_edges,
 )
 from ._inputs import disassemble_instruction_addresses
 from ._inspector import op_text, summary_text, varnode_text
@@ -225,6 +236,7 @@ class XrayWindow(tk.Tk):
             fg=_theme.TEXT,
             font=_theme.PANEL_TITLE_FONT,
         ).pack(anchor="w", padx=14, pady=(14, 8))
+        build_checkbox_panel(sidebar, self.canvas, self._cpg_enabled).pack(fill="x", padx=0, pady=0)
         self.inspector = tk.Text(
             sidebar,
             bg=_theme.PANEL_BG,
@@ -269,6 +281,20 @@ class XrayWindow(tk.Tk):
             draw_cross_edge(self.canvas, child, parent, self.op_by_id, self.varnode_by_id)
         for root in self.visual_roots:
             draw_nodes(self.canvas, root, self.op_by_id, self.varnode_by_id, self._show_node)
+        # CPG overlay: IOP + fspec always drawn; CBRANCH only when CPG enabled.
+        opid_to_root = build_opid_to_root(self.visual_roots, self.op_by_id)
+        iop_edges = collect_iop_edges(self.varnode_by_id, self.op_by_id, opid_to_root)
+        draw_iop_edges(self.canvas, iop_edges, self.op_by_id, self.varnode_by_id)
+        fspec_edges = collect_fspec_edges(
+            self.varnode_by_id, self.op_by_id, opid_to_root, self._function_info
+        )
+        draw_fspec_edges(self.canvas, fspec_edges, self.op_by_id, self.varnode_by_id)
+        if self._cpg_enabled:
+            addr_to_roots = build_address_to_roots(self.visual_roots, self.op_by_id)
+            cbranch_edges = collect_cbranch_edges(
+                self.pcode.pcode_ops, addr_to_roots, opid_to_root
+            )
+            draw_cbranch_edges(self.canvas, cbranch_edges, self.op_by_id, self.varnode_by_id)
         self._set_inspector_text(
             summary_text(
                 title,
