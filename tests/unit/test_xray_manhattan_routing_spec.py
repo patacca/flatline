@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from flatline.xray._canvas import manhattan_route, nearest_side_anchors
-from flatline.xray._layout import VisualNode, node_size
+from flatline.xray._layout import NodeRect, VisualNode, node_size
 
 from ._xray_support import make_sample_pcode
 
@@ -37,6 +37,79 @@ def test_manhattan_route_returns_8_values() -> None:
         coords = manhattan_route(x1, y1, x2, y2)
         assert len(coords) == 8
         assert all(isinstance(v, (int, float)) for v in coords)
+
+
+def test_manhattan_route_no_obstacles_same_as_default() -> None:
+    coords_none = manhattan_route(10.0, 20.0, 80.0, 100.0, obstacles=None)
+    coords_empty = manhattan_route(10.0, 20.0, 80.0, 100.0, obstacles=[])
+    assert coords_none == coords_empty
+
+
+def test_manhattan_route_detours_around_obstacle() -> None:
+    obstacle = NodeRect(x_min=40.0, y_min=55.0, x_max=60.0, y_max=65.0)
+    coords = manhattan_route(10.0, 20.0, 80.0, 100.0, obstacles=[obstacle])
+    waypoints = list(zip(coords[::2], coords[1::2], strict=True))
+    for i in range(len(waypoints) - 1):
+        ax, ay = waypoints[i]
+        bx, by = waypoints[i + 1]
+        if ay != by:
+            continue
+        seg_y = ay
+        x_lo, x_hi = min(ax, bx), max(ax, bx)
+        overlaps_x = x_hi >= obstacle.x_min and x_lo <= obstacle.x_max
+        inside_y = obstacle.y_min <= seg_y <= obstacle.y_max
+        assert not (overlaps_x and inside_y), (
+            f"horizontal segment at y={seg_y} from x={x_lo} to x={x_hi} "
+            f"crosses obstacle {obstacle}"
+        )
+
+
+def test_manhattan_route_no_detour_when_obstacle_not_in_path() -> None:
+    obstacle = NodeRect(x_min=200.0, y_min=200.0, x_max=250.0, y_max=250.0)
+    coords = manhattan_route(10.0, 20.0, 80.0, 100.0, obstacles=[obstacle])
+    assert len(coords) == 8
+
+
+def test_manhattan_route_detour_picks_shorter_direction() -> None:
+    obstacle = NodeRect(x_min=40.0, y_min=58.0, x_max=60.0, y_max=62.0)
+    coords = manhattan_route(10.0, 20.0, 80.0, 100.0, obstacles=[obstacle])
+    waypoints = list(zip(coords[::2], coords[1::2], strict=True))
+    detour_ys = [y for _, y in waypoints if y < obstacle.y_min or y > obstacle.y_max]
+    assert len(detour_ys) > 0
+
+
+def test_manhattan_route_multiple_obstacles() -> None:
+    obs1 = NodeRect(x_min=20.0, y_min=55.0, x_max=40.0, y_max=65.0)
+    obs2 = NodeRect(x_min=60.0, y_min=45.0, x_max=80.0, y_max=55.0)
+    coords = manhattan_route(10.0, 20.0, 100.0, 100.0, obstacles=[obs1, obs2])
+    waypoints = list(zip(coords[::2], coords[1::2], strict=True))
+    for i in range(len(waypoints) - 1):
+        ax, ay = waypoints[i]
+        bx, by = waypoints[i + 1]
+        if ay != by:
+            continue
+        seg_y = ay
+        x_lo, x_hi = min(ax, bx), max(ax, bx)
+        for obs in [obs1, obs2]:
+            overlaps_x = x_hi >= obs.x_min and x_lo <= obs.x_max
+            inside_y = obs.y_min <= seg_y <= obs.y_max
+            assert not (overlaps_x and inside_y)
+
+
+def test_manhattan_route_result_has_even_length() -> None:
+    obstacle = NodeRect(x_min=40.0, y_min=55.0, x_max=60.0, y_max=65.0)
+    coords = manhattan_route(10.0, 20.0, 80.0, 100.0, obstacles=[obstacle])
+    assert len(coords) % 2 == 0
+    assert len(coords) >= 8
+
+
+def test_manhattan_route_endpoints_preserved_with_obstacles() -> None:
+    obstacle = NodeRect(x_min=40.0, y_min=55.0, x_max=60.0, y_max=65.0)
+    coords = manhattan_route(10.0, 20.0, 80.0, 100.0, obstacles=[obstacle])
+    assert coords[0] == 10.0
+    assert coords[1] == 20.0
+    assert coords[-2] == 80.0
+    assert coords[-1] == 100.0
 
 
 def _make_lookup_dicts() -> tuple[dict, dict]:
