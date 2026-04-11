@@ -73,16 +73,20 @@ def test_cpg_edge_theme_tokens() -> None:
 
     # Verify all CPG edge constants are importable and have correct types
     assert hasattr(module, "CBRANCH_TRUE_COLOR"), "CBRANCH_TRUE_COLOR token missing from _theme"
-    assert isinstance(module.CBRANCH_TRUE_COLOR, str) and module.CBRANCH_TRUE_COLOR.startswith("#")
+    assert isinstance(module.CBRANCH_TRUE_COLOR, str)
+    assert module.CBRANCH_TRUE_COLOR.startswith("#")
 
     assert hasattr(module, "CBRANCH_FALSE_COLOR"), "CBRANCH_FALSE_COLOR token missing from _theme"
-    assert isinstance(module.CBRANCH_FALSE_COLOR, str) and module.CBRANCH_FALSE_COLOR.startswith("#")
+    assert isinstance(module.CBRANCH_FALSE_COLOR, str)
+    assert module.CBRANCH_FALSE_COLOR.startswith("#")
 
     assert hasattr(module, "IOP_EDGE_COLOR"), "IOP_EDGE_COLOR token missing from _theme"
-    assert isinstance(module.IOP_EDGE_COLOR, str) and module.IOP_EDGE_COLOR.startswith("#")
+    assert isinstance(module.IOP_EDGE_COLOR, str)
+    assert module.IOP_EDGE_COLOR.startswith("#")
 
     assert hasattr(module, "FSPEC_EDGE_COLOR"), "FSPEC_EDGE_COLOR token missing from _theme"
-    assert isinstance(module.FSPEC_EDGE_COLOR, str) and module.FSPEC_EDGE_COLOR.startswith("#")
+    assert isinstance(module.FSPEC_EDGE_COLOR, str)
+    assert module.FSPEC_EDGE_COLOR.startswith("#")
 
     assert hasattr(module, "IOP_EDGE_DASH"), "IOP_EDGE_DASH token missing from _theme"
     assert isinstance(module.IOP_EDGE_DASH, tuple) and len(module.IOP_EDGE_DASH) == 2

@@ -236,7 +236,8 @@ class XrayWindow(tk.Tk):
             fg=_theme.TEXT,
             font=_theme.PANEL_TITLE_FONT,
         ).pack(anchor="w", padx=14, pady=(14, 8))
-        build_checkbox_panel(sidebar, self.canvas, self._cpg_enabled).pack(fill="x", padx=0, pady=0)
+        panel = build_checkbox_panel(sidebar, self.canvas, self._cpg_enabled)
+        panel.pack(fill="x", padx=0, pady=0)
         self.inspector = tk.Text(
             sidebar,
             bg=_theme.PANEL_BG,

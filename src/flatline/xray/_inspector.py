@@ -128,9 +128,11 @@ def op_text(
         lines.append("")
         lines.append("--- Branch Targets ---")
         true_addr = op.true_target_address
-        lines.append(f"True target:  0x{true_addr:x}" if true_addr is not None else "True target:  none")
+        true_str = f"0x{true_addr:x}" if true_addr is not None else "none"
+        lines.append(f"True target:  {true_str}")
         false_addr = op.false_target_address
-        lines.append(f"False target: 0x{false_addr:x}" if false_addr is not None else "False target: none")
+        false_str = f"0x{false_addr:x}" if false_addr is not None else "none"
+        lines.append(f"False target: {false_str}")
 
     return "\n".join(lines)
 
@@ -191,12 +193,14 @@ def varnode_text(
     if isinstance(varnode, IopVarnode):
         lines.append("")
         lines.append("--- IOP Target ---")
-        lines.append(f"Target op:   #{varnode.target_op_id}" if varnode.target_op_id is not None else "Target op:   none")
+        target_str = f"#{varnode.target_op_id}" if varnode.target_op_id is not None else "none"
+        lines.append(f"Target op:   {target_str}")
 
     if isinstance(varnode, FspecVarnode):
         lines.append("")
         lines.append("--- Call Site ---")
-        lines.append(f"Site index:  {varnode.call_site_index}" if varnode.call_site_index is not None else "Site index:  none")
+        site_str = f"{varnode.call_site_index}" if varnode.call_site_index is not None else "none"
+        lines.append(f"Site index:  {site_str}")
 
     return "\n".join(lines)
 
