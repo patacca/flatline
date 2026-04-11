@@ -16,12 +16,16 @@ from flatline.models.pcode_ops.branch import Cbranch
 from flatline.models.varnodes import FspecVarnode, IopVarnode
 from flatline.xray._canvas import manhattan_route, nearest_side_anchors, node_pad, node_size
 from flatline.xray._theme import (
+    BODY_FONT,
     CANVAS_BG,
     CBRANCH_FALSE_COLOR,
     CBRANCH_TRUE_COLOR,
     FSPEC_EDGE_COLOR,
     IOP_EDGE_COLOR,
     IOP_EDGE_DASH,
+    PANEL_BG,
+    PANEL_TITLE_FONT,
+    TEXT,
 )
 
 if TYPE_CHECKING:
@@ -267,8 +271,91 @@ def draw_fspec_edges(
         )
 
 
+def build_checkbox_panel(
+    parent: tk.Frame,
+    canvas: tk.Canvas,
+    cpg_enabled: bool,
+) -> tk.Frame:
+    """Build an edge-visibility checkbox panel for the CPG overlay.
+
+    Returns a ``tk.Frame`` containing a labelled section with three checkboxes:
+    control-flow (cbranch), IOP references, and fspec call targets.  The
+    control-flow checkbox is greyed out when *cpg_enabled* is ``False``.
+    """
+    frame = tk.Frame(parent, bg=PANEL_BG)
+    tk.Label(
+        frame,
+        text="Edge Visibility",
+        bg=PANEL_BG,
+        fg=TEXT,
+        font=PANEL_TITLE_FONT,
+    ).pack(anchor="w", padx=14, pady=(8, 4))
+
+    # --- Control-flow edges (cbranch) ---
+    cf_var = tk.BooleanVar(value=True)
+
+    def _toggle_cf() -> None:
+        canvas.itemconfigure("cbranch_edge", state="normal" if cf_var.get() else "hidden")
+
+    cf_cb = tk.Checkbutton(
+        frame,
+        text="Control-flow edges",
+        variable=cf_var,
+        command=_toggle_cf,
+        bg=PANEL_BG,
+        fg=TEXT,
+        selectcolor=PANEL_BG,
+        font=BODY_FONT,
+        anchor="w",
+    )
+    if not cpg_enabled:
+        cf_cb.configure(state="disabled")
+    cf_cb.pack(fill="x", padx=14, pady=2)
+
+    # --- IOP reference edges ---
+    iop_var = tk.BooleanVar(value=True)
+
+    def _toggle_iop() -> None:
+        canvas.itemconfigure("iop_edge", state="normal" if iop_var.get() else "hidden")
+
+    tk.Checkbutton(
+        frame,
+        text="IOP reference edges",
+        variable=iop_var,
+        command=_toggle_iop,
+        bg=PANEL_BG,
+        fg=TEXT,
+        selectcolor=PANEL_BG,
+        font=BODY_FONT,
+        anchor="w",
+    ).pack(fill="x", padx=14, pady=2)
+
+    # --- Call target edges (fspec) ---
+    fspec_var = tk.BooleanVar(value=True)
+
+    def _toggle_fspec() -> None:
+        state = "normal" if fspec_var.get() else "hidden"
+        canvas.itemconfigure("fspec_edge", state=state)
+        canvas.itemconfigure("fspec_virtual_node", state=state)
+
+    tk.Checkbutton(
+        frame,
+        text="Call target edges",
+        variable=fspec_var,
+        command=_toggle_fspec,
+        bg=PANEL_BG,
+        fg=TEXT,
+        selectcolor=PANEL_BG,
+        font=BODY_FONT,
+        anchor="w",
+    ).pack(fill="x", padx=14, pady=2)
+
+    return frame
+
+
 __all__ = [
     "build_address_to_roots",
+    "build_checkbox_panel",
     "build_opid_to_root",
     "collect_cbranch_edges",
     "collect_fspec_edges",
