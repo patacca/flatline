@@ -5,6 +5,8 @@ instance should exist per process.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 try:
     import tkinter as tk
 except ImportError as exc:  # pragma: no cover - platform dependent
@@ -15,6 +17,10 @@ except ImportError as exc:  # pragma: no cover - platform dependent
         "  Fedora:         sudo dnf install python3-tkinter\n"
         "  macOS Homebrew: brew install python-tk"
     ) from exc
+
+if TYPE_CHECKING:
+    from flatline.models.types import FunctionInfo
+
 from . import _theme
 from ._canvas import (
     draw_cross_edge,
@@ -71,12 +77,16 @@ class XrayWindow(tk.Tk):
         *,
         request=None,
         source_label: str | None = None,
+        cpg: bool = False,
+        function_info: FunctionInfo | None = None,
     ) -> None:
         super().__init__()
         self.window_title = title
         self.result = result
         self.request = request
         self.source_label = source_label
+        self._cpg_enabled = cpg
+        self._function_info = function_info
         self.pcode = self._require_pcode(result)
         self.op_by_id = {op.id: op for op in self.pcode.pcode_ops}
         self.varnode_by_id = {varnode.id: varnode for varnode in self.pcode.varnodes}
