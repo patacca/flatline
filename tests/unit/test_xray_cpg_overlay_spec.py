@@ -10,6 +10,7 @@ from flatline.models.pcode_ops import Cbranch, IntAdd, Return
 from flatline.xray._layout import VisualNode
 
 if TYPE_CHECKING:
+    from flatline import FunctionInfo
     from flatline.models import PcodeOpInfo
 
 
@@ -281,5 +282,196 @@ def test_collect_iop_edges_ignores_non_iop_varnodes() -> None:
     )
 
     edges = collect_iop_edges({1003: non_iop_vn}, {74: object()}, {74: source_root})
+
+    assert edges == []
+
+
+# ---------------------------------------------------------------------------
+# Task 6 — FSPEC edge collection and virtual node helper
+# ---------------------------------------------------------------------------
+
+
+def _make_function_info(call_sites: list) -> FunctionInfo:
+    from flatline import DiagnosticFlags, FunctionInfo as _FunctionInfo, FunctionPrototype, TypeInfo
+
+    return _FunctionInfo(
+        name="stub",
+        entry_address=0x400000,
+        size=64,
+        is_complete=True,
+        prototype=FunctionPrototype(
+            calling_convention="__cdecl",
+            parameters=[],
+            return_type=TypeInfo(name="void", size=0, metatype="void"),
+            is_noreturn=False,
+            has_this_pointer=False,
+            has_input_errors=False,
+            has_output_errors=False,
+        ),
+        local_variables=[],
+        call_sites=call_sites,
+        jump_tables=[],
+        diagnostics=DiagnosticFlags(
+            is_complete=True,
+            has_unreachable_blocks=False,
+            has_unimplemented=False,
+            has_bad_data=False,
+            has_no_code=False,
+        ),
+        varnode_count=0,
+    )
+
+
+def test_make_virtual_node_id_returns_indexed_id() -> None:
+    from flatline.xray._cpg_overlay import make_virtual_node_id
+
+    assert make_virtual_node_id("0x401000", 0) == "fspec_virtual_0"
+    assert make_virtual_node_id("0x402000", 7) == "fspec_virtual_7"
+
+
+def test_collect_fspec_edges_returns_edge_for_valid_fspec_varnode() -> None:
+    from flatline.models.enums import VarnodeSpace
+    from flatline.models.types import CallSiteInfo
+    from flatline.models.varnodes import FspecVarnode
+    from flatline.xray._cpg_overlay import collect_fspec_edges
+
+    source_root = _node("src-root", ("op", 80), 0)
+
+    fspec_vn = FspecVarnode(
+        id=2000,
+        space=VarnodeSpace.FSPEC,
+        offset=0,
+        size=8,
+        flags=_make_varnode_flags(),
+        defining_op_id=None,
+        use_op_ids=[80],
+        call_site_index=0,
+    )
+
+    fi = _make_function_info([CallSiteInfo(instruction_address=0x401000, target_address=0x402000)])
+
+    edges = collect_fspec_edges({2000: fspec_vn}, {80: object()}, {80: source_root}, fi)
+
+    assert edges == [(source_root, "0x402000")]
+
+
+def test_collect_fspec_edges_skips_indirect_call_with_no_target_address() -> None:
+    from flatline.models.enums import VarnodeSpace
+    from flatline.models.types import CallSiteInfo
+    from flatline.models.varnodes import FspecVarnode
+    from flatline.xray._cpg_overlay import collect_fspec_edges
+
+    source_root = _node("src-root", ("op", 81), 0)
+
+    fspec_vn = FspecVarnode(
+        id=2001,
+        space=VarnodeSpace.FSPEC,
+        offset=0,
+        size=8,
+        flags=_make_varnode_flags(),
+        defining_op_id=None,
+        use_op_ids=[81],
+        call_site_index=0,
+    )
+
+    fi = _make_function_info([CallSiteInfo(instruction_address=0x401010, target_address=None)])
+
+    edges = collect_fspec_edges({2001: fspec_vn}, {81: object()}, {81: source_root}, fi)
+
+    assert edges == []
+
+
+def test_collect_fspec_edges_skips_out_of_range_call_site_index() -> None:
+    from flatline.models.enums import VarnodeSpace
+    from flatline.models.varnodes import FspecVarnode
+    from flatline.xray._cpg_overlay import collect_fspec_edges
+
+    source_root = _node("src-root", ("op", 82), 0)
+
+    fspec_vn = FspecVarnode(
+        id=2002,
+        space=VarnodeSpace.FSPEC,
+        offset=0,
+        size=8,
+        flags=_make_varnode_flags(),
+        defining_op_id=None,
+        use_op_ids=[82],
+        call_site_index=5,
+    )
+
+    fi = _make_function_info([])
+
+    edges = collect_fspec_edges({2002: fspec_vn}, {82: object()}, {82: source_root}, fi)
+
+    assert edges == []
+
+
+def test_collect_fspec_edges_skips_when_function_info_is_none() -> None:
+    from flatline.models.enums import VarnodeSpace
+    from flatline.models.varnodes import FspecVarnode
+    from flatline.xray._cpg_overlay import collect_fspec_edges
+
+    source_root = _node("src-root", ("op", 83), 0)
+
+    fspec_vn = FspecVarnode(
+        id=2003,
+        space=VarnodeSpace.FSPEC,
+        offset=0,
+        size=8,
+        flags=_make_varnode_flags(),
+        defining_op_id=None,
+        use_op_ids=[83],
+        call_site_index=0,
+    )
+
+    edges = collect_fspec_edges({2003: fspec_vn}, {83: object()}, {83: source_root}, None)
+
+    assert edges == []
+
+
+def test_collect_fspec_edges_skips_when_use_op_ids_is_empty() -> None:
+    from flatline.models.enums import VarnodeSpace
+    from flatline.models.types import CallSiteInfo
+    from flatline.models.varnodes import FspecVarnode
+    from flatline.xray._cpg_overlay import collect_fspec_edges
+
+    fspec_vn = FspecVarnode(
+        id=2004,
+        space=VarnodeSpace.FSPEC,
+        offset=0,
+        size=8,
+        flags=_make_varnode_flags(),
+        defining_op_id=None,
+        use_op_ids=[],
+        call_site_index=0,
+    )
+
+    fi = _make_function_info([CallSiteInfo(instruction_address=0x401020, target_address=0x403000)])
+
+    edges = collect_fspec_edges({2004: fspec_vn}, {84: object()}, {}, fi)
+
+    assert edges == []
+
+
+def test_collect_fspec_edges_skips_when_source_root_not_in_opid_to_root() -> None:
+    from flatline.models.enums import VarnodeSpace
+    from flatline.models.types import CallSiteInfo
+    from flatline.models.varnodes import FspecVarnode
+    from flatline.xray._cpg_overlay import collect_fspec_edges
+
+    fspec_vn = FspecVarnode(
+        id=2005,
+        space=VarnodeSpace.FSPEC,
+        offset=0,
+        size=8,
+        flags=_make_varnode_flags(),
+        defining_op_id=None,
+        use_op_ids=[85],
+        call_site_index=0,
+    )
+
+    fi = _make_function_info([CallSiteInfo(instruction_address=0x401030, target_address=0x404000)])
+
+    edges = collect_fspec_edges({2005: fspec_vn}, {85: object()}, {}, fi)
 
     assert edges == []
