@@ -213,9 +213,8 @@ def test_collect_iop_edges_returns_edge_for_valid_iop_varnode() -> None:
         target_op_id=71,
     )
 
-    op_by_id = {70: object(), 71: object()}
     root_by_op_id = {70: source_root, 71: target_root}
-    edges = collect_iop_edges({1000: iop_vn}, op_by_id, root_by_op_id)
+    edges = collect_iop_edges({1000: iop_vn}, root_by_op_id)
 
     assert edges == [(source_root, target_root)]
 
@@ -238,7 +237,7 @@ def test_collect_iop_edges_skips_when_target_op_id_is_none() -> None:
         target_op_id=None,
     )
 
-    edges = collect_iop_edges({1001: iop_vn}, {72: object()}, {72: source_root})
+    edges = collect_iop_edges({1001: iop_vn}, {72: source_root})
 
     assert edges == []
 
@@ -261,7 +260,7 @@ def test_collect_iop_edges_skips_when_use_op_ids_is_empty() -> None:
         target_op_id=73,
     )
 
-    edges = collect_iop_edges({1002: iop_vn}, {73: object()}, {73: target_root})
+    edges = collect_iop_edges({1002: iop_vn}, {73: target_root})
 
     assert edges == []
 
@@ -283,7 +282,7 @@ def test_collect_iop_edges_ignores_non_iop_varnodes() -> None:
         use_op_ids=[74],
     )
 
-    edges = collect_iop_edges({1003: non_iop_vn}, {74: object()}, {74: source_root})
+    edges = collect_iop_edges({1003: non_iop_vn}, {74: source_root})
 
     assert edges == []
 
@@ -357,7 +356,7 @@ def test_collect_fspec_edges_returns_edge_for_valid_fspec_varnode() -> None:
 
     fi = _make_function_info([CallSiteInfo(instruction_address=0x401000, target_address=0x402000)])
 
-    edges = collect_fspec_edges({2000: fspec_vn}, {80: object()}, {80: source_root}, fi)
+    edges = collect_fspec_edges({2000: fspec_vn}, {80: source_root}, fi)
 
     assert edges == [(source_root, "0x402000")]
 
@@ -383,7 +382,7 @@ def test_collect_fspec_edges_skips_indirect_call_with_no_target_address() -> Non
 
     fi = _make_function_info([CallSiteInfo(instruction_address=0x401010, target_address=None)])
 
-    edges = collect_fspec_edges({2001: fspec_vn}, {81: object()}, {81: source_root}, fi)
+    edges = collect_fspec_edges({2001: fspec_vn}, {81: source_root}, fi)
 
     assert edges == []
 
@@ -408,7 +407,7 @@ def test_collect_fspec_edges_skips_out_of_range_call_site_index() -> None:
 
     fi = _make_function_info([])
 
-    edges = collect_fspec_edges({2002: fspec_vn}, {82: object()}, {82: source_root}, fi)
+    edges = collect_fspec_edges({2002: fspec_vn}, {82: source_root}, fi)
 
     assert edges == []
 
@@ -431,7 +430,7 @@ def test_collect_fspec_edges_skips_when_function_info_is_none() -> None:
         call_site_index=0,
     )
 
-    edges = collect_fspec_edges({2003: fspec_vn}, {83: object()}, {83: source_root}, None)
+    edges = collect_fspec_edges({2003: fspec_vn}, {83: source_root}, None)
 
     assert edges == []
 
@@ -455,7 +454,7 @@ def test_collect_fspec_edges_skips_when_use_op_ids_is_empty() -> None:
 
     fi = _make_function_info([CallSiteInfo(instruction_address=0x401020, target_address=0x403000)])
 
-    edges = collect_fspec_edges({2004: fspec_vn}, {84: object()}, {}, fi)
+    edges = collect_fspec_edges({2004: fspec_vn}, {}, fi)
 
     assert edges == []
 
@@ -479,6 +478,6 @@ def test_collect_fspec_edges_skips_when_source_root_not_in_opid_to_root() -> Non
 
     fi = _make_function_info([CallSiteInfo(instruction_address=0x401030, target_address=0x404000)])
 
-    edges = collect_fspec_edges({2005: fspec_vn}, {85: object()}, {}, fi)
+    edges = collect_fspec_edges({2005: fspec_vn}, {}, fi)
 
     assert edges == []

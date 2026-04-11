@@ -14,7 +14,8 @@ from typing import TYPE_CHECKING
 
 from flatline.models.pcode_ops.branch import Cbranch
 from flatline.models.varnodes import FspecVarnode, IopVarnode
-from flatline.xray._canvas import manhattan_route, nearest_side_anchors, node_pad, node_size
+from flatline.xray._canvas import manhattan_route, nearest_side_anchors
+from flatline.xray._layout import node_pad, node_size
 from flatline.xray._theme import (
     BODY_FONT,
     CANVAS_BG,
@@ -103,7 +104,6 @@ def collect_cbranch_edges(
 
 def collect_iop_edges(
     varnode_by_id: dict,
-    op_by_id: dict,
     opid_to_root: dict[int, VisualNode],
 ) -> list[tuple[VisualNode, VisualNode]]:
     """Collect overlay edges for IOP (internal op pointer) varnodes."""
@@ -133,7 +133,6 @@ def make_virtual_node_id(label: str, index: int) -> str:
 
 def collect_fspec_edges(
     varnode_by_id: dict,
-    op_by_id: dict,
     opid_to_root: dict[int, VisualNode],
     function_info: FunctionInfo | None,
 ) -> list[tuple[VisualNode, str]]:

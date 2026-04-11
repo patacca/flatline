@@ -284,11 +284,9 @@ class XrayWindow(tk.Tk):
             draw_nodes(self.canvas, root, self.op_by_id, self.varnode_by_id, self._show_node)
         # CPG overlay: IOP + fspec always drawn; CBRANCH only when CPG enabled.
         opid_to_root = build_opid_to_root(self.visual_roots, self.op_by_id)
-        iop_edges = collect_iop_edges(self.varnode_by_id, self.op_by_id, opid_to_root)
+        iop_edges = collect_iop_edges(self.varnode_by_id, opid_to_root)
         draw_iop_edges(self.canvas, iop_edges, self.op_by_id, self.varnode_by_id)
-        fspec_edges = collect_fspec_edges(
-            self.varnode_by_id, self.op_by_id, opid_to_root, self._function_info
-        )
+        fspec_edges = collect_fspec_edges(self.varnode_by_id, opid_to_root, self._function_info)
         draw_fspec_edges(self.canvas, fspec_edges, self.op_by_id, self.varnode_by_id)
         if self._cpg_enabled:
             addr_to_roots = build_address_to_roots(self.visual_roots, self.op_by_id)
