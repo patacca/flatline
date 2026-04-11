@@ -30,6 +30,16 @@ VERTICAL_LEVEL_GAP = 132.0
 
 
 @dataclass
+class NodeRect:
+    """Axis-aligned bounding box for one visual node, used as an obstacle."""
+
+    x_min: float
+    y_min: float
+    x_max: float
+    y_max: float
+
+
+@dataclass
 class VisualNode:
     """One node in the visual tree."""
 
@@ -365,13 +375,36 @@ def node_pad(
     return node_size(node, op_by_id, varnode_by_id)[1] / 2.0
 
 
+def collect_node_rects(
+    nodes: Sequence[VisualNode],
+    op_by_id: Mapping[int, PcodeOpInfo],
+    varnode_by_id: Mapping[int, VarnodeInfo],
+    *,
+    padding: float = 4.0,
+) -> list[NodeRect]:
+    rects: list[NodeRect] = []
+    for node in nodes:
+        w, h = node_size(node, op_by_id, varnode_by_id)
+        rects.append(
+            NodeRect(
+                x_min=node.x - w / 2.0 - padding,
+                y_min=node.y - h / 2.0 - padding,
+                x_max=node.x + w / 2.0 + padding,
+                y_max=node.y + h / 2.0 + padding,
+            )
+        )
+    return rects
+
+
 __all__ = [
     "HORIZONTAL_NODE_GAP",
     "VERTICAL_LEVEL_GAP",
     "NodeId",
+    "NodeRect",
     "VisualNode",
     "assign_forest_positions",
     "build_visual_forest",
+    "collect_node_rects",
     "collect_visual_nodes",
     "compute_canvas_size",
     "fit_opcode_label",

@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 from flatline.models.pcode_ops.branch import Cbranch
 from flatline.models.varnodes import FspecVarnode, IopVarnode
 from flatline.xray._canvas import manhattan_route, nearest_side_anchors
-from flatline.xray._layout import node_pad, node_size
+from flatline.xray._layout import NodeRect, node_pad, node_size
 from flatline.xray._theme import (
     BODY_FONT,
     CANVAS_BG,
@@ -209,6 +209,7 @@ def draw_cbranch_edges(
     cbranch_edges: list[tuple[VisualNode, VisualNode, str]],
     op_by_id: dict,
     varnode_by_id: dict,
+    obstacles: list[NodeRect] | None = None,
 ) -> None:
     """Draw true/false conditional branch overlay edges on the canvas.
 
@@ -222,7 +223,7 @@ def draw_cbranch_edges(
         tx = target.x
         ty = target.y - node_pad(target, op_by_id, varnode_by_id)
         color = CBRANCH_TRUE_COLOR if branch_type == "true" else CBRANCH_FALSE_COLOR
-        coords = manhattan_route(sx, sy, tx, ty)
+        coords = manhattan_route(sx, sy, tx, ty, obstacles)
         canvas.create_line(
             *coords,
             fill=color,
@@ -238,6 +239,7 @@ def draw_iop_edges(
     iop_edges: list[tuple[VisualNode, VisualNode]],
     op_by_id: dict,
     varnode_by_id: dict,
+    obstacles: list[NodeRect] | None = None,
 ) -> None:
     """Draw IOP reference overlay edges on the canvas.
 
@@ -247,7 +249,7 @@ def draw_iop_edges(
     """
     for source, target in iop_edges:
         (sx, sy), (tx, ty) = nearest_side_anchors(source, target, op_by_id, varnode_by_id)
-        coords = manhattan_route(sx, sy, tx, ty)
+        coords = manhattan_route(sx, sy, tx, ty, obstacles)
         canvas.create_line(
             *coords,
             fill=IOP_EDGE_COLOR,
@@ -264,6 +266,7 @@ def draw_fspec_edges(
     fspec_edges: list[tuple[VisualNode, str]],
     op_by_id: dict,
     varnode_by_id: dict,
+    obstacles: list[NodeRect] | None = None,
 ) -> None:
     """Draw fspec call-target overlay edges with virtual destination nodes.
 
@@ -302,7 +305,7 @@ def draw_fspec_edges(
         # Edge: right side of source → left side of virtual node
         tx = vx - vw
         ty = vy
-        coords = manhattan_route(sx, sy, tx, ty)
+        coords = manhattan_route(sx, sy, tx, ty, obstacles)
         canvas.create_line(
             *coords,
             fill=FSPEC_EDGE_COLOR,

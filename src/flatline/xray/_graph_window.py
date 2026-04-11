@@ -51,6 +51,7 @@ from ._layout import (
     VisualNode,
     assign_forest_positions,
     build_visual_forest,
+    collect_node_rects,
     collect_visual_nodes,
     compute_canvas_size,
     measure_forest,
@@ -270,6 +271,8 @@ class XrayWindow(tk.Tk):
             stretch="never",
         )
         self._zoom = self._INITIAL_ZOOM
+        self._obstacles = collect_node_rects(self.visual_nodes, self.op_by_id, self.varnode_by_id)
+        _obs = self._obstacles
         draw_depth_bands(
             self.canvas,
             self.max_depth,
@@ -279,9 +282,9 @@ class XrayWindow(tk.Tk):
             self._level_gap,
         )
         for root in self.visual_roots:
-            draw_edges(self.canvas, root, self.op_by_id, self.varnode_by_id)
+            draw_edges(self.canvas, root, self.op_by_id, self.varnode_by_id, _obs)
         for parent, child in self._cross_edges:
-            draw_cross_edge(self.canvas, child, parent, self.op_by_id, self.varnode_by_id)
+            draw_cross_edge(self.canvas, child, parent, self.op_by_id, self.varnode_by_id, _obs)
         for root in self.visual_roots:
             draw_nodes(self.canvas, root, self.op_by_id, self.varnode_by_id, self._show_node)
         # CPG overlay: IOP + fspec always drawn; CBRANCH only when CPG enabled.
@@ -289,15 +292,15 @@ class XrayWindow(tk.Tk):
         opid_to_node = build_opid_to_node(self.visual_roots)
         vnid_to_node = build_vnid_to_node(self.visual_roots)
         iop_edges = collect_iop_edges(self.varnode_by_id, opid_to_node, vnid_to_node)
-        draw_iop_edges(self.canvas, iop_edges, self.op_by_id, self.varnode_by_id)
+        draw_iop_edges(self.canvas, iop_edges, self.op_by_id, self.varnode_by_id, _obs)
         fspec_edges = collect_fspec_edges(self.varnode_by_id, opid_to_root, self._function_info)
-        draw_fspec_edges(self.canvas, fspec_edges, self.op_by_id, self.varnode_by_id)
+        draw_fspec_edges(self.canvas, fspec_edges, self.op_by_id, self.varnode_by_id, _obs)
         if self._cpg_enabled:
             addr_to_roots = build_address_to_roots(self.visual_roots, self.op_by_id)
             cbranch_edges = collect_cbranch_edges(
                 self.pcode.pcode_ops, addr_to_roots, opid_to_root
             )
-            draw_cbranch_edges(self.canvas, cbranch_edges, self.op_by_id, self.varnode_by_id)
+            draw_cbranch_edges(self.canvas, cbranch_edges, self.op_by_id, self.varnode_by_id, _obs)
         self._set_inspector_text(
             summary_text(
                 title,
