@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import pytest
 
-from flatline.models.pcode_ops.branch import Cbranch
 from flatline.models.pcode_ops import IntAdd
-from flatline.models.varnodes import FspecVarnode, IopVarnode, RegisterVarnode
+from flatline.models.pcode_ops.branch import Cbranch
 from flatline.models.types import VarnodeFlags
+from flatline.models.varnodes import FspecVarnode, IopVarnode, RegisterVarnode
 from flatline.xray import _inspector  # pyright: ignore[reportMissingImports]
 
 pytestmark = pytest.mark.unit

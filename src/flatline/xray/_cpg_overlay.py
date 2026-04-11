@@ -245,13 +245,17 @@ def draw_fspec_edges(
         # Draw virtual node: rectangle + text label
         vtag = make_virtual_node_id(label, index)
         canvas.create_rectangle(
-            vx - vw, vy - vh, vx + vw, vy + vh,
+            vx - vw,
+            vy - vh,
+            vx + vw,
+            vy + vh,
             outline=FSPEC_EDGE_COLOR,
             fill=CANVAS_BG,
             tags=(vtag, "fspec_virtual_node"),
         )
         canvas.create_text(
-            vx, vy,
+            vx,
+            vy,
             text=label,
             fill=FSPEC_EDGE_COLOR,
             font=("Courier", 8),

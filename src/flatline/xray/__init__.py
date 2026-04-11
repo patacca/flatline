@@ -13,7 +13,10 @@ def main(argv: list[str] | None = None, *, cpg: bool = False) -> int:
     """Run the X-Ray CLI entry point without importing tkinter eagerly."""
     from flatline.xray.__main__ import main as _main
 
-    return _main(argv)
+    effective_argv = list(argv) if argv is not None else []
+    if cpg and "--cpg" not in effective_argv:
+        effective_argv.append("--cpg")
+    return _main(effective_argv if effective_argv else None)
 
 
 def __getattr__(name: str):

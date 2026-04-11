@@ -6,7 +6,7 @@ import pytest
 
 from flatline.xray.__main__ import _build_parser
 
-from ._xray_support import import_graph_window, make_sample_result
+from ._xray_support import import_graph_window
 
 pytestmark = pytest.mark.unit
 

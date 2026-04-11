@@ -50,7 +50,7 @@ def test_nearest_side_anchors_target_right() -> None:
     op_by_id, varnode_by_id = _make_lookup_dicts()
     source = VisualNode(key="s", actual=("op", 0), depth=0, x=100.0, y=300.0)
     target = VisualNode(key="t", actual=("op", 1), depth=0, x=500.0, y=300.0)
-    (sx, sy), (tx, ty) = nearest_side_anchors(source, target, op_by_id, varnode_by_id)
+    (sx, _sy), (tx, _ty) = nearest_side_anchors(source, target, op_by_id, varnode_by_id)
     sw, _ = node_size(source, op_by_id, varnode_by_id)
     tw, _ = node_size(target, op_by_id, varnode_by_id)
     assert sx == source.x + sw / 2.0
@@ -61,7 +61,7 @@ def test_nearest_side_anchors_target_left() -> None:
     op_by_id, varnode_by_id = _make_lookup_dicts()
     source = VisualNode(key="s", actual=("op", 0), depth=0, x=500.0, y=300.0)
     target = VisualNode(key="t", actual=("op", 1), depth=0, x=100.0, y=300.0)
-    (sx, sy), (tx, ty) = nearest_side_anchors(source, target, op_by_id, varnode_by_id)
+    (sx, _sy), (tx, _ty) = nearest_side_anchors(source, target, op_by_id, varnode_by_id)
     sw, _ = node_size(source, op_by_id, varnode_by_id)
     tw, _ = node_size(target, op_by_id, varnode_by_id)
     assert sx == source.x - sw / 2.0

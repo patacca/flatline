@@ -213,7 +213,9 @@ def test_collect_iop_edges_returns_edge_for_valid_iop_varnode() -> None:
         target_op_id=71,
     )
 
-    edges = collect_iop_edges({1000: iop_vn}, {70: object(), 71: object()}, {70: source_root, 71: target_root})
+    op_by_id = {70: object(), 71: object()}
+    root_by_op_id = {70: source_root, 71: target_root}
+    edges = collect_iop_edges({1000: iop_vn}, op_by_id, root_by_op_id)
 
     assert edges == [(source_root, target_root)]
 
@@ -292,7 +294,12 @@ def test_collect_iop_edges_ignores_non_iop_varnodes() -> None:
 
 
 def _make_function_info(call_sites: list) -> FunctionInfo:
-    from flatline import DiagnosticFlags, FunctionInfo as _FunctionInfo, FunctionPrototype, TypeInfo
+    from flatline import (
+        DiagnosticFlags,
+        FunctionInfo as _FunctionInfo,
+        FunctionPrototype,
+        TypeInfo,
+    )
 
     return _FunctionInfo(
         name="stub",
