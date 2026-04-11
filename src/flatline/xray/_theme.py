@@ -59,6 +59,13 @@ DEPTH_BAND_COLOR = "#0f1f30"
 EDGE_INACTIVE_COLOR = "#2a5a7a"
 EDGE_INACTIVE_WIDTH = 1.0
 
+# CPG overlay edge colors and styles.
+CBRANCH_TRUE_COLOR = "#22c55e"
+CBRANCH_FALSE_COLOR = "#ef4444"
+IOP_EDGE_COLOR = "#f59e0b"
+FSPEC_EDGE_COLOR = "#8b5cf6"
+IOP_EDGE_DASH = (6, 4)
+
 TITLE_FONT = ("Helvetica", 24, "bold")
 SUBTITLE_FONT = ("Helvetica", 11)
 PANEL_TITLE_FONT = ("Helvetica", 14, "bold")
@@ -113,6 +120,8 @@ __all__ = [
     "BAND_FONT",
     "BODY_FONT",
     "CANVAS_BG",
+    "CBRANCH_FALSE_COLOR",
+    "CBRANCH_TRUE_COLOR",
     "CHROME",
     "DEPTH_BAND_COLOR",
     "DEPTH_BAND_INPUT_FILL",
@@ -124,6 +133,9 @@ __all__ = [
     "EDGE_INPUT",
     "EDGE_OUTPUT",
     "EDGE_RELATED",
+    "FSPEC_EDGE_COLOR",
+    "IOP_EDGE_COLOR",
+    "IOP_EDGE_DASH",
     "NODE_FONT",
     "NODE_OPCODE_CALL",
     "NODE_OPCODE_DEFAULT",

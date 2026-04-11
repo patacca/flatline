@@ -66,3 +66,24 @@ def test_theme_has_depth_band_and_inactive_edge_tokens() -> None:
     assert hasattr(module, "EDGE_INACTIVE_WIDTH"), "EDGE_INACTIVE_WIDTH token missing from _theme"
     assert isinstance(module.EDGE_INACTIVE_WIDTH, (int, float))
     assert module.EDGE_INACTIVE_WIDTH > 0
+
+
+def test_cpg_edge_theme_tokens() -> None:
+    module = importlib.import_module("flatline.xray._theme")
+
+    # Verify all CPG edge constants are importable and have correct types
+    assert hasattr(module, "CBRANCH_TRUE_COLOR"), "CBRANCH_TRUE_COLOR token missing from _theme"
+    assert isinstance(module.CBRANCH_TRUE_COLOR, str) and module.CBRANCH_TRUE_COLOR.startswith("#")
+
+    assert hasattr(module, "CBRANCH_FALSE_COLOR"), "CBRANCH_FALSE_COLOR token missing from _theme"
+    assert isinstance(module.CBRANCH_FALSE_COLOR, str) and module.CBRANCH_FALSE_COLOR.startswith("#")
+
+    assert hasattr(module, "IOP_EDGE_COLOR"), "IOP_EDGE_COLOR token missing from _theme"
+    assert isinstance(module.IOP_EDGE_COLOR, str) and module.IOP_EDGE_COLOR.startswith("#")
+
+    assert hasattr(module, "FSPEC_EDGE_COLOR"), "FSPEC_EDGE_COLOR token missing from _theme"
+    assert isinstance(module.FSPEC_EDGE_COLOR, str) and module.FSPEC_EDGE_COLOR.startswith("#")
+
+    assert hasattr(module, "IOP_EDGE_DASH"), "IOP_EDGE_DASH token missing from _theme"
+    assert isinstance(module.IOP_EDGE_DASH, tuple) and len(module.IOP_EDGE_DASH) == 2
+    assert all(isinstance(x, int) and x > 0 for x in module.IOP_EDGE_DASH)
