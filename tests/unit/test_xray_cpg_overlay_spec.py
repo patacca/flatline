@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from flatline import VarnodeFlags
 from flatline.models.enums import PcodeOpcode
 from flatline.models.pcode_ops import Cbranch, IntAdd, Return
 from flatline.xray._layout import VisualNode
@@ -170,5 +171,115 @@ def test_collect_cbranch_edges_ignores_non_cbranch_ops() -> None:
         {0x4010B0: [target_root]},
         {60: source_root},
     )
+
+    assert edges == []
+
+
+# ---------------------------------------------------------------------------
+# Task 5 — IOP edge collection
+# ---------------------------------------------------------------------------
+
+
+def _make_varnode_flags() -> VarnodeFlags:
+    return VarnodeFlags(
+        is_constant=False,
+        is_input=False,
+        is_free=False,
+        is_implied=False,
+        is_explicit=True,
+        is_read_only=False,
+        is_persist=False,
+        is_addr_tied=False,
+    )
+
+
+def test_collect_iop_edges_returns_edge_for_valid_iop_varnode() -> None:
+    from flatline.models.enums import VarnodeSpace
+    from flatline.models.varnodes import IopVarnode
+    from flatline.xray._cpg_overlay import collect_iop_edges
+
+    source_root = _node("src-root", ("op", 70), 0)
+    target_root = _node("tgt-root", ("op", 71), 0)
+
+    iop_vn = IopVarnode(
+        id=1000,
+        space=VarnodeSpace.IOP,
+        offset=0,
+        size=8,
+        flags=_make_varnode_flags(),
+        defining_op_id=None,
+        use_op_ids=[70],
+        target_op_id=71,
+    )
+
+    edges = collect_iop_edges({1000: iop_vn}, {70: object(), 71: object()}, {70: source_root, 71: target_root})
+
+    assert edges == [(source_root, target_root)]
+
+
+def test_collect_iop_edges_skips_when_target_op_id_is_none() -> None:
+    from flatline.models.enums import VarnodeSpace
+    from flatline.models.varnodes import IopVarnode
+    from flatline.xray._cpg_overlay import collect_iop_edges
+
+    source_root = _node("src-root", ("op", 72), 0)
+
+    iop_vn = IopVarnode(
+        id=1001,
+        space=VarnodeSpace.IOP,
+        offset=0,
+        size=8,
+        flags=_make_varnode_flags(),
+        defining_op_id=None,
+        use_op_ids=[72],
+        target_op_id=None,
+    )
+
+    edges = collect_iop_edges({1001: iop_vn}, {72: object()}, {72: source_root})
+
+    assert edges == []
+
+
+def test_collect_iop_edges_skips_when_use_op_ids_is_empty() -> None:
+    from flatline.models.enums import VarnodeSpace
+    from flatline.models.varnodes import IopVarnode
+    from flatline.xray._cpg_overlay import collect_iop_edges
+
+    target_root = _node("tgt-root", ("op", 73), 0)
+
+    iop_vn = IopVarnode(
+        id=1002,
+        space=VarnodeSpace.IOP,
+        offset=0,
+        size=8,
+        flags=_make_varnode_flags(),
+        defining_op_id=None,
+        use_op_ids=[],
+        target_op_id=73,
+    )
+
+    edges = collect_iop_edges({1002: iop_vn}, {73: object()}, {73: target_root})
+
+    assert edges == []
+
+
+def test_collect_iop_edges_ignores_non_iop_varnodes() -> None:
+    from flatline.models.enums import VarnodeSpace
+    from flatline.models.varnodes import UniqueVarnode
+    from flatline.xray._cpg_overlay import collect_iop_edges
+
+    source_root = _node("src-root", ("op", 74), 0)
+
+    non_iop_vn = UniqueVarnode(
+        id=1003,
+        space=VarnodeSpace.UNIQUE,
+        offset=0x100,
+        size=8,
+        flags=_make_varnode_flags(),
+        defining_op_id=None,
+        use_op_ids=[74],
+    )
+
+    edges = collect_iop_edges({1003: non_iop_vn}, {74: object()}, {74: source_root})
 
     assert edges == []

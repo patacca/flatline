@@ -12,6 +12,7 @@ from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from flatline.models.pcode_ops.branch import Cbranch
+from flatline.models.varnodes import IopVarnode
 
 if TYPE_CHECKING:
     from flatline.models import PcodeOpInfo
@@ -85,8 +86,33 @@ def collect_cbranch_edges(
     return edges
 
 
+def collect_iop_edges(
+    varnode_by_id: dict,
+    op_by_id: dict,
+    opid_to_root: dict[int, VisualNode],
+) -> list[tuple[VisualNode, VisualNode]]:
+    """Collect overlay edges for IOP (internal op pointer) varnodes."""
+    edges: list[tuple[VisualNode, VisualNode]] = []
+    for vn in varnode_by_id.values():
+        if not isinstance(vn, IopVarnode):
+            continue
+        if vn.target_op_id is None:
+            continue
+        target_root = opid_to_root.get(vn.target_op_id)
+        if target_root is None:
+            continue
+        if not vn.use_op_ids:
+            continue
+        source_root = opid_to_root.get(vn.use_op_ids[0])
+        if source_root is None:
+            continue
+        edges.append((source_root, target_root))
+    return edges
+
+
 __all__ = [
     "build_address_to_roots",
     "build_opid_to_root",
     "collect_cbranch_edges",
+    "collect_iop_edges",
 ]
