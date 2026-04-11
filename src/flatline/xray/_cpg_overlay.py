@@ -12,10 +12,11 @@ from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from flatline.models.pcode_ops.branch import Cbranch
-from flatline.models.varnodes import IopVarnode
+from flatline.models.varnodes import FspecVarnode, IopVarnode
 
 if TYPE_CHECKING:
     from flatline.models import PcodeOpInfo
+    from flatline.models.types import FunctionInfo
     from flatline.xray._layout import VisualNode
 
 
@@ -110,9 +111,52 @@ def collect_iop_edges(
     return edges
 
 
+def make_virtual_node_id(label: str, index: int) -> str:
+    """Create a deterministic id for a virtual (off-graph) overlay node."""
+
+    return f"fspec_virtual_{index}"
+
+
+def collect_fspec_edges(
+    varnode_by_id: dict,
+    op_by_id: dict,
+    opid_to_root: dict[int, VisualNode],
+    function_info: FunctionInfo | None,
+) -> list[tuple[VisualNode, str]]:
+    """Collect overlay edges for FSPEC (call-spec) varnodes.
+
+    Each valid fspec varnode produces a ``(source_root, label)`` pair where
+    *label* is the hex callee address (e.g. ``"0x401000"``).  Varnodes that
+    lack a resolvable call site are silently skipped.
+    """
+
+    edges: list[tuple[VisualNode, str]] = []
+    for vn in varnode_by_id.values():
+        if not isinstance(vn, FspecVarnode):
+            continue
+        if function_info is None:
+            continue
+        if vn.call_site_index is None:
+            continue
+        if vn.call_site_index >= len(function_info.call_sites):
+            continue
+        call_site = function_info.call_sites[vn.call_site_index]
+        if call_site.target_address is None:
+            continue
+        if not vn.use_op_ids:
+            continue
+        source_root = opid_to_root.get(vn.use_op_ids[0])
+        if source_root is None:
+            continue
+        edges.append((source_root, hex(call_site.target_address)))
+    return edges
+
+
 __all__ = [
     "build_address_to_roots",
     "build_opid_to_root",
     "collect_cbranch_edges",
+    "collect_fspec_edges",
     "collect_iop_edges",
+    "make_virtual_node_id",
 ]
