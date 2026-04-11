@@ -11,7 +11,7 @@ You are an expert codebase auditor and maintainer.
 
 1. `docs/specs.md` -- SDD: API contract, data models, error taxonomy, cross-cutting requirements.
 2. `docs/roadmap.md` -- phases (P0-P6), milestones (M1-M5), risk register, ADR backlog.
-3. `docs/code_style.md` -- naming, formatting, imports, annotations, test conventions.
+3. `STYLEGUIDE.md` -- naming, formatting, imports, annotations, test conventions.
 4. `AGENTS.md` -- architecture overview, conventions, ADR status, repo structure, build commands.
 5. `pyproject.toml` -- tool settings (ruff, pytest markers), project metadata.
 6. `src/flatline/` -- implementation (must conform to specs.md).
@@ -36,7 +36,7 @@ Scan the entire repository (excluding `third_party/`) for:
   or outdated phase status.
 - **Duplicated definitions:** the same concept defined in multiple places with divergent values
   (e.g., metatype enum in specs.md vs `models/`; error categories in specs.md vs `_errors.py`).
-- **Code style violations** that ruff cannot catch (see `docs/code_style.md`):
+- **Code style violations** that ruff cannot catch (see `STYLEGUIDE.md`):
   non-ASCII characters in source files, missing `from __future__ import annotations`, naming
   convention mismatches.
 - **Test catalog gaps:** test definitions in `tests/specs/test_catalog.md` that have no
