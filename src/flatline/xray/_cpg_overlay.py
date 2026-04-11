@@ -14,8 +14,13 @@ from typing import TYPE_CHECKING
 
 from flatline.models.pcode_ops.branch import Cbranch
 from flatline.models.varnodes import FspecVarnode, IopVarnode
-from flatline.xray._canvas import manhattan_route, node_pad
-from flatline.xray._theme import CBRANCH_FALSE_COLOR, CBRANCH_TRUE_COLOR
+from flatline.xray._canvas import manhattan_route, nearest_side_anchors, node_pad
+from flatline.xray._theme import (
+    CBRANCH_FALSE_COLOR,
+    CBRANCH_TRUE_COLOR,
+    IOP_EDGE_COLOR,
+    IOP_EDGE_DASH,
+)
 
 if TYPE_CHECKING:
     from flatline.models import PcodeOpInfo
@@ -184,6 +189,32 @@ def draw_cbranch_edges(
         )
 
 
+def draw_iop_edges(
+    canvas: tk.Canvas,
+    iop_edges: list[tuple[VisualNode, VisualNode]],
+    op_by_id: dict,
+    varnode_by_id: dict,
+) -> None:
+    """Draw IOP reference overlay edges on the canvas.
+
+    Each edge runs between the nearest horizontal sides of *source* and *target*
+    using orthogonal Manhattan routing.  IOP edges use an amber dashed style to
+    distinguish them from data-flow and control-flow edges.
+    """
+    for source, target in iop_edges:
+        (sx, sy), (tx, ty) = nearest_side_anchors(source, target, op_by_id, varnode_by_id)
+        coords = manhattan_route(sx, sy, tx, ty)
+        canvas.create_line(
+            *coords,
+            fill=IOP_EDGE_COLOR,
+            width=1.4,
+            dash=IOP_EDGE_DASH,
+            arrow=tk.LAST,
+            arrowshape=(10, 12, 5),
+            tags=("iop_edge",),
+        )
+
+
 __all__ = [
     "build_address_to_roots",
     "build_opid_to_root",
@@ -191,5 +222,6 @@ __all__ = [
     "collect_fspec_edges",
     "collect_iop_edges",
     "draw_cbranch_edges",
+    "draw_iop_edges",
     "make_virtual_node_id",
 ]
