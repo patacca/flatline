@@ -81,6 +81,31 @@ After launch, the window shows three coordinated views. You can resize these by 
 
 Clicking any element in one panel synchronizes the highlights and focus across all three views, ensuring you always have the full context for the current p-code operation.
 
+## 6. Enable the CPG overlay
+
+The Code Property Graph (CPG) mode adds control-flow and reference edges on top of the default data-flow graph.
+
+Launch the viewer with the `--cpg` flag:
+
+```bash
+flatline-xray demo.bin \
+  --base-address 0x1000 \
+  --function-address 0x1000 \
+  --language-id x86:LE:64:default \
+  --compiler-spec gcc \
+  --cpg
+```
+
+In this mode, several new elements appear:
+
+- **Control-flow edges**: Solid lines connecting branch operations to their targets. Green indicates the true branch; red indicates the false branch.
+- **Reference edges**: Amber dashed lines connecting internal operation pointers (IOPs) to their target operations.
+- **Call targets**: Purple dashed lines connecting call operations to virtual nodes labeled with the destination address.
+
+The inspector panel now includes an **Edge Visibility** section at the bottom. Use the checkboxes to toggle the visibility of each overlay edge type.
+
+For a detailed breakdown of edge types and inspector changes, see the [CPG Overlay reference](cpg.md).
+
 ## Troubleshooting
 
 If the viewer refuses to start because `tkinter` is missing, install the Python
