@@ -7,12 +7,15 @@ uses those indexes to resolve typed ``Cbranch`` operations into overlay edges.
 
 from __future__ import annotations
 
+import tkinter as tk
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from flatline.models.pcode_ops.branch import Cbranch
 from flatline.models.varnodes import FspecVarnode, IopVarnode
+from flatline.xray._canvas import manhattan_route, node_pad
+from flatline.xray._theme import CBRANCH_FALSE_COLOR, CBRANCH_TRUE_COLOR
 
 if TYPE_CHECKING:
     from flatline.models import PcodeOpInfo
@@ -152,11 +155,41 @@ def collect_fspec_edges(
     return edges
 
 
+def draw_cbranch_edges(
+    canvas: tk.Canvas,
+    cbranch_edges: list[tuple[VisualNode, VisualNode, str]],
+    op_by_id: dict,
+    varnode_by_id: dict,
+) -> None:
+    """Draw true/false conditional branch overlay edges on the canvas.
+
+    Each edge runs from the bottom of *source* to the top of *target* using
+    orthogonal Manhattan routing.  True branches are green, false branches red.
+    """
+
+    for source, target, branch_type in cbranch_edges:
+        sx = source.x
+        sy = source.y + node_pad(source, op_by_id, varnode_by_id)
+        tx = target.x
+        ty = target.y - node_pad(target, op_by_id, varnode_by_id)
+        color = CBRANCH_TRUE_COLOR if branch_type == "true" else CBRANCH_FALSE_COLOR
+        coords = manhattan_route(sx, sy, tx, ty)
+        canvas.create_line(
+            *coords,
+            fill=color,
+            width=1.8,
+            arrow=tk.LAST,
+            arrowshape=(12, 14, 6),
+            tags=("cbranch_edge",),
+        )
+
+
 __all__ = [
     "build_address_to_roots",
     "build_opid_to_root",
     "collect_cbranch_edges",
     "collect_fspec_edges",
     "collect_iop_edges",
+    "draw_cbranch_edges",
     "make_virtual_node_id",
 ]
