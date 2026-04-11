@@ -14,10 +14,12 @@ from typing import TYPE_CHECKING
 
 from flatline.models.pcode_ops.branch import Cbranch
 from flatline.models.varnodes import FspecVarnode, IopVarnode
-from flatline.xray._canvas import manhattan_route, nearest_side_anchors, node_pad
+from flatline.xray._canvas import manhattan_route, nearest_side_anchors, node_pad, node_size
 from flatline.xray._theme import (
+    CANVAS_BG,
     CBRANCH_FALSE_COLOR,
     CBRANCH_TRUE_COLOR,
+    FSPEC_EDGE_COLOR,
     IOP_EDGE_COLOR,
     IOP_EDGE_DASH,
 )
@@ -215,6 +217,56 @@ def draw_iop_edges(
         )
 
 
+def draw_fspec_edges(
+    canvas: tk.Canvas,
+    fspec_edges: list[tuple[VisualNode, str]],
+    op_by_id: dict,
+    varnode_by_id: dict,
+) -> None:
+    """Draw fspec call-target overlay edges with virtual destination nodes.
+
+    For each (source_node, label) pair a small virtual rectangle is drawn to the
+    right of *source*, and an edge is drawn from the right side of *source* to the
+    left side of that virtual node.  The label shows the hex callee address.
+    """
+    vw, vh = 40, 10  # half-width and half-height of virtual nodes
+    for index, (source, label) in enumerate(fspec_edges):
+        sw, sh = node_size(source, op_by_id, varnode_by_id)
+        # Source anchor: right midpoint
+        sx = source.x + sw / 2.0
+        sy = source.y
+        # Virtual node position: offset right, staggered vertically
+        vx = source.x + sw * 1.5
+        vy = source.y + sh * 0.6 * index
+        # Draw virtual node: rectangle + text label
+        vtag = make_virtual_node_id(label, index)
+        canvas.create_rectangle(
+            vx - vw, vy - vh, vx + vw, vy + vh,
+            outline=FSPEC_EDGE_COLOR,
+            fill=CANVAS_BG,
+            tags=(vtag, "fspec_virtual_node"),
+        )
+        canvas.create_text(
+            vx, vy,
+            text=label,
+            fill=FSPEC_EDGE_COLOR,
+            font=("Courier", 8),
+            tags=(vtag, "fspec_virtual_node"),
+        )
+        # Edge: right side of source → left side of virtual node
+        tx = vx - vw
+        ty = vy
+        coords = manhattan_route(sx, sy, tx, ty)
+        canvas.create_line(
+            *coords,
+            fill=FSPEC_EDGE_COLOR,
+            width=1.4,
+            arrow=tk.LAST,
+            arrowshape=(10, 12, 5),
+            tags=("fspec_edge",),
+        )
+
+
 __all__ = [
     "build_address_to_roots",
     "build_opid_to_root",
@@ -222,6 +274,7 @@ __all__ = [
     "collect_fspec_edges",
     "collect_iop_edges",
     "draw_cbranch_edges",
+    "draw_fspec_edges",
     "draw_iop_edges",
     "make_virtual_node_id",
 ]
