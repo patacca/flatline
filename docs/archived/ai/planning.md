@@ -4,7 +4,7 @@ Objective: Produce an SDD (Spec-Driven Development) plan for a Python library (t
 
 Read these first:
 - notes/api/decompiler_inventory.md (primary: decompiler surface/contract)
-- notes/api/mvp_contract.md (merge; parts obsolete—reconcile)
+- notes/api/mvp_contract.md (merge; parts obsolete-reconcile)
 - notes/r2ghidra/integration_map.md (reference only)
 - notes/experiments/ (test inspiration)
 
@@ -14,7 +14,7 @@ Baseline:
 - C++ path: third_party/ghidra/Ghidra/Features/Decompiler/src/decompile/cpp
 
 Constraints:
-- In-process decompiler execution is mandatory (Python↔C++ bridge required; don’t propose binding/build details yet).
+- In-process decompiler execution is mandatory (Python↔C++ bridge required; don't propose binding/build details yet).
 - Package must be usable out-of-the-box via pip; users must not build/provide Ghidra. Plan for shipping the decompiler and address licensing/redistribution strategy.
 - Target OS: Linux/macOS/Windows. MVP: Linux first; prioritize choices that preserve future cross-platform feasibility.
 - Python versions: 3.13+.
@@ -31,7 +31,7 @@ Deliverables (create/overwrite):
      * Decompilation scope options: (A) bytes+arch/function-level vs (B) full program/binary using loaders vs hybrids
      * Pros/cons, risks, impact on determinism, performance, UX, fixtures, packaging, cross-platform
      * Recommendation(s) + explicit decision points requiring user choice
-   - Strategy for “stable Python API over unstable Ghidra”: adapter boundaries, contract tests, change-detection process
+   - Strategy for "stable Python API over unstable Ghidra": adapter boundaries, contract tests, change-detection process
    - Cross-cutting: determinism/oracles, concurrency model, perf budgets, security boundaries, logging, configuration, extensibility
    - MVP vs Next; merge mvp_contract.md, marking obsolete items and replacements
    - End with: Open Questions + Assumptions
@@ -40,7 +40,7 @@ Deliverables (create/overwrite):
    - Phases/milestones with entry/exit criteria (Linux MVP first; cross-platform later)
    - Risk register + mitigations (ABI drift, determinism, package size, CI/toolchains, license compliance, Windows risk, etc.)
    - ADR backlog (title + question answered + when needed)
-   - Release/versioning plan aligned with “latest Ghidra only”
+   - Release/versioning plan aligned with "latest Ghidra only"
 
 3) tests/ (definitions only)
    - Propose tests/ layout; write test-spec files (markdown and/or pytest skeletons) without real integration calls

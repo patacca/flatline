@@ -1,4 +1,4 @@
-You are refining an EXISTING plan (previous iteration). Treat the repo’s current state as the latest output of that plan. Do **not** create a new plan; regenerate the **same deliverables** as a consistent vNext with the smallest necessary changes.
+You are refining an EXISTING plan (previous iteration). Treat the repo's current state as the latest output of that plan. Do **not** create a new plan; regenerate the **same deliverables** as a consistent vNext with the smallest necessary changes.
 
 ## Inputs (read first)
 - `planning.md`, `specs.md`, `roadmap.md`, `tests/**`

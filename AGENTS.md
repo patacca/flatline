@@ -1,7 +1,7 @@
 # Maintenance
 - Update only when repo instructions or durable project facts change; do not touch this file for routine code, CI, dependency-pin, or scanner-remediation edits.
 - Prefer short commit message. One line if possible.
-- **NEVER use `git add -f` / `--force` to override `.gitignore`.** If a path is gitignored, it stays gitignored.
+- **NEVER use `git add -f` / `--force` to override `.gitignore`.**
 
 # Overview
 - `flatline`: pip-installable Python wrapper around Ghidra C++ decompiler (surface only).
@@ -9,17 +9,15 @@
 - Latest public release: `0.1.2`.
 - Enriched output: `Enriched.pcode` + `Pcode.to_graph()` for graph traversal/drawing.
 - Utility: `src/flatline/xray/` ships `flatline-xray` / `python -m flatline.xray` (tkinter pcode viewer).
-- `flatline[xray]` extra removed; xray uses Ghidra Sleigh natively; `tkinter` is lazily imported.
 - Docs: `https://patacca.github.io/flatline/`; README covers local MkDocs access.
 - Hosts: Linux x86_64, macOS arm64, Windows x86_64 (Tier 1); Linux aarch64, macOS x86_64 (Pending).
 - Wheels: CPython 3.13/3.14, 64-bit; manylinux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64.
 - Deps: `ghidra-sleigh` (runtime data), `networkx` (pcode graph); `ghidra_sleigh.get_runtime_data_dir()`.
 - Submodules: `third_party/ghidra` (active); `third_party/r2ghidra` (ignored).
 - Fixture ISAs: x86_64, x86_32, AArch64, RISC-V 64, MIPS32; `tests/fixtures/*.hex`.
-- Regression: switch site `0x1009` + 9 targets; `tests/fixtures/generate_hex_fixtures.py`.
 
 # Design posture
-- User-centered; prefer caller convenience.
+- User-centered; focus on user convenience.
 - Only test functional changes; packaging/CI fixes use direct artifact validation instead of new tests, unless they change a durable release/support/native-build contract.
 
 # Architecture (3-layer adapter)
@@ -31,21 +29,20 @@
 - Flow: `SleighArchitecture` -> `LoadImage` -> action perform -> `docFunction` -> `FunctionInfo`.
 
 # Conventions
-- Max 600 lines/file (except docs). Contract-first/TDD. ASCII only in source/build files.
+- Max 600 lines/file (except docs). Contract-first/TDD. ASCII-only in source/build files.
 - Use code comments extensively to explain concepts, intent, and non-obvious logic; save re-derivation time and reduce documentation burden.
 - Clear tree structure and self-explanatory names for files, modules, classes, functions, variables.
-- Python: guard type-hint imports behind `if TYPE_CHECKING:`.
+- Python: ALWAYS guard type-hint imports behind `if TYPE_CHECKING:`.
 - Hard errors on invalid input; warnings on degraded success; no silent fallbacks.
 - Frozen value copies; no native pointers cross ABI.
 - Tests: structured format parsing, not grep; workflow tests only for durable release/support/native-build invariants.
 - Build UX: no user-facing `CPPFLAGS`/`LDFLAGS`/`PKG_CONFIG_PATH`.
 - CI: Windows must not use `ilammy/msvc-dev-cmd`; all checkout steps set `persist-credentials: false`; explicit `permissions: contents: read`.
-- C++20: `cpp_std=c++20` in root/`src/flatline/meson.build`.
-- Style: `docs/code_style.md`.
+- Use C++20 std
+- Coding style: `docs/code_style.md`
 
 # Baseline and policy
 - Vendored: `third_party/ghidra` submodule.
-- MVP: Linux x86_64, Python 3.13+, latest-upstream-only.
 - ISA priority: x86/ARM/RISC-V/MIPS 32+64; fixture-backed x86 32/64, ARM64, RISC-V 64, MIPS32.
 - Stable public API over unstable internals. Always use venv.
 
@@ -54,10 +51,10 @@
 - `docs/adr/`: accepted architecture decision records.
 - `docs/TODO.md`: next-scope features, platform expansion, open work.
 - `docs/archived/`: archived historical docs; **PERMANENTLY READ-ONLY**.
-- `docs/code_style.md`: style guide.
+- `docs/code_style.md`: coding style guide.
 - `CHANGELOG.md`: release history; **NEVER modify dated release entries**.
 - `mkdocs.yml` + `docs-site/`: documentation site structure.
-- `docs/ai/`: `planning.md` (brief), `preplanning.md` (constraints), `refine_plan.md` (checklist).
+- `docs/ai/`: active AI working docs.
 - `NOTICE`: attribution pointers; `LICENSE`: root license.
 - `docs/release_notes.md`: `0.1.x` contract; `docs/release_review.md`: checklist.
 - `docs/release_workflow.md`: operator steps; `docs/adr/adr-013.md`: wheel policy.
