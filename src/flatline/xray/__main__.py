@@ -80,6 +80,12 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="List available language/compiler pairs and exit.",
     )
+    parser.add_argument(
+        "--cpg",
+        action="store_true",
+        default=False,
+        help="Enable Code Property Graph mode (control-flow edges).",
+    )
     return parser
 
 
@@ -133,6 +139,8 @@ def _main_with_args(args: argparse.Namespace) -> int:
             result,
             request=request,
             source_label=str(target.memory_path),
+            cpg=args.cpg,
+            function_info=result.function_info,
         ).show()
     except Exception as exc:
         print(
