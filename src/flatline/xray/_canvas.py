@@ -65,6 +65,41 @@ def draw_depth_bands(
 
 
 # ---------------------------------------------------------------------------
+# Edge routing helpers
+# ---------------------------------------------------------------------------
+
+
+def manhattan_route(x1: float, y1: float, x2: float, y2: float) -> list[float]:
+    """Return a flat 4-point Manhattan polyline: down, horizontal, down."""
+    mid_y = (y1 + y2) / 2.0
+    return [x1, y1, x1, mid_y, x2, mid_y, x2, y2]
+
+
+def nearest_side_anchors(
+    source: VisualNode,
+    target: VisualNode,
+    op_by_id: dict,
+    varnode_by_id: dict,
+) -> tuple[tuple[float, float], tuple[float, float]]:
+    """Return (source_point, target_point) using the closest left/right side pair."""
+    sw, _sh = node_size(source, op_by_id, varnode_by_id)
+    tw, _th = node_size(target, op_by_id, varnode_by_id)
+    # Left midpoints: (x - half_w, y), right midpoints: (x + half_w, y)
+    s_left = (source.x - sw / 2.0, source.y)
+    s_right = (source.x + sw / 2.0, source.y)
+    t_left = (target.x - tw / 2.0, target.y)
+    t_right = (target.x + tw / 2.0, target.y)
+    # Try all 4 pairs; return the pair with shortest Euclidean distance
+    pairs = [
+        (s_left, t_right),
+        (s_right, t_left),
+        (s_left, t_left),
+        (s_right, t_right),
+    ]
+    return min(pairs, key=lambda p: (p[0][0] - p[1][0]) ** 2 + (p[0][1] - p[1][1]) ** 2)
+
+
+# ---------------------------------------------------------------------------
 # Edges
 # ---------------------------------------------------------------------------
 
@@ -88,31 +123,20 @@ def draw_edge(
     op_by_id: dict,
     varnode_by_id: dict,
 ) -> None:
-    """Draw a single smooth bezier edge from *source* to *target*."""
+    """Draw a single orthogonal Manhattan edge from *source* to *target*."""
     import tkinter as tk
 
     sx = source.x
     sy = source.y + node_pad(source, op_by_id, varnode_by_id)
     tx = target.x
     ty = target.y - node_pad(target, op_by_id, varnode_by_id)
-    # Inactive edge tokens keep edges subdued so node highlights dominate.
-    # The EDGE_INPUT/EDGE_OUTPUT palette is reserved for future active-edge re-coloring.
     color = _theme.EDGE_INACTIVE_COLOR
     width = _theme.EDGE_INACTIVE_WIDTH
-    span_y = ty - sy
+    coords = manhattan_route(sx, sy, tx, ty)
     canvas.create_line(
-        sx,
-        sy,
-        sx,
-        sy + span_y * 0.35,
-        tx,
-        sy + span_y * 0.65,
-        tx,
-        ty,
+        *coords,
         fill=color,
         width=width,
-        smooth=True,
-        splinesteps=24,
         arrow=tk.LAST,
         arrowshape=(12, 14, 6),
     )
@@ -132,20 +156,11 @@ def draw_cross_edge(
     sy = source.y + node_pad(source, op_by_id, varnode_by_id)
     tx = target.x
     ty = target.y - node_pad(target, op_by_id, varnode_by_id)
-    mid_y = (sy + ty) / 2.0
+    coords = manhattan_route(sx, sy, tx, ty)
     canvas.create_line(
-        sx,
-        sy,
-        sx,
-        mid_y,
-        tx,
-        mid_y,
-        tx,
-        ty,
+        *coords,
         fill=_theme.EDGE_RELATED,
         width=1.4,
-        smooth=True,
-        splinesteps=24,
         dash=(6, 4),
         arrow=tk.LAST,
         arrowshape=(10, 12, 5),
