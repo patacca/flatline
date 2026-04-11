@@ -36,7 +36,7 @@
 - Flow: `SleighArchitecture` -> `LoadImage` -> action perform -> `docFunction` -> `FunctionInfo`.
 
 # Conventions
-- Max 600 lines/file (except docs). Contract-first/TDD. ASCII-only in source/build files.
+- Max 600 lines/file (except docs). Contract-first/TDD. ASCII-only in source/build files. Try avoiding more than 5 level indentation.
 - Use code comments extensively to explain concepts, intent, and non-obvious logic; save re-derivation time and reduce documentation burden.
 - Clear tree structure and self-explanatory names for files, modules, classes, functions, variables.
 - **Python**: ALWAYS guard type-hint imports behind `if TYPE_CHECKING:`.
