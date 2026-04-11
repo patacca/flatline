@@ -75,6 +75,42 @@ def build_opid_to_root(
     return opid_to_root
 
 
+def build_opid_to_node(
+    visual_roots: Sequence[VisualNode],
+) -> dict[int, VisualNode]:
+    """Map each visualized pcode op id to its own visual node."""
+
+    opid_to_node: dict[int, VisualNode] = {}
+
+    def walk(node: VisualNode) -> None:
+        if node.actual[0] == "op":
+            opid_to_node[node.actual[1]] = node
+        for child in node.children:
+            walk(child)
+
+    for root in visual_roots:
+        walk(root)
+    return opid_to_node
+
+
+def build_vnid_to_node(
+    visual_roots: Sequence[VisualNode],
+) -> dict[int, VisualNode]:
+    """Map each visualized varnode id to its own visual node."""
+
+    vnid_to_node: dict[int, VisualNode] = {}
+
+    def walk(node: VisualNode) -> None:
+        if node.actual[0] == "varnode":
+            vnid_to_node[node.actual[1]] = node
+        for child in node.children:
+            walk(child)
+
+    for root in visual_roots:
+        walk(root)
+    return vnid_to_node
+
+
 def collect_cbranch_edges(
     pcode_ops: Sequence[PcodeOpInfo],
     addr_to_roots: Mapping[int, Sequence[VisualNode]],
@@ -104,24 +140,27 @@ def collect_cbranch_edges(
 
 def collect_iop_edges(
     varnode_by_id: dict,
-    opid_to_root: dict[int, VisualNode],
+    opid_to_node: dict[int, VisualNode],
+    vnid_to_node: dict[int, VisualNode],
 ) -> list[tuple[VisualNode, VisualNode]]:
-    """Collect overlay edges for IOP (internal op pointer) varnodes."""
+    """Collect overlay edges for IOP (internal op pointer) varnodes.
+
+    Each edge runs from the IOP varnode's own visual node to the visual node
+    of the target pcode op it references.
+    """
     edges: list[tuple[VisualNode, VisualNode]] = []
     for vn in varnode_by_id.values():
         if not isinstance(vn, IopVarnode):
             continue
         if vn.target_op_id is None:
             continue
-        target_root = opid_to_root.get(vn.target_op_id)
-        if target_root is None:
+        target_node = opid_to_node.get(vn.target_op_id)
+        if target_node is None:
             continue
-        if not vn.use_op_ids:
+        source_node = vnid_to_node.get(vn.id)
+        if source_node is None:
             continue
-        source_root = opid_to_root.get(vn.use_op_ids[0])
-        if source_root is None:
-            continue
-        edges.append((source_root, target_root))
+        edges.append((source_node, target_node))
     return edges
 
 
@@ -360,7 +399,9 @@ def build_checkbox_panel(
 __all__ = [
     "build_address_to_roots",
     "build_checkbox_panel",
+    "build_opid_to_node",
     "build_opid_to_root",
+    "build_vnid_to_node",
     "collect_cbranch_edges",
     "collect_fspec_edges",
     "collect_iop_edges",
