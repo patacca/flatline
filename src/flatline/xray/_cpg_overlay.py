@@ -268,6 +268,7 @@ def draw_fspec_edges(
             *coords,
             fill=FSPEC_EDGE_COLOR,
             width=1.4,
+            dash=(4, 3),
             arrow=tk.LAST,
             arrowshape=(10, 12, 5),
             tags=("fspec_edge",),
