@@ -45,6 +45,7 @@ nav:
   - X-Ray:
     - xray/index.md
     - Tutorial: xray/tutorial.md
+    - CPG Overlay: xray/cpg.md
   - How-to Guides:
     - how-to/index.md
     - Load from Binary: how-to/load-from-binary.md

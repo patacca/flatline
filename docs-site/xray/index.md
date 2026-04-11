@@ -19,9 +19,9 @@ writing code around `DecompileResult` and `Enriched.pcode`.
 
 The viewer features a three-panel layout designed for high-density analysis:
 
-- **Graph View** (Center): The dominant pane displaying p-code operations and varnode nodes. It supports interactive selection, highlighting, and zooming.
+- **Graph View** (Center): The dominant pane displaying p-code operations and varnode nodes. It supports interactive selection, highlighting, and zooming. In CPG mode, it displays an additional overlay of control-flow and reference edges.
 - **Assembly Panel** (Left): Shows the decoded instructions for the function.
-- **Inspector Panel** (Right): Provides detailed metadata for the currently selected node or instruction.
+- **Inspector Panel** (Right): Provides detailed metadata for the currently selected node or instruction. It also contains edge visibility toggles when the CPG overlay is active.
 
 All panes are resizable by dragging the vertical dividers between them. The graph pane automatically expands to fill available space when the window is resized.
 
@@ -31,6 +31,7 @@ It is useful for:
 - visual inspection of p-code use-def structure
 - checking how the decompiler recovered a function before you embed the result
   in tooling
+- analyzing control-flow and internal operation references using the CPG overlay
 
 ## Installation and runtime
 
