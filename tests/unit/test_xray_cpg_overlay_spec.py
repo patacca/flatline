@@ -199,8 +199,8 @@ def test_collect_iop_edges_returns_edge_for_valid_iop_varnode() -> None:
     from flatline.models.varnodes import IopVarnode
     from flatline.xray._cpg_overlay import collect_iop_edges
 
-    source_root = _node("src-root", ("op", 70), 0)
-    target_root = _node("tgt-root", ("op", 71), 0)
+    iop_vn_node = _node("iop-vn", ("varnode", 1000), 1)
+    target_op_node = _node("tgt-op", ("op", 71), 0)
 
     iop_vn = IopVarnode(
         id=1000,
@@ -213,10 +213,11 @@ def test_collect_iop_edges_returns_edge_for_valid_iop_varnode() -> None:
         target_op_id=71,
     )
 
-    root_by_op_id = {70: source_root, 71: target_root}
-    edges = collect_iop_edges({1000: iop_vn}, root_by_op_id)
+    opid_to_node = {71: target_op_node}
+    vnid_to_node = {1000: iop_vn_node}
+    edges = collect_iop_edges({1000: iop_vn}, opid_to_node, vnid_to_node)
 
-    assert edges == [(source_root, target_root)]
+    assert edges == [(iop_vn_node, target_op_node)]
 
 
 def test_collect_iop_edges_skips_when_target_op_id_is_none() -> None:
@@ -224,7 +225,7 @@ def test_collect_iop_edges_skips_when_target_op_id_is_none() -> None:
     from flatline.models.varnodes import IopVarnode
     from flatline.xray._cpg_overlay import collect_iop_edges
 
-    source_root = _node("src-root", ("op", 72), 0)
+    iop_vn_node = _node("iop-vn", ("varnode", 1001), 1)
 
     iop_vn = IopVarnode(
         id=1001,
@@ -237,17 +238,17 @@ def test_collect_iop_edges_skips_when_target_op_id_is_none() -> None:
         target_op_id=None,
     )
 
-    edges = collect_iop_edges({1001: iop_vn}, {72: source_root})
+    edges = collect_iop_edges({1001: iop_vn}, {}, {1001: iop_vn_node})
 
     assert edges == []
 
 
-def test_collect_iop_edges_skips_when_use_op_ids_is_empty() -> None:
+def test_collect_iop_edges_skips_when_iop_varnode_not_visualized() -> None:
     from flatline.models.enums import VarnodeSpace
     from flatline.models.varnodes import IopVarnode
     from flatline.xray._cpg_overlay import collect_iop_edges
 
-    target_root = _node("tgt-root", ("op", 73), 0)
+    target_op_node = _node("tgt-op", ("op", 73), 0)
 
     iop_vn = IopVarnode(
         id=1002,
@@ -260,7 +261,7 @@ def test_collect_iop_edges_skips_when_use_op_ids_is_empty() -> None:
         target_op_id=73,
     )
 
-    edges = collect_iop_edges({1002: iop_vn}, {73: target_root})
+    edges = collect_iop_edges({1002: iop_vn}, {73: target_op_node}, {})
 
     assert edges == []
 
@@ -282,9 +283,71 @@ def test_collect_iop_edges_ignores_non_iop_varnodes() -> None:
         use_op_ids=[74],
     )
 
-    edges = collect_iop_edges({1003: non_iop_vn}, {74: source_root})
+    edges = collect_iop_edges({1003: non_iop_vn}, {74: source_root}, {})
 
     assert edges == []
+
+
+def test_collect_iop_edges_connects_varnode_node_to_target_op_node_not_roots() -> None:
+    """Regression: IOP edges must connect the IOP varnode visual node to the
+    target op visual node, not their subtree roots.  The old implementation
+    resolved both endpoints via opid_to_root, which collapsed intra-subtree
+    references into self-loops on the root."""
+    from flatline.models.enums import VarnodeSpace
+    from flatline.models.varnodes import IopVarnode
+    from flatline.xray._cpg_overlay import collect_iop_edges
+
+    # Build a subtree: root_op -> iop_vn_node -> nested_op
+    nested_op = _node("nested-op", ("op", 91), 2)
+    iop_vn_node = _node("iop-vn", ("varnode", 2000), 1, nested_op)
+    root_op = _node("root-op", ("op", 90), 0, iop_vn_node)
+
+    iop_vn = IopVarnode(
+        id=2000,
+        space=VarnodeSpace.IOP,
+        offset=0,
+        size=8,
+        flags=_make_varnode_flags(),
+        defining_op_id=None,
+        use_op_ids=[90],
+        target_op_id=91,
+    )
+
+    opid_to_node = {90: root_op, 91: nested_op}
+    vnid_to_node = {2000: iop_vn_node}
+    edges = collect_iop_edges({2000: iop_vn}, opid_to_node, vnid_to_node)
+
+    # The edge MUST go from the IOP varnode node to the nested op node,
+    # NOT from root_op to root_op (which is what root-level resolution gives).
+    assert edges == [(iop_vn_node, nested_op)]
+
+
+# ---------------------------------------------------------------------------
+# build_opid_to_node / build_vnid_to_node
+# ---------------------------------------------------------------------------
+
+
+def test_build_opid_to_node_maps_ops_to_their_own_visual_nodes() -> None:
+    from flatline.xray._cpg_overlay import build_opid_to_node
+
+    nested_op = _node("nested-op", ("op", 31), 2)
+    root = _node("root", ("op", 30), 0, _node("vn-1", ("varnode", 301), 1, nested_op))
+
+    opid_to_node = build_opid_to_node([root])
+
+    assert opid_to_node[30] is root
+    assert opid_to_node[31] is nested_op
+
+
+def test_build_vnid_to_node_maps_varnodes_to_their_own_visual_nodes() -> None:
+    from flatline.xray._cpg_overlay import build_vnid_to_node
+
+    vn_node = _node("vn-1", ("varnode", 301), 1)
+    root = _node("root", ("op", 30), 0, vn_node)
+
+    vnid_to_node = build_vnid_to_node([root])
+
+    assert vnid_to_node[301] is vn_node
 
 
 # ---------------------------------------------------------------------------
