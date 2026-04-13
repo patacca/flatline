@@ -385,6 +385,106 @@ def deconflict_edge_segments(
     return [_waypoints_to_coords(wps) for wps in result_wps]
 
 
+def _find_reconnect_index(
+    waypoints: list[tuple[float, float]],
+    seg_idx: int,
+    rect: NodeRect,
+) -> int:
+    """Scan forward from *seg_idx + 1* to find the first waypoint outside *rect*.
+
+    Intermediate waypoints that sit inside the obstacle are skipped so the
+    detour splice reconnects to a point that is actually reachable.
+    """
+    reconnect = seg_idx + 1
+    while reconnect < len(waypoints) - 1 and _point_in_rect(*waypoints[reconnect], rect):
+        reconnect += 1
+    return reconnect
+
+
+def _detour_segment(
+    waypoints: list[tuple[float, float]],
+    seg_idx: int,
+    rect: NodeRect,
+    *,
+    horizontal: bool,
+) -> bool:
+    """Try to splice a detour around *rect* for the segment at *seg_idx*.
+
+    Works for both horizontal segments (*horizontal=True*, where the
+    segment has constant y) and vertical segments (*horizontal=False*,
+    constant x).  The two cases are structurally identical with swapped
+    axis roles, so a single ``(main, cross)`` abstraction handles both.
+
+    Returns True and mutates *waypoints* in-place when a detour is
+    spliced; returns False when the segment does not hit *rect*.
+    """
+    ax, ay = waypoints[seg_idx]
+    bx, by = waypoints[seg_idx + 1]
+
+    # Identify the axis roles: "main" is the axis along which the segment
+    # travels (variable coordinate), "cross" is the constant coordinate.
+    if horizontal:
+        main_a, main_b, cross = ax, bx, ay
+        main_lo, main_hi = min(ax, bx), max(ax, bx)
+        if not _h_segment_hits(main_lo, main_hi, cross, rect):
+            return False
+        dist_neg = abs(cross - rect.y_min)
+        dist_pos = abs(rect.y_max - cross)
+        detour_cross = (
+            rect.y_min - _OBSTACLE_MARGIN
+            if dist_neg <= dist_pos
+            else rect.y_max + _OBSTACLE_MARGIN
+        )
+        enter_main = rect.x_min - _OBSTACLE_MARGIN
+        exit_main = rect.x_max + _OBSTACLE_MARGIN
+    else:
+        main_a, main_b, cross = ay, by, ax
+        main_lo, main_hi = min(ay, by), max(ay, by)
+        if not _v_segment_hits(main_lo, main_hi, cross, rect):
+            return False
+        dist_neg = abs(cross - rect.x_min)
+        dist_pos = abs(rect.x_max - cross)
+        detour_cross = (
+            rect.x_min - _OBSTACLE_MARGIN
+            if dist_neg <= dist_pos
+            else rect.x_max + _OBSTACLE_MARGIN
+        )
+        enter_main = rect.y_min - _OBSTACLE_MARGIN
+        exit_main = rect.y_max + _OBSTACLE_MARGIN
+
+    if main_a > main_b:
+        enter_main, exit_main = exit_main, enter_main
+
+    reconnect = _find_reconnect_index(waypoints, seg_idx, rect)
+    bx, by = waypoints[reconnect]
+
+    # Build the 6-point detour splice.  For a horizontal segment the detour
+    # goes: keep-y -> enter-x -> shift-y -> exit-x -> restore-y -> end.
+    # For vertical, the pattern is transposed: keep-x -> enter-y -> shift-x
+    # -> exit-y -> restore-x -> end.
+    if horizontal:
+        splice = [
+            (ax, ay),
+            (enter_main, ay),
+            (enter_main, detour_cross),
+            (exit_main, detour_cross),
+            (exit_main, by),
+            (bx, by),
+        ]
+    else:
+        splice = [
+            (ax, ay),
+            (ax, enter_main),
+            (detour_cross, enter_main),
+            (detour_cross, exit_main),
+            (bx, exit_main),
+            (bx, by),
+        ]
+
+    waypoints[seg_idx : reconnect + 1] = splice
+    return True
+
+
 def manhattan_route(
     x1: float,
     y1: float,
@@ -398,8 +498,8 @@ def manhattan_route(
     only vertical and horizontal segments, detouring around any *obstacles*.
 
     *first_axis* controls the initial path shape:
-    - ``"vertical"`` (default): down → horizontal → down (classic tree edge).
-    - ``"horizontal"``: right → vertical → right (for side-to-side IOP edges).
+    - ``"vertical"`` (default): down -> horizontal -> down (classic tree edge).
+    - ``"horizontal"``: right -> vertical -> right (for side-to-side IOP edges).
 
     Obstacles that contain the start or end point are automatically
     excluded so that anchor points sitting on padded node boundaries
@@ -413,86 +513,36 @@ def manhattan_route(
     waypoints = _build_initial_waypoints(x1, y1, x2, y2, first_axis, safe_obstacles)
 
     for _ in range(_MAX_DETOUR_PASSES):
-        fixed = False
-        for seg_idx in range(len(waypoints) - 1):
-            ax, ay = waypoints[seg_idx]
-            bx, by = waypoints[seg_idx + 1]
-
-            if ay == by:
-                seg_y = ay
-                x_lo, x_hi = min(ax, bx), max(ax, bx)
-                for rect in safe_obstacles:
-                    if not _h_segment_hits(x_lo, x_hi, seg_y, rect):
-                        continue
-                    reconnect = seg_idx + 1
-                    while reconnect < len(waypoints) - 1 and _point_in_rect(
-                        *waypoints[reconnect], rect
-                    ):
-                        reconnect += 1
-                    bx, by = waypoints[reconnect]
-
-                    dist_above = abs(seg_y - rect.y_min)
-                    dist_below = abs(rect.y_max - seg_y)
-                    if dist_above <= dist_below:
-                        detour_y = rect.y_min - _OBSTACLE_MARGIN
-                    else:
-                        detour_y = rect.y_max + _OBSTACLE_MARGIN
-                    enter_x = rect.x_min - _OBSTACLE_MARGIN
-                    exit_x = rect.x_max + _OBSTACLE_MARGIN
-                    if ax > bx:
-                        enter_x, exit_x = exit_x, enter_x
-                    waypoints[seg_idx : reconnect + 1] = [
-                        (ax, ay),
-                        (enter_x, ay),
-                        (enter_x, detour_y),
-                        (exit_x, detour_y),
-                        (exit_x, by),
-                        (bx, by),
-                    ]
-                    fixed = True
-                    break
-
-            elif ax == bx:
-                seg_x = ax
-                y_lo, y_hi = min(ay, by), max(ay, by)
-                for rect in safe_obstacles:
-                    if not _v_segment_hits(y_lo, y_hi, seg_x, rect):
-                        continue
-                    reconnect = seg_idx + 1
-                    while reconnect < len(waypoints) - 1 and _point_in_rect(
-                        *waypoints[reconnect], rect
-                    ):
-                        reconnect += 1
-                    bx, by = waypoints[reconnect]
-
-                    dist_left = abs(seg_x - rect.x_min)
-                    dist_right = abs(rect.x_max - seg_x)
-                    if dist_left <= dist_right:
-                        detour_x = rect.x_min - _OBSTACLE_MARGIN
-                    else:
-                        detour_x = rect.x_max + _OBSTACLE_MARGIN
-                    enter_y = rect.y_min - _OBSTACLE_MARGIN
-                    exit_y = rect.y_max + _OBSTACLE_MARGIN
-                    if ay > by:
-                        enter_y, exit_y = exit_y, enter_y
-                    waypoints[seg_idx : reconnect + 1] = [
-                        (ax, ay),
-                        (ax, enter_y),
-                        (detour_x, enter_y),
-                        (detour_x, exit_y),
-                        (bx, exit_y),
-                        (bx, by),
-                    ]
-                    fixed = True
-                    break
-
-            if fixed:
-                break
+        fixed = _detour_one_segment(waypoints, safe_obstacles)
         if not fixed:
             break
 
     waypoints = _collapse_collinear(waypoints)
     return [c for pt in waypoints for c in pt]
+
+
+def _detour_one_segment(
+    waypoints: list[tuple[float, float]],
+    safe_obstacles: list[NodeRect],
+) -> bool:
+    """Scan *waypoints* for the first segment that hits an obstacle and splice a detour.
+
+    Returns True if a detour was applied, False if all segments are clear.
+    """
+    for seg_idx in range(len(waypoints) - 1):
+        ax, ay = waypoints[seg_idx]
+        bx, by = waypoints[seg_idx + 1]
+
+        is_horizontal = ay == by
+        is_vertical = ax == bx
+        if not is_horizontal and not is_vertical:
+            continue
+
+        for rect in safe_obstacles:
+            if _detour_segment(waypoints, seg_idx, rect, horizontal=is_horizontal):
+                return True
+
+    return False
 
 
 def nearest_side_anchors(
