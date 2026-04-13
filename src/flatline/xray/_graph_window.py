@@ -9,23 +9,21 @@ from typing import TYPE_CHECKING
 
 try:
     import tkinter as tk
-except ImportError as exc:  # pragma: no cover - platform dependent
+except ImportError as exc:
     raise ImportError(
-        "flatline-xray requires tkinter, which is missing from this Python "
-        "installation.\n"
-        "  Debian/Ubuntu:  sudo apt install python3-tk\n"
-        "  Fedora:         sudo dnf install python3-tkinter\n"
-        "  macOS Homebrew: brew install python-tk"
+        "tkinter is required for flatline.xray - install a Python build "
+        "that includes tkinter (e.g. python3-tk on Debian/Ubuntu).",
     ) from exc
 
 if TYPE_CHECKING:
+    from typing import ClassVar
+
     from ..models.types import FunctionInfo
 
 from . import _theme
 from ._canvas import (
-    draw_cross_edge,
+    draw_all_tree_edges,
     draw_depth_bands,
-    draw_edges,
     draw_nodes,
     hide_all_glows,
     show_node_glow,
@@ -83,6 +81,17 @@ class XrayWindow(tk.Tk):
     # Zoom level when the window opens (or after reset_view()).
     # Exposed as a class constant so headless tests can verify determinism.
     _INITIAL_ZOOM = 1.0
+
+    # Base arrowshape tuples (at zoom=1.0); rescaled on each zoom change.
+    _ARROW_LARGE = (12, 14, 6)
+    _ARROW_SMALL = (10, 12, 5)
+    _ARROW_SHAPES: ClassVar[dict[str, tuple[int, int, int]]] = {
+        "tree_edge": _ARROW_LARGE,
+        "cbranch_edge": _ARROW_LARGE,
+        "cross_edge": _ARROW_SMALL,
+        "iop_edge": _ARROW_SMALL,
+        "fspec_edge": _ARROW_SMALL,
+    }
 
     def __init__(
         self,
@@ -281,10 +290,14 @@ class XrayWindow(tk.Tk):
             self._bottom_margin,
             self._level_gap,
         )
-        for root in self.visual_roots:
-            draw_edges(self.canvas, root, self.op_by_id, self.varnode_by_id, _obs)
-        for parent, child in self._cross_edges:
-            draw_cross_edge(self.canvas, child, parent, self.op_by_id, self.varnode_by_id, _obs)
+        draw_all_tree_edges(
+            self.canvas,
+            self.visual_roots,
+            self._cross_edges,
+            self.op_by_id,
+            self.varnode_by_id,
+            _obs,
+        )
         for root in self.visual_roots:
             draw_nodes(self.canvas, root, self.op_by_id, self.varnode_by_id, self._show_node)
         # CPG overlay: IOP + fspec always drawn; CBRANCH only when CPG enabled.
@@ -317,24 +330,15 @@ class XrayWindow(tk.Tk):
         self.canvas.xview_moveto(x_center)
         self.canvas.yview_moveto(0.0)
         self.canvas.bind("<MouseWheel>", self._on_mouse_wheel)
-        self.canvas.bind(
-            "<Button-4>",
-            lambda event: self._handle_button_scroll(event, zoom_in=True),
-        )
-        self.canvas.bind(
-            "<Button-5>",
-            lambda event: self._handle_button_scroll(event, zoom_in=False),
-        )
+        self.canvas.bind("<Button-4>", lambda e: self._handle_button_scroll(e, zoom_in=True))
+        self.canvas.bind("<Button-5>", lambda e: self._handle_button_scroll(e, zoom_in=False))
         try:
-            self.canvas.bind("<Button-6>", lambda _event: self.canvas.xview_scroll(-3, "units"))
-            self.canvas.bind("<Button-7>", lambda _event: self.canvas.xview_scroll(3, "units"))
+            self.canvas.bind("<Button-6>", lambda _e: self.canvas.xview_scroll(-3, "units"))
+            self.canvas.bind("<Button-7>", lambda _e: self.canvas.xview_scroll(3, "units"))
         except tk.TclError:
             pass
-        self.bind("<Control-equal>", lambda event: self._do_zoom(self._zoom * 1.15, event))
-        self.bind(
-            "<Control-minus>",
-            lambda event: self._do_zoom(self._zoom / 1.15, event),
-        )
+        self.bind("<Control-equal>", lambda e: self._do_zoom(self._zoom * 1.15, e))
+        self.bind("<Control-minus>", lambda e: self._do_zoom(self._zoom / 1.15, e))
         self.bind("<Control-0>", lambda _event: self.reset_view())
 
     def show(self) -> None:
@@ -444,28 +448,19 @@ class XrayWindow(tk.Tk):
         selected_op_ids: set[int],
         related_varnode_ids: set[int],
     ) -> str:
-        address_lines = "\n".join(f"  - 0x{address:x}" for address in sorted(addresses))
-        op_lines = "\n".join(
+        addr = "\n".join(f"  - 0x{a:x}" for a in sorted(addresses))
+        ops = "\n".join(
             f"  - op#{op.id}: {op.opcode}" for op in self.sorted_ops if op.id in selected_op_ids
         )
-        varnode_lines = "\n".join(
-            f"  - v{varnode.id}: {varnode.space}@0x{varnode.offset:x}"
-            for varnode in self.pcode.varnodes
-            if varnode.id in related_varnode_ids
+        vns = "\n".join(
+            f"  - v{v.id}: {v.space}@0x{v.offset:x}"
+            for v in self.pcode.varnodes
+            if v.id in related_varnode_ids
         )
-        return "\n".join(
-            [
-                "Assembly selection",
-                "",
-                "Addresses:",
-                address_lines or "  - none",
-                "",
-                "Ops at selection:",
-                op_lines or "  - none",
-                "",
-                "Related varnodes:",
-                varnode_lines or "  - none",
-            ]
+        return (
+            f"Assembly selection\n\nAddresses:\n{addr or '  - none'}\n\n"
+            f"Ops at selection:\n{ops or '  - none'}\n\n"
+            f"Related varnodes:\n{vns or '  - none'}"
         )
 
     def _show_node(self, node: VisualNode) -> None:
@@ -573,6 +568,7 @@ class XrayWindow(tk.Tk):
         cx = self.canvas.canvasx(widget_x)
         cy = self.canvas.canvasy(widget_y)
         self.canvas.scale("all", 0, 0, ratio, ratio)
+        self._rescale_arrowheads(new_zoom)
         new_w = self.virtual_width * new_zoom
         new_h = self.virtual_height * new_zoom
         self.canvas.configure(scrollregion=(0, 0, new_w, new_h))
@@ -589,6 +585,11 @@ class XrayWindow(tk.Tk):
         x_center = max(0.0, (w / 2.0 - self.canvas.winfo_width() / 2.0) / max(w, 1))
         self.canvas.xview_moveto(x_center)
         self.canvas.yview_moveto(0.0)
+
+    def _rescale_arrowheads(self, zoom: float) -> None:
+        for tag, base in self._ARROW_SHAPES.items():
+            scaled = tuple(v * zoom for v in base)
+            self.canvas.itemconfigure(tag, arrowshape=scaled)
 
 
 __all__ = ["XrayWindow"]

@@ -10,6 +10,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import flatline.xray._theme as _theme
+from flatline.xray._edge_routing import (
+    deconflict_edge_segments,
+    manhattan_route,
+)
+from flatline.xray._edge_slots import assign_edge_slots
 from flatline.xray._inputs import (
     _opcode_color,
     _varnode_color,
@@ -66,191 +71,91 @@ def draw_depth_bands(
 
 
 # ---------------------------------------------------------------------------
-# Edge routing helpers
-# ---------------------------------------------------------------------------
-
-# Small gap between an edge detour and the obstacle boundary it goes around.
-_OBSTACLE_MARGIN = 6.0
-
-# Safety limit: how many detour iterations before we give up and return
-# the best path found so far.  Prevents runaway loops when obstacles are
-# densely packed or overlapping.
-_MAX_DETOUR_PASSES = 30
-
-
-def _h_segment_hits(
-    x_lo: float,
-    x_hi: float,
-    seg_y: float,
-    rect: NodeRect,
-) -> bool:
-    """Return True if a horizontal segment at *seg_y* from *x_lo* to *x_hi*
-    overlaps *rect*.  Both ranges are treated as closed intervals.
-    """
-    return x_hi >= rect.x_min and x_lo <= rect.x_max and rect.y_min <= seg_y <= rect.y_max
-
-
-def manhattan_route(
-    x1: float,
-    y1: float,
-    x2: float,
-    y2: float,
-    obstacles: list[NodeRect] | None = None,
-) -> list[float]:
-    """Return a flat polyline that goes from (x1, y1) to (x2, y2) using
-    only vertical and horizontal segments, detouring around any *obstacles*.
-
-    Without obstacles (or with an empty list) the result is the classic
-    4-point down-horizontal-down path.
-    """
-    if not obstacles:
-        mid_y = (y1 + y2) / 2.0
-        return [x1, y1, x1, mid_y, x2, mid_y, x2, y2]
-
-    mid_y = (y1 + y2) / 2.0
-    waypoints: list[tuple[float, float]] = [
-        (x1, y1),
-        (x1, mid_y),
-        (x2, mid_y),
-        (x2, y2),
-    ]
-
-    # Iterative detour: when a horizontal segment overlaps an obstacle,
-    # splice in a vertical-horizontal-vertical bypass and rescan.
-    for _ in range(_MAX_DETOUR_PASSES):
-        fixed = False
-        for seg_idx in range(len(waypoints) - 1):
-            ax, ay = waypoints[seg_idx]
-            bx, by = waypoints[seg_idx + 1]
-            if ay != by:
-                continue
-            seg_y = ay
-            x_lo = min(ax, bx)
-            x_hi = max(ax, bx)
-            for rect in obstacles:
-                if not _h_segment_hits(x_lo, x_hi, seg_y, rect):
-                    continue
-                dist_above = abs(seg_y - rect.y_min)
-                dist_below = abs(rect.y_max - seg_y)
-                if dist_above <= dist_below:
-                    detour_y = rect.y_min - _OBSTACLE_MARGIN
-                else:
-                    detour_y = rect.y_max + _OBSTACLE_MARGIN
-
-                new_points: list[tuple[float, float]] = [
-                    (ax, ay),
-                    (ax, detour_y),
-                    (bx, detour_y),
-                    (bx, by),
-                ]
-                waypoints[seg_idx : seg_idx + 2] = new_points
-                fixed = True
-                break
-            if fixed:
-                break
-        if not fixed:
-            break
-
-    flat: list[float] = []
-    for wx, wy in waypoints:
-        flat.append(wx)
-        flat.append(wy)
-    return flat
-
-
-def nearest_side_anchors(
-    source: VisualNode,
-    target: VisualNode,
-    op_by_id: dict,
-    varnode_by_id: dict,
-) -> tuple[tuple[float, float], tuple[float, float]]:
-    """Return (source_point, target_point) using the closest left/right side pair."""
-    sw, _sh = node_size(source, op_by_id, varnode_by_id)
-    tw, _th = node_size(target, op_by_id, varnode_by_id)
-    # Left midpoints: (x - half_w, y), right midpoints: (x + half_w, y)
-    s_left = (source.x - sw / 2.0, source.y)
-    s_right = (source.x + sw / 2.0, source.y)
-    t_left = (target.x - tw / 2.0, target.y)
-    t_right = (target.x + tw / 2.0, target.y)
-    # Try all 4 pairs; return the pair with shortest Euclidean distance
-    pairs = [
-        (s_left, t_right),
-        (s_right, t_left),
-        (s_left, t_left),
-        (s_right, t_right),
-    ]
-    return min(pairs, key=lambda p: (p[0][0] - p[1][0]) ** 2 + (p[0][1] - p[1][1]) ** 2)
-
-
-# ---------------------------------------------------------------------------
 # Edges
 # ---------------------------------------------------------------------------
 
 
-def draw_edges(
-    canvas: tk.Canvas,
+def _collect_tree_edges(
     node: VisualNode,
     op_by_id: dict,
     varnode_by_id: dict,
-    obstacles: list[NodeRect] | None = None,
-) -> None:
-    """Recursively draw all tree edges from *node* downward."""
+) -> list[tuple[VisualNode, VisualNode]]:
+    """Return all (child, parent) pairs in the subtree rooted at *node*."""
+    result: list[tuple[VisualNode, VisualNode]] = []
     for child in node.children:
-        draw_edge(canvas, child, node, op_by_id, varnode_by_id, obstacles)
-        draw_edges(canvas, child, op_by_id, varnode_by_id, obstacles)
+        result.append((child, node))
+        result.extend(_collect_tree_edges(child, op_by_id, varnode_by_id))
+    return result
 
 
-def draw_edge(
+def draw_all_tree_edges(
     canvas: tk.Canvas,
-    source: VisualNode,
-    target: VisualNode,
+    visual_roots: list[VisualNode],
+    cross_edges: list[tuple[VisualNode, VisualNode]],
     op_by_id: dict,
     varnode_by_id: dict,
     obstacles: list[NodeRect] | None = None,
 ) -> None:
-    """Draw a single orthogonal Manhattan edge from *source* to *target*."""
+    """Batch-draw all tree edges and cross edges with port-slot offsets.
+
+    Collects every (child→parent) tree edge and every cross edge, assigns
+    slot offsets so edges sharing a node anchor are visually separated, then
+    draws each with Manhattan routing.
+    """
     import tkinter as tk
 
-    sx = source.x
-    sy = source.y + node_pad(source, op_by_id, varnode_by_id)
-    tx = target.x
-    ty = target.y - node_pad(target, op_by_id, varnode_by_id)
-    color = _theme.EDGE_INACTIVE_COLOR
-    width = _theme.EDGE_INACTIVE_WIDTH
-    coords = manhattan_route(sx, sy, tx, ty, obstacles)
-    canvas.create_line(
-        *coords,
-        fill=color,
-        width=width,
-        arrow=tk.LAST,
-        arrowshape=(12, 14, 6),
+    all_pairs: list[tuple[VisualNode, VisualNode]] = []
+    for root in visual_roots:
+        all_pairs.extend(_collect_tree_edges(root, op_by_id, varnode_by_id))
+
+    cross_pairs = [(child, parent) for parent, child in cross_edges]
+    tree_count = len(all_pairs)
+    all_pairs.extend(cross_pairs)
+
+    if not all_pairs:
+        return
+
+    raw_edges: list[tuple[float, float, float, float]] = []
+    src_sizes: list[tuple[float, float]] = []
+    tgt_sizes: list[tuple[float, float]] = []
+    for source, target in all_pairs:
+        sx = source.x
+        sy = source.y + node_pad(source, op_by_id, varnode_by_id)
+        tx = target.x
+        ty = target.y - node_pad(target, op_by_id, varnode_by_id)
+        raw_edges.append((sx, sy, tx, ty))
+        src_sizes.append(node_size(source, op_by_id, varnode_by_id))
+        tgt_sizes.append(node_size(target, op_by_id, varnode_by_id))
+
+    slotted = assign_edge_slots(
+        raw_edges, src_sizes, tgt_sizes, source_side="bottom", target_side="top"
     )
 
+    all_routed: list[list[float]] = [
+        manhattan_route(sx, sy, tx, ty, obstacles) for sx, sy, tx, ty in slotted
+    ]
+    all_routed = deconflict_edge_segments(all_routed)
 
-def draw_cross_edge(
-    canvas: tk.Canvas,
-    source: VisualNode,
-    target: VisualNode,
-    op_by_id: dict,
-    varnode_by_id: dict,
-    obstacles: list[NodeRect] | None = None,
-) -> None:
-    """Draw a dashed cross-tree edge between *source* and *target*."""
-    import tkinter as tk
-
-    sx = source.x
-    sy = source.y + node_pad(source, op_by_id, varnode_by_id)
-    tx = target.x
-    ty = target.y - node_pad(target, op_by_id, varnode_by_id)
-    coords = manhattan_route(sx, sy, tx, ty, obstacles)
-    canvas.create_line(
-        *coords,
-        fill=_theme.EDGE_RELATED,
-        width=1.4,
-        dash=(6, 4),
-        arrow=tk.LAST,
-        arrowshape=(10, 12, 5),
-    )
+    for idx, coords in enumerate(all_routed):
+        if idx < tree_count:
+            canvas.create_line(
+                *coords,
+                fill=_theme.EDGE_INACTIVE_COLOR,
+                width=_theme.EDGE_INACTIVE_WIDTH,
+                arrow=tk.LAST,
+                arrowshape=(12, 14, 6),
+                tags=("tree_edge", "arrow_edge"),
+            )
+        else:
+            canvas.create_line(
+                *coords,
+                fill=_theme.EDGE_RELATED,
+                width=1.4,
+                dash=(6, 4),
+                arrow=tk.LAST,
+                arrowshape=(10, 12, 5),
+                tags=("cross_edge", "arrow_edge"),
+            )
 
 
 # ---------------------------------------------------------------------------

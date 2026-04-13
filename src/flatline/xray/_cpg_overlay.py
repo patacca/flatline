@@ -14,7 +14,9 @@ from typing import TYPE_CHECKING
 
 from flatline.models.pcode_ops.branch import Cbranch
 from flatline.models.varnodes import FspecVarnode, IopVarnode
-from flatline.xray._canvas import manhattan_route, nearest_side_anchors
+from flatline.xray._canvas import manhattan_route
+from flatline.xray._edge_routing import nearest_side_anchors
+from flatline.xray._edge_slots import assign_edge_slots
 from flatline.xray._layout import NodeRect, node_pad, node_size
 from flatline.xray._theme import (
     BODY_FONT,
@@ -28,6 +30,10 @@ from flatline.xray._theme import (
     PANEL_TITLE_FONT,
     TEXT,
 )
+
+# Minimum horizontal stub (pixels) added to IOP edge anchors so that the
+# horizontal departure segment is always visible.
+_IOP_STUB_PX = 15.0
 
 if TYPE_CHECKING:
     from flatline.models import PcodeOpInfo
@@ -214,14 +220,32 @@ def draw_cbranch_edges(
     """Draw true/false conditional branch overlay edges on the canvas.
 
     Each edge runs from the bottom of *source* to the top of *target* using
-    orthogonal Manhattan routing.  True branches are green, false branches red.
+    orthogonal Manhattan routing.  Edges sharing an anchor are spread via
+    port-slot assignment so they never overlap.  True branches are green,
+    false branches red.
     """
+    if not cbranch_edges:
+        return
 
-    for source, target, branch_type in cbranch_edges:
+    raw_edges: list[tuple[float, float, float, float]] = []
+    src_sizes: list[tuple[float, float]] = []
+    tgt_sizes: list[tuple[float, float]] = []
+    for source, target, _branch_type in cbranch_edges:
         sx = source.x
         sy = source.y + node_pad(source, op_by_id, varnode_by_id)
         tx = target.x
         ty = target.y - node_pad(target, op_by_id, varnode_by_id)
+        raw_edges.append((sx, sy, tx, ty))
+        src_sizes.append(node_size(source, op_by_id, varnode_by_id))
+        tgt_sizes.append(node_size(target, op_by_id, varnode_by_id))
+
+    slotted = assign_edge_slots(
+        raw_edges, src_sizes, tgt_sizes, source_side="bottom", target_side="top"
+    )
+
+    for (sx, sy, tx, ty), (_source, _target, branch_type) in zip(
+        slotted, cbranch_edges, strict=True
+    ):
         color = CBRANCH_TRUE_COLOR if branch_type == "true" else CBRANCH_FALSE_COLOR
         coords = manhattan_route(sx, sy, tx, ty, obstacles)
         canvas.create_line(
@@ -230,7 +254,7 @@ def draw_cbranch_edges(
             width=1.8,
             arrow=tk.LAST,
             arrowshape=(12, 14, 6),
-            tags=("cbranch_edge",),
+            tags=("cbranch_edge", "arrow_edge"),
         )
 
 
@@ -244,12 +268,52 @@ def draw_iop_edges(
     """Draw IOP reference overlay edges on the canvas.
 
     Each edge runs between the nearest horizontal sides of *source* and *target*
-    using orthogonal Manhattan routing.  IOP edges use an amber dashed style to
+    using horizontal-first Manhattan routing so the path departs and arrives
+    horizontally.  A short horizontal stub (``_IOP_STUB_PX``) is added at both
+    source and target so that the horizontal departure is always visible even
+    when nodes are vertically aligned.  IOP edges use an amber dashed style to
     distinguish them from data-flow and control-flow edges.
     """
+    if not iop_edges:
+        return
+
+    raw_edges: list[tuple[float, float, float, float]] = []
+    src_sizes: list[tuple[float, float]] = []
+    tgt_sizes: list[tuple[float, float]] = []
+    source_sides: list[str] = []
+    target_sides: list[str] = []
+
     for source, target in iop_edges:
         (sx, sy), (tx, ty) = nearest_side_anchors(source, target, op_by_id, varnode_by_id)
-        coords = manhattan_route(sx, sy, tx, ty, obstacles)
+        raw_edges.append((sx, sy, tx, ty))
+        sw, sh = node_size(source, op_by_id, varnode_by_id)
+        tw, th = node_size(target, op_by_id, varnode_by_id)
+        src_sizes.append((sw, sh))
+        tgt_sizes.append((tw, th))
+        s_side = "right" if sx > source.x else "left"
+        t_side = "right" if tx > target.x else "left"
+        source_sides.append(s_side)
+        target_sides.append(t_side)
+
+    dominant_src = max(set(source_sides), key=source_sides.count) if source_sides else "right"
+    dominant_tgt = max(set(target_sides), key=target_sides.count) if target_sides else "left"
+
+    slotted = assign_edge_slots(
+        raw_edges,
+        src_sizes,
+        tgt_sizes,
+        source_side=dominant_src,
+        target_side=dominant_tgt,
+    )
+
+    for (sx, sy, tx, ty), s_side, t_side in zip(slotted, source_sides, target_sides, strict=True):
+        # Push anchors outward by a stub so the horizontal departure is always
+        # visible, even when source and target are nearly vertically aligned.
+        s_dir = 1.0 if s_side == "right" else -1.0
+        t_dir = 1.0 if t_side == "right" else -1.0
+        sx += s_dir * _IOP_STUB_PX
+        tx += t_dir * _IOP_STUB_PX
+        coords = manhattan_route(sx, sy, tx, ty, obstacles, first_axis="horizontal")
         canvas.create_line(
             *coords,
             fill=IOP_EDGE_COLOR,
@@ -257,7 +321,7 @@ def draw_iop_edges(
             dash=IOP_EDGE_DASH,
             arrow=tk.LAST,
             arrowshape=(10, 12, 5),
-            tags=("iop_edge",),
+            tags=("iop_edge", "arrow_edge"),
         )
 
 
@@ -272,18 +336,37 @@ def draw_fspec_edges(
 
     For each (source_node, label) pair a small virtual rectangle is drawn to the
     right of *source*, and an edge is drawn from the right side of *source* to the
-    left side of that virtual node.  The label shows the hex callee address.
+    left side of that virtual node.
     """
-    vw, vh = 40, 10  # half-width and half-height of virtual nodes
-    for index, (source, label) in enumerate(fspec_edges):
+    if not fspec_edges:
+        return
+
+    vw, vh = 40, 10
+    raw_edges: list[tuple[float, float, float, float]] = []
+    src_sizes: list[tuple[float, float]] = []
+    tgt_sizes: list[tuple[float, float]] = []
+    virtual_positions: list[tuple[float, float]] = []
+
+    for index, (source, _label) in enumerate(fspec_edges):
         sw, sh = node_size(source, op_by_id, varnode_by_id)
-        # Source anchor: right midpoint
         sx = source.x + sw / 2.0
         sy = source.y
-        # Virtual node position: offset right, staggered vertically
         vx = source.x + sw * 1.5
         vy = source.y + sh * 0.6 * index
-        # Draw virtual node: rectangle + text label
+        tx = vx - vw
+        ty = vy
+        raw_edges.append((sx, sy, tx, ty))
+        src_sizes.append((sw, sh))
+        tgt_sizes.append((float(vw * 2), float(vh * 2)))
+        virtual_positions.append((vx, vy))
+
+    slotted = assign_edge_slots(
+        raw_edges, src_sizes, tgt_sizes, source_side="right", target_side="left"
+    )
+
+    for index, ((sx, sy, tx, ty), (_source, label), (vx, vy)) in enumerate(
+        zip(slotted, fspec_edges, virtual_positions, strict=True)
+    ):
         vtag = make_virtual_node_id(label, index)
         canvas.create_rectangle(
             vx - vw,
@@ -302,10 +385,7 @@ def draw_fspec_edges(
             font=("Courier", 8),
             tags=(vtag, "fspec_virtual_node"),
         )
-        # Edge: right side of source → left side of virtual node
-        tx = vx - vw
-        ty = vy
-        coords = manhattan_route(sx, sy, tx, ty, obstacles)
+        coords = manhattan_route(sx, sy, tx, ty, obstacles, first_axis="horizontal")
         canvas.create_line(
             *coords,
             fill=FSPEC_EDGE_COLOR,
@@ -313,7 +393,7 @@ def draw_fspec_edges(
             dash=(4, 3),
             arrow=tk.LAST,
             arrowshape=(10, 12, 5),
-            tags=("fspec_edge",),
+            tags=("fspec_edge", "arrow_edge"),
         )
 
 
