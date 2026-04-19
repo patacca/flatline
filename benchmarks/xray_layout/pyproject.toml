@@ -1,0 +1,19 @@
+[project]
+name = "flatline-xray-bench"
+version = "0.0.0"
+requires-python = ">=3.13"
+
+[project.optional-dependencies]
+core = ["flatline", "networkx>=3.0", "jsonschema>=4.0", "cairosvg>=2.7", "Pillow>=10.0"]
+libavoid = []
+hola = []
+ogdf = []
+domus = []
+wueortho = []
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = []

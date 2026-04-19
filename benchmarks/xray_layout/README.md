@@ -9,9 +9,46 @@ Data-driven evaluation of orthogonal layout libraries as candidates to replace
 xray's custom placement+routing algorithm. Candidates: libavoid, HOLA, OGDF,
 DOMUS, WueOrtho, OGDF+libavoid combo.
 
-## Quickstart
+## Installation
 
-See install instructions below (to be filled in by Task 9).
+### Prerequisites
+
+- Python 3.13+
+- gcc
+- Cairo system library (required by cairosvg):
+  - Ubuntu/Debian: `sudo apt-get install libcairo2-dev`
+  - Fedora/RHEL: `sudo dnf install cairo-devel`
+  - macOS: `brew install cairo`
+
+### Setup
+
+Run the idempotent setup script from the repo root:
+
+```bash
+./benchmarks/xray_layout/setup.sh
+```
+
+This creates `.venv-bench/` in the benchmark directory (separate from the main flatline `.venv/`).
+
+Activate the environment:
+
+```bash
+source benchmarks/xray_layout/.venv-bench/bin/activate
+```
+
+Verify the installation:
+
+```bash
+python -c "import flatline, networkx, jsonschema, cairosvg, PIL; print('OK')"
+```
+
+Run the benchmark check:
+
+```bash
+python -m benchmarks.xray_layout.bench check
+```
+
+**Note:** This virtual environment is intentionally separate from the main flatline `.venv/`.
 
 ## Branch Policy
 
