@@ -13,7 +13,7 @@ layout()/render() return trivial geometry.
 from __future__ import annotations
 
 import shutil
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from benchmarks.xray_layout.bench.adapters._base import BaseAdapter, LayoutResult
 
@@ -53,19 +53,18 @@ class WueorthoAdapter(BaseAdapter):
             f"sbt found at {sbt}, but WueOrtho integration not yet implemented",
         )
 
-    def layout(self, graph: nx.MultiDiGraph) -> LayoutResult:
-        nodes = list(graph.nodes())[:2]
-        positions = {n: (float(i * 10), 0.0) for i, n in enumerate(nodes)}
-        sizes = {n: (4.0, 4.0) for n in nodes}
-        return LayoutResult(
-            node_positions=positions,
-            edge_routes={},
-            runtime_ms=0.0,
-            node_sizes=sizes,
+    def layout(self, graph: "nx.MultiDiGraph[Any]") -> LayoutResult:
+        msg = (
+            "WueOrtho benchmark adapter is deferred: no runnable JVM integration is "
+            "implemented for the Scala pipeline"
         )
+        raise NotImplementedError(msg)
 
     def render(
-        self, result: LayoutResult, graph: nx.MultiDiGraph, out_path: Path
+        self,
+        result: LayoutResult,
+        graph: "nx.MultiDiGraph[Any]",
+        out_path: Path,
     ) -> None:
         from PIL import Image
 

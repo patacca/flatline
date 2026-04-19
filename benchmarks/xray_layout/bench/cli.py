@@ -306,9 +306,16 @@ def cmd_grid(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_report(args: argparse.Namespace) -> int:  # noqa: ARG001 - args reserved for future flags
-    """Stub: aggregate report generation is implemented in a later task."""
-    print("report not yet implemented")
+def cmd_report(args: argparse.Namespace) -> int:
+    """Aggregate every run record under ``out/runs`` into ``out/REPORT.md``."""
+    from .report import generate
+
+    out_dir = Path(args.out).resolve() if getattr(args, "out", None) else DEFAULT_OUT
+    try:
+        generate(out_dir=out_dir)
+    except FileNotFoundError as exc:
+        print(f"report failed: {exc}", file=sys.stderr)
+        return 1
     return 0
 
 
@@ -394,6 +401,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_grid.set_defaults(func=cmd_grid)
 
     p_report = sub.add_parser("report", help="regenerate aggregate report")
+    p_report.add_argument(
+        "--out",
+        default=str(DEFAULT_OUT),
+        help=f"benchmark output directory (default: {DEFAULT_OUT})",
+    )
     p_report.set_defaults(func=cmd_report)
 
     p_check = sub.add_parser("check", help="probe adapter install status")

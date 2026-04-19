@@ -11,10 +11,11 @@ Budget conventions:
 
 from __future__ import annotations
 
+import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     import networkx as nx
@@ -31,10 +32,10 @@ class LayoutResult:
         node_sizes: Mapping from node ID to (width, height) in pixels.
     """
 
-    node_positions: dict
-    edge_routes: dict
+    node_positions: dict[object, tuple[float, float]]
+    edge_routes: dict[tuple[object, object, object], list[tuple[float, float]]]
     runtime_ms: float
-    node_sizes: dict
+    node_sizes: dict[object, tuple[float, float]]
 
 
 @runtime_checkable
@@ -56,7 +57,7 @@ class Adapter(Protocol):
         """
         ...
 
-    def layout(self, graph: nx.MultiDiGraph) -> LayoutResult:
+    def layout(self, graph: "nx.MultiDiGraph[Any]") -> LayoutResult:
         """Compute a layout for the given graph.
 
         Must complete within the 60-second per-layout timeout.
@@ -72,7 +73,10 @@ class Adapter(Protocol):
         ...
 
     def render(
-        self, result: LayoutResult, graph: nx.MultiDiGraph, out_path: Path
+        self,
+        result: LayoutResult,
+        graph: "nx.MultiDiGraph[Any]",
+        out_path: Path,
     ) -> None:
         """Render the layout result to a file.
 
@@ -102,12 +106,29 @@ class BaseAdapter(ABC):
         """
         self.name = name
 
+    @abstractmethod
+    def install_check(self) -> tuple[bool, str]:
+        """Check whether the adapter is runnable in the current environment."""
+
+    @abstractmethod
+    def layout(self, graph: "nx.MultiDiGraph[Any]") -> LayoutResult:
+        """Compute a canonical layout result for the given graph."""
+
+    @abstractmethod
+    def render(
+        self,
+        result: LayoutResult,
+        graph: "nx.MultiDiGraph[Any]",
+        out_path: Path,
+    ) -> None:
+        """Render one layout result to the requested output path."""
+
     def build_payload(
         self,
         status: str,
         error_message: str | None = None,
-        metrics: dict | None = None,
-    ) -> dict:
+        metrics: dict[str, float] | None = None,
+    ) -> dict[str, Any]:
         """Build a canonical-schema JSON payload for benchmark results.
 
         The payload follows the benchmark schema with candidate identifier,
@@ -127,7 +148,7 @@ class BaseAdapter(ABC):
             - error_message: Optional error message
             - metrics: Optional metrics dict
         """
-        payload: dict = {
+        payload: dict[str, Any] = {
             "candidate": self.name,
             "binary": "",
             "function": "",
@@ -138,3 +159,89 @@ class BaseAdapter(ABC):
         if metrics is not None:
             payload["metrics"] = metrics
         return payload
+
+    def run(
+        self,
+        *,
+        binary_path: Path,
+        entry: str | None,
+        budget_seconds: int,
+        out_dir: Path,
+    ) -> dict[str, Any]:
+        """Execute one benchmark run and emit the canonical metrics JSON.
+
+        The current CLI still writes a secondary copy of the returned record
+        under ``out/runs``.  The benchmark plan, however, treats
+        ``out/metrics/<binary>__<candidate>.json`` as the canonical artifact,
+        so adapters write that file directly here.
+        """
+        from benchmarks.xray_layout.bench.graph_extract import extract
+        from benchmarks.xray_layout.bench.metrics import compute
+        from benchmarks.xray_layout.bench.timeout import time_budget
+
+        binary_stem = binary_path.stem
+        meta_path = self._resolve_meta_path(binary_path)
+        ok, message = self.install_check()
+        if not ok:
+            record = self.build_payload("deferred", error_message=message)
+            return self._finalize_record(
+                record=record,
+                binary_stem=binary_stem,
+                entry=entry,
+                out_dir=out_dir,
+            )
+
+        graph = extract(binary_path, meta_path)
+        png_path = out_dir / "renders" / f"{binary_stem}__{self.name}.png"
+
+        with time_budget(budget_seconds):
+            result = self.layout(graph)
+            metrics = compute(result, graph)
+            self.render(result, graph, png_path)
+
+        record = self.build_payload(
+            "ok",
+            metrics=metrics,
+        )
+        record["outputs"] = {
+            "png_path": str(png_path),
+        }
+        return self._finalize_record(
+            record=record,
+            binary_stem=binary_stem,
+            entry=entry,
+            out_dir=out_dir,
+        )
+
+    def _resolve_meta_path(self, binary_path: Path) -> Path:
+        """Resolve the corpus metadata JSON paired with a built benchmark ELF."""
+        meta_path = binary_path.with_suffix(".meta.json")
+        if meta_path.exists():
+            return meta_path
+        msg = f"benchmark metadata not found for {binary_path} (expected {meta_path})"
+        raise FileNotFoundError(msg)
+
+    def _finalize_record(
+        self,
+        *,
+        record: dict[str, Any],
+        binary_stem: str,
+        entry: str | None,
+        out_dir: Path,
+    ) -> dict[str, Any]:
+        """Fill required schema fields, validate, and write canonical JSON."""
+        from benchmarks.xray_layout.bench.schema import validate
+
+        record["candidate"] = self.name
+        record["binary"] = binary_stem
+        record["function"] = entry or "<auto>"
+        validate(record)
+
+        metrics_dir = out_dir / "metrics"
+        metrics_dir.mkdir(parents=True, exist_ok=True)
+        metrics_path = metrics_dir / f"{binary_stem}__{self.name}.json"
+        _ = metrics_path.write_text(
+            json.dumps(record, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+        return record

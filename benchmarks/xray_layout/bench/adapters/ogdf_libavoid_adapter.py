@@ -14,7 +14,7 @@ The stub layout() documents the planned data flow in code comments.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from benchmarks.xray_layout.bench.adapters._base import BaseAdapter, LayoutResult
 from benchmarks.xray_layout.bench.adapters.libavoid_adapter import LibavoidAdapter
@@ -51,28 +51,18 @@ class OgdfLibavoidAdapter(BaseAdapter):
             missing.append(f"libavoid({libavoid_msg})")
         return (False, "; ".join(missing))
 
-    def layout(self, graph: nx.MultiDiGraph) -> LayoutResult:
-        # Wave-2 plan:
-        #   1. Call OGDF (e.g. PlanarizationLayout) to obtain node
-        #      positions and node sizes -- ignore OGDF's edge bends.
-        #   2. Build libavoid Router, register Rectangles for each node
-        #      using the OGDF positions, register ConnRefs for each edge.
-        #   3. Run Router::processTransaction() and read back checkpoints
-        #      as the orthogonal polylines for edge_routes.
-        #   4. Sum runtime of both phases for runtime_ms.
-        # Wave-1 stub: trivial 2-node placeholder.
-        nodes = list(graph.nodes())[:2]
-        positions = {n: (float(i * 10), 0.0) for i, n in enumerate(nodes)}
-        sizes = {n: (4.0, 4.0) for n in nodes}
-        return LayoutResult(
-            node_positions=positions,
-            edge_routes={},
-            runtime_ms=0.0,
-            node_sizes=sizes,
+    def layout(self, graph: "nx.MultiDiGraph[Any]") -> LayoutResult:
+        msg = (
+            "OGDF+libavoid benchmark adapter is deferred: both component engines must "
+            "pass their install gates before the combo pipeline can run"
         )
+        raise NotImplementedError(msg)
 
     def render(
-        self, result: LayoutResult, graph: nx.MultiDiGraph, out_path: Path
+        self,
+        result: LayoutResult,
+        graph: "nx.MultiDiGraph[Any]",
+        out_path: Path,
     ) -> None:
         from PIL import Image
 

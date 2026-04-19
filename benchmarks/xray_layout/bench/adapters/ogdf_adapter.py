@@ -14,7 +14,7 @@ return trivial 2-node geometry.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from benchmarks.xray_layout.bench.adapters._base import BaseAdapter, LayoutResult
 
@@ -45,19 +45,18 @@ class OgdfAdapter(BaseAdapter):
         version = getattr(ogdf_python, "__version__", "unknown")
         return (True, f"ogdf_python {version}")
 
-    def layout(self, graph: nx.MultiDiGraph) -> LayoutResult:
-        nodes = list(graph.nodes())[:2]
-        positions = {n: (float(i * 10), 0.0) for i, n in enumerate(nodes)}
-        sizes = {n: (4.0, 4.0) for n in nodes}
-        return LayoutResult(
-            node_positions=positions,
-            edge_routes={},
-            runtime_ms=0.0,
-            node_sizes=sizes,
+    def layout(self, graph: "nx.MultiDiGraph[Any]") -> LayoutResult:
+        msg = (
+            "OGDF benchmark adapter is deferred: ogdf_python cannot import until the "
+            "required system libCOIN/libOGDF shared libraries are installed"
         )
+        raise NotImplementedError(msg)
 
     def render(
-        self, result: LayoutResult, graph: nx.MultiDiGraph, out_path: Path
+        self,
+        result: LayoutResult,
+        graph: "nx.MultiDiGraph[Any]",
+        out_path: Path,
     ) -> None:
         from PIL import Image
 
