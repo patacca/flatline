@@ -485,6 +485,47 @@ def _detour_segment(
     return True
 
 
+def _optimize_path(
+    waypoints: list[tuple[float, float]], obstacles: list[NodeRect] | None = None
+) -> list[tuple[float, float]]:
+    if not waypoints:
+        return []
+    if len(waypoints) < 3:  # Simple one or two points path, cannot be improved
+        return waypoints.copy()
+
+    # Coloring each point to tell from which direction it was reached.
+    # S=Start E=End U=Up D=Down L=Left R=Right I=Ignore
+    colors = ["S"]  # Start
+    for i, p in enumerate(waypoints[1:-1]):
+        prev = waypoints[i - 1]
+        if prev[0] == p[0] and prev[1] < p[1]:
+            colors.append("D")
+        elif prev[0] == p[0] and prev[1] > p[1]:
+            colors.append("U")
+        elif prev[1] == p[1] and prev[0] < p[0]:
+            colors.append("L")
+        elif prev[1] == p[1] and prev[0] > p[0]:
+            colors.append("R")
+        else:  # Non-aligned edge, leave it alone
+            colors.append("I")
+    colors.append("E")  # End
+
+    # TODO
+    # result = []
+    i = 0
+    while i < len(waypoints):
+        # URU/ULU/DRD/DLD -> L
+        if 1:
+            pass
+        # URU/ULU/DRD/DLD -> L
+        if 1:
+            pass
+        i+=1
+
+    waypoints = _collapse_collinear(waypoints)
+    return waypoints
+
+
 def manhattan_route(
     x1: float,
     y1: float,
@@ -517,7 +558,7 @@ def manhattan_route(
         if not fixed:
             break
 
-    waypoints = _collapse_collinear(waypoints)
+    waypoints = _optimize_path(waypoints, safe_obstacles)
     return [c for pt in waypoints for c in pt]
 
 
