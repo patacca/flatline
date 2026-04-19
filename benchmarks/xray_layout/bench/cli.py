@@ -289,7 +289,7 @@ def cmd_grid(args: argparse.Namespace) -> int:
     paths: list[Path] = []
     labels: list[str] = []
     for name in ADAPTER_NAMES:
-        candidate = renders / f"{name}__{args.binary}.png"
+        candidate = renders / f"{args.binary}__{name}.png"
         if candidate.exists():
             paths.append(candidate)
             labels.append(name)
