@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["candidate", "binary", "function", "status"],
+  "properties": {
+    "candidate": {"type": "string", "enum": ["libavoid","hola","ogdf","domus","wueortho","ogdf_libavoid"]},
+    "binary": {"type": "string"},
+    "function": {"type": "string"},
+    "status": {"type": "string", "enum": ["ok","error","timeout","deferred","crashed"]},
+    "error_message": {"type": "string"},
+    "machine": {"type": "object", "properties": {"cpu":{"type":"string"},"ram_gb":{"type":"number"},"os":{"type":"string"}}},
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "edge_crossings": {"type":"number"},
+        "total_edge_length": {"type":"number"},
+        "runtime_ms": {"type":"number"},
+        "bend_count": {"type":"number"},
+        "bbox_area": {"type":"number"},
+        "bbox_aspect": {"type":"number"},
+        "port_violations": {"type":"number"},
+        "edge_overlaps": {"type":"number"},
+        "same_instr_cluster_dist": {"type":"number"}
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "properties": {
+        "png_path": {"type":"string"},
+        "svg_path": {"type":"string"}
+      }
+    }
+  },
+  "additionalProperties": false
+}
