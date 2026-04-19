@@ -1,0 +1,10 @@
+out/binaries/*
+out/renders/*
+out/graphs/*
+out/metrics/*
+.venv-bench/
+third_party/
+__pycache__/
+*.pyc
+*.pyo
+out/run.log
