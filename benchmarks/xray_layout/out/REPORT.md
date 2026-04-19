@@ -1,6 +1,6 @@
 ---
-generated_at: "2026-04-19T20:51:07.542218+00:00"
-git_sha: "0a02fcd"
+generated_at: "2026-04-19T21:50:59.461337+00:00"
+git_sha: "746ba85"
 branch: "bench/xray-layout-comparison"
 machine:
   cpu: "Intel(R) Core(TM) Ultra 5 225H"
@@ -29,7 +29,7 @@ benchmark_version: "0.0.0"
 
 | Candidate | Status | edge_crossings | total_edge_length | runtime_ms | bend_count | bbox_area | bbox_aspect | port_violations | edge_overlaps | same_instr_cluster_dist |
 |---|---|---|---|---|---|---|---|---|---|---|
-| hola | ok | 1.0 | 1625.0 | 184.6 | 0.0 | 105750.0 | 2.1 | 32.0 | 0.0 | 113.6 |
+| hola | ok | 1.0 | 1625.0 | 140.3 | 0.0 | 105750.0 | 2.1 | 32.0 | 0.0 | 113.6 |
 | libavoid | deferred | - | - | - | - | - | - | - | - | - |
 | ogdf | deferred | - | - | - | - | - | - | - | - | - |
 | domus | error | - | - | - | - | - | - | - | - | - |
