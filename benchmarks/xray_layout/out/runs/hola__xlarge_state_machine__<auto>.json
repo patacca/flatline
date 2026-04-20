@@ -1,12 +1,12 @@
 {
   "binary": "xlarge_state_machine",
   "candidate": "hola",
-  "error_message": "FileNotFoundError: benchmark metadata not found for /home/patacca/patacca_git/flatline/benchmarks/xray_layout/corpus/sources/xlarge_state_machine.c (expected /home/patacca/patacca_git/flatline/benchmarks/xray_layout/corpus/sources/xlarge_state_machine.meta.json)",
+  "error_message": "hard wall-clock timeout after 300s; killed worker process group",
   "function": "<auto>",
   "machine": {
     "cpu": "x86_64",
     "os": "Linux 6.19.8-arch1-1",
     "ram_gb": 30.83
   },
-  "status": "error"
+  "status": "timeout"
 }

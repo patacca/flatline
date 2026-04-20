@@ -8,16 +8,16 @@
     "ram_gb": 30.83
   },
   "metrics": {
-    "bbox_area": 8336943.999309629,
-    "bbox_aspect": 1.4188668865256353,
+    "bbox_area": 8336943.999309628,
+    "bbox_aspect": 1.4188668865256358,
     "bend_count": 0.0,
     "edge_crossings": 714.0,
     "edge_overlaps": 7.0,
     "orthogonal_segment_ratio": 0.5958083832335329,
     "port_violations": 158.0,
-    "runtime_ms": 244160.1848070277,
-    "same_instr_cluster_dist": 557.4304627069025,
-    "total_edge_length": 167480.3790665687
+    "runtime_ms": 212340.51983698737,
+    "same_instr_cluster_dist": 557.4304842784178,
+    "total_edge_length": 167480.3790665688
   },
   "outputs": {
     "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/large_nested__hola.png"

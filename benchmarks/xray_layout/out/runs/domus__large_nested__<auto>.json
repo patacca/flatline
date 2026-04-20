@@ -1,7 +1,7 @@
 {
   "binary": "large_nested",
   "candidate": "domus",
-  "error_message": "Layout timed out after 300s",
+  "error_message": "hard wall-clock timeout after 300s; killed worker process group",
   "function": "<auto>",
   "machine": {
     "cpu": "x86_64",
