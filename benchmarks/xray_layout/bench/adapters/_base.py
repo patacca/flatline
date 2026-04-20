@@ -30,12 +30,19 @@ class LayoutResult:
         edge_routes: Mapping from edge ID to list of (x, y) waypoints.
         runtime_ms: Wall-clock time for layout computation in milliseconds.
         node_sizes: Mapping from node ID to (width, height) in pixels.
+        error_class: Optional category tag set by adapters that hard-fail
+            (instead of raising) when their strict contract rejects the
+            input graph -- e.g. ``"non_planar"`` for Baseline B's
+            PlanarizationLayout+OrthoLayout pipeline on K5.  ``None`` for
+            successful runs.  Adapters that surface error_class typically
+            return otherwise-empty position/route maps.
     """
 
     node_positions: dict[object, tuple[float, float]]
     edge_routes: dict[tuple[object, object, object], list[tuple[float, float]]]
     runtime_ms: float
     node_sizes: dict[object, tuple[float, float]]
+    error_class: str | None = None
 
 
 @runtime_checkable

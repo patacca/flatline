@@ -66,3 +66,18 @@ rm -rf "$(dirname "${LOADER}")/__pycache__"
 
 Or simply re-create the venv via `benchmarks/xray_layout/setup.sh` and
 re-run the install scripts.
+
+## Adapter
+
+The Python adapter that consumes this patch is
+`benchmarks/xray_layout/bench/adapters/ogdf_planarization_adapter.py`
+(class `OgdfPlanarizationAdapter`, name `ogdf_planarization`). Its
+`install_check()` exercises both a small planar DAG and the K5 non-planar
+graph end-to-end, so a successful `install_check` also certifies that the
+strict `error_class="non_planar"` contract holds before any benchmark case
+runs. Invoke it via:
+
+```bash
+source benchmarks/xray_layout/.venv-bench/bin/activate
+python -c "from benchmarks.xray_layout.bench.adapters import ogdf_planarization_adapter; ok, msg = ogdf_planarization_adapter.OgdfPlanarizationAdapter().install_check(); print(ok, msg)"
+```
