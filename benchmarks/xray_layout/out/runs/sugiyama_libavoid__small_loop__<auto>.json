@@ -10,14 +10,14 @@
   "metrics": {
     "bbox_area": 2310166.6666666665,
     "bbox_aspect": 0.2982035928143713,
-    "bend_count": 84.0,
-    "edge_crossings": 129.0,
-    "edge_overlaps": 2.0,
-    "orthogonal_segment_ratio": 0.7483870967741936,
+    "bend_count": 77.0,
+    "edge_crossings": 81.0,
+    "edge_overlaps": 29.0,
+    "orthogonal_segment_ratio": 1.0,
     "port_violations": 34.0,
-    "runtime_ms": 317.9156951373443,
+    "runtime_ms": 15.57384105399251,
     "same_instr_cluster_dist": 288.2444249656302,
-    "total_edge_length": 43529.403911673246
+    "total_edge_length": 35697.690618762455
   },
   "outputs": {
     "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/small_loop__sugiyama_libavoid.png"

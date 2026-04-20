@@ -1,12 +1,26 @@
 {
   "binary": "xlarge_state_machine",
   "candidate": "sugiyama_libavoid",
-  "error_message": "hard wall-clock timeout after 300s; killed worker process group",
   "function": "<auto>",
   "machine": {
     "cpu": "x86_64",
     "os": "Linux 6.19.8-arch1-1",
     "ram_gb": 30.83
   },
-  "status": "timeout"
+  "metrics": {
+    "bbox_area": 763468583.3333333,
+    "bbox_aspect": 0.2986501409193546,
+    "bend_count": 835.0,
+    "edge_crossings": 6677.0,
+    "edge_overlaps": 241.0,
+    "orthogonal_segment_ratio": 1.0,
+    "port_violations": 365.0,
+    "runtime_ms": 40842.485869070515,
+    "same_instr_cluster_dist": 6396.986885280272,
+    "total_edge_length": 6129097.68817265
+  },
+  "outputs": {
+    "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/xlarge_state_machine__sugiyama_libavoid.png"
+  },
+  "status": "ok"
 }

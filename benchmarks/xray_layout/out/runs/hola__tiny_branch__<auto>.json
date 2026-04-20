@@ -10,14 +10,14 @@
   "metrics": {
     "bbox_area": 284155.40540540544,
     "bbox_aspect": 1.4868624420401855,
-    "bend_count": 0.0,
-    "edge_crossings": 8.0,
-    "edge_overlaps": 2.0,
-    "orthogonal_segment_ratio": 0.6486486486486487,
+    "bend_count": 19.0,
+    "edge_crossings": 11.0,
+    "edge_overlaps": 0.0,
+    "orthogonal_segment_ratio": 1.0,
     "port_violations": 16.0,
-    "runtime_ms": 94.15881906170398,
+    "runtime_ms": 86.36136609129608,
     "same_instr_cluster_dist": 203.4776068346298,
-    "total_edge_length": 6761.621621621623
+    "total_edge_length": 6951.642999999999
   },
   "outputs": {
     "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/tiny_branch__hola.png"

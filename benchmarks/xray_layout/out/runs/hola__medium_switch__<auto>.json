@@ -9,15 +9,15 @@
   },
   "metrics": {
     "bbox_area": 1267174.9999999998,
-    "bbox_aspect": 1.5302197802197803,
-    "bend_count": 0.0,
+    "bbox_aspect": 1.5302197802197806,
+    "bend_count": 42.0,
     "edge_crossings": 36.0,
-    "edge_overlaps": 2.0,
-    "orthogonal_segment_ratio": 0.6835443037974683,
-    "port_violations": 38.0,
-    "runtime_ms": 844.7802290320396,
-    "same_instr_cluster_dist": 281.71859216281774,
-    "total_edge_length": 20247.738193006568
+    "edge_overlaps": 0.0,
+    "orthogonal_segment_ratio": 1.0,
+    "port_violations": 39.0,
+    "runtime_ms": 763.7380040250719,
+    "same_instr_cluster_dist": 281.71918130357784,
+    "total_edge_length": 20408.014000000006
   },
   "outputs": {
     "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/medium_switch__hola.png"
