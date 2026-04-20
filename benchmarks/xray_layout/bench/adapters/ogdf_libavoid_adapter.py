@@ -34,6 +34,7 @@ import time
 from typing import TYPE_CHECKING, Any
 
 from benchmarks.xray_layout.bench.adapters._base import BaseAdapter, LayoutResult
+from benchmarks.xray_layout.bench.adapters._libavoid_config import apply_orthogonal_config
 from benchmarks.xray_layout.bench.adapters.libavoid_adapter import LibavoidAdapter
 from benchmarks.xray_layout.bench.adapters.ogdf_adapter import OgdfAdapter
 
@@ -117,6 +118,7 @@ class OgdfLibavoidAdapter(BaseAdapter):
 
         # Step 2: build libavoid obstacle field anchored at OGDF positions.
         router = ad.Router(ad.OrthogonalRouting)
+        apply_orthogonal_config(router)
         # adaptagrams renamed Rectangle to AvoidRectangle in newer
         # bindings (collision with other adaptagrams libs).  Fall back
         # to Rectangle for older builds.

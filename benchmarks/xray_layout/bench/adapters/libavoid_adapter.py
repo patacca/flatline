@@ -32,6 +32,7 @@ import time
 from typing import TYPE_CHECKING, Any
 
 from benchmarks.xray_layout.bench.adapters._base import BaseAdapter, LayoutResult
+from benchmarks.xray_layout.bench.adapters._libavoid_config import apply_orthogonal_config
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -163,6 +164,7 @@ class LibavoidAdapter(BaseAdapter):
             node_positions[node_id] = (cx, cy)
 
         router = ad.Router(ad.OrthogonalRouting)
+        apply_orthogonal_config(router)
 
         shapes: dict[object, Any] = {}
         for node_id in ordered_nodes:
@@ -192,7 +194,7 @@ class LibavoidAdapter(BaseAdapter):
                 continue
             src_end = ad.ConnEnd(shapes[source], ad.ConnDirAll)
             tgt_end = ad.ConnEnd(shapes[target], ad.ConnDirAll)
-            conn = ad.ConnRef(router, src_end, tgt_end)
+            conn = ad.ConnRef(router, src_end, tgt_end, ad.ConnType_Orthogonal)
             connectors[(source, target, key)] = conn
 
         # Wrap the C++ call in a SIGALRM watchdog.  We restore the previous
