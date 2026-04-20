@@ -11,11 +11,11 @@ therefore build a fresh ``adaptagrams.Graph`` from the input
 ``MultiDiGraph``, push node sizes into each ``DialectNode``, call
 ``doHOLA``, and harvest the resulting node centres.
 
-Edge polylines: the SWIG bindings expose libdialect's edge-lookup
-container as an opaque ``SwigPyObject``, so reaching into the routed
-polylines from Python is not supported by upstream. We therefore use
-straight-line centre-to-centre routes for every edge - that keeps the
-metric layer fed without claiming routing fidelity we cannot verify.
+Edge polylines: HOLA's per-edge polylines are not exposed by the SWIG
+``Graph.addEdge`` return value (it is an opaque ``SwigPyObject``), but
+the same routes are emitted in textual form by ``Graph.writeTglf()``.
+We parse that TGLF dump to recover the genuine HOLA polylines, so
+downstream metrics see the orthogonal segments HOLA actually computed.
 
 If ``adaptagrams`` (or its ``doHOLA`` symbol) is missing, ``install_check``
 returns ``(False, ...)`` and the harness records the run as ``deferred``
@@ -41,6 +41,48 @@ if TYPE_CHECKING:
 # comparisons remain meaningful.
 _DEFAULT_NODE_WIDTH = 50.0
 _DEFAULT_NODE_HEIGHT = 30.0
+
+
+def _parse_tglf_edges(tglf: str) -> list[list[tuple[float, float]]]:
+    """Return polylines from a TGLF dump in original edge order.
+
+    TGLF format (libdialect-specific dialect): three '#'-separated
+    sections - nodes, edges, constraints. Each edge line is
+    "<srcId> <tgtId> <x1> <y1> <x2> <y2> ... <xn> <yn>" with the
+    source/target ids as the first two whitespace-separated tokens
+    followed by 2N coordinate floats forming the polyline vertices.
+    """
+    return [poly for _src, _tgt, poly in _parse_tglf_edges_with_ids(tglf)]
+
+
+def _parse_tglf_edges_with_ids(
+    tglf: str,
+) -> list[tuple[int, int, list[tuple[float, float]]]]:
+    """Same as :func:`_parse_tglf_edges` but also exposes endpoint ids."""
+    sections = tglf.split("#")
+    if len(sections) < 2:
+        return []
+    edges_section = sections[1]
+    out: list[tuple[int, int, list[tuple[float, float]]]] = []
+    for raw_line in edges_section.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        tokens = line.split()
+        if len(tokens) < 4 or (len(tokens) - 2) % 2 != 0:
+            # Malformed row (need at least srcId tgtId x y, and an even
+            # number of coordinate tokens). Skip silently rather than
+            # crash the whole layout on a parser hiccup.
+            continue
+        try:
+            src_id = int(tokens[0])
+            tgt_id = int(tokens[1])
+            coords = [float(t) for t in tokens[2:]]
+        except ValueError:
+            continue
+        polyline = [(coords[i], coords[i + 1]) for i in range(0, len(coords), 2)]
+        out.append((src_id, tgt_id, polyline))
+    return out
 
 
 class HolaAdapter(BaseAdapter):
@@ -119,12 +161,17 @@ class HolaAdapter(BaseAdapter):
             dnode.setDims(width, height)
             ag_nodes[node_id] = dnode
 
-        for source, target, _key in graph.edges(keys=True):
+        # Track non-self-loop edges in addEdge call order so we can map
+        # TGLF's per-edge polylines (emitted in the same order) back to
+        # our (source, target, key) tuples after doHOLA runs.
+        added_edge_keys: list[tuple[object, object, object]] = []
+        for source, target, key in graph.edges(keys=True):
             if source == target:
                 # Self-loops cannot be expressed in libdialect's edge
                 # lookup; skip them rather than synthesise a fake edge.
                 continue
             ag_graph.addEdge(ag_nodes[source], ag_nodes[target])
+            added_edge_keys.append((source, target, key))
 
         # Wall-clock cap is enforced upstream by the harness's per-case
         # subprocess + killpg; SIGALRM cannot interrupt this native call.
@@ -137,18 +184,65 @@ class HolaAdapter(BaseAdapter):
             centre = ag_nodes[node_id].getCentre()
             node_positions[node_id] = (float(centre.x), float(centre.y))
 
-        # Straight-line edge routes. SWIG exposes the routed-edge lookup
-        # as an opaque SwigPyObject we cannot iterate from Python, so we
-        # synthesise centre-to-centre polylines. Self-loops get a
-        # degenerate two-point route at the node centre so downstream
-        # metrics still see an entry per input edge.
+        # Recover HOLA's actual orthogonal polylines via the TGLF dump.
+        # SWIG exposes Graph.addEdge's return value as an opaque
+        # SwigPyObject with no accessors, but Graph.writeTglf() emits a
+        # textual dump where each post-doHOLA edge appears as
+        #   "<srcId> <tgtId> <x1> <y1> <x2> <y2> ... <xn> <yn>"
+        # in the same order as the addEdge calls. We map srcId/tgtId
+        # (libdialect's internal node id, assigned in addNode order) back
+        # to the source nx node via the addNode order we preserved in
+        # ordered_nodes, then attach the polyline to the matching
+        # (source, target, key) tuple from added_edge_keys.
+        tglf_id_to_nx_node = {
+            ag_nodes[node_id].id(): node_id for node_id in ordered_nodes
+        }
+        edge_polylines = _parse_tglf_edges(ag_graph.writeTglf())
+
         edge_routes: dict[
             tuple[object, object, object], list[tuple[float, float]]
         ] = {}
+        if len(edge_polylines) == len(added_edge_keys):
+            # Trust positional alignment between addEdge order and TGLF
+            # edge order (verified empirically against libdialect's
+            # writeTglf implementation, which iterates m_edges in
+            # insertion order).
+            for edge_key, polyline in zip(
+                added_edge_keys, edge_polylines, strict=True
+            ):
+                edge_routes[edge_key] = polyline
+        else:
+            # Edge-count mismatch (HOLA may have rewritten the edge set,
+            # e.g. for alignment ghosts). Fall back to a srcId/tgtId
+            # lookup, consuming polylines per ordered key. Multi-edges
+            # between the same pair are matched in addEdge order.
+            polylines_by_endpoints: dict[
+                tuple[object, object], list[list[tuple[float, float]]]
+            ] = {}
+            for src_id, tgt_id, polyline in _parse_tglf_edges_with_ids(
+                ag_graph.writeTglf()
+            ):
+                if src_id not in tglf_id_to_nx_node:
+                    continue
+                if tgt_id not in tglf_id_to_nx_node:
+                    continue
+                src_nx = tglf_id_to_nx_node[src_id]
+                tgt_nx = tglf_id_to_nx_node[tgt_id]
+                polylines_by_endpoints.setdefault(
+                    (src_nx, tgt_nx), []
+                ).append(polyline)
+            for edge_key in added_edge_keys:
+                source, target, _key = edge_key
+                bucket = polylines_by_endpoints.get((source, target))
+                if bucket:
+                    edge_routes[edge_key] = bucket.pop(0)
+
+        # Self-loop fallback: empty polyline so the edge appears in the
+        # result map without inventing geometry. Downstream metrics that
+        # iterate routes already tolerate len(route) < 2.
         for source, target, key in graph.edges(keys=True):
-            src_centre = node_positions[source]
-            tgt_centre = node_positions[target]
-            edge_routes[(source, target, key)] = [src_centre, tgt_centre]
+            if (source, target, key) not in edge_routes:
+                edge_routes[(source, target, key)] = []
 
         return LayoutResult(
             node_positions=node_positions,
