@@ -18,13 +18,27 @@ Edge metadata (every edge has both keys):
                      | "vertical_preferred" (cfg)
                      | "horizontal_only"    (iop)
 
-The current public ``Pcode.to_graph()`` projection produces a bipartite
-varnode/pcode-op graph (data-flow only); CFG block nodes and inter-op
-horizontal (iop) edges are not exposed by the public API yet, so this
-extractor emits ``edge_type="pcode_dataflow"`` for every projected edge
-and never produces ``cfg`` / ``iop`` edges. The classification scheme is
-defined here (rather than at render time) so downstream layout code can
-remain agnostic of the underlying flatline projection details.
+The base ``Pcode.to_graph()`` projection emits only bipartite
+varnode<->op data-flow edges. To exercise layout backends on a
+realistic CFG-shaped graph (and to make the resulting graph connected),
+we synthesise two additional edge families on top of the base graph
+without touching flatline's public API:
+
+* ``iop`` edges: pcode ops in execution order. We sort all ops by
+  ``(sequence_time, sequence_order)`` and add one edge from each op to
+  the immediately following op. This produces a single op-spine that
+  threads the entire function, irrespective of basic-block boundaries.
+
+* ``cfg`` edges: every branch op (BRANCH, CBRANCH and similar) whose
+  ``true_target_address`` / ``false_target_address`` is set fans out to
+  every op whose ``instruction_address`` matches that target. We do not
+  attempt to identify "the first op" of the target instruction because
+  the public API exposes per-op fields only; emitting an edge to every
+  matching op is correct under set semantics and keeps this extractor
+  free of basic-block reconstruction logic.
+
+``cfg_block`` nodes remain reserved for a future projection that
+exposes basic blocks; this extractor never emits them.
 
 CLI:
     python -m benchmarks.xray_layout.bench.graph_extract \\
@@ -136,7 +150,10 @@ def extract(binary_path: Path, meta_path: Path) -> nx.MultiDiGraph[object]:
     op_by_id = {op.id: op for op in pcode.pcode_ops}
     varnode_by_id = {vn.id: vn for vn in pcode.varnodes}
 
-    return _augment_graph(base_graph, op_by_id, varnode_by_id)
+    augmented = _augment_graph(base_graph, op_by_id, varnode_by_id)
+    _add_iop_edges(augmented, pcode.pcode_ops)
+    _add_cfg_edges(augmented, pcode.pcode_ops)
+    return augmented
 
 
 def _load_meta(meta_path: Path) -> dict[str, int | str]:
@@ -254,6 +271,78 @@ def _augment_graph(
         graph.add_edge(src, dst, key=key, **merged_edge)
 
     return graph
+
+
+def _add_iop_edges(graph: nx.MultiDiGraph[object], pcode_ops: list[object]) -> None:
+    """Add inter-op (IOP) execution-order edges to the graph in place.
+
+    Sorts all ops by ``(sequence_time, sequence_order)`` (Ghidra's
+    deterministic per-op key) and links each op to the immediately
+    following op with a single ``edge_type="iop"`` edge. The result is a
+    single op-spine that traverses the entire function regardless of
+    basic-block boundaries; this is intentional and avoids reconstructing
+    blocks from the public API surface.
+    """
+
+    ordered = sorted(pcode_ops, key=lambda op: (op.sequence_time, op.sequence_order))
+    iop_attrs = {
+        "edge_type": EDGE_TYPE_IOP,
+        "port_constraint": _PORT_CONSTRAINT_BY_EDGE_TYPE[EDGE_TYPE_IOP],
+        # ``kind`` mirrors the base-graph convention (string discriminator)
+        # so any consumer that switches on ``kind`` keeps working.
+        "kind": EDGE_TYPE_IOP,
+    }
+    for current, follower in zip(ordered, ordered[1:], strict=False):
+        src = ("op", current.id)
+        dst = ("op", follower.id)
+        # Both endpoints must already exist as nodes in the augmented
+        # graph (they were added from ``base_graph`` above). If not, the
+        # base projection is missing an op node -- skip rather than
+        # invent a node, to keep the contract one-way.
+        if src in graph and dst in graph:
+            graph.add_edge(src, dst, **iop_attrs)
+
+
+def _add_cfg_edges(graph: nx.MultiDiGraph[object], pcode_ops: list[object]) -> None:
+    """Add control-flow (CFG) edges in place from each branch op.
+
+    For every op exposing a non-None ``true_target_address`` or
+    ``false_target_address`` (covers BRANCH, CBRANCH, and any future op
+    class that surfaces these fields), we emit one CFG edge from the
+    branch op to *every* op whose ``instruction_address`` matches that
+    target address. We deliberately fan out instead of picking a single
+    "first op of the target instruction" because the public API exposes
+    only per-op fields; set-fanout is correct under any later block
+    reconstruction (every targeted op is reachable along the branch).
+    """
+
+    # Pre-bucket ops by instruction address so target lookup is O(1).
+    ops_by_addr: dict[int, list[object]] = {}
+    for op in pcode_ops:
+        ops_by_addr.setdefault(int(op.instruction_address), []).append(op)
+
+    cfg_attrs = {
+        "edge_type": EDGE_TYPE_CFG,
+        "port_constraint": _PORT_CONSTRAINT_BY_EDGE_TYPE[EDGE_TYPE_CFG],
+        "kind": EDGE_TYPE_CFG,
+    }
+    for op in pcode_ops:
+        # ``getattr`` + None-check works for any op class that may or may
+        # not expose these fields, without coupling to the BranchOp
+        # hierarchy at import time.
+        for target_attr in ("true_target_address", "false_target_address"):
+            target = getattr(op, target_attr, None)
+            if target is None:
+                continue
+            target_addr = int(target)
+            target_ops = ops_by_addr.get(target_addr, ())
+            src = ("op", op.id)
+            if src not in graph:
+                continue
+            for target_op in target_ops:
+                dst = ("op", target_op.id)
+                if dst in graph:
+                    graph.add_edge(src, dst, **cfg_attrs)
 
 
 def _node_attributes(
