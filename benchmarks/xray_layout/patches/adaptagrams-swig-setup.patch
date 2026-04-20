@@ -1,0 +1,20 @@
+--- a/cola/swig-python3-setup.py
++++ b/cola/swig-python3-setup.py
+@@ -4,10 +4,7 @@
+ setup.py file for SWIG example
+ """
+ 
+-from distutils.core import setup, Extension
+-# distutils are marked deprecated and will be removed from Python 3.13 and beyond
+-# install setuptools
+-# from setuptools import setup, Extension
++from setuptools import setup, Extension
+ 
+ adaptagrams_module = Extension('_adaptagrams',
+                                sources=['adaptagrams_wrap.cxx'],
+@@ -27,4 +24,5 @@
+        description = """Adaptagrams libraries""",
+        ext_modules = [adaptagrams_module],
+        py_modules = ["adaptagrams"],
++       python_requires=">=3.13",
+       )
