@@ -214,6 +214,10 @@ class OgdfAdapter(BaseAdapter):
             # destructors interact poorly with the interpreter shutdown
             # ordering and have produced double-free crashes in testing.
             primary.__python_owns__ = False
+            # Note: ogdf_python does not expose OrthoLayout in this build,
+            # so we rely on PlanarizationLayout's default planar layouter.
+            # If OrthoLayout becomes available, wrap it and call
+            # primary.setPlanarLayouter(ortho) here.
             primary.call(ga)
         except Exception:  # noqa: BLE001 - cppyy bubbles C++ exceptions opaquely
             # Planarisation rejected the graph (most often non-planar);
