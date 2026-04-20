@@ -27,7 +27,6 @@ artifact.
 
 from __future__ import annotations
 
-import signal
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -53,31 +52,6 @@ _DEFAULT_NODE_HEIGHT = 30.0
 # to force routes through narrow corridors that increase bend counts.
 _GRID_SPACING_X = 120.0
 _GRID_SPACING_Y = 80.0
-
-# Hard wall-clock cap for ``router.processTransaction()``.  Matches the
-# Per-case layout budget (configurable, default 300s) enforced by
-# ``BaseAdapter.run`` so we surface a clean TimeoutError before the harness's
-# outer SIGALRM fires.
-_LAYOUT_TIMEOUT_SECONDS = 300
-
-
-class _RoutingTimeout(Exception):
-    """Raised by the SIGALRM handler when libavoid exceeds the budget."""
-
-
-def _alarm_handler(signum: int, frame: object) -> None:
-    """SIGALRM handler that converts the timeout into a Python exception.
-
-    Using ``signal.alarm`` (rather than a watchdog thread) keeps the timeout
-    cheap and avoids the GIL pitfalls of trying to interrupt a blocking C++
-    call from another thread.  libavoid runs synchronously on the main
-    thread so the signal will be delivered as soon as it returns to the
-    Python interpreter loop.
-    """
-    _ = (signum, frame)
-    raise _RoutingTimeout(
-        f"libavoid processTransaction exceeded {_LAYOUT_TIMEOUT_SECONDS}s"
-    )
 
 
 class LibavoidAdapter(BaseAdapter):
@@ -197,19 +171,10 @@ class LibavoidAdapter(BaseAdapter):
             conn = ad.ConnRef(router, src_end, tgt_end, ad.ConnType_Orthogonal)
             connectors[(source, target, key)] = conn
 
-        # Wrap the C++ call in a SIGALRM watchdog.  We restore the previous
-        # handler in a finally block so we never leak signal state into the
-        # caller (the harness installs its own outer time_budget).
-        previous_handler = signal.signal(signal.SIGALRM, _alarm_handler)
-        signal.alarm(_LAYOUT_TIMEOUT_SECONDS)
+        # Wall-clock cap is enforced upstream by the harness's per-case
+        # subprocess + killpg; SIGALRM cannot interrupt this native call.
         t0 = time.perf_counter()
-        try:
-            router.processTransaction()
-        except _RoutingTimeout as exc:
-            raise TimeoutError(str(exc)) from exc
-        finally:
-            signal.alarm(0)
-            signal.signal(signal.SIGALRM, previous_handler)
+        router.processTransaction()
         runtime_ms = (time.perf_counter() - t0) * 1000.0
 
         edge_routes: dict[tuple[object, object, object], list[tuple[float, float]]] = {}

@@ -1,12 +1,26 @@
 {
   "binary": "xlarge_state_machine",
   "candidate": "ogdf_planarization",
-  "error_message": "FileNotFoundError: benchmark metadata not found for /home/patacca/patacca_git/flatline/benchmarks/xray_layout/corpus/sources/xlarge_state_machine.c (expected /home/patacca/patacca_git/flatline/benchmarks/xray_layout/corpus/sources/xlarge_state_machine.meta.json)",
   "function": "<auto>",
   "machine": {
     "cpu": "x86_64",
     "os": "Linux 6.19.8-arch1-1",
     "ram_gb": 30.83
   },
-  "status": "error"
+  "metrics": {
+    "bbox_area": 0.0,
+    "bbox_aspect": 0.0,
+    "bend_count": 0.0,
+    "edge_crossings": 0.0,
+    "edge_overlaps": 0.0,
+    "orthogonal_segment_ratio": 0.0,
+    "port_violations": 0.0,
+    "runtime_ms": 0.9708029683679342,
+    "same_instr_cluster_dist": 0.0,
+    "total_edge_length": 0.0
+  },
+  "outputs": {
+    "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/xlarge_state_machine__ogdf_planarization.png"
+  },
+  "status": "ok"
 }

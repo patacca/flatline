@@ -1,26 +1,12 @@
 {
   "binary": "small_loop",
   "candidate": "ogdf",
+  "error_message": "hard wall-clock timeout after 1s; killed worker process group",
   "function": "<auto>",
   "machine": {
     "cpu": "x86_64",
     "os": "Linux 6.19.8-arch1-1",
     "ram_gb": 30.83
   },
-  "metrics": {
-    "bbox_area": 907603.125,
-    "bbox_aspect": 1.2673559822747416,
-    "bend_count": 194.0,
-    "edge_crossings": 11.0,
-    "edge_overlaps": 0.0,
-    "orthogonal_segment_ratio": 0.7056603773584905,
-    "port_violations": 34.0,
-    "runtime_ms": 38.57850702479482,
-    "same_instr_cluster_dist": 185.0752294608271,
-    "total_edge_length": 17286.25
-  },
-  "outputs": {
-    "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/small_loop__ogdf.png"
-  },
-  "status": "ok"
+  "status": "timeout"
 }

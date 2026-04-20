@@ -10,10 +10,15 @@ Subcommands:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import importlib
 import json
+import os
 import platform
+import signal
+import subprocess
 import sys
+import tempfile
 import traceback
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -40,6 +45,12 @@ BENCH_ROOT = Path(__file__).resolve().parent
 XRAY_LAYOUT_ROOT = BENCH_ROOT.parent
 DEFAULT_OUT = XRAY_LAYOUT_ROOT / "out"
 CORPUS_DIR = XRAY_LAYOUT_ROOT / "corpus"
+# Built ELFs (with paired .meta.json) live alongside DEFAULT_OUT.
+# Adapter run() reads ``binary_path.read_bytes()`` and pairs the meta via
+# ``binary_path.with_suffix('.meta.json')``, so stem resolution must point
+# at the built ELF -- not the source .c -- for both the bytes and the meta
+# to be found.
+BINARIES_DIR = DEFAULT_OUT / "binaries"
 SCHEMA_PATH = XRAY_LAYOUT_ROOT / "schemas" / "run.json"
 
 
@@ -80,12 +91,19 @@ def _load_adapter(name: str) -> tuple[Any | None, str | None]:
 def _resolve_binary(binary: str) -> Path:
     """Resolve *binary* to a concrete path.
 
-    Accepts either a corpus stem (matched against CORPUS_DIR/sources/<stem>.c)
-    or an absolute/relative filesystem path.
+    Accepts either a corpus stem or an absolute/relative filesystem path.
+    Stems resolve to the built ELF under ``out/binaries/<stem>.elf`` because
+    the adapter run loop reads the file as raw bytes and locates the meta
+    via ``<binary_path>.meta.json``; the source ``.c`` does not satisfy
+    either contract. Source-stem fallback is kept as a last-resort hint so
+    a missing build produces a clearer downstream error than a bare miss.
     """
     p = Path(binary)
     if p.exists():
         return p.resolve()
+    elf = BINARIES_DIR / f"{binary}.elf"
+    if elf.exists():
+        return elf.resolve()
     candidate = CORPUS_DIR / "sources" / f"{binary}.c"
     if candidate.exists():
         return candidate.resolve()
@@ -155,7 +173,7 @@ def _write_record(out_dir: Path, record: dict[str, Any]) -> Path:
     return path
 
 
-def _run_one(
+def _run_one_inproc(
     adapter_name: str,
     binary_stem: str,
     binary_path: Path,
@@ -163,7 +181,14 @@ def _run_one(
     budget: int,
     out_dir: Path,
 ) -> dict[str, Any]:
-    """Execute a single (adapter, binary) pair and return its run record."""
+    """In-process execution of a single (adapter, binary) pair.
+
+    Invoked inside the per-case worker subprocess; never call directly from
+    the harness because a hung native call (libavoid, OGDF) cannot be
+    interrupted from Python and would freeze the whole benchmark suite.
+    The parent ``_run_one`` enforces the wall-clock cap by killing this
+    process group on timeout.
+    """
     record: dict[str, Any] = {
         "candidate": adapter_name,
         "binary": binary_stem,
@@ -178,12 +203,7 @@ def _run_one(
         record["error_message"] = err or "adapter unavailable"
         return record
 
-    # Try to invoke the adapter's run method; tolerate any failure mode.
     try:
-        # Adapter contract is still being finalised; we call run(...) if it
-        # exists, otherwise mark the run as deferred so the harness keeps
-        # going. Each adapter is expected to honour the time budget itself
-        # or via the time_budget helper.
         run_fn = getattr(instance, "run", None)
         if run_fn is None:
             record["status"] = "deferred"
@@ -198,16 +218,12 @@ def _run_one(
         if isinstance(result, dict):
             record.update(result)
         record.setdefault("status", "ok")
-    except TimeoutError as exc:
-        record["status"] = "timeout"
-        record["error_message"] = str(exc)
     except MemoryError as exc:
         record["status"] = "crashed"
         record["error_message"] = f"OOM: {exc}"
     except Exception as exc:  # noqa: BLE001 - harness must not abort
         record["status"] = "error"
         record["error_message"] = f"{type(exc).__name__}: {exc}"
-        # Stash trace as a side-band file; not part of schema.
         try:
             (out_dir / "errors").mkdir(parents=True, exist_ok=True)
             (out_dir / "errors" / f"{adapter_name}__{binary_stem}.txt").write_text(
@@ -216,6 +232,139 @@ def _run_one(
         except OSError:
             pass
     return record
+
+
+def _run_one(
+    adapter_name: str,
+    binary_stem: str,
+    binary_path: Path,
+    entry: str | None,
+    budget: int,
+    out_dir: Path,
+) -> dict[str, Any]:
+    """Execute a single (adapter, binary) pair under a hard wall-clock cap.
+
+    Spawns the in-process worker as a child Python process inside a fresh
+    POSIX session/process group. On ``--budget`` expiry the parent sends
+    SIGKILL to the entire group, which reliably stops native C++ calls
+    (libavoid, OGDF, cppyy) that ignore Python-level SIGALRM. Without
+    this isolation the harness silently hangs past the budget when a
+    native layout call refuses to return -- the failure mode that
+    motivated this design.
+
+    A successful child writes its run record JSON to a fresh temp path
+    that the parent then loads. Timeout/crash records are synthesized in
+    the parent so the harness always emits exactly one record per case.
+    """
+    base_record: dict[str, Any] = {
+        "candidate": adapter_name,
+        "binary": binary_stem,
+        "function": entry or "<auto>",
+        "machine": _machine_info(),
+    }
+
+    fd, tmp_result_str = tempfile.mkstemp(
+        prefix=f"runcase_{adapter_name}_{binary_stem}_",
+        suffix=".json",
+        dir=str(out_dir),
+    )
+    os.close(fd)
+    tmp_result = Path(tmp_result_str)
+    try:
+        cmd = [
+            sys.executable,
+            "-m",
+            "benchmarks.xray_layout.bench",
+            "_run-case",
+            "--adapter",
+            adapter_name,
+            "--binary-stem",
+            binary_stem,
+            "--binary-path",
+            str(binary_path),
+            "--budget",
+            str(budget),
+            "--out",
+            str(out_dir),
+            "--result-path",
+            str(tmp_result),
+        ]
+        if entry is not None:
+            cmd.extend(["--entry", entry])
+
+        # start_new_session=True puts the child in its own process group so
+        # killpg reaches grandchildren too (e.g. DOMUS's external binary).
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            start_new_session=True,
+            text=True,
+        )
+
+        try:
+            _stderr = proc.communicate(timeout=budget)[1]
+            rc = proc.returncode
+        except subprocess.TimeoutExpired:
+            with contextlib.suppress(ProcessLookupError):
+                os.killpg(proc.pid, signal.SIGKILL)
+            try:
+                _stderr = proc.communicate(timeout=10)[1]
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                _stderr = ""
+            record = dict(base_record)
+            record["status"] = "timeout"
+            record["error_message"] = (
+                f"hard wall-clock timeout after {budget}s; killed worker process group"
+            )
+            _write_worker_stderr(out_dir, adapter_name, binary_stem, _stderr)
+            return record
+
+        if tmp_result.exists() and tmp_result.stat().st_size > 0:
+            try:
+                return json.loads(tmp_result.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as exc:
+                record = dict(base_record)
+                record["status"] = "error"
+                record["error_message"] = (
+                    f"worker wrote unparseable result JSON: {exc}"
+                )
+                _write_worker_stderr(out_dir, adapter_name, binary_stem, _stderr)
+                return record
+
+        # No result file: child died before writing. Distinguish signal
+        # death (rc < 0 on POSIX) from a clean non-zero exit.
+        record = dict(base_record)
+        if rc is not None and rc < 0:
+            record["status"] = "crashed"
+            record["error_message"] = (
+                f"worker killed by signal {-rc} before writing result"
+            )
+        else:
+            record["status"] = "error"
+            record["error_message"] = (
+                f"worker exited (code={rc}) without writing result"
+            )
+        _write_worker_stderr(out_dir, adapter_name, binary_stem, _stderr)
+        return record
+    finally:
+        with contextlib.suppress(OSError):
+            tmp_result.unlink(missing_ok=True)
+
+
+def _write_worker_stderr(
+    out_dir: Path, adapter_name: str, binary_stem: str, stderr: str | None
+) -> None:
+    """Persist worker stderr to out/errors/ for post-mortem inspection."""
+    if not stderr:
+        return
+    try:
+        errors_dir = out_dir / "errors"
+        errors_dir.mkdir(parents=True, exist_ok=True)
+        (errors_dir / f"{adapter_name}__{binary_stem}.txt").write_text(stderr)
+    except OSError:
+        pass
 
 
 def _split_csv(value: str | None, default: list[str]) -> list[str]:
@@ -320,8 +469,30 @@ def cmd_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_run_case(args: argparse.Namespace) -> int:
+    """Hidden subcommand: execute one (adapter, binary) pair in-process.
+
+    Invoked by ``_run_one`` as a child process so the parent can enforce a
+    hard wall-clock cap via ``killpg`` on its session group. Writes the
+    resulting record JSON to ``--result-path`` (atomic-ish: parent creates
+    a fresh empty temp file, child overwrites it). Always returns 0 on
+    successful write -- the record's ``status`` field carries semantic
+    success/failure -- so a non-zero exit code unambiguously means the
+    worker itself crashed before recording anything.
+    """
+    record = _run_one_inproc(
+        adapter_name=args.adapter,
+        binary_stem=args.binary_stem,
+        binary_path=Path(args.binary_path),
+        entry=args.entry or None,
+        budget=args.budget,
+        out_dir=Path(args.out),
+    )
+    Path(args.result_path).write_text(json.dumps(record), encoding="utf-8")
+    return 0
+
+
 def cmd_check(args: argparse.Namespace) -> int:  # noqa: ARG001
-    """Print an install-status table for every adapter; always exit 0."""
     rows: list[tuple[str, str, str]] = []
     for name in ADAPTER_NAMES:
         instance, load_err = _load_adapter(name)
@@ -411,6 +582,19 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_check = sub.add_parser("check", help="probe adapter install status")
     p_check.set_defaults(func=cmd_check)
+
+    # Hidden internal subcommand: per-case worker spawned by _run_one().
+    # Not advertised in --help because it is a process-isolation
+    # implementation detail of the run subcommand.
+    p_runcase = sub.add_parser("_run-case", help=argparse.SUPPRESS)
+    p_runcase.add_argument("--adapter", required=True)
+    p_runcase.add_argument("--binary-stem", required=True)
+    p_runcase.add_argument("--binary-path", required=True)
+    p_runcase.add_argument("--entry", default=None)
+    p_runcase.add_argument("--budget", type=int, required=True)
+    p_runcase.add_argument("--out", required=True)
+    p_runcase.add_argument("--result-path", required=True)
+    p_runcase.set_defaults(func=cmd_run_case)
 
     return parser
 

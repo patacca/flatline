@@ -25,7 +25,6 @@ runtime failures stay as ``error`` rows: there is no fallback engine.
 
 from __future__ import annotations
 
-import signal
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -42,30 +41,6 @@ if TYPE_CHECKING:
 # comparisons remain meaningful.
 _DEFAULT_NODE_WIDTH = 50.0
 _DEFAULT_NODE_HEIGHT = 30.0
-
-# Hard wall-clock cap for ``adaptagrams.doHOLA``. Mirrors the per-case
-# layout budget (configurable, default 300s) enforced by ``BaseAdapter.run``
-# so we surface a clean TimeoutError before the harness's outer SIGALRM fires.
-_LAYOUT_TIMEOUT_SECONDS = 300
-
-
-class _LayoutTimeout(Exception):
-    """Raised by the SIGALRM handler when doHOLA exceeds the budget."""
-
-
-def _alarm_handler(signum: int, frame: object) -> None:
-    """SIGALRM handler that converts the timeout into a Python exception.
-
-    Using ``signal.alarm`` (rather than a watchdog thread) keeps the
-    timeout cheap and avoids the GIL pitfalls of trying to interrupt a
-    blocking C++ call from another thread. doHOLA runs synchronously on
-    the main thread so the signal is delivered as soon as control returns
-    to the Python interpreter loop.
-    """
-    _ = (signum, frame)
-    raise _LayoutTimeout(
-        f"adaptagrams.doHOLA exceeded {_LAYOUT_TIMEOUT_SECONDS}s"
-    )
 
 
 class HolaAdapter(BaseAdapter):
@@ -151,19 +126,10 @@ class HolaAdapter(BaseAdapter):
                 continue
             ag_graph.addEdge(ag_nodes[source], ag_nodes[target])
 
-        # Wrap the C++ call in a SIGALRM watchdog. Restore the previous
-        # handler in finally so we never leak signal state into the
-        # caller (the harness installs its own outer time_budget).
-        previous_handler = signal.signal(signal.SIGALRM, _alarm_handler)
-        signal.alarm(_LAYOUT_TIMEOUT_SECONDS)
+        # Wall-clock cap is enforced upstream by the harness's per-case
+        # subprocess + killpg; SIGALRM cannot interrupt this native call.
         t0 = time.perf_counter()
-        try:
-            ad.doHOLA(ag_graph)
-        except _LayoutTimeout as exc:
-            raise TimeoutError(str(exc)) from exc
-        finally:
-            signal.alarm(0)
-            signal.signal(signal.SIGALRM, previous_handler)
+        ad.doHOLA(ag_graph)
         runtime_ms = (time.perf_counter() - t0) * 1000.0
 
         node_positions: dict[object, tuple[float, float]] = {}

@@ -1,12 +1,1329 @@
-Traceback (most recent call last):
-  File "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/bench/cli.py", line 192, in _run_one
-    result = run_fn(
-        binary_path=binary_path,
-    ...<2 lines>...
-        out_dir=out_dir,
-    )
-  File "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/bench/adapters/_base.py", line 190, in run
-    meta_path = self._resolve_meta_path(binary_path)
-  File "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/bench/adapters/_base.py", line 229, in _resolve_meta_path
-    raise FileNotFoundError(msg)
-FileNotFoundError: benchmark metadata not found for /home/patacca/patacca_git/flatline/benchmarks/xray_layout/corpus/sources/xlarge_state_machine.c (expected /home/patacca/patacca_git/flatline/benchmarks/xray_layout/corpus/sources/xlarge_state_machine.meta.json)
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1143 can't connect to shape 75
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1132 can't connect to shape 65
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1130 can't connect to shape 74
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1129 can't connect to shape 64
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1126 can't connect to shape 73
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1124 can't connect to shape 66
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1121 can't connect to shape 56
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1120 can't connect to shape 59
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1119 can't connect to shape 61
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1116 can't connect to shape 290
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1115 can't connect to shape 290
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1110 can't connect to shape 63
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1102 can't connect to shape 44
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1099 can't connect to shape 37
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1096 can't connect to shape 40
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1094 can't connect to shape 269
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1094 can't connect to shape 35
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1083 can't connect to shape 21
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1080 can't connect to shape 18
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1078 can't connect to shape 17
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1074 can't connect to shape 9
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1073 can't connect to shape 11
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1068 can't connect to shape 26
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1067 can't connect to shape 22
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1066 can't connect to shape 20
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1064 can't connect to shape 239
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1064 can't connect to shape 10
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1063 can't connect to shape 239
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1057 can't connect to shape 172
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1054 can't connect to shape 170
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1053 can't connect to shape 68
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1051 can't connect to shape 228
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1047 can't connect to shape 150
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1044 can't connect to shape 222
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1044 can't connect to shape 148
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1040 can't connect to shape 218
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1039 can't connect to shape 218
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1034 can't connect to shape 51
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1032 can't connect to shape 213
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1029 can't connect to shape 211
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1029 can't connect to shape 144
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1028 can't connect to shape 211
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1028 can't connect to shape 144
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1026 can't connect to shape 210
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1026 can't connect to shape 144
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1025 can't connect to shape 210
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1025 can't connect to shape 144
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1024 can't connect to shape 210
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1024 can't connect to shape 144
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1023 can't connect to shape 210
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1023 can't connect to shape 144
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1022 can't connect to shape 27
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1020 can't connect to shape 208
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1020 can't connect to shape 143
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1019 can't connect to shape 208
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1019 can't connect to shape 143
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1018 can't connect to shape 208
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1018 can't connect to shape 143
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1017 can't connect to shape 208
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1017 can't connect to shape 143
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1016 can't connect to shape 208
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1016 can't connect to shape 143
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1015 can't connect to shape 143
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1012 can't connect to shape 206
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1012 can't connect to shape 142
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1011 can't connect to shape 206
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1011 can't connect to shape 142
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1010 can't connect to shape 206
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1010 can't connect to shape 142
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1009 can't connect to shape 206
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1009 can't connect to shape 142
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1008 can't connect to shape 206
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1008 can't connect to shape 142
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1007 can't connect to shape 142
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1005 can't connect to shape 204
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1004 can't connect to shape 204
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1003 can't connect to shape 204
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1002 can't connect to shape 204
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1001 can't connect to shape 204
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 1000 can't connect to shape 204
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 996 can't connect to shape 139
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 995 can't connect to shape 139
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 994 can't connect to shape 139
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 993 can't connect to shape 139
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 992 can't connect to shape 139
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 991 can't connect to shape 139
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 989 can't connect to shape 200
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 989 can't connect to shape 138
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 988 can't connect to shape 200
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 988 can't connect to shape 138
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 987 can't connect to shape 138
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 986 can't connect to shape 138
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 983 can't connect to shape 137
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 982 can't connect to shape 137
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 981 can't connect to shape 137
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 980 can't connect to shape 137
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 978 can't connect to shape 190
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 977 can't connect to shape 190
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 976 can't connect to shape 190
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 974 can't connect to shape 189
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 971 can't connect to shape 135
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 968 can't connect to shape 146
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 966 can't connect to shape 182
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 965 can't connect to shape 138
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 964 can't connect to shape 138
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 963 can't connect to shape 137
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 962 can't connect to shape 60
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 961 can't connect to shape 43
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 960 can't connect to shape 24
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 958 can't connect to shape 179
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 957 can't connect to shape 137
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 956 can't connect to shape 135
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 954 can't connect to shape 405
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 953 can't connect to shape 405
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 953 can't connect to shape 135
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 952 can't connect to shape 405
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 952 can't connect to shape 135
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 951 can't connect to shape 405
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 951 can't connect to shape 135
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 950 can't connect to shape 405
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 949 can't connect to shape 135
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 945 can't connect to shape 126
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 942 can't connect to shape 52
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 941 can't connect to shape 32
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 940 can't connect to shape 173
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 939 can't connect to shape 171
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 938 can't connect to shape 169
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 934 can't connect to shape 396
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 934 can't connect to shape 33
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 933 can't connect to shape 396
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 932 can't connect to shape 396
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 932 can't connect to shape 123
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 931 can't connect to shape 136
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 930 can't connect to shape 136
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 927 can't connect to shape 121
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 922 can't connect to shape 387
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 922 can't connect to shape 116
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 920 can't connect to shape 115
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 915 can't connect to shape 111
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 913 can't connect to shape 110
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 911 can't connect to shape 122
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 907 can't connect to shape 372
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 907 can't connect to shape 104
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 906 can't connect to shape 372
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 906 can't connect to shape 104
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 905 can't connect to shape 117
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 902 can't connect to shape 369
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 901 can't connect to shape 369
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 900 can't connect to shape 112
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 897 can't connect to shape 366
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 897 can't connect to shape 102
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 896 can't connect to shape 366
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 896 can't connect to shape 102
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 895 can't connect to shape 105
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 891 can't connect to shape 361
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 891 can't connect to shape 100
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 889 can't connect to shape 101
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 888 can't connect to shape 101
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 886 can't connect to shape 357
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 882 can't connect to shape 354
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 882 can't connect to shape 94
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 879 can't connect to shape 95
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 877 can't connect to shape 349
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 872 can't connect to shape 345
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 870 can't connect to shape 344
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 870 can't connect to shape 90
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 868 can't connect to shape 343
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 866 can't connect to shape 342
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 864 can't connect to shape 162
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 863 can't connect to shape 158
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 860 can't connect to shape 156
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 858 can't connect to shape 157
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 854 can't connect to shape 168
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 852 can't connect to shape 167
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 850 can't connect to shape 166
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 848 can't connect to shape 165
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 846 can't connect to shape 164
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 844 can't connect to shape 155
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 839 can't connect to shape 130
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 838 can't connect to shape 161
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 834 can't connect to shape 119
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 832 can't connect to shape 154
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 830 can't connect to shape 108
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 829 can't connect to shape 97
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 827 can't connect to shape 86
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 826 can't connect to shape 159
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 823 can't connect to shape 149
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 822 can't connect to shape 1
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 821 can't connect to shape 2
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 820 can't connect to shape 86
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 819 can't connect to shape 101
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 817 can't connect to shape 144
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 815 can't connect to shape 143
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 813 can't connect to shape 142
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 811 can't connect to shape 92
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 809 can't connect to shape 77
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 807 can't connect to shape 77
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 806 can't connect to shape 76
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 805 can't connect to shape 144
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 804 can't connect to shape 143
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 803 can't connect to shape 142
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 802 can't connect to shape 140
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 801 can't connect to shape 139
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 800 can't connect to shape 138
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 799 can't connect to shape 137
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 798 can't connect to shape 136
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 797 can't connect to shape 135
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 795 can't connect to shape 68
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 794 can't connect to shape 75
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 792 can't connect to shape 74
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 790 can't connect to shape 73
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 788 can't connect to shape 33
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 787 can't connect to shape 40
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 785 can't connect to shape 71
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 783 can't connect to shape 76
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 781 can't connect to shape 138
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 779 can't connect to shape 67
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 778 can't connect to shape 66
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 776 can't connect to shape 65
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 774 can't connect to shape 64
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 772 can't connect to shape 70
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 770 can't connect to shape 97
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 768 can't connect to shape 63
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 766 can't connect to shape 62
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 765 can't connect to shape 61
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 764 can't connect to shape 68
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 763 can't connect to shape 60
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 762 can't connect to shape 60
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 760 can't connect to shape 59
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 758 can't connect to shape 56
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 756 can't connect to shape 55
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 754 can't connect to shape 54
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 752 can't connect to shape 119
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 750 can't connect to shape 152
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 747 can't connect to shape 50
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 745 can't connect to shape 49
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 742 can't connect to shape 123
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 739 can't connect to shape 26
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 737 can't connect to shape 46
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 735 can't connect to shape 133
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 733 can't connect to shape 30
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 730 can't connect to shape 40
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 729 can't connect to shape 42
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 727 can't connect to shape 41
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 724 can't connect to shape 38
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 723 can't connect to shape 35
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 722 can't connect to shape 45
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 721 can't connect to shape 44
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 720 can't connect to shape 43
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 719 can't connect to shape 43
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 718 can't connect to shape 37
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 716 can't connect to shape 140
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 714 can't connect to shape 35
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 712 can't connect to shape 52
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 709 can't connect to shape 31
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 708 can't connect to shape 49
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 706 can't connect to shape 48
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 703 can't connect to shape 23
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 701 can't connect to shape 137
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 699 can't connect to shape 28
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 697 can't connect to shape 104
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 695 can't connect to shape 24
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 693 can't connect to shape 27
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 692 can't connect to shape 26
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 691 can't connect to shape 24
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 690 can't connect to shape 22
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 689 can't connect to shape 21
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 686 can't connect to shape 19
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 685 can't connect to shape 7
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 683 can't connect to shape 8
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 680 can't connect to shape 16
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 678 can't connect to shape 15
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 677 can't connect to shape 19
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 675 can't connect to shape 13
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 673 can't connect to shape 16
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 672 can't connect to shape 15
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 671 can't connect to shape 13
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 670 can't connect to shape 12
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 669 can't connect to shape 19
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 668 can't connect to shape 18
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 667 can't connect to shape 17
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 666 can't connect to shape 20
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 665 can't connect to shape 121
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 663 can't connect to shape 11
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 661 can't connect to shape 14
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 659 can't connect to shape 25
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 657 can't connect to shape 9
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 654 can't connect to shape 5
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 653 can't connect to shape 51
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 651 can't connect to shape 4
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 649 can't connect to shape 32
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 648 can't connect to shape 173
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 647 can't connect to shape 172
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 645 can't connect to shape 123
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 644 can't connect to shape 171
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 643 can't connect to shape 170
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 641 can't connect to shape 47
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 639 can't connect to shape 36
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 637 can't connect to shape 18
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 635 can't connect to shape 17
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 633 can't connect to shape 3
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 631 can't connect to shape 58
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 629 can't connect to shape 66
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 627 can't connect to shape 161
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 624 can't connect to shape 159
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 623 can't connect to shape 51
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 621 can't connect to shape 69
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 619 can't connect to shape 80
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 617 can't connect to shape 163
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 615 can't connect to shape 32
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 613 can't connect to shape 12
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 610 can't connect to shape 151
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 609 can't connect to shape 168
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 608 can't connect to shape 167
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 607 can't connect to shape 166
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 606 can't connect to shape 165
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 605 can't connect to shape 164
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 604 can't connect to shape 162
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 603 can't connect to shape 161
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 602 can't connect to shape 160
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 601 can't connect to shape 159
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 600 can't connect to shape 158
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 599 can't connect to shape 157
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 598 can't connect to shape 156
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 597 can't connect to shape 155
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 596 can't connect to shape 154
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 594 can't connect to shape 150
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 592 can't connect to shape 149
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 590 can't connect to shape 148
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 587 can't connect to shape 146
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 586 can't connect to shape 146
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 584 can't connect to shape 168
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 582 can't connect to shape 167
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 580 can't connect to shape 166
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 578 can't connect to shape 165
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 576 can't connect to shape 164
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 574 can't connect to shape 162
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 572 can't connect to shape 157
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 570 can't connect to shape 156
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 568 can't connect to shape 155
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 564 can't connect to shape 57
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 562 can't connect to shape 87
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 560 can't connect to shape 67
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 558 can't connect to shape 131
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 556 can't connect to shape 38
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 554 can't connect to shape 128
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 552 can't connect to shape 133
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 551 can't connect to shape 132
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 550 can't connect to shape 131
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 549 can't connect to shape 129
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 548 can't connect to shape 128
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 546 can't connect to shape 125
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 545 can't connect to shape 144
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 544 can't connect to shape 143
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 543 can't connect to shape 142
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 542 can't connect to shape 140
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 541 can't connect to shape 139
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 540 can't connect to shape 138
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 539 can't connect to shape 137
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 538 can't connect to shape 136
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 537 can't connect to shape 135
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 535 can't connect to shape 126
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 535 can't connect to shape 83
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 534 can't connect to shape 126
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 532 can't connect to shape 125
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 530 can't connect to shape 124
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 527 can't connect to shape 159
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 525 can't connect to shape 31
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 523 can't connect to shape 120
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 521 can't connect to shape 120
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 520 can't connect to shape 118
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 519 can't connect to shape 121
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 518 can't connect to shape 122
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 517 can't connect to shape 117
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 515 can't connect to shape 10
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 513 can't connect to shape 118
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 511 can't connect to shape 114
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 509 can't connect to shape 114
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 508 can't connect to shape 113
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 507 can't connect to shape 115
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 506 can't connect to shape 116
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 505 can't connect to shape 115
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 503 can't connect to shape 158
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 501 can't connect to shape 85
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 499 can't connect to shape 109
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 496 can't connect to shape 106
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 495 can't connect to shape 109
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 494 can't connect to shape 107
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 493 can't connect to shape 106
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 492 can't connect to shape 111
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 491 can't connect to shape 110
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 490 can't connect to shape 112
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 489 can't connect to shape 81
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 487 can't connect to shape 79
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 485 can't connect to shape 78
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 483 can't connect to shape 110
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 481 can't connect to shape 105
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 479 can't connect to shape 107
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 477 can't connect to shape 99
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 475 can't connect to shape 99
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 474 can't connect to shape 98
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 473 can't connect to shape 104
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 472 can't connect to shape 103
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 471 can't connect to shape 102
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 470 can't connect to shape 101
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 469 can't connect to shape 100
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 468 can't connect to shape 100
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 467 can't connect to shape 82
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 465 can't connect to shape 96
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 463 can't connect to shape 98
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 461 can't connect to shape 93
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 459 can't connect to shape 93
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 458 can't connect to shape 92
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 457 can't connect to shape 95
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 456 can't connect to shape 94
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 455 can't connect to shape 94
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 454 can't connect to shape 95
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 452 can't connect to shape 91
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 450 can't connect to shape 89
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 447 can't connect to shape 87
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 446 can't connect to shape 151
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 444 can't connect to shape 169
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 443 can't connect to shape 44
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 441 can't connect to shape 90
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 439 can't connect to shape 139
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 437 can't connect to shape 62
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 435 can't connect to shape 27
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 433 can't connect to shape 106
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 431 can't connect to shape 102
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 429 can't connect to shape 34
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 427 can't connect to shape 136
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 425 can't connect to shape 61
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 423 can't connect to shape 135
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 421 can't connect to shape 154
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 418 can't connect to shape 119
+         since it has no pins with class id of 3.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 417 can't connect to shape 130
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 415 can't connect to shape 111
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 413 can't connect to shape 108
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 411 can't connect to shape 81
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 410 can't connect to shape 79
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 409 can't connect to shape 78
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 408 can't connect to shape 84
+         since it has no pins with class id of 10.
+Warning: In ConnEnd::assignPinVisibilityTo():
+         ConnEnd for connector 407 can't connect to shape 2
+         since it has no pins with class id of 10.

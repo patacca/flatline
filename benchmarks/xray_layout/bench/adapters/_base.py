@@ -184,7 +184,6 @@ class BaseAdapter(ABC):
         """
         from benchmarks.xray_layout.bench.graph_extract import extract
         from benchmarks.xray_layout.bench.metrics import compute
-        from benchmarks.xray_layout.bench.timeout import time_budget
 
         binary_stem = binary_path.stem
         meta_path = self._resolve_meta_path(binary_path)
@@ -201,10 +200,13 @@ class BaseAdapter(ABC):
         graph = extract(binary_path, meta_path)
         png_path = out_dir / "renders" / f"{binary_stem}__{self.name}.png"
 
-        with time_budget(budget_seconds):
-            result = self.layout(graph)
-            metrics = compute(result, graph)
-            self.render(result, graph, png_path)
+        # Wall-clock budget is enforced by the harness via a per-case
+        # subprocess + killpg; in-process SIGALRM cannot interrupt the
+        # native C++ layout/routing calls below, so no inner cap is set.
+        _ = budget_seconds
+        result = self.layout(graph)
+        metrics = compute(result, graph)
+        self.render(result, graph, png_path)
 
         record = self.build_payload(
             "ok",

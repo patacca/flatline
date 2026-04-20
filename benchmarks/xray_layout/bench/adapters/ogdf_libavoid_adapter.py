@@ -29,7 +29,6 @@ missing dependencies.
 
 from __future__ import annotations
 
-import signal
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -48,29 +47,6 @@ if TYPE_CHECKING:
 # data (defence in depth; OgdfAdapter currently always emits sizes).
 _DEFAULT_NODE_WIDTH = 50.0
 _DEFAULT_NODE_HEIGHT = 30.0
-
-# Hard wall-clock cap for ``router.processTransaction()``; matches the
-# per-case layout budget (configurable, default 300s) enforced by
-# ``BaseAdapter.run`` so we surface a clean TimeoutError before the harness's
-# outer SIGALRM fires.
-_LAYOUT_TIMEOUT_SECONDS = 300
-
-
-class _RoutingTimeout(Exception):
-    """Raised by the SIGALRM handler when libavoid exceeds the budget."""
-
-
-def _alarm_handler(signum: int, frame: object) -> None:
-    """SIGALRM handler that converts the timeout into a Python exception.
-
-    Mirrors ``libavoid_adapter._alarm_handler`` so the combo timeout has
-    the same shape as the standalone libavoid timeout: signal-based
-    rather than thread-based, no GIL games, restored in a finally block.
-    """
-    _ = (signum, frame)
-    raise _RoutingTimeout(
-        f"libavoid processTransaction exceeded {_LAYOUT_TIMEOUT_SECONDS}s"
-    )
 
 
 class OgdfLibavoidAdapter(BaseAdapter):
@@ -156,19 +132,11 @@ class OgdfLibavoidAdapter(BaseAdapter):
             tgt_end = ad.ConnEnd(shapes[target], ad.ConnDirAll)
             connectors[(source, target, key)] = ad.ConnRef(router, src_end, tgt_end)
 
-        # Step 4: route under SIGALRM watchdog.  Restore the previous
-        # handler in a finally block so we never leak signal state into
-        # the caller (the harness installs its own outer time_budget).
-        previous_handler = signal.signal(signal.SIGALRM, _alarm_handler)
-        signal.alarm(_LAYOUT_TIMEOUT_SECONDS)
+        # Step 4: route. Wall-clock cap is enforced upstream by the
+        # harness's per-case subprocess + killpg; SIGALRM cannot interrupt
+        # this native call.
         t0 = time.perf_counter()
-        try:
-            router.processTransaction()
-        except _RoutingTimeout as exc:
-            raise TimeoutError(str(exc)) from exc
-        finally:
-            signal.alarm(0)
-            signal.signal(signal.SIGALRM, previous_handler)
+        router.processTransaction()
         routing_ms = (time.perf_counter() - t0) * 1000.0
 
         # Step 5: harvest routes.  Combo runtime is the sum of the two
