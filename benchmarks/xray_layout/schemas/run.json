@@ -3,7 +3,7 @@
   "type": "object",
   "required": ["candidate", "binary", "function", "status"],
   "properties": {
-    "candidate": {"type": "string", "enum": ["libavoid","hola","ogdf","domus","ogdf_libavoid"]},
+    "candidate": {"type": "string", "enum": ["libavoid","hola","ogdf","domus","ogdf_libavoid","sugiyama_libavoid","ogdf_planarization"]},
     "binary": {"type": "string"},
     "function": {"type": "string"},
     "status": {"type": "string", "enum": ["ok","error","timeout","deferred","crashed"]},
@@ -21,7 +21,8 @@
         "bbox_aspect": {"type":"number"},
         "port_violations": {"type":"number"},
         "edge_overlaps": {"type":"number"},
-        "same_instr_cluster_dist": {"type":"number"}
+        "same_instr_cluster_dist": {"type":"number"},
+        "orthogonal_segment_ratio": {"type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "Fraction of polyline segments that are axis-aligned (within _ORTHO_TOL=1e-6). 1.0 = fully orthogonal."}
       }
     },
     "outputs": {

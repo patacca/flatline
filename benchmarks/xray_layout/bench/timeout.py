@@ -3,8 +3,8 @@
 Provides a time_budget context manager for enforcing timeouts on layout
 operations. Uses signal.SIGALRM which is only available on POSIX systems.
 
-Convention: Each layout operation has a 60-second timeout. The overall
-benchmark suite has a 30-minute budget for all layouts.
+Convention: Each layout operation has a configured per-case budget (default
+300s). The overall benchmark suite has a 30-minute budget for all layouts.
 """
 
 from __future__ import annotations

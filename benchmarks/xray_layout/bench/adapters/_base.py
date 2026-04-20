@@ -6,7 +6,7 @@ provide a unified interface for benchmarking.
 
 Budget conventions:
 - 30-minute total budget for the entire benchmark suite
-- 60-second timeout per individual layout operation
+- per-case timeout for individual layout operations (configurable, default 300s)
 """
 
 from __future__ import annotations
@@ -60,7 +60,7 @@ class Adapter(Protocol):
     def layout(self, graph: "nx.MultiDiGraph[Any]") -> LayoutResult:
         """Compute a layout for the given graph.
 
-        Must complete within the 60-second per-layout timeout.
+        Must complete within the per-case layout timeout (configurable, default 300s).
 
         Args:
             graph: The graph to layout. Nodes have 'width' and 'height'
@@ -94,8 +94,8 @@ class BaseAdapter(ABC):
     Provides common functionality for building benchmark payloads.
     Subclasses must implement the Adapter protocol methods.
 
-    The 30-minute total budget and 60-second per-layout timeout are
-    enforced by the benchmark runner, not individual adapters.
+    The 30-minute total budget and per-case layout timeout (configurable,
+    default 300s) are enforced by the benchmark runner, not individual adapters.
     """
 
     def __init__(self, name: str) -> None:

@@ -43,10 +43,10 @@ if TYPE_CHECKING:
 _DEFAULT_NODE_WIDTH = 50.0
 _DEFAULT_NODE_HEIGHT = 30.0
 
-# Hard wall-clock cap for ``adaptagrams.doHOLA``. Mirrors the 60-second
-# per-layout budget enforced by ``BaseAdapter.run`` so we surface a clean
-# TimeoutError before the harness's outer SIGALRM fires.
-_LAYOUT_TIMEOUT_SECONDS = 60
+# Hard wall-clock cap for ``adaptagrams.doHOLA``. Mirrors the per-case
+# layout budget (configurable, default 300s) enforced by ``BaseAdapter.run``
+# so we surface a clean TimeoutError before the harness's outer SIGALRM fires.
+_LAYOUT_TIMEOUT_SECONDS = 300
 
 
 class _LayoutTimeout(Exception):

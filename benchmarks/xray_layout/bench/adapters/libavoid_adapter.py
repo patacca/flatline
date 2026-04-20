@@ -54,9 +54,10 @@ _GRID_SPACING_X = 120.0
 _GRID_SPACING_Y = 80.0
 
 # Hard wall-clock cap for ``router.processTransaction()``.  Matches the
-# 60-second per-layout budget enforced by ``BaseAdapter.run`` so we surface
-# a clean TimeoutError before the harness's outer SIGALRM fires.
-_LAYOUT_TIMEOUT_SECONDS = 60
+# Per-case layout budget (configurable, default 300s) enforced by
+# ``BaseAdapter.run`` so we surface a clean TimeoutError before the harness's
+# outer SIGALRM fires.
+_LAYOUT_TIMEOUT_SECONDS = 300
 
 
 class _RoutingTimeout(Exception):

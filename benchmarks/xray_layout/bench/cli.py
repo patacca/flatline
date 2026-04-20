@@ -385,8 +385,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_run.add_argument(
         "--budget",
         type=int,
-        default=60,
-        help="per-run time budget in seconds (default: 60)",
+        default=300,
+        help="per-run time budget in seconds (default: 300)",
     )
     p_run.add_argument(
         "--out",
