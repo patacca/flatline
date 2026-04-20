@@ -44,6 +44,8 @@ CANDIDATES: list[str] = [
     "ogdf",
     "domus",
     "ogdf_libavoid",
+    "sugiyama_libavoid",
+    "ogdf_planarization",
 ]
 
 # Binaries built by the corpus pipeline. Stems must match the ELF basenames
@@ -60,6 +62,7 @@ BINARIES: list[str] = [
 # Metric column order; must be a subset of schemas/run.json metrics.
 METRICS: list[str] = [
     "edge_crossings",
+    "orthogonal_segment_ratio",
     "total_edge_length",
     "runtime_ms",
     "bend_count",

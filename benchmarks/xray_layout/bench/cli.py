@@ -30,6 +30,8 @@ ADAPTER_NAMES: list[str] = [
     "ogdf",
     "domus",
     "ogdf_libavoid",
+    "sugiyama_libavoid",
+    "ogdf_planarization",
 ]
 
 # Repo-relative anchors. The benchmark lives at benchmarks/xray_layout/, so
