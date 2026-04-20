@@ -9,7 +9,6 @@ libavoid = []
 hola = []
 ogdf = []
 domus = []
-wueortho = []
 
 [build-system]
 requires = ["setuptools"]

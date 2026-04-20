@@ -43,7 +43,6 @@ CANDIDATES: list[str] = [
     "hola",
     "ogdf",
     "domus",
-    "wueortho",
     "ogdf_libavoid",
 ]
 

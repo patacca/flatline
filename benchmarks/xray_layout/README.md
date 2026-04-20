@@ -7,7 +7,7 @@
 
 Data-driven evaluation of orthogonal layout libraries as candidates to replace
 xray's custom placement+routing algorithm. Candidates: libavoid, HOLA, OGDF,
-DOMUS, WueOrtho, OGDF+libavoid combo.
+DOMUS, OGDF+libavoid combo.
 
 ## Installation
 

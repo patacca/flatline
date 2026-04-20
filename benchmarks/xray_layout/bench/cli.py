@@ -29,7 +29,6 @@ ADAPTER_NAMES: list[str] = [
     "hola",
     "ogdf",
     "domus",
-    "wueortho",
     "ogdf_libavoid",
 ]
 
