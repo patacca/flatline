@@ -73,15 +73,21 @@ fi
 
 BUILD_START=$(date +%s)
 
-# 30-min timeout for autotools+swig build.
+"${VENV_PY}" -c "import setuptools" 2>/dev/null || "${VENV_PY}" -m pip install --quiet setuptools
+
+# Drive SWIG build with venv python directly: upstream Makefile-swig-python
+# hardcodes `python3` which resolves to the system interpreter (no setuptools
+# on Py3.13+) and breaks the bindings build.
 set +e
-timeout 1800 bash -c '
+VENV_PY="${VENV_PY}" timeout 1800 bash -c '
     set -euo pipefail
     cd cola
     ./autogen.sh
     ./configure CXXFLAGS="-std=c++11" CPPFLAGS="-DUSE_ASSERT_EXCEPTIONS" LDFLAGS="-Wl,-rpath,\$ORIGIN"
     make -j"$(nproc)"
-    make -f Makefile-swig-python
+    rm -f swig-worked adaptagrams_wrap.o adaptagrams_wrap.cxx _adaptagrams.so adaptagrams.py
+    swig -DNDEBUG -c++ -python adaptagrams.i
+    "${VENV_PY}" swig-python3-setup.py build_ext --inplace
 '
 BUILD_EXIT=$?
 set -e
