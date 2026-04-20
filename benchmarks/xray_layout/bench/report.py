@@ -228,6 +228,13 @@ def _render_summary(runs: dict[tuple[str, str], dict[str, Any]]) -> list[str]:
         tier = _tier_for(cand, runs)
         lines.append(f"| {cand} | {tier} | {ok_count}/{total} |")
     lines.append("")
+    # Pointer to hand-written investigation notes (research-branch artefact).
+    # Lives beside REPORT.md so it survives `bench report` regenerations.
+    lines.append(
+        "> See [`DOMUS_INVESTIGATION.md`](DOMUS_INVESTIGATION.md) for the "
+        "DOMUS adapter/extractor fix journey and viability analysis."
+    )
+    lines.append("")
     return lines
 
 
