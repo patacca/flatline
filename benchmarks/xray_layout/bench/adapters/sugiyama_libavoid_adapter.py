@@ -43,7 +43,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from benchmarks.xray_layout.bench.adapters._base import BaseAdapter, LayoutResult
-from benchmarks.xray_layout.bench.adapters._libavoid_config import apply_orthogonal_config
+from benchmarks.xray_layout.bench.adapters._libavoid_config import (
+    add_all_directions_pin,
+    apply_orthogonal_config,
+)
 
 if TYPE_CHECKING:
     import networkx as nx
@@ -279,38 +282,95 @@ class SugiyamaLibavoidAdapter(BaseAdapter):
             shape = A.ShapeRef(router, rect)
             shapes[node_id] = shape
 
-            # Source-side: three pins on the bottom edge (propY = 1.0,
-            # ConnDirDown).  classID encodes branch semantics so the
-            # routing engine can distinguish true/false/default per side.
-            # We register all three on every node unconditionally; unused
-            # pins cost a tiny amount of router state but keep the code
-            # uniform and predictable.
-            pins.append(A.ShapeConnectionPin(
-                shape, _PIN_TRUE, _PROPX_TRUE, _PROPY_BOTTOM, 0.0, A.ConnDirDown
-            ))
-            pins.append(A.ShapeConnectionPin(
-                shape, _PIN_FALSE, _PROPX_FALSE, _PROPY_BOTTOM, 0.0, A.ConnDirDown
-            ))
-            pins.append(A.ShapeConnectionPin(
-                shape, _PIN_DEFAULT, _PROPX_DEFAULT, _PROPY_BOTTOM, 0.0, A.ConnDirDown
-            ))
-            # Target-side: single pin at top centre (propY = 0.0, ConnDirUp).
-            pins.append(A.ShapeConnectionPin(
-                shape, _PIN_TARGET, _PROPX_TARGET, _PROPY_TOP, 0.0, A.ConnDirUp
-            ))
+            # Source-side: three pins on the bottom edge (propY = 1.0).
+            # classID encodes branch semantics so the routing engine can
+            # distinguish true/false/default per side. We register all three
+            # on every node unconditionally; unused pins cost a tiny amount
+            # of router state but keep the code uniform and predictable.
+            #
+            # CRITICAL: visDirs MUST include Down|Left|Right (not Down only).
+            # libavoid's orthogonal visibility graph only emits visibility
+            # rays in the directions a pin allows; a strict ConnDirDown pin
+            # can only contribute vertical visibility, so any off-axis
+            # forward edge has NO orthogonal path candidate and libavoid
+            # falls back to a 2-point centre-to-centre straight diagonal
+            # (via the dummy endpoint vertex at the shape centre). The same
+            # applies to ConnDirUp on the target pin.
+            #
+            # CRITICAL: pins must be non-exclusive (setExclusive(False)).
+            # By default a pin is exclusive: once one ConnEnd binds it, all
+            # subsequent ConnEnds requesting the same classID get the
+            # misleading "no pins with class id of N" warning and degrade
+            # to centre-to-centre. Many real graphs have multiple incoming
+            # edges per node (target pin 10 oversubscribed) and multiple
+            # default-kind outgoing edges per node (source pin 3
+            # oversubscribed), so non-exclusive is required.
+            _SRC_DIRS = A.ConnDirDown | A.ConnDirLeft | A.ConnDirRight
+            _TGT_DIRS = A.ConnDirUp | A.ConnDirLeft | A.ConnDirRight
+            for class_id, prop_x in (
+                (_PIN_TRUE, _PROPX_TRUE),
+                (_PIN_FALSE, _PROPX_FALSE),
+                (_PIN_DEFAULT, _PROPX_DEFAULT),
+            ):
+                pin = A.ShapeConnectionPin(
+                    shape, class_id, prop_x, _PROPY_BOTTOM, 0.0, _SRC_DIRS,
+                )
+                pin.setExclusive(False)
+                pins.append(pin)
+            tgt_pin = A.ShapeConnectionPin(
+                shape, _PIN_TARGET, _PROPX_TARGET, _PROPY_TOP, 0.0, _TGT_DIRS,
+            )
+            tgt_pin.setExclusive(False)
+            pins.append(tgt_pin)
+            # Centre / all-directions pin (CONNECTIONPIN_CENTRE) used as a
+            # safe fallback for edges whose endpoints cannot be routed
+            # orthogonally with the strict top/bottom side pins. This
+            # applies to:
+            #   * back-edges (target above or at the same y as source):
+            #     a "leave the bottom going down + enter the top going up"
+            #     polyline is geometrically impossible without a giant
+            #     detour and libavoid silently degrades to a straight
+            #     centre-to-centre segment instead.
+            #   * same-rank siblings (target.y == source.y): identical
+            #     reason -- the side pins point in mutually inconsistent
+            #     directions for that geometry.
+            # The centre pin lets libavoid choose any side per connector
+            # and produce a real orthogonal polyline. Forward edges keep
+            # using the side pins so true/false branch semantics remain
+            # visible in the routed output.
+            add_all_directions_pin(shape)
 
         # ---- Step 5: Connectors with classID-anchored ConnEnds ----
+        # Forward edges (target strictly below source) use the side pins
+        # so true/false/default branches leave the bottom from distinct
+        # X positions and enter targets at the top centre. Back-edges and
+        # same-rank edges fall back to CONNECTIONPIN_CENTRE on both ends
+        # so libavoid can pick whichever side yields a real orthogonal
+        # route -- see the pin-registration block above for the geometric
+        # rationale.
         connectors: dict[tuple[object, object, object], Any] = {}
         for source, target, key, data in graph.edges(keys=True, data=True):
             if source == target:
                 # Already recorded; libavoid cannot route same-shape ends.
                 continue
-            src_pin = _kind_to_pin(data.get("kind"))
+            src_y = node_positions[source][1]
+            tgt_y = node_positions[target][1]
+            if tgt_y > src_y:
+                src_pin = _kind_to_pin(data.get("kind"))
+                tgt_pin = _PIN_TARGET
+            else:
+                src_pin = A.CONNECTIONPIN_CENTRE
+                tgt_pin = A.CONNECTIONPIN_CENTRE
             # ConnEnd(ShapeRef, unsigned classID) selects a specific pin by
             # classID, which is exactly the side-anchoring we configured.
             src_end = A.ConnEnd(shapes[source], src_pin)
-            tgt_end = A.ConnEnd(shapes[target], _PIN_TARGET)
-            connectors[(source, target, key)] = A.ConnRef(router, src_end, tgt_end)
+            tgt_end = A.ConnEnd(shapes[target], tgt_pin)
+            # ConnType_Orthogonal forces axis-aligned segments. Without it
+            # libavoid may emit straight diagonals between the pinned
+            # endpoints, violating the benchmark's orthogonal contract.
+            connectors[(source, target, key)] = A.ConnRef(
+                router, src_end, tgt_end, A.ConnType_Orthogonal
+            )
 
         # ---- Step 6: Route ----
         t1 = time.perf_counter()
