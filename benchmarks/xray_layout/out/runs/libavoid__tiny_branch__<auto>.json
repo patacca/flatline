@@ -15,7 +15,7 @@
     "edge_overlaps": 0.0,
     "orthogonal_segment_ratio": 1.0,
     "port_violations": 18.0,
-    "runtime_ms": 3.778371959924698,
+    "runtime_ms": 3.723340923897922,
     "same_instr_cluster_dist": 302.5047496688426,
     "total_edge_length": 10916.36651888634
   },

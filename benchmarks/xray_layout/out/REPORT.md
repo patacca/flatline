@@ -1,6 +1,6 @@
 ---
-generated_at: "2026-04-20T19:59:02.121116+00:00"
-git_sha: "65aecd8"
+generated_at: "2026-04-20T20:37:17.317471+00:00"
+git_sha: "de4a1b3"
 branch: "bench/xray-layout-comparison"
 machine:
   cpu: "Intel(R) Core(TM) Ultra 5 225H"
@@ -33,70 +33,70 @@ benchmark_version: "0.0.0"
 | Candidate | Status | edge_crossings | orthogonal_segment_ratio | total_edge_length | runtime_ms | bend_count | bbox_area | bbox_aspect | port_violations | edge_overlaps | same_instr_cluster_dist |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | ogdf_planarization | ok | 0.0 | 0.0 | 0.0 | 0.2 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
-| libavoid | ok | 133.0 | 0.3 | 10880.0 | 0.9 | 0.0 | 115200.0 | 2.0 | 16.0 | 5.0 | 302.5 |
-| ogdf_libavoid | ok | 11.0 | 0.4 | 6176.9 | 22.8 | 0.0 | 214321.0 | 1.3 | 16.0 | 2.0 | 235.7 |
-| ogdf | ok | 1.0 | 0.7 | 7008.3 | 23.4 | 101.0 | 214321.0 | 1.3 | 16.0 | 0.0 | 235.7 |
-| sugiyama_libavoid | ok | 42.0 | 0.8 | 15128.1 | 76.7 | 60.0 | 589000.0 | 0.7 | 16.0 | 2.0 | 199.1 |
-| hola | ok | 8.0 | 0.6 | 6761.6 | 90.5 | 0.0 | 284155.4 | 1.5 | 16.0 | 2.0 | 203.5 |
+| libavoid | ok | 170.0 | 1.0 | 10916.4 | 3.7 | 65.0 | 115200.0 | 2.0 | 18.0 | 0.0 | 302.5 |
+| ogdf | ok | 1.0 | 0.7 | 7008.3 | 18.3 | 101.0 | 214321.0 | 1.3 | 16.0 | 0.0 | 235.7 |
+| ogdf_libavoid | ok | 34.0 | 1.0 | 6128.9 | 24.4 | 25.0 | 214321.0 | 1.3 | 15.0 | 0.0 | 235.7 |
+| sugiyama_libavoid | ok | 42.0 | 0.8 | 15128.1 | 74.3 | 60.0 | 589000.0 | 0.7 | 16.0 | 2.0 | 199.1 |
+| hola | ok | 8.0 | 0.6 | 6761.6 | 94.2 | 0.0 | 284155.4 | 1.5 | 16.0 | 2.0 | 203.5 |
 | domus | error | - | - | - | - | - | - | - | - | - | - |
 
-![tiny_branch grid](renders/tiny_branch__GRID.png)
+*Grid not available for tiny_branch*
 
 ### small_loop
 
 | Candidate | Status | edge_crossings | orthogonal_segment_ratio | total_edge_length | runtime_ms | bend_count | bbox_area | bbox_aspect | port_violations | edge_overlaps | same_instr_cluster_dist |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | ogdf_planarization | ok | 0.0 | 0.0 | 0.0 | 0.2 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
-| libavoid | ok | 631.0 | 0.3 | 32120.0 | 2.1 | 0.0 | 345600.0 | 1.5 | 34.0 | 4.0 | 344.0 |
-| ogdf | ok | 12.0 | 0.7 | 18663.8 | 35.6 | 189.0 | 849375.0 | 1.5 | 34.0 | 0.0 | 268.5 |
-| domus | ok | 11.0 | 1.0 | 23971.8 | 40.8 | 0.0 | 7332532.1 | 0.8 | 16.0 | 0.0 | 880.1 |
-| ogdf_libavoid | ok | 33.0 | 0.3 | 18476.1 | 41.2 | 0.0 | 739171.0 | 1.8 | 34.0 | 2.0 | 166.5 |
-| sugiyama_libavoid | ok | 129.0 | 0.7 | 43529.4 | 294.6 | 84.0 | 2310166.7 | 0.3 | 34.0 | 2.0 | 288.2 |
-| hola | ok | 84.0 | 0.7 | 22598.9 | 1138.1 | 0.0 | 1443606.0 | 1.3 | 34.0 | 6.0 | 379.3 |
+| libavoid | ok | 609.0 | 1.0 | 32412.4 | 20.7 | 152.0 | 345600.0 | 1.5 | 33.0 | 132.0 | 344.0 |
+| ogdf | ok | 9.0 | 0.6 | 18332.7 | 36.7 | 188.0 | 866730.7 | 1.4 | 34.0 | 0.0 | 320.0 |
+| domus | ok | 11.0 | 1.0 | 23971.8 | 43.8 | 0.0 | 7332532.1 | 0.8 | 16.0 | 0.0 | 880.1 |
+| ogdf_libavoid | ok | 33.0 | 1.0 | 15896.0 | 49.4 | 42.0 | 772968.8 | 1.5 | 45.0 | 5.0 | 169.3 |
+| sugiyama_libavoid | ok | 129.0 | 0.7 | 43529.4 | 317.9 | 84.0 | 2310166.7 | 0.3 | 34.0 | 2.0 | 288.2 |
+| hola | ok | 84.0 | 0.7 | 22598.9 | 1160.4 | 0.0 | 1443606.0 | 1.3 | 34.0 | 6.0 | 379.3 |
 
-![small_loop grid](renders/small_loop__GRID.png)
+*Grid not available for small_loop*
 
 ### medium_switch
 
 | Candidate | Status | edge_crossings | orthogonal_segment_ratio | total_edge_length | runtime_ms | bend_count | bbox_area | bbox_aspect | port_violations | edge_overlaps | same_instr_cluster_dist |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | ogdf_planarization | ok | 0.0 | 0.0 | 0.0 | 0.2 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
-| libavoid | ok | 610.0 | 0.3 | 34080.0 | 2.4 | 0.0 | 403200.0 | 1.8 | 38.0 | 1.0 | 373.1 |
-| ogdf | ok | 6.0 | 0.7 | 18086.1 | 39.9 | 194.0 | 876905.0 | 1.3 | 38.0 | 0.0 | 301.5 |
-| ogdf_libavoid | ok | 23.0 | 0.3 | 18566.2 | 45.1 | 0.0 | 1096378.6 | 0.9 | 38.0 | 2.0 | 217.5 |
-| sugiyama_libavoid | ok | 93.0 | 0.8 | 59290.7 | 155.2 | 92.0 | 4580550.0 | 0.3 | 38.0 | 5.0 | 625.5 |
-| hola | ok | 36.0 | 0.7 | 20247.7 | 793.8 | 0.0 | 1267175.0 | 1.5 | 38.0 | 2.0 | 281.7 |
+| libavoid | ok | 636.0 | 1.0 | 34369.0 | 19.1 | 149.0 | 403200.0 | 1.8 | 42.0 | 0.0 | 373.1 |
+| ogdf | ok | 6.0 | 0.6 | 16859.1 | 41.0 | 192.0 | 981601.0 | 1.2 | 38.0 | 0.0 | 218.8 |
+| ogdf_libavoid | ok | 33.0 | 1.0 | 19237.6 | 47.4 | 43.0 | 909237.8 | 1.7 | 46.0 | 14.0 | 244.7 |
+| sugiyama_libavoid | ok | 93.0 | 0.8 | 59290.7 | 155.1 | 92.0 | 4580550.0 | 0.3 | 38.0 | 5.0 | 625.5 |
+| hola | ok | 36.0 | 0.7 | 20247.7 | 844.8 | 0.0 | 1267175.0 | 1.5 | 38.0 | 2.0 | 281.7 |
 | domus | error | - | - | - | - | - | - | - | - | - | - |
 
-![medium_switch grid](renders/medium_switch__GRID.png)
+*Grid not available for medium_switch*
 
 ### large_nested
 
 | Candidate | Status | edge_crossings | orthogonal_segment_ratio | total_edge_length | runtime_ms | bend_count | bbox_area | bbox_aspect | port_violations | edge_overlaps | same_instr_cluster_dist |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| ogdf_planarization | ok | 0.0 | 0.0 | 0.0 | 0.9 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
-| libavoid | ok | 12616.0 | 0.2 | 290760.0 | 28.1 | 0.0 | 1622400.0 | 1.5 | 158.0 | 9.0 | 707.1 |
-| ogdf_libavoid | ok | 652.0 | 0.2 | 198815.0 | 1276.0 | 0.0 | 11281745.4 | 1.5 | 158.0 | 3.0 | 727.7 |
-| ogdf | ok | 170.0 | 0.6 | 164464.8 | 2150.8 | 909.0 | 9397329.5 | 1.3 | 158.0 | 0.0 | 497.9 |
-| sugiyama_libavoid | ok | 2094.0 | 0.8 | 1309540.9 | 129634.0 | 521.0 | 118882566.7 | 0.2 | 158.0 | 5.0 | 2680.0 |
-| hola | ok | 714.0 | 0.6 | 167480.4 | 212340.5 | 0.0 | 8336944.0 | 1.4 | 158.0 | 7.0 | 557.4 |
+| ogdf_planarization | ok | 0.0 | 0.0 | 0.0 | 0.5 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+| libavoid | ok | 12844.0 | 1.0 | 292098.3 | 1173.5 | 791.0 | 1622400.0 | 1.5 | 167.0 | 0.0 | 707.1 |
+| ogdf_libavoid | ok | 565.0 | 1.0 | 233342.0 | 2545.9 | 216.0 | 12284145.3 | 1.3 | 211.0 | 10.0 | 798.1 |
+| ogdf | ok | 219.0 | 0.7 | 198913.1 | 3666.1 | 922.0 | 9936305.6 | 1.2 | 158.0 | 0.0 | 526.1 |
+| sugiyama_libavoid | ok | 2094.0 | 0.8 | 1309540.9 | 130012.6 | 521.0 | 118882566.7 | 0.2 | 158.0 | 5.0 | 2680.0 |
+| hola | ok | 714.0 | 0.6 | 167479.7 | 236674.3 | 0.0 | 8336944.0 | 1.4 | 158.0 | 7.0 | 557.4 |
 | domus | timeout | - | - | - | - | - | - | - | - | - | - |
 
-![large_nested grid](renders/large_nested__GRID.png)
+*Grid not available for large_nested*
 
 ### xlarge_state_machine
 
 | Candidate | Status | edge_crossings | orthogonal_segment_ratio | total_edge_length | runtime_ms | bend_count | bbox_area | bbox_aspect | port_violations | edge_overlaps | same_instr_cluster_dist |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| ogdf_planarization | ok | 0.0 | 0.0 | 0.0 | 1.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
-| libavoid | ok | 62851.0 | 0.2 | 944720.0 | 126.8 | 0.0 | 3648000.0 | 1.6 | 344.0 | 173.0 | 1098.3 |
-| ogdf_libavoid | ok | 1977.0 | 0.2 | 610862.8 | 17538.7 | 0.0 | 42009303.9 | 1.2 | 344.0 | 89.0 | 965.4 |
-| ogdf | ok | 727.0 | 0.7 | 670281.3 | 27782.2 | 2158.0 | 42520369.5 | 1.1 | 344.0 | 0.0 | 815.0 |
+| ogdf_planarization | ok | 0.0 | 0.0 | 0.0 | 1.2 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+| ogdf | ok | 800.0 | 0.7 | 700576.0 | 14440.7 | 2176.0 | 44612395.4 | 1.7 | 344.0 | 0.0 | 729.0 |
+| libavoid | ok | 61461.0 | 1.0 | 947765.2 | 16118.7 | 1846.0 | 3648000.0 | 1.6 | 371.0 | 0.0 | 1098.3 |
+| ogdf_libavoid | ok | 1702.0 | 1.0 | 618442.7 | 31637.6 | 560.0 | 38115505.1 | 1.3 | 417.0 | 0.0 | 841.8 |
 | hola | timeout | - | - | - | - | - | - | - | - | - | - |
 | domus | timeout | - | - | - | - | - | - | - | - | - | - |
 | sugiyama_libavoid | timeout | - | - | - | - | - | - | - | - | - | - |
 
-![xlarge_state_machine grid](renders/xlarge_state_machine__GRID.png)
+*Grid not available for xlarge_state_machine*
 
 ## Recommendations
 
@@ -107,10 +107,10 @@ Composite score = 0.4 * port_violations + 0.3 * edge_crossings + 0.2 * bend_coun
 | ogdf_planarization | 0.00 |
 | domus | 97.71 |
 | hola | 123.30 |
-| ogdf_libavoid | 255.21 |
-| ogdf | 286.57 |
+| ogdf_libavoid | 281.97 |
+| ogdf | 293.05 |
 | sugiyama_libavoid | 334.12 |
-| libavoid | 4714.16 |
+| libavoid | 4770.30 |
 
 ## Caveats
 
