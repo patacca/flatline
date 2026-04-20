@@ -1,7 +1,7 @@
 """libavoid layout adapter.
 
 libavoid is a C++ library for orthogonal connector routing, part of the
-adaptagrams project (https://github.com/Adaptagrams/adaptagrams). The
+adaptagrams project (https://github.com/mjwybrow/adaptagrams). The
 upstream project ships SWIG-generated Python bindings exposed under the
 ``adaptagrams`` module name.  This adapter drives the bindings directly:
 node positions are arranged on a deterministic grid, ``ShapeRef`` instances
