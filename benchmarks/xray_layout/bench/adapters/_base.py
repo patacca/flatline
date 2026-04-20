@@ -205,6 +205,29 @@ class BaseAdapter(ABC):
         # native C++ layout/routing calls below, so no inner cap is set.
         _ = budget_seconds
         result = self.layout(graph)
+
+        # Strict-contract adapters (e.g. ogdf_planarization) signal a
+        # rejected input by returning a LayoutResult with error_class set
+        # and empty position/route maps. Treat that as a real failure --
+        # otherwise the harness records status="ok" with all-zero metrics,
+        # which both hides the failure in the executive summary AND gives
+        # the candidate an artificially perfect composite score.
+        if result.error_class is not None:
+            self.render(result, graph, png_path)
+            record = self.build_payload(
+                "error",
+                error_message=result.error_class,
+            )
+            record["outputs"] = {
+                "png_path": str(png_path),
+            }
+            return self._finalize_record(
+                record=record,
+                binary_stem=binary_stem,
+                entry=entry,
+                out_dir=out_dir,
+            )
+
         metrics = compute(result, graph)
         self.render(result, graph, png_path)
 

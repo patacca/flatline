@@ -1,29 +1,37 @@
-"""Baseline B adapter: OGDF PlanarizationLayout + OrthoLayout (STRICT).
+"""Baseline B adapter: OGDF PlanarizationLayout + OrthoLayout.
 
 This adapter implements **Baseline B** of the orthogonal-layout benchmark:
-the pure planarisation+orthogonal-drawing pipeline with no degraded path.
+PlanarizationLayout's standard non-planar pipeline driving OrthoLayout as
+the planar drawing module. PlanarizationLayout itself handles non-planar
+input by minimising crossings, replacing each crossing with a degree-4
+dummy node, embedding the resulting planar representation, and only then
+running the planar layouter -- so there is no separate "is the input
+planar?" gate here.
 
-Pipeline:
+Module wiring (mirrors the OGDF orthogonal example):
+
+* CrossingMinimizationModule  -> ``SubgraphPlanarizer`` configured with
+  - PlanarSubgraphModule    -> ``PlanarSubgraphFast<int>``
+  - EdgeInsertionModule     -> ``VariableEmbeddingInserter`` with
+                               ``RemoveReinsertType::All``
+* EmbedderModule              -> ``EmbedderMinDepthMaxFaceLayers``
+* LayoutPlanRepModule         -> ``OrthoLayout`` (separation 20, cOverhang 0.4)
+
+Pipeline executed per call:
 
 1. Build an ``ogdf.Graph`` mirroring the input ``networkx.MultiDiGraph``.
-2. Run a Boyer-Myrvold planarity test (``ogdf.BoyerMyrvold().isPlanar``).
-   Non-planar inputs are rejected immediately with
-   ``LayoutResult(error_class="non_planar", ...)`` -- no degraded result is
-   produced.
-3. Construct ``PlanarizationLayout`` and explicitly install ``OrthoLayout``
-   as its planar drawing module via ``setPlanarLayouter(...)``.
-   ``OrthoLayout`` produces orthogonal routes with bend points natively, so
-   we do not need a post-processing router (no libavoid here).
-4. Read back node centres and edge bend points from ``GraphAttributes``;
+   ``PlanarizationLayout::call(GA)`` has a documented precondition that the
+   graph contains no self-loops, so loops are dropped during the build (the
+   sibling ``ogdf_adapter`` already does the same).
+2. Construct PlanarizationLayout, install the modules above, and call it.
+3. Read back node centres and edge bend points from ``GraphAttributes``;
    sandwich the bends between source/target centres to form a polyline per
    edge.
 
-**Strict contract:** any failure of the orthogonal pipeline -- non-planar
-input, OGDF-side exception during ``call(...)``, etc. -- is returned as a
-``LayoutResult`` with the corresponding ``error_class`` (``"non_planar"`` or
-``"ortho_failed"``).  No hierarchical degradation path exists here; that
-behaviour lives in the companion ``ogdf_adapter.py`` baseline, which is the
-orthogonal-or-degrade variant intended for the contrasting sensitivity arm.
+Failure handling: any OGDF-side exception during ``call(...)`` surfaces as
+``LayoutResult(error_class="ortho_failed: ...")``.  The harness's
+``BaseAdapter.run`` translates that into ``status="error"`` so a broken
+case can never appear as zero-metric "success" in the report.
 
 Library bootstrap notes mirror ``ogdf_adapter.py``:
 
@@ -35,7 +43,12 @@ Library bootstrap notes mirror ``ogdf_adapter.py``:
   install script is the hard gate for this adapter.
 * OGDF algorithm objects held from Python have ``__python_owns__ = False``
   set so cppyy does not try to free them on shutdown -- the same double-free
-  trap documented at length in ``ogdf_adapter.py`` applies verbatim.
+  trap documented at length in ``ogdf_adapter.py`` applies verbatim. The
+  per-PlanarizationLayout sub-modules (SubgraphPlanarizer, PlanarSubgraphFast,
+  VariableEmbeddingInserter, EmbedderMinDepthMaxFaceLayers, OrthoLayout) are
+  handed off to PlanarizationLayout via the setX setters and become owned
+  by it on the C++ side -- detaching them from cppyy here is required to
+  avoid the same double-free.
 """
 
 from __future__ import annotations
@@ -94,20 +107,17 @@ class OgdfPlanarizationAdapter(BaseAdapter):
         super().__init__(self.name)
 
     def install_check(self) -> tuple[bool, str]:
-        """Probe ``ogdf_python`` and verify ``OrthoLayout`` + ``BoyerMyrvold``.
+        """Probe ``ogdf_python`` and verify the full PlanarizationLayout wiring.
 
-        On top of the usual ``ogdf_python`` import, this also runs two tiny
-        end-to-end smoke graphs:
+        On top of the usual ``ogdf_python`` import this runs two end-to-end
+        smoke graphs against the adapter's own ``layout()``:
 
-        1. A 4-node planar DAG is laid out with PlanarizationLayout +
-           OrthoLayout; the call must succeed and emit at least one node
-           position.  This catches the case where the loader patch worked
-           but the actual layout pipeline is broken (missing C++ symbol,
-           OrthoLayout API mismatch, etc.) before any real benchmark run.
-        2. K5 (the canonical non-planar graph) is fed through the public
-           ``layout()`` method; the adapter must return
-           ``error_class="non_planar"`` -- not raise, not fall back.  This
-           pins the strict contract from the install gate onward.
+        1. A 4-node planar DAG -- must lay out cleanly with positions.
+        2. K5 (the canonical non-planar graph) -- must ALSO lay out cleanly,
+           because PlanarizationLayout handles non-planar inputs by crossing
+           minimisation. A failure here means the SubgraphPlanarizer /
+           PlanarSubgraphFast / VariableEmbeddingInserter wiring is broken,
+           which would silently degrade real benchmark cases.
         """
         if not _OGDF_BUILD_DIR.exists():
             return (False, f"ogdf_planarization: OGDF build dir not found at {_OGDF_BUILD_DIR}")
@@ -118,16 +128,31 @@ class OgdfPlanarizationAdapter(BaseAdapter):
         except Exception as exc:  # noqa: BLE001 - cppyy raises diverse types
             return (False, f"ogdf_planarization: ogdf_python import failed: {exc}")
 
-        # Make sure the symbols this adapter actually needs are reachable.
+        # Make sure every symbol the layout pipeline touches is reachable.
         # ``OrthoLayout`` requires the loader.py patch from
         # install_ogdf_planarization.sh; missing it is the most likely cause
         # of a failed install_check on a fresh venv.
         try:
-            cppinclude("ogdf/planarity/PlanarizationLayout.h")
-            cppinclude("ogdf/planarity/BoyerMyrvold.h")
+            for header in (
+                "ogdf/planarity/PlanarizationLayout.h",
+                "ogdf/planarity/SubgraphPlanarizer.h",
+                "ogdf/planarity/PlanarSubgraphFast.h",
+                "ogdf/planarity/VariableEmbeddingInserter.h",
+                "ogdf/planarity/EmbedderMinDepthMaxFaceLayers.h",
+                "ogdf/orthogonal/OrthoLayout.h",
+            ):
+                cppinclude(header)
         except Exception as exc:  # noqa: BLE001 - cppyy include failures vary
             return (False, f"ogdf_planarization: cppinclude failed: {exc}")
-        for sym in ("PlanarizationLayout", "OrthoLayout", "BoyerMyrvold"):
+        for sym in (
+            "PlanarizationLayout",
+            "SubgraphPlanarizer",
+            "PlanarSubgraphFast",
+            "VariableEmbeddingInserter",
+            "EmbedderMinDepthMaxFaceLayers",
+            "OrthoLayout",
+            "RemoveReinsertType",
+        ):
             if not hasattr(ogdf, sym):
                 return (
                     False,
@@ -135,11 +160,12 @@ class OgdfPlanarizationAdapter(BaseAdapter):
                     "benchmarks/xray_layout/bench/adapters/install_ogdf_planarization.sh",
                 )
 
-        # Smoke 1: a 4-node planar DAG should lay out cleanly.
         try:
             import networkx as nx
         except Exception as exc:  # noqa: BLE001
             return (False, f"ogdf_planarization: networkx import failed: {exc}")
+
+        # Smoke 1: a 4-node planar DAG should lay out cleanly.
         planar = nx.MultiDiGraph()
         planar.add_edges_from([(0, 1), (1, 2), (2, 3), (0, 3)])
         try:
@@ -153,17 +179,19 @@ class OgdfPlanarizationAdapter(BaseAdapter):
                 f"positions={len(res_ok.node_positions)})",
             )
 
-        # Smoke 2: K5 must trip the strict non-planar branch.
+        # Smoke 2: K5 must ALSO succeed -- PlanarizationLayout planarises
+        # non-planar graphs internally via crossing minimisation. If this
+        # fails, the SubgraphPlanarizer module wiring is wrong.
         k5 = nx.complete_graph(5, create_using=nx.MultiDiGraph)
         try:
             res_k5 = self.layout(k5)
         except Exception as exc:  # noqa: BLE001
             return (False, f"ogdf_planarization: K5 smoke crashed: {exc}")
-        if res_k5.error_class != "non_planar":
+        if res_k5.error_class is not None or not res_k5.node_positions:
             return (
                 False,
-                f"ogdf_planarization: K5 smoke did not surface non_planar "
-                f"(got error_class={res_k5.error_class!r})",
+                f"ogdf_planarization: K5 smoke failed (error_class={res_k5.error_class!r}, "
+                f"positions={len(res_k5.node_positions)})",
             )
 
         version = "unknown"
@@ -172,31 +200,36 @@ class OgdfPlanarizationAdapter(BaseAdapter):
             version = getattr(_op, "__version__", "unknown")
         except Exception:  # noqa: BLE001 - version is best-effort
             pass
-        return (True, f"ogdf_planarization: ogdf_python {version} (OrthoLayout + BoyerMyrvold OK)")
+        return (True, f"ogdf_planarization: ogdf_python {version} (full Planarization+Ortho wiring OK)")
 
     def layout(self, graph: "nx.MultiDiGraph[Any]") -> LayoutResult:
-        """Lay out *graph* with PlanarizationLayout + OrthoLayout (strict).
+        """Lay out *graph* with PlanarizationLayout + OrthoLayout.
 
-        Returns a ``LayoutResult`` with ``error_class="non_planar"`` if
-        Boyer-Myrvold rejects the input, or ``error_class="ortho_failed"``
-        if OGDF raises during the actual layout call.  In both error paths
-        the position/route maps are empty and ``runtime_ms`` reflects the
-        time spent up to the failure -- matching the schema the harness
-        expects from ``LayoutResult`` for failed-but-non-crashing runs.
+        PlanarizationLayout accepts non-planar input directly (it minimises
+        crossings, planarises, embeds, then runs the planar layouter).
+        Returns a ``LayoutResult`` with ``error_class="ortho_failed: ..."``
+        only if OGDF raises during ``call(...)`` -- there is no separate
+        planarity rejection path.
         """
         _bootstrap_ogdf_env()
         # Local imports keep module load cheap when only ``install_check``
         # runs (e.g. ``bench check``).
         from ogdf_python import cppinclude, ogdf
 
-        cppinclude("ogdf/planarity/PlanarizationLayout.h")
-        cppinclude("ogdf/planarity/BoyerMyrvold.h")
-        # OrthoLayout's header is pulled in by install_ogdf_planarization.sh's
-        # patch to ogdf_python/loader.py; we still cppinclude it defensively
-        # so direct adapter use without the venv patch surfaces a clear
-        # AttributeError on ``ogdf.OrthoLayout`` rather than a crash deep in
-        # ``setPlanarLayouter``.
-        cppinclude("ogdf/orthogonal/OrthoLayout.h")
+        for header in (
+            "ogdf/planarity/PlanarizationLayout.h",
+            "ogdf/planarity/SubgraphPlanarizer.h",
+            "ogdf/planarity/PlanarSubgraphFast.h",
+            "ogdf/planarity/VariableEmbeddingInserter.h",
+            "ogdf/planarity/EmbedderMinDepthMaxFaceLayers.h",
+            # OrthoLayout's header is pulled in by install_ogdf_planarization.sh's
+            # patch to ogdf_python/loader.py; we still cppinclude it defensively
+            # so direct adapter use without the venv patch surfaces a clear
+            # AttributeError on ``ogdf.OrthoLayout`` rather than a crash deep in
+            # ``setPlanarLayouter``.
+            "ogdf/orthogonal/OrthoLayout.h",
+        ):
+            cppinclude(header)
 
         ordered_nodes: list[object] = sorted(graph.nodes(), key=repr)
 
@@ -213,9 +246,10 @@ class OgdfPlanarizationAdapter(BaseAdapter):
         def _build() -> tuple[Any, Any, dict[object, Any], dict[tuple[object, object, object], Any]]:
             """Mirror the input nx graph into an OGDF Graph + GraphAttributes.
 
-            Self-loops are skipped because OGDF's planarisation pipeline
-            cannot route them; this matches ``ogdf_adapter._build`` so the
-            two baselines exclude exactly the same edges.
+            Self-loops are skipped because PlanarizationLayout::call(GA) has
+            a documented precondition forbidding them; this matches
+            ``ogdf_adapter._build`` so the two baselines exclude exactly the
+            same edges.
             """
             g = ogdf.Graph()
             node_handles: dict[object, Any] = {}
@@ -247,37 +281,41 @@ class OgdfPlanarizationAdapter(BaseAdapter):
             return g, ga, node_handles, edge_handles
 
         t0 = time.perf_counter()
-        g, ga, node_handles, edge_handles = _build()
+        _g, ga, node_handles, edge_handles = _build()
 
-        # Strict gate 1: planarity test.  BoyerMyrvold.isPlanar takes the
-        # raw ogdf::Graph and returns a bool -- we run it on a *copy* by
-        # default behaviour (non-destructive overload), so the original
-        # graph survives intact for the layout call below if planar.
-        bm = ogdf.BoyerMyrvold()
-        bm.__python_owns__ = False
-        if not bm.isPlanar(g):
-            runtime_ms = (time.perf_counter() - t0) * 1000.0
-            return LayoutResult(
-                node_positions={},
-                edge_routes={},
-                runtime_ms=runtime_ms,
-                node_sizes=node_sizes,
-                error_class="non_planar",
-            )
-
-        # Strict gate 2: PlanarizationLayout with OrthoLayout as the
-        # explicit planar drawing module.  We do NOT catch a degradation
-        # path here -- an OGDF-side exception is the contract's
-        # "ortho_failed" bucket and is surfaced as such.
+        # Wire the standard non-planar pipeline (mirrors the OGDF orthogonal
+        # example): SubgraphPlanarizer{PlanarSubgraphFast<int>,
+        # VariableEmbeddingInserter} -> EmbedderMinDepthMaxFaceLayers ->
+        # OrthoLayout. Every sub-module is detached from cppyy because
+        # PlanarizationLayout's setX setters take ownership on the C++ side
+        # (releasing the unique_ptr held by Python would double-free).
         try:
             pl = ogdf.PlanarizationLayout()
             pl.__python_owns__ = False
+
+            cross_min = ogdf.SubgraphPlanarizer()
+            cross_min.__python_owns__ = False
+            # PlanarSubgraphFast is a class template parameterised by edge
+            # cost type; the OGDF example uses the default <int>.
+            planar_subgraph = ogdf.PlanarSubgraphFast[int]()
+            planar_subgraph.__python_owns__ = False
+            inserter = ogdf.VariableEmbeddingInserter()
+            inserter.__python_owns__ = False
+            inserter.removeReinsert(ogdf.RemoveReinsertType.All)
+            cross_min.setSubgraph(planar_subgraph)
+            cross_min.setInserter(inserter)
+            pl.setCrossMin(cross_min)
+
+            embedder = ogdf.EmbedderMinDepthMaxFaceLayers()
+            embedder.__python_owns__ = False
+            pl.setEmbedder(embedder)
+
             ortho = ogdf.OrthoLayout()
-            # ortho is owned by the PlanarizationLayout once handed off via
-            # setPlanarLayouter -- detaching it from cppyy's GC matches the
-            # ownership story used in ogdf_adapter for its algorithm objects.
             ortho.__python_owns__ = False
+            ortho.separation(20.0)
+            ortho.cOverhang(0.4)
             pl.setPlanarLayouter(ortho)
+
             pl.call(ga)
         except Exception as exc:  # noqa: BLE001 - cppyy bubbles C++ types opaquely
             runtime_ms = (time.perf_counter() - t0) * 1000.0
