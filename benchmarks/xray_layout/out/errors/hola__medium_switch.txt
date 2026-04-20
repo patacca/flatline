@@ -9,4 +9,4 @@ Traceback (most recent call last):
     meta_path = self._resolve_meta_path(binary_path)
   File "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/bench/adapters/_base.py", line 229, in _resolve_meta_path
     raise FileNotFoundError(msg)
-FileNotFoundError: benchmark metadata not found for /home/patacca/patacca_git/flatline/benchmarks/xray_layout/corpus/sources/tiny_branch.c (expected /home/patacca/patacca_git/flatline/benchmarks/xray_layout/corpus/sources/tiny_branch.meta.json)
+FileNotFoundError: benchmark metadata not found for /home/patacca/patacca_git/flatline/benchmarks/xray_layout/corpus/sources/medium_switch.c (expected /home/patacca/patacca_git/flatline/benchmarks/xray_layout/corpus/sources/medium_switch.meta.json)

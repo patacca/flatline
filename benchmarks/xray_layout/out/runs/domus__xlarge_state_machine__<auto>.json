@@ -1,12 +1,12 @@
 {
   "binary": "xlarge_state_machine",
   "candidate": "domus",
-  "error_message": "Layout timed out after 30s",
+  "error_message": "FileNotFoundError: benchmark metadata not found for /home/patacca/patacca_git/flatline/benchmarks/xray_layout/corpus/sources/xlarge_state_machine.c (expected /home/patacca/patacca_git/flatline/benchmarks/xray_layout/corpus/sources/xlarge_state_machine.meta.json)",
   "function": "<auto>",
   "machine": {
     "cpu": "x86_64",
     "os": "Linux 6.19.8-arch1-1",
     "ram_gb": 30.83
   },
-  "status": "timeout"
+  "status": "error"
 }

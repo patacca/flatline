@@ -1,0 +1,26 @@
+{
+  "binary": "tiny_branch",
+  "candidate": "sugiyama_libavoid",
+  "function": "<auto>",
+  "machine": {
+    "cpu": "x86_64",
+    "os": "Linux 6.19.8-arch1-1",
+    "ram_gb": 30.83
+  },
+  "metrics": {
+    "bbox_area": 588999.9999999999,
+    "bbox_aspect": 0.6526315789473686,
+    "bend_count": 60.0,
+    "edge_crossings": 42.0,
+    "edge_overlaps": 2.0,
+    "orthogonal_segment_ratio": 0.7708333333333334,
+    "port_violations": 16.0,
+    "runtime_ms": 72.81096605584025,
+    "same_instr_cluster_dist": 199.0880984762237,
+    "total_edge_length": 15128.07092175561
+  },
+  "outputs": {
+    "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/tiny_branch__sugiyama_libavoid.png"
+  },
+  "status": "ok"
+}

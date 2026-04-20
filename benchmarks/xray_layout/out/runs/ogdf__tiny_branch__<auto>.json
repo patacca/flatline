@@ -13,8 +13,9 @@
     "bend_count": 101.0,
     "edge_crossings": 1.0,
     "edge_overlaps": 0.0,
+    "orthogonal_segment_ratio": 0.7372262773722628,
     "port_violations": 16.0,
-    "runtime_ms": 20.658325986005366,
+    "runtime_ms": 22.381798014976084,
     "same_instr_cluster_dist": 235.6774857243101,
     "total_edge_length": 7008.333333333342
   },

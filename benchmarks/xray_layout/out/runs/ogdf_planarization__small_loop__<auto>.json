@@ -1,0 +1,26 @@
+{
+  "binary": "small_loop",
+  "candidate": "ogdf_planarization",
+  "function": "<auto>",
+  "machine": {
+    "cpu": "x86_64",
+    "os": "Linux 6.19.8-arch1-1",
+    "ram_gb": 30.83
+  },
+  "metrics": {
+    "bbox_area": 0.0,
+    "bbox_aspect": 0.0,
+    "bend_count": 0.0,
+    "edge_crossings": 0.0,
+    "edge_overlaps": 0.0,
+    "orthogonal_segment_ratio": 0.0,
+    "port_violations": 0.0,
+    "runtime_ms": 0.17802102956920862,
+    "same_instr_cluster_dist": 0.0,
+    "total_edge_length": 0.0
+  },
+  "outputs": {
+    "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/small_loop__ogdf_planarization.png"
+  },
+  "status": "ok"
+}

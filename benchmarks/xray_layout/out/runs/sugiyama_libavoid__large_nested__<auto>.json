@@ -1,0 +1,26 @@
+{
+  "binary": "large_nested",
+  "candidate": "sugiyama_libavoid",
+  "function": "<auto>",
+  "machine": {
+    "cpu": "x86_64",
+    "os": "Linux 6.19.8-arch1-1",
+    "ram_gb": 30.83
+  },
+  "metrics": {
+    "bbox_area": 129199769.34523806,
+    "bbox_aspect": 0.27955610968100786,
+    "bend_count": 458.0,
+    "edge_crossings": 1585.0,
+    "edge_overlaps": 33.0,
+    "orthogonal_segment_ratio": 0.760759493670886,
+    "port_violations": 158.0,
+    "runtime_ms": 70555.95742398873,
+    "same_instr_cluster_dist": 2741.333500310466,
+    "total_edge_length": 1296761.1148407536
+  },
+  "outputs": {
+    "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/large_nested__sugiyama_libavoid.png"
+  },
+  "status": "ok"
+}
