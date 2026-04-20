@@ -33,7 +33,10 @@ import time
 from typing import TYPE_CHECKING, Any
 
 from benchmarks.xray_layout.bench.adapters._base import BaseAdapter, LayoutResult
-from benchmarks.xray_layout.bench.adapters._libavoid_config import apply_orthogonal_config
+from benchmarks.xray_layout.bench.adapters._libavoid_config import (
+    add_all_directions_pin,
+    apply_orthogonal_config,
+)
 from benchmarks.xray_layout.bench.adapters.libavoid_adapter import LibavoidAdapter
 from benchmarks.xray_layout.bench.adapters.ogdf_adapter import OgdfAdapter
 
@@ -110,6 +113,10 @@ class OgdfLibavoidAdapter(BaseAdapter):
                 ad.Point(cx + half_w, cy + half_h),
             )
             shapes[node_id] = ad.ShapeRef(router, rect)
+            # Centre pin with ConnDirAll is required for orthogonal routing;
+            # without it ConnEnd's second arg is treated as a missing pin
+            # class id and the router silently emits straight-line fallbacks.
+            add_all_directions_pin(shapes[node_id])
 
         # Step 3: connectors per edge.  Self-loops are skipped here; we
         # synthesise a degenerate 2-point route after routing so the
@@ -125,12 +132,15 @@ class OgdfLibavoidAdapter(BaseAdapter):
                 # node was dropped we cannot route an edge to it.  Skip
                 # rather than crash; a straight fallback is added below.
                 continue
-            # ConnEnd REQUIRES the ConnDirAll second arg in current
-            # adaptagrams bindings; calling ConnEnd(shape) alone raises
-            # TypeError.  ConnDirAll = 15 lets libavoid pick any side.
-            src_end = ad.ConnEnd(shapes[source], ad.ConnDirAll)
-            tgt_end = ad.ConnEnd(shapes[target], ad.ConnDirAll)
-            connectors[(source, target, key)] = ad.ConnRef(router, src_end, tgt_end)
+            # ConnEnd(shape, CONNECTIONPIN_CENTRE) anchors on the centre pin
+            # registered above; the orthogonal ConnType is required so each
+            # connector inherits the router's orthogonal routing rules
+            # rather than falling back to the libavoid PolyLine default.
+            src_end = ad.ConnEnd(shapes[source], ad.CONNECTIONPIN_CENTRE)
+            tgt_end = ad.ConnEnd(shapes[target], ad.CONNECTIONPIN_CENTRE)
+            connectors[(source, target, key)] = ad.ConnRef(
+                router, src_end, tgt_end, ad.ConnType_Orthogonal
+            )
 
         # Step 4: route. Wall-clock cap is enforced upstream by the
         # harness's per-case subprocess + killpg; SIGALRM cannot interrupt

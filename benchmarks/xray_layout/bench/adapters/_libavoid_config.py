@@ -33,6 +33,33 @@ def make_orthogonal_router() -> "A.Router":
     return router
 
 
+def add_all_directions_pin(shape: "A.ShapeRef") -> None:
+    """Register a centre connection pin allowing routing on all four sides.
+
+    libavoid REQUIRES a ShapeConnectionPin for ConnEnd to anchor on a shape;
+    without one, ``ConnEnd(shape, ConnDirAll)`` is silently misinterpreted
+    (the second arg is a pin class id in the SWIG binding, NOT direction
+    flags) and the router falls back to a single straight segment between
+    shape centres regardless of ``OrthogonalRouting`` / ``ConnType_Orthogonal``.
+
+    The pin is anchored at ``ATTACH_POS_CENTRE``, ``ATTACH_POS_CENTRE`` (i.e.
+    the shape's geometric centre) with ``proportional=True`` so it tracks the
+    shape if it moves. ``ConnDirAll`` lets libavoid pick whichever side
+    minimises bend count for each connector. Class id is
+    ``CONNECTIONPIN_CENTRE`` so call sites can reference it via
+    ``ConnEnd(shape, CONNECTIONPIN_CENTRE)``.
+    """
+    A.ShapeConnectionPin(
+        shape,
+        A.CONNECTIONPIN_CENTRE,
+        A.ATTACH_POS_CENTRE,
+        A.ATTACH_POS_CENTRE,
+        True,  # proportional anchor (tracks shape on move)
+        0.0,   # insideOffset (unused for centre pins)
+        A.ConnDirAll,
+    )
+
+
 if __name__ == "__main__":
     r = make_orthogonal_router()
     print(f"Router created: {type(r).__name__}")

@@ -31,7 +31,10 @@ import time
 from typing import TYPE_CHECKING, Any
 
 from benchmarks.xray_layout.bench.adapters._base import BaseAdapter, LayoutResult
-from benchmarks.xray_layout.bench.adapters._libavoid_config import apply_orthogonal_config
+from benchmarks.xray_layout.bench.adapters._libavoid_config import (
+    add_all_directions_pin,
+    apply_orthogonal_config,
+)
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -156,6 +159,10 @@ class LibavoidAdapter(BaseAdapter):
                 ad.Point(cx + half_w, cy + half_h),
             )
             shape = ad.ShapeRef(router, rect)
+            # Register a centre pin allowing all four sides; without this the
+            # SWIG-bound ConnEnd(shape, ConnDirAll) form is misinterpreted as
+            # a missing pin class id and routes degenerate to straight lines.
+            add_all_directions_pin(shape)
             shapes[node_id] = shape
 
         connectors: dict[tuple[object, object, object], Any] = {}
@@ -166,8 +173,8 @@ class LibavoidAdapter(BaseAdapter):
                 # rather than synthesised so the metric layer sees an
                 # honest absence.
                 continue
-            src_end = ad.ConnEnd(shapes[source], ad.ConnDirAll)
-            tgt_end = ad.ConnEnd(shapes[target], ad.ConnDirAll)
+            src_end = ad.ConnEnd(shapes[source], ad.CONNECTIONPIN_CENTRE)
+            tgt_end = ad.ConnEnd(shapes[target], ad.CONNECTIONPIN_CENTRE)
             conn = ad.ConnRef(router, src_end, tgt_end, ad.ConnType_Orthogonal)
             connectors[(source, target, key)] = conn
 
