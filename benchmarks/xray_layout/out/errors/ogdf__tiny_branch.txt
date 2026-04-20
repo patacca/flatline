@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/bench/cli.py", line 190, in _run_one
+    result = run_fn(
+        binary_path=binary_path,
+    ...<2 lines>...
+        out_dir=out_dir,
+    )
+  File "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/bench/adapters/_base.py", line 198, in run
+    result = self.layout(graph)
+  File "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/bench/adapters/ogdf_adapter.py", line 206, in layout
+    g, ga, node_handles, edge_handles = _build()
+                                        ~~~~~~^^
+  File "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/bench/adapters/ogdf_adapter.py", line 200, in _build
+    ga.width(handle).__assign__(width)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'float' object has no attribute '__assign__'

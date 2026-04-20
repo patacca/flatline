@@ -1,0 +1,25 @@
+{
+  "binary": "medium_switch",
+  "candidate": "hola",
+  "function": "<auto>",
+  "machine": {
+    "cpu": "x86_64",
+    "os": "Linux 6.19.8-arch1-1",
+    "ram_gb": 30.83
+  },
+  "metrics": {
+    "bbox_area": 1267174.9999999998,
+    "bbox_aspect": 1.5302197802197806,
+    "bend_count": 0.0,
+    "edge_crossings": 35.0,
+    "edge_overlaps": 2.0,
+    "port_violations": 38.0,
+    "runtime_ms": 821.2542448891327,
+    "same_instr_cluster_dist": 281.71918130357784,
+    "total_edge_length": 20247.774167978707
+  },
+  "outputs": {
+    "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/medium_switch__hola.png"
+  },
+  "status": "ok"
+}

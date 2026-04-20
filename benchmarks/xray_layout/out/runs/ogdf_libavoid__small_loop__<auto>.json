@@ -1,0 +1,25 @@
+{
+  "binary": "small_loop",
+  "candidate": "ogdf_libavoid",
+  "function": "<auto>",
+  "machine": {
+    "cpu": "x86_64",
+    "os": "Linux 6.19.8-arch1-1",
+    "ram_gb": 30.83
+  },
+  "metrics": {
+    "bbox_area": 729925.0,
+    "bbox_aspect": 1.2890365448504983,
+    "bend_count": 0.0,
+    "edge_crossings": 23.0,
+    "edge_overlaps": 2.0,
+    "port_violations": 34.0,
+    "runtime_ms": 23.605920025147498,
+    "same_instr_cluster_dist": 159.32530621862213,
+    "total_edge_length": 14223.75
+  },
+  "outputs": {
+    "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/small_loop__ogdf_libavoid.png"
+  },
+  "status": "ok"
+}

@@ -1,0 +1,25 @@
+{
+  "binary": "medium_switch",
+  "candidate": "ogdf_libavoid",
+  "function": "<auto>",
+  "machine": {
+    "cpu": "x86_64",
+    "os": "Linux 6.19.8-arch1-1",
+    "ram_gb": 30.83
+  },
+  "metrics": {
+    "bbox_area": 951296.885813149,
+    "bbox_aspect": 1.1472868217054266,
+    "bend_count": 0.0,
+    "edge_crossings": 12.0,
+    "edge_overlaps": 2.0,
+    "port_violations": 38.0,
+    "runtime_ms": 26.41047805082053,
+    "same_instr_cluster_dist": 186.30304186281367,
+    "total_edge_length": 16139.558823529414
+  },
+  "outputs": {
+    "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/medium_switch__ogdf_libavoid.png"
+  },
+  "status": "ok"
+}

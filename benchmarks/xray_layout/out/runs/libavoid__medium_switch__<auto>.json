@@ -1,0 +1,25 @@
+{
+  "binary": "medium_switch",
+  "candidate": "libavoid",
+  "function": "<auto>",
+  "machine": {
+    "cpu": "x86_64",
+    "os": "Linux 6.19.8-arch1-1",
+    "ram_gb": 30.83
+  },
+  "metrics": {
+    "bbox_area": 403200.0,
+    "bbox_aspect": 1.75,
+    "bend_count": 0.0,
+    "edge_crossings": 537.0,
+    "edge_overlaps": 12.0,
+    "port_violations": 38.0,
+    "runtime_ms": 2.115544048137963,
+    "same_instr_cluster_dist": 373.08360343125526,
+    "total_edge_length": 34080.0
+  },
+  "outputs": {
+    "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/medium_switch__libavoid.png"
+  },
+  "status": "ok"
+}

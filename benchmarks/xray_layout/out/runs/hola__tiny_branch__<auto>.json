@@ -1,0 +1,25 @@
+{
+  "binary": "tiny_branch",
+  "candidate": "hola",
+  "function": "<auto>",
+  "machine": {
+    "cpu": "x86_64",
+    "os": "Linux 6.19.8-arch1-1",
+    "ram_gb": 30.83
+  },
+  "metrics": {
+    "bbox_area": 284155.40540540544,
+    "bbox_aspect": 1.4868624420401855,
+    "bend_count": 0.0,
+    "edge_crossings": 8.0,
+    "edge_overlaps": 2.0,
+    "port_violations": 16.0,
+    "runtime_ms": 93.90559303574264,
+    "same_instr_cluster_dist": 203.4776068346298,
+    "total_edge_length": 6761.621621621623
+  },
+  "outputs": {
+    "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/tiny_branch__hola.png"
+  },
+  "status": "ok"
+}

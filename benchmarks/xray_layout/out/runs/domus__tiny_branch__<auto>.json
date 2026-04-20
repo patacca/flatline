@@ -1,0 +1,12 @@
+{
+  "binary": "tiny_branch",
+  "candidate": "domus",
+  "error_message": "RuntimeError: DOMUS failed: terminate called after throwing an instance of 'std::bad_optional_access'\n  what():  bad optional access",
+  "function": "<auto>",
+  "machine": {
+    "cpu": "x86_64",
+    "os": "Linux 6.19.8-arch1-1",
+    "ram_gb": 30.83
+  },
+  "status": "error"
+}

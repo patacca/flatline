@@ -1,0 +1,25 @@
+{
+  "binary": "large_nested",
+  "candidate": "libavoid",
+  "function": "<auto>",
+  "machine": {
+    "cpu": "x86_64",
+    "os": "Linux 6.19.8-arch1-1",
+    "ram_gb": 30.83
+  },
+  "metrics": {
+    "bbox_area": 1622400.0,
+    "bbox_aspect": 1.5,
+    "bend_count": 0.0,
+    "edge_crossings": 12146.0,
+    "edge_overlaps": 113.0,
+    "port_violations": 158.0,
+    "runtime_ms": 68.04179097525775,
+    "same_instr_cluster_dist": 707.0528540739074,
+    "total_edge_length": 290760.0
+  },
+  "outputs": {
+    "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/large_nested__libavoid.png"
+  },
+  "status": "ok"
+}

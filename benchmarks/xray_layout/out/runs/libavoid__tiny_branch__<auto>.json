@@ -1,0 +1,25 @@
+{
+  "binary": "tiny_branch",
+  "candidate": "libavoid",
+  "function": "<auto>",
+  "machine": {
+    "cpu": "x86_64",
+    "os": "Linux 6.19.8-arch1-1",
+    "ram_gb": 30.83
+  },
+  "metrics": {
+    "bbox_area": 115200.0,
+    "bbox_aspect": 2.0,
+    "bend_count": 0.0,
+    "edge_crossings": 105.0,
+    "edge_overlaps": 7.0,
+    "port_violations": 16.0,
+    "runtime_ms": 0.7628599414601922,
+    "same_instr_cluster_dist": 302.5047496688426,
+    "total_edge_length": 10880.0
+  },
+  "outputs": {
+    "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/tiny_branch__libavoid.png"
+  },
+  "status": "ok"
+}

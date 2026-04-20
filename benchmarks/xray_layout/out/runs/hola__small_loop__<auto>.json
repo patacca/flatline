@@ -1,0 +1,25 @@
+{
+  "binary": "small_loop",
+  "candidate": "hola",
+  "function": "<auto>",
+  "machine": {
+    "cpu": "x86_64",
+    "os": "Linux 6.19.8-arch1-1",
+    "ram_gb": 30.83
+  },
+  "metrics": {
+    "bbox_area": 1443606.0182493338,
+    "bbox_aspect": 1.3233166591100736,
+    "bend_count": 0.0,
+    "edge_crossings": 84.0,
+    "edge_overlaps": 6.0,
+    "port_violations": 34.0,
+    "runtime_ms": 1170.4730510246009,
+    "same_instr_cluster_dist": 379.2739214554674,
+    "total_edge_length": 22598.91815245294
+  },
+  "outputs": {
+    "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/small_loop__hola.png"
+  },
+  "status": "ok"
+}

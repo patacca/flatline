@@ -1,0 +1,12 @@
+{
+  "binary": "large_nested",
+  "candidate": "domus",
+  "error_message": "Layout timed out after 60s",
+  "function": "<auto>",
+  "machine": {
+    "cpu": "x86_64",
+    "os": "Linux 6.19.8-arch1-1",
+    "ram_gb": 30.83
+  },
+  "status": "timeout"
+}

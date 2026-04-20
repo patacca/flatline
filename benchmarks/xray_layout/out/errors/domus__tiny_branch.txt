@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/bench/cli.py", line 190, in _run_one
+    result = run_fn(
+        binary_path=binary_path,
+    ...<2 lines>...
+        out_dir=out_dir,
+    )
+  File "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/bench/adapters/_base.py", line 198, in run
+    result = self.layout(graph)
+  File "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/bench/adapters/domus_adapter.py", line 104, in layout
+    raise RuntimeError(f"DOMUS failed: {stderr}")
+RuntimeError: DOMUS failed: terminate called after throwing an instance of 'std::bad_optional_access'
+  what():  bad optional access

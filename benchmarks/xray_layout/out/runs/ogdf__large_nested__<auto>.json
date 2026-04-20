@@ -1,0 +1,25 @@
+{
+  "binary": "large_nested",
+  "candidate": "ogdf",
+  "function": "<auto>",
+  "machine": {
+    "cpu": "x86_64",
+    "os": "Linux 6.19.8-arch1-1",
+    "ram_gb": 30.83
+  },
+  "metrics": {
+    "bbox_area": 12173876.543209879,
+    "bbox_aspect": 1.1565068493150685,
+    "bend_count": 915.0,
+    "edge_crossings": 208.0,
+    "edge_overlaps": 0.0,
+    "port_violations": 158.0,
+    "runtime_ms": 1688.7656119652092,
+    "same_instr_cluster_dist": 477.95299212305804,
+    "total_edge_length": 196958.61111111107
+  },
+  "outputs": {
+    "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/large_nested__ogdf.png"
+  },
+  "status": "ok"
+}
