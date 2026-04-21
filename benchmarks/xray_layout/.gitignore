@@ -2,6 +2,7 @@ out/binaries/*
 out/renders/*
 out/graphs/*
 out/metrics/*
+out/errors/*
 .venv-bench/
 third_party/
 __pycache__/
