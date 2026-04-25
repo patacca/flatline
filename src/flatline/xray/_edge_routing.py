@@ -7,27 +7,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flatline._errors import InternalError
-from flatline.xray._edge_routing_legacy import (
-    _build_initial_waypoints as _build_initial_waypoints,
-    _collapse_collinear as _collapse_collinear,
-    _coords_to_waypoints as _coords_to_waypoints,
-    _detour_one_segment as _detour_one_segment,
-    _detour_segment as _detour_segment,
-    _filter_endpoint_obstacles as _filter_endpoint_obstacles,
-    _find_clear_midpoint_y as _find_clear_midpoint_y,
-    _find_reconnect_index as _find_reconnect_index,
-    _h_segment_blocked as _h_segment_blocked,
-    _h_segment_hits as _h_segment_hits,
-    _optimize_path as _optimize_path,
-    _point_in_rect as _point_in_rect,
-    _segments_overlap_on_line as _segments_overlap_on_line,
-    _v_segment_blocked as _v_segment_blocked,
-    _v_segment_hits as _v_segment_hits,
-    _waypoints_to_coords as _waypoints_to_coords,
-    deconflict_edge_segments as deconflict_edge_segments,
-    manhattan_route as manhattan_route,
-    nearest_side_anchors as nearest_side_anchors,
-)
 from flatline.xray._layout import LayoutResult
 
 if TYPE_CHECKING:
@@ -139,8 +118,5 @@ def route_edges(
 
 
 __all__ = [
-    "deconflict_edge_segments",
-    "manhattan_route",
-    "nearest_side_anchors",
     "route_edges",
 ]

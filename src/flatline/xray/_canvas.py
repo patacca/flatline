@@ -11,9 +11,6 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from . import _theme
-from ._edge_routing import (
-    manhattan_route as manhattan_route,
-)
 from ._inputs import (
     _opcode_color,
     _varnode_color,
