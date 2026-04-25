@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
+import math
+from collections import OrderedDict
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
+import networkx as nx
+
+from flatline._errors import InternalError
+from flatline._native_layout import ogdf
 from flatline.models.enums import VarnodeSpace
 
 if TYPE_CHECKING:
@@ -27,6 +33,33 @@ CONSTANT_VARNODE_MIN_WIDTH = 74.0
 VARNODE_MIN_WIDTH = 68.0
 HORIZONTAL_NODE_GAP = 30.0
 VERTICAL_LEVEL_GAP = 132.0
+_LAYER_DISTANCE = 80
+_NODE_DISTANCE = 40
+_DEFAULT_LAYOUT_NODE_SIZE = (76.0, 68.0)
+_LAYOUT_CACHE_MAXSIZE = 8
+
+ogdf.setSeed(0)
+
+
+@dataclass(frozen=True)
+class Position:
+    """Center-based node rectangle returned by the native layout."""
+
+    x: float
+    y: float
+    w: float
+    h: float
+
+
+@dataclass(frozen=True)
+class LayoutResult:
+    """Native layout output keyed by stable node ID strings."""
+
+    nodes: dict[str, Position]
+    meta: dict
+
+
+_layout_cache: OrderedDict[int, LayoutResult] = OrderedDict()
 
 
 @dataclass
@@ -396,17 +429,143 @@ def collect_node_rects(
     return rects
 
 
+def compute_layout(pcode_graph: nx.MultiDiGraph) -> LayoutResult:
+    """Compute a deterministic center-based Sugiyama layout for a pcode graph."""
+
+    cached = _layout_cache.get(id(pcode_graph))
+    if cached is not None:
+        _layout_cache.move_to_end(id(pcode_graph))
+        return cached
+
+    if pcode_graph.number_of_nodes() == 0:
+        return _store_layout_result(
+            id(pcode_graph),
+            LayoutResult(nodes={}, meta={"schema_version": 1, "back_edges": []}),
+        )
+
+    ogdf.setSeed(0)
+    graph = ogdf.Graph()
+    graph_nodes = _stable_graph_nodes(pcode_graph)
+    ogdf_nodes = {node_id: graph.newNode() for node_id in graph_nodes}
+    for source, target in _stable_graph_edges(pcode_graph):
+        if source != target:
+            graph.newEdge(ogdf_nodes[source], ogdf_nodes[target])
+
+    attributes = ogdf.GraphAttributes(graph, ogdf.nodeGraphics | ogdf.edgeGraphics)
+    for node_id, native_node in ogdf_nodes.items():
+        width, height = _layout_node_size(pcode_graph, node_id)
+        attributes.setWidth(native_node, width)
+        attributes.setHeight(native_node, height)
+
+    layout = ogdf.SugiyamaLayout()
+    layout.setRuns(1)
+    hierarchy_layout = ogdf.FastHierarchyLayout()
+    hierarchy_layout.layerDistance(_LAYER_DISTANCE)
+    hierarchy_layout.nodeDistance(_NODE_DISTANCE)
+    _ = ogdf.OptimalRanking()
+    layout.call(attributes)
+
+    positions: dict[str, Position] = {}
+    for node_id in graph_nodes:
+        native_node = ogdf_nodes[node_id]
+        position = Position(
+            x=float(attributes.x(native_node)),
+            y=float(attributes.y(native_node)),
+            w=float(attributes.width(native_node)),
+            h=float(attributes.height(native_node)),
+        )
+        _validate_position(node_id, position)
+        positions[_node_id_string(node_id)] = position
+
+    result = LayoutResult(
+        nodes=positions,
+        meta={"schema_version": 1, "back_edges": _back_edges(pcode_graph)},
+    )
+    return _store_layout_result(id(pcode_graph), result)
+
+
+def _store_layout_result(cache_key: int, result: LayoutResult) -> LayoutResult:
+    _layout_cache[cache_key] = result
+    _layout_cache.move_to_end(cache_key)
+    while len(_layout_cache) > _LAYOUT_CACHE_MAXSIZE:
+        _layout_cache.popitem(last=False)
+    return result
+
+
+def _stable_graph_nodes(pcode_graph: nx.MultiDiGraph) -> list[object]:
+    return sorted(pcode_graph.nodes, key=_node_id_string)
+
+
+def _stable_graph_edges(pcode_graph: nx.MultiDiGraph) -> list[tuple[object, object]]:
+    return sorted(
+        pcode_graph.edges(),
+        key=lambda edge: (_node_id_string(edge[0]), _node_id_string(edge[1])),
+    )
+
+
+def _node_id_string(node_id: object) -> str:
+    return repr(node_id)
+
+
+def _back_edges(pcode_graph: nx.MultiDiGraph) -> list[tuple[str, str]]:
+    components = list(nx.strongly_connected_components(pcode_graph))
+    cyclic_nodes = {node for component in components if len(component) > 1 for node in component}
+    back_edges = [
+        (_node_id_string(source), _node_id_string(target))
+        for source, target in pcode_graph.edges()
+        if source == target or (source in cyclic_nodes and target in cyclic_nodes)
+    ]
+    return sorted(back_edges)
+
+
+def _layout_node_size(pcode_graph: nx.MultiDiGraph, node_id: object) -> tuple[float, float]:
+    op_by_id, varnode_by_id = _layout_payloads(pcode_graph)
+    if isinstance(node_id, tuple) and len(node_id) == 2 and isinstance(node_id[1], int):
+        kind, numeric_id = node_id
+        if kind == "op" and numeric_id in op_by_id:
+            node = VisualNode(key=_node_id_string(node_id), actual=node_id, depth=0)
+            return node_size(node, op_by_id, varnode_by_id)
+        if kind == "varnode" and numeric_id in varnode_by_id:
+            node = VisualNode(key=_node_id_string(node_id), actual=node_id, depth=0)
+            return node_size(node, op_by_id, varnode_by_id)
+    return _DEFAULT_LAYOUT_NODE_SIZE
+
+
+def _layout_payloads(
+    pcode_graph: nx.MultiDiGraph,
+) -> tuple[dict[int, PcodeOpInfo], dict[int, VarnodeInfo]]:
+    op_by_id = {}
+    varnode_by_id = {}
+    for _node_id, data in pcode_graph.nodes(data=True):
+        op = data.get("op")
+        if op is not None:
+            op_by_id[op.id] = op
+        varnode = data.get("varnode")
+        if varnode is not None:
+            varnode_by_id[varnode.id] = varnode
+    return op_by_id, varnode_by_id
+
+
+def _validate_position(node_id: object, position: Position) -> None:
+    values = (position.x, position.y, position.w, position.h)
+    if not all(math.isfinite(value) for value in values):
+        raise InternalError(f"layout produced non-finite coordinate for {node_id!r}")
+
+
 __all__ = [
     "HORIZONTAL_NODE_GAP",
     "VERTICAL_LEVEL_GAP",
+    "LayoutResult",
     "NodeId",
     "NodeRect",
+    "Position",
     "VisualNode",
     "assign_forest_positions",
     "build_visual_forest",
     "collect_node_rects",
     "collect_visual_nodes",
     "compute_canvas_size",
+    "compute_layout",
     "fit_opcode_label",
     "fit_varnode_badge",
     "measure_forest",
