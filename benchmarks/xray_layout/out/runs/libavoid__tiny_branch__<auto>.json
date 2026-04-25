@@ -11,13 +11,13 @@
     "bbox_area": 115200.0,
     "bbox_aspect": 2.0,
     "bend_count": 65.0,
-    "edge_crossings": 170.0,
+    "edge_crossings": 168.0,
     "edge_overlaps": 0.0,
     "orthogonal_segment_ratio": 1.0,
     "port_violations": 18.0,
-    "runtime_ms": 3.0729410937055945,
+    "runtime_ms": 2.7518130373209715,
     "same_instr_cluster_dist": 302.5047496688426,
-    "total_edge_length": 10916.36651888634
+    "total_edge_length": 10964.446120876388
   },
   "outputs": {
     "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/tiny_branch__libavoid.png"

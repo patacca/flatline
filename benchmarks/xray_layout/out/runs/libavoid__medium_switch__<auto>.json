@@ -11,13 +11,13 @@
     "bbox_area": 403200.0,
     "bbox_aspect": 1.75,
     "bend_count": 149.0,
-    "edge_crossings": 636.0,
+    "edge_crossings": 640.0,
     "edge_overlaps": 0.0,
     "orthogonal_segment_ratio": 1.0,
     "port_violations": 42.0,
-    "runtime_ms": 17.0011940645054,
+    "runtime_ms": 11.497067054733634,
     "same_instr_cluster_dist": 373.08360343125526,
-    "total_edge_length": 34368.9521149005
+    "total_edge_length": 34534.72346201005
   },
   "outputs": {
     "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/medium_switch__libavoid.png"

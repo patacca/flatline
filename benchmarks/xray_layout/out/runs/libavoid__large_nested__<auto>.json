@@ -11,13 +11,13 @@
     "bbox_area": 1622400.0,
     "bbox_aspect": 1.5,
     "bend_count": 791.0,
-    "edge_crossings": 12844.0,
+    "edge_crossings": 12815.0,
     "edge_overlaps": 0.0,
     "orthogonal_segment_ratio": 1.0,
     "port_violations": 167.0,
-    "runtime_ms": 944.5884339511395,
+    "runtime_ms": 382.49733694829047,
     "same_instr_cluster_dist": 707.0528540739074,
-    "total_edge_length": 292098.3285807737
+    "total_edge_length": 292765.1313603947
   },
   "outputs": {
     "png_path": "/home/patacca/patacca_git/flatline/benchmarks/xray_layout/out/renders/large_nested__libavoid.png"
