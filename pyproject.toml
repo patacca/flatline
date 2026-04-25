@@ -67,6 +67,7 @@ dev = [
 # -- pytest ----------------------------------------------------------------
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+norecursedirs = ["third_party/ogdf", "third_party/libavoid_src"]
 markers = [
     "unit: Pure-logic tests with no native dependencies (U-xxx)",
     "contract: Schema/type stability tests (C-xxx)",
@@ -83,6 +84,7 @@ addopts = "-ra"
 target-version = "py314"
 line-length = 99
 src = ["src", "tests", "tools"]
+extend-exclude = ["third_party/ogdf", "third_party/libavoid_src"]
 
 [tool.ruff.lint]
 select = [
