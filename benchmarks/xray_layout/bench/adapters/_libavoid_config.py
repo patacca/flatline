@@ -11,6 +11,15 @@ _CROSSING_PENALTY = 10000.0
 _SEGMENT_PENALTY = 50.0
 # Penalty for fixed shared path - discourages shared routing
 _FIXED_SHARED_PATH_PENALTY = 110.0
+# Minimum clearance the router must keep between any orthogonal segment and a
+# shape's bounding box. libavoid's default is 0.0, which lets segments slide
+# flush against (and visually appear to pass through) node boundaries when
+# the visibility graph aligns. Pinning a non-zero buffer forces the router
+# to maintain a routing channel around every shape -- without this, edges
+# from centre-pin ConnEnds (and any segment whose visibility ray grazes a
+# node corner) get drawn through node bodies. 8.0 is well below our
+# _LAYER_DISTANCE=30 so it does not collapse Sugiyama's rank gaps.
+_SHAPE_BUFFER_DISTANCE = 8.0
 # Tolerance for axis-alignment check in orthogonal_segment_ratio metric
 _ORTHO_TOL = 1e-6
 
@@ -20,6 +29,7 @@ def apply_orthogonal_config(router: "A.Router") -> None:
     router.setRoutingPenalty(A.crossingPenalty, _CROSSING_PENALTY)
     router.setRoutingPenalty(A.segmentPenalty, _SEGMENT_PENALTY)
     router.setRoutingPenalty(A.fixedSharedPathPenalty, _FIXED_SHARED_PATH_PENALTY)
+    router.setRoutingParameter(A.shapeBufferDistance, _SHAPE_BUFFER_DISTANCE)
     router.setRoutingOption(A.nudgeOrthogonalSegmentsConnectedToShapes, True)
     router.setRoutingOption(A.nudgeOrthogonalTouchingColinearSegments, True)
     router.setRoutingOption(A.nudgeSharedPathsWithCommonEndPoint, True)
