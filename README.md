@@ -5,6 +5,7 @@
 [![Downloads](https://img.shields.io/pepy/dt/flatline)](https://pepy.tech/projects/flatline)
 [![Docs](https://img.shields.io/badge/docs-online-blue)](https://patacca.github.io/flatline/)
 [![CI](https://github.com/patacca/flatline/actions/workflows/ci.yml/badge.svg)](https://github.com/patacca/flatline/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](https://www.gnu.org/licenses/gpl-3.0-standalone.html)
 
 Python wrapper around the Ghidra decompiler. Provides a stable, pip-installable
 interface for single-function decompilation with structured output -- no Ghidra
@@ -41,7 +42,9 @@ falls back to a source build.
 
 ### Build from source
 
-Source builds require a C++20 compiler, Ninja, and zlib headers:
+Source builds require a C++20 compiler, Ninja, and zlib headers. Note that
+`--recurse-submodules` is required to pull in `third_party/ogdf` and
+`third_party/libavoid_src`:
 
 | Platform | Install command |
 |----------|----------------|
@@ -52,6 +55,8 @@ Source builds require a C++20 compiler, Ninja, and zlib headers:
 | Windows | Visual Studio with C++ workload; `pip install ninja`; `vcpkg install zlib:x64-windows` |
 
 ```bash
+git clone --recurse-submodules https://github.com/patacca/flatline.git
+cd flatline
 python -m venv .venv
 source .venv/bin/activate
 pip install .
@@ -164,5 +169,8 @@ This project was developed with the support of [Quarkslab](https://github.com/qu
 
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE) for the project license and [NOTICE](NOTICE)
-for redistribution-time attribution.
+GPL-3.0-or-later. See [LICENSE](LICENSE) for the project license and
+[THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES) for redistribution-time attribution.
+
+Note: Downstream users who statically link flatline must comply with
+GPL-3.0-or-later.
