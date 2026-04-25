@@ -68,8 +68,9 @@ python -m flatline.xray demo.bin \
 
 After launch, the window shows three coordinated views. You can resize these by dragging the vertical dividers between them.
 
-- **The graph view** (Center) shows p-code ops and varnodes with edges for def-use relationships.
+- **The graph view** (Center) shows p-code ops and varnodes with edges for def-use relationships. It uses a vertical Sugiyama-layered layout with orthogonal edge routing.
     - Click a node to focus it: this highlights the node, mutes unrelated nodes, and populates the inspector.
+    - Self-loops are rendered as right-side U-bend polylines.
     - The assembly panel automatically scrolls to the related instruction.
     - Press **Ctrl+0** to reset the zoom and re-center the graph.
 - **The assembly panel** (Left) lists the recovered instruction addresses and decoded instructions.
@@ -121,3 +122,9 @@ pair that matches your architecture and runtime data.
 If runtime data is not being discovered automatically, pass
 `--runtime-data-dir /path/to/ghidra/runtime/data` so the viewer can find the
 Sleigh assets.
+
+### Layout & Graph issues
+
+If an expected edge is missing from the graph, verify if the p-code graph has cycles outside of Strongly Connected Components (SCCs). The Sugiyama layout is optimized for directed acyclic graphs and may simplify certain cyclical structures for readability.
+
+Toggling edge visibility via the inspector checkboxes only hides or shows edges; it does not recalculate the node positions. This is intentional to prevent the graph from "jumping" during analysis.

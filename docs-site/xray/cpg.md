@@ -15,7 +15,7 @@ flatline-xray demo.bin \
   --cpg
 ```
 
-In the Python API, pass `cpg=True` when initializing an `XrayWindow`.
+The graph uses a vertical Sugiyama-layered layout (via OGDF) and orthogonal Manhattan routing (via libavoid).
 
 ## Edge types
 
@@ -49,6 +49,8 @@ The inspector panel contains an **Edge Visibility** section at the bottom. Use t
 - **Control-flow edges**: Toggles CBRANCH overlay lines.
 - **IOP reference edges**: Toggles IOP overlay lines.
 - **Call target edges**: Toggles fspec overlay lines and their virtual nodes.
+
+Toggling these checkboxes hides or shows the respective edges immediately but does not trigger a graph relayout. This ensures that node positions remain stable while you toggle different views.
 
 If the viewer is launched without the `--cpg` flag, the control-flow checkbox is disabled.
 
