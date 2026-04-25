@@ -13,7 +13,7 @@
 - Hosts: Linux x86_64, macOS arm64, Windows x86_64 (Tier 1); Linux aarch64, macOS x86_64 (Pending).
 - Wheels: CPython 3.13/3.14, 64-bit; manylinux x86_64/aarch64, Windows x86_64, macOS x86_64/arm64.
 - Deps: `ghidra-sleigh` (runtime data), `networkx` (pcode graph); `ghidra_sleigh.get_runtime_data_dir()`.
-- Submodules: `third_party/ghidra` (vendored/active); `third_party/r2ghidra` (ignored).
+- Submodules: `third_party/ghidra` (vendored/active); `third_party/r2ghidra` (ignored); `third_party/ogdf` (vendored/active); `third_party/libavoid_src` (vendored/active).
 - ISAs: x86/ARM/RISC-V/MIPS (32+64-bit); fixture-backed in `tests/fixtures/*.hex`.
 
 # Design posture
