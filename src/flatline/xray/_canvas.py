@@ -77,34 +77,21 @@ def draw_depth_bands(
 def draw_routed_edges(
     canvas: tk.Canvas,
     routes: dict[tuple[object, object, object], list[tuple[float, float]]],
-    back_edges: set[tuple[str, str]] | None = None,
 ) -> None:
     """Draw libavoid-routed graph edges from polyline points."""
     import tkinter as tk
 
-    back_edges = back_edges or set()
     for source, target, _edge_key in sorted(routes, key=repr):
         polyline = routes[(source, target, _edge_key)]
         coords = [coord for point in polyline for coord in point]
-        if (repr(source), repr(target)) not in back_edges:
-            canvas.create_line(
-                *coords,
-                fill=_theme.EDGE_INACTIVE_COLOR,
-                width=_theme.EDGE_INACTIVE_WIDTH,
-                arrow=tk.LAST,
-                arrowshape=(12, 14, 6),
-                tags=("tree_edge", "arrow_edge"),
-            )
-        else:
-            canvas.create_line(
-                *coords,
-                fill=_theme.EDGE_RELATED,
-                width=1.4,
-                dash=(6, 4),
-                arrow=tk.LAST,
-                arrowshape=(10, 12, 5),
-                tags=("cross_edge", "arrow_edge"),
-            )
+        canvas.create_line(
+            *coords,
+            fill=_theme.EDGE_INACTIVE_COLOR,
+            width=_theme.EDGE_INACTIVE_WIDTH,
+            arrow=tk.LAST,
+            arrowshape=(12, 14, 6),
+            tags=("tree_edge", "arrow_edge"),
+        )
 
 
 # ---------------------------------------------------------------------------

@@ -250,7 +250,6 @@ class XrayWindow(tk.Tk):
         draw_routed_edges(
             self.canvas,
             route_edges(self.layout, self.pcode_graph),
-            set(self.layout.meta.get("back_edges", ())),
         )
         for root in self.visual_roots:
             draw_nodes(self.canvas, root, self.op_by_id, self.varnode_by_id, self._show_node)
