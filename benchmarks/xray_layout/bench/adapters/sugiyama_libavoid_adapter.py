@@ -44,7 +44,6 @@ from typing import TYPE_CHECKING, Any
 
 from benchmarks.xray_layout.bench.adapters._base import BaseAdapter, LayoutResult
 from benchmarks.xray_layout.bench.adapters._libavoid_config import (
-    add_all_directions_pin,
     apply_orthogonal_config,
 )
 
@@ -56,6 +55,21 @@ if TYPE_CHECKING:
 # so cross-adapter renders sit at comparable scales.
 _DEFAULT_NODE_WIDTH = 50.0
 _DEFAULT_NODE_HEIGHT = 30.0
+
+# FastHierarchyLayout spacing (Sugiyama's default hierarchy layout module).
+# OGDF's stock defaults are layerDistance=3.0 and fixedLayerDistance=False,
+# which causes the layout to dynamically inflate the inter-layer gap based on
+# graph size -- in practice 5x-10x node height for our CFGs, producing the
+# strongly vertically stretched renders observed in earlier benchmark runs
+# (aspect ratio ~3:1). We pin a fixed layer distance equal to the node height
+# and a node distance comparable to node width so the rank gap is a single
+# node-height of whitespace -- enough room for libavoid bends without the
+# ratio-distorting padding. The horizontal nodeDistance keeps siblings within
+# a layer from touching while still allowing libavoid orthogonal segments to
+# fit between them. Tune these together: nodeDistance affects edge bend room
+# inside a rank, layerDistance affects vertical edge run length.
+_LAYER_DISTANCE = _DEFAULT_NODE_HEIGHT  # 30.0 -- one node-height of vertical padding
+_NODE_DISTANCE = _DEFAULT_NODE_WIDTH / 2.0  # 25.0 -- half a node-width of horizontal padding
 
 # Repo-relative path to the locally built OGDF tree.  Mirrors ogdf_adapter
 # rather than importing it so this adapter remains standalone (per the
@@ -247,6 +261,21 @@ class SugiyamaLibavoidAdapter(BaseAdapter):
         # Detach from cppyy GC -- OGDF destructor ordering vs. interpreter
         # shutdown causes double-frees otherwise (documented in ogdf_adapter).
         sugiyama.__python_owns__ = False
+        # Override the default FastHierarchyLayout to pin a fixed inter-layer
+        # gap. With the stock layout module OGDF inflates layerDistance based
+        # on graph size, producing aspect ratios ~3:1 on our CFGs. We build
+        # an explicit FastHierarchyLayout with a fixed layer distance equal
+        # to one node-height and hand ownership to SugiyamaLayout via
+        # setLayout (which takes a raw pointer and stores it in a unique_ptr
+        # internally). __python_owns__ = False prevents cppyy from freeing
+        # the module while OGDF still holds it.
+        cppinclude("ogdf/layered/FastHierarchyLayout.h")
+        hier_layout = ogdf.FastHierarchyLayout()
+        hier_layout.__python_owns__ = False
+        hier_layout.layerDistance(_LAYER_DISTANCE)
+        hier_layout.nodeDistance(_NODE_DISTANCE)
+        hier_layout.fixedLayerDistance(True)
+        sugiyama.setLayout(hier_layout)
         # SugiyamaLayout's default modules (OptimalRanking + BarycenterHeuristic
         # + FastHierarchyLayout) compute a feedback arc set internally to
         # break cycles; back-edges are drawn as virtual paths through ranks.
@@ -322,45 +351,28 @@ class SugiyamaLibavoidAdapter(BaseAdapter):
             )
             tgt_pin.setExclusive(False)
             pins.append(tgt_pin)
-            # Centre / all-directions pin (CONNECTIONPIN_CENTRE) used as a
-            # safe fallback for edges whose endpoints cannot be routed
-            # orthogonally with the strict top/bottom side pins. This
-            # applies to:
-            #   * back-edges (target above or at the same y as source):
-            #     a "leave the bottom going down + enter the top going up"
-            #     polyline is geometrically impossible without a giant
-            #     detour and libavoid silently degrades to a straight
-            #     centre-to-centre segment instead.
-            #   * same-rank siblings (target.y == source.y): identical
-            #     reason -- the side pins point in mutually inconsistent
-            #     directions for that geometry.
-            # The centre pin lets libavoid choose any side per connector
-            # and produce a real orthogonal polyline. Forward edges keep
-            # using the side pins so true/false branch semantics remain
-            # visible in the routed output.
-            add_all_directions_pin(shape)
 
         # ---- Step 5: Connectors with classID-anchored ConnEnds ----
-        # Forward edges (target strictly below source) use the side pins
-        # so true/false/default branches leave the bottom from distinct
-        # X positions and enter targets at the top centre. Back-edges and
-        # same-rank edges fall back to CONNECTIONPIN_CENTRE on both ends
-        # so libavoid can pick whichever side yields a real orthogonal
-        # route -- see the pin-registration block above for the geometric
-        # rationale.
+        # ALL non-self-loop edges anchor at side pins: source on bottom-edge
+        # (per branch kind), target on top-edge centre. Forward edges produce
+        # a clean "down out, down in" route; back-edges and same-rank edges
+        # produce a U-bend (down out of source, around the obstruction
+        # region, up into target) -- this is the standard hierarchical
+        # convention and only works correctly with shapeBufferDistance > 0
+        # (set in apply_orthogonal_config) so libavoid has routing channels
+        # around shapes to thread the U through. An earlier revision used
+        # CONNECTIONPIN_CENTRE for back-edges thinking the U was impossible;
+        # in fact libavoid produces it cleanly given non-zero shape buffers,
+        # AND centre-pin ConnEnds caused polylines to start/end at the
+        # geometric centre of shapes, visually passing through node bodies
+        # -- a port_violations and node-traversal bug we traded the U-bend
+        # complaint for. Side pins everywhere is the correct invariant.
         connectors: dict[tuple[object, object, object], Any] = {}
         for source, target, key, data in graph.edges(keys=True, data=True):
             if source == target:
-                # Already recorded; libavoid cannot route same-shape ends.
                 continue
-            src_y = node_positions[source][1]
-            tgt_y = node_positions[target][1]
-            if tgt_y > src_y:
-                src_pin = _kind_to_pin(data.get("kind"))
-                tgt_pin = _PIN_TARGET
-            else:
-                src_pin = A.CONNECTIONPIN_CENTRE
-                tgt_pin = A.CONNECTIONPIN_CENTRE
+            src_pin = _kind_to_pin(data.get("kind"))
+            tgt_pin = _PIN_TARGET
             # ConnEnd(ShapeRef, unsigned classID) selects a specific pin by
             # classID, which is exactly the side-anchoring we configured.
             src_end = A.ConnEnd(shapes[source], src_pin)
