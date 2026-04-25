@@ -2,6 +2,12 @@
 // P2-Step-3b: wire per-request decompile pipeline with structured errors.
 
 #include <nanobind/nanobind.h>
+
+#include <libavoid/connectionpin.h>
+#include <libavoid/connector.h>
+#include <libavoid/geomtypes.h>
+#include <libavoid/router.h>
+#include <libavoid/shape.h>
 #include <ogdf/basic/Graph.h>
 #include <ogdf/basic/GraphAttributes.h>
 #include <ogdf/basic/basic.h>
@@ -84,6 +90,95 @@ void bind_ogdf_layout(nb::module_& ogdf_mod) {
     ogdf_mod.def("setSeed", [](int seed) { ogdf::setSeed(seed); });
 }
 
+Avoid::Point polygon_point_at(const Avoid::Polygon& polygon, int index) {
+    const int size = static_cast<int>(polygon.size());
+    if (index < 0) {
+        index += size;
+    }
+    if (index < 0 || index >= size) {
+        throw nb::index_error("Polygon index out of range");
+    }
+    return polygon.ps[static_cast<size_t>(index)];
+}
+
+void bind_avoid_router(nb::module_& avoid_mod) {
+    nb::enum_<Avoid::RouterFlag>(avoid_mod, "RouterFlag")
+        .value("OrthogonalRouting", Avoid::OrthogonalRouting)
+        .value("PolyLineRouting", Avoid::PolyLineRouting);
+
+    nb::enum_<Avoid::RoutingParameter>(avoid_mod, "RoutingParameter")
+        .value("segmentPenalty", Avoid::segmentPenalty)
+        .value("anglePenalty", Avoid::anglePenalty)
+        .value("crossingPenalty", Avoid::crossingPenalty)
+        .value("clusterCrossingPenalty", Avoid::clusterCrossingPenalty)
+        .value("fixedSharedPathPenalty", Avoid::fixedSharedPathPenalty)
+        .value("portDirectionPenalty", Avoid::portDirectionPenalty)
+        .value("shapeBufferDistance", Avoid::shapeBufferDistance)
+        .value("idealNudgingDistance", Avoid::idealNudgingDistance)
+        .value("reverseDirectionPenalty", Avoid::reverseDirectionPenalty);
+
+    nb::enum_<Avoid::RoutingOption>(avoid_mod, "RoutingOption")
+        .value("nudgeOrthogonalSegmentsConnectedToShapes",
+               Avoid::nudgeOrthogonalSegmentsConnectedToShapes)
+        .value("improveHyperedgeRoutesMovingJunctions", Avoid::improveHyperedgeRoutesMovingJunctions)
+        .value("penaliseOrthogonalSharedPathsAtConnEnds",
+               Avoid::penaliseOrthogonalSharedPathsAtConnEnds)
+        .value("nudgeOrthogonalTouchingColinearSegments",
+               Avoid::nudgeOrthogonalTouchingColinearSegments)
+        .value("performUnifyingNudgingPreprocessingStep",
+               Avoid::performUnifyingNudgingPreprocessingStep)
+        .value("improveHyperedgeRoutesMovingAddingAndDeletingJunctions",
+               Avoid::improveHyperedgeRoutesMovingAddingAndDeletingJunctions)
+        .value("nudgeSharedPathsWithCommonEndPoint", Avoid::nudgeSharedPathsWithCommonEndPoint);
+
+    nb::class_<Avoid::Router>(avoid_mod, "Router")
+        .def(nb::init<Avoid::RouterFlag>())
+        .def("processTransaction", &Avoid::Router::processTransaction)
+        .def("setRoutingParameter", &Avoid::Router::setRoutingParameter)
+        .def("setRoutingOption", &Avoid::Router::setRoutingOption);
+
+    nb::class_<Avoid::Point>(avoid_mod, "Point")
+        .def(nb::init<double, double>())
+        .def_rw("x", &Avoid::Point::x)
+        .def_rw("y", &Avoid::Point::y);
+
+    nb::class_<Avoid::Polygon>(avoid_mod, "Polygon")
+        .def(nb::init<>())
+        .def_prop_ro("size", [](const Avoid::Polygon& polygon) { return polygon.size(); })
+        .def("__getitem__", &polygon_point_at);
+
+    nb::class_<Avoid::Rectangle, Avoid::Polygon>(avoid_mod, "Rectangle")
+        .def(nb::init<Avoid::Point, Avoid::Point>());
+
+    nb::class_<Avoid::ShapeRef>(avoid_mod, "ShapeRef", nb::never_destruct())
+        .def(nb::new_([](Avoid::Router& router, Avoid::Polygon& polygon) {
+                 return new Avoid::ShapeRef(&router, polygon);
+             }),
+             nb::rv_policy::reference);
+
+    nb::class_<Avoid::ShapeConnectionPin>(avoid_mod, "ShapeConnectionPin", nb::never_destruct())
+        .def(nb::new_([](Avoid::ShapeRef& shape, unsigned int class_id, double x_offset,
+                         double y_offset, double inside_offset, Avoid::ConnDirFlags vis_dirs) {
+                 return new Avoid::ShapeConnectionPin(&shape, class_id, x_offset, y_offset,
+                                                      inside_offset, vis_dirs);
+             }),
+             nb::rv_policy::reference, nb::arg("shape"), nb::arg("classId"),
+             nb::arg("xOffset"), nb::arg("yOffset"), nb::arg("insideOffset") = 0.0,
+             nb::arg("visDirs") = static_cast<Avoid::ConnDirFlags>(Avoid::ConnDirAll))
+        .def("setExclusive", &Avoid::ShapeConnectionPin::setExclusive);
+
+    nb::class_<Avoid::ConnEnd>(avoid_mod, "ConnEnd")
+        .def(nb::init<Avoid::ShapeRef*, unsigned int>());
+
+    nb::class_<Avoid::ConnRef>(avoid_mod, "ConnRef", nb::never_destruct())
+        .def(nb::new_([](Avoid::Router& router, const Avoid::ConnEnd& source,
+                         const Avoid::ConnEnd& target) {
+                 return new Avoid::ConnRef(&router, source, target);
+             }),
+             nb::rv_policy::reference)
+        .def("displayRoute", [](Avoid::ConnRef& conn) { return conn.displayRoute(); });
+}
+
 }  // namespace
 
 // -- Module definition --------------------------------------------------------
@@ -94,6 +189,8 @@ NB_MODULE(_flatline_native, m) {
     nb::module_ native_layout = m.def_submodule("_native_layout", "Internal layout bindings");
     nb::module_ ogdf_mod = native_layout.def_submodule("ogdf", "OGDF Sugiyama layout bindings");
     bind_ogdf_layout(ogdf_mod);
+    nb::module_ avoid_mod = native_layout.def_submodule("avoid", "libavoid orthogonal router bindings");
+    bind_avoid_router(avoid_mod);
 
     nb::class_<MemoryLoadImageSkeleton>(m, "MemoryLoadImageSkeleton")
         .def(nb::init<std::uint64_t, nb::bytes, nb::object>(), nb::arg("base_address"),
