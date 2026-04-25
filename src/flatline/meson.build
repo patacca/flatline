@@ -288,6 +288,120 @@ if nanobind_available
     cpp_args: ghidra_cpp_args,
   )
 
+  # --- OGDF static library (layout backend) ---
+  # Layered subset only; OptimalHierarchyLayout.cpp and
+  # OptimalHierarchyClusterLayout.cpp are excluded because they depend on
+  # COIN-OR. The cluster variant has a no-op stub so OGDF's vtables resolve.
+  # config_autogen.h under native/ogdf/basic/internal/ is a hand-written,
+  # cross-platform replacement for OGDF's CMake-generated header.
+  ogdf_src = '../../third_party/ogdf/src/ogdf'
+  ogdf_inc = include_directories(
+    'native',
+    '../../third_party/ogdf/include',
+  )
+
+  ogdf_section_cpp_args = []
+  ogdf_section_link_args = []
+  if cpp_argument_syntax != 'msvc'
+    ogdf_section_cpp_args = ['-ffunction-sections', '-fdata-sections']
+    if host_machine.system() == 'darwin'
+      ogdf_section_link_args = ['-Wl,-dead_strip']
+    else
+      ogdf_section_link_args = ['-Wl,--gc-sections']
+    endif
+  else
+    ogdf_section_cpp_args = ['/Gy']
+    ogdf_section_link_args = ['/OPT:REF']
+  endif
+
+  ogdf_cpp_args = ogdf_section_cpp_args
+  if cpp_argument_syntax == 'msvc'
+    ogdf_cpp_args += ['/w']
+  else
+    ogdf_cpp_args += ['-w']
+  endif
+
+  ogdf_sources = [
+    ogdf_src / 'basic/basic.cpp',
+    ogdf_src / 'basic/CombinatorialEmbedding.cpp',
+    ogdf_src / 'basic/Graph.cpp',
+    ogdf_src / 'basic/GraphAttributes.cpp',
+    ogdf_src / 'basic/GraphCopy.cpp',
+    ogdf_src / 'basic/LayoutStandards.cpp',
+    ogdf_src / 'basic/Logger.cpp',
+    ogdf_src / 'basic/System.cpp',
+    ogdf_src / 'basic/geometry.cpp',
+    ogdf_src / 'basic/graphics.cpp',
+    ogdf_src / 'basic/memory/PoolMemoryAllocator.cpp',
+    ogdf_src / 'basic/simple_graph_alg.cpp',
+    ogdf_src / 'cluster/ClusterGraph.cpp',
+    ogdf_src / 'layered/BarycenterHeuristic.cpp',
+    ogdf_src / 'layered/CrossingMinInterfaces.cpp',
+    ogdf_src / 'layered/CrossingsMatrix.cpp',
+    ogdf_src / 'layered/DfsAcyclicSubgraph.cpp',
+    ogdf_src / 'layered/ExtendedNestingGraph.cpp',
+    ogdf_src / 'layered/FastHierarchyLayout.cpp',
+    ogdf_src / 'layered/LongestPathRanking.cpp',
+    ogdf_src / 'layered/OptimalRanking.cpp',
+    ogdf_src / 'layered/SplitHeuristic.cpp',
+    ogdf_src / 'layered/SugiyamaLayout.cpp',
+    ogdf_src / 'packing/TileToRowsCCPacker.cpp',
+    'native/ogdf_optimal_hierarchy_cluster_stub.cpp',
+  ]
+
+  thread_dep = dependency('threads')
+
+  ogdf_lib = static_library(
+    'ogdf_lib',
+    ogdf_sources,
+    include_directories: ogdf_inc,
+    dependencies: thread_dep,
+    cpp_args: ogdf_cpp_args,
+  )
+
+  # --- libavoid static library (edge routing) ---
+  # All 23 .cpp files from cola/libavoid/; zero external dependencies.
+  libavoid_src = '../../third_party/libavoid_src/cola/libavoid'
+  libavoid_inc = include_directories('../../third_party/libavoid_src/cola')
+
+  libavoid_cpp_args = ogdf_section_cpp_args
+  if cpp_argument_syntax != 'msvc'
+    libavoid_cpp_args += ['-Wno-deprecated-declarations']
+  endif
+
+  libavoid_sources = [
+    libavoid_src / 'actioninfo.cpp',
+    libavoid_src / 'connectionpin.cpp',
+    libavoid_src / 'connector.cpp',
+    libavoid_src / 'connend.cpp',
+    libavoid_src / 'geometry.cpp',
+    libavoid_src / 'geomtypes.cpp',
+    libavoid_src / 'graph.cpp',
+    libavoid_src / 'hyperedge.cpp',
+    libavoid_src / 'hyperedgeimprover.cpp',
+    libavoid_src / 'hyperedgetree.cpp',
+    libavoid_src / 'junction.cpp',
+    libavoid_src / 'makepath.cpp',
+    libavoid_src / 'mtst.cpp',
+    libavoid_src / 'obstacle.cpp',
+    libavoid_src / 'orthogonal.cpp',
+    libavoid_src / 'router.cpp',
+    libavoid_src / 'scanline.cpp',
+    libavoid_src / 'shape.cpp',
+    libavoid_src / 'timer.cpp',
+    libavoid_src / 'vertices.cpp',
+    libavoid_src / 'viscluster.cpp',
+    libavoid_src / 'visibility.cpp',
+    libavoid_src / 'vpsc.cpp',
+  ]
+
+  libavoid_lib = static_library(
+    'libavoid_lib',
+    libavoid_sources,
+    include_directories: libavoid_inc,
+    cpp_args: libavoid_cpp_args,
+  )
+
   # --- nanobind extension module ---
   py.extension_module(
     '_flatline_native',
@@ -301,9 +415,10 @@ if nanobind_available
       nanobind_source_dir / 'nb_combined.cpp',
     ],
     cpp_args: native_bridge_cpp_args,
-    include_directories: [ghidra_inc, nanobind_inc],
-    link_whole: ghidra_decompiler_lib,
-    dependencies: zlib_dep,
+    include_directories: [ghidra_inc, nanobind_inc, ogdf_inc, libavoid_inc],
+    link_whole: [ghidra_decompiler_lib, ogdf_lib, libavoid_lib],
+    dependencies: [zlib_dep, thread_dep],
+    link_args: ogdf_section_link_args,
     install: true,
     subdir: 'flatline',
   )
