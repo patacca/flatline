@@ -93,8 +93,19 @@ The main workflows to preserve in future design are:
 - When capability expands, keep the base workflow simple and make extra complexity explicit.
 - Support claims should follow evidence, not availability alone.
 - Footprint pressure should trigger an explicit product decision, not silent pruning of the default experience.
-- `flatline.xray` is an alpha API. Its constructor signature and UI behavior
-  may change between minor releases without deprecation.
+- `flatline.xray` uses a native Sugiyama-based layout engine for rank-based
+  visual semantics.
+  - The pipeline follows: `Pcode.to_graph() → OGDF Sugiyama → libavoid orthogonal → tk canvas`.
+  - Prioritizes a vertical primary flow axis (top-down) through strict
+    layered-by-rank placement.
+  - Performance budget (as per [ADR-014](adr/adr-014-relicense-to-gplv3-and-vendor-ogdf-libavoid.md)):
+    - median latency ≤ 200ms
+    - p95 latency ≤ 1s
+    - hard ceiling ≤ 5s
+  - Self-loops are handled via explicit 5-vertex right-side U-polylines.
+  - Layout results are cached keyed on `id(pcode_graph)`; UI toggles do not
+    trigger relayout.
+  - Strongly Connected Component (SCC) clustering is deferred post-MVP.
 
 ## Persistent Risks Worth Remembering
 
