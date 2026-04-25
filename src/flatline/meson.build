@@ -7,6 +7,11 @@ py.install_sources(
 )
 
 py.install_sources(
+  '_native_layout/__init__.py',
+  subdir: 'flatline/_native_layout',
+)
+
+py.install_sources(
   'bridge/__init__.py',
   'bridge/_coercion_utils.py',
   'bridge/core.py',
