@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 import networkx as nx
 
 from flatline._errors import InternalError
-from flatline._native_layout import ogdf
 from flatline.models.enums import VarnodeSpace
 
 if TYPE_CHECKING:
@@ -37,8 +36,6 @@ _LAYER_DISTANCE = 80
 _NODE_DISTANCE = 40
 _DEFAULT_LAYOUT_NODE_SIZE = (76.0, 68.0)
 _LAYOUT_CACHE_MAXSIZE = 8
-
-ogdf.setSeed(0)
 
 
 @dataclass(frozen=True)
@@ -442,6 +439,14 @@ def compute_layout(pcode_graph: nx.MultiDiGraph) -> LayoutResult:
             id(pcode_graph),
             LayoutResult(nodes={}, meta={"schema_version": 1, "back_edges": []}),
         )
+
+    try:
+        from flatline._native_layout import ogdf  # lazy: native bridge optional
+    except ImportError as exc:
+        raise InternalError(
+            "compute_layout() requires the native bridge; "
+            "install flatline with native_bridge=enabled"
+        ) from exc
 
     ogdf.setSeed(0)
     graph = ogdf.Graph()
