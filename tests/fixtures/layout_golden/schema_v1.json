@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Flatline xray layout dump (v1)",
+  "description": "Schema for flatline-xray --layout-dump JSON output. Captures Sugiyama node positions and libavoid orthogonal edge polylines.",
+  "type": "object",
+  "required": ["schema_version", "nodes", "edges"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Layout dump schema version."
+    },
+    "nodes": {
+      "type": "object",
+      "description": "Map from stable node id (repr of pcode graph node) to center-based rectangle.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["x", "y", "w", "h"],
+        "additionalProperties": false,
+        "properties": {
+          "x": { "type": "number" },
+          "y": { "type": "number" },
+          "w": { "type": "number" },
+          "h": { "type": "number" }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "description": "Routed edges as orthogonal polylines.",
+      "items": {
+        "type": "object",
+        "required": ["src", "dst", "key", "polyline", "back_edge"],
+        "additionalProperties": false,
+        "properties": {
+          "src": { "type": "string" },
+          "dst": { "type": "string" },
+          "key": { "type": "string" },
+          "polyline": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": { "type": "number" }
+            }
+          },
+          "back_edge": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}
