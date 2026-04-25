@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import heapq
+from itertools import pairwise
 
 from flatline.xray._layout import NodeRect, VisualNode, node_size
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
 
 _OBSTACLE_MARGIN = 6.0
 _MAX_DETOUR_PASSES = 30
@@ -134,7 +132,7 @@ def _build_initial_waypoints(
     _ALIGN_THRESHOLD = 1.0
     _NEAR_ALIGN_RATIO = 0.1
 
-    def _transpose(points: Iterable[Sequence[int]]) -> list[tuple[int]]:
+    def _transpose(points: tuple[tuple[float, float], ...]) -> list[tuple[float, float]]:
         return [(p[1], p[0]) for p in points] if first_axis == "horizontal" else list(points)
 
     # Apply symmetry over y=x only for horizontal lines, so we always work with vertical lines
@@ -178,6 +176,101 @@ def _coords_to_waypoints(coords: list[float]) -> list[tuple[float, float]]:
 
 def _waypoints_to_coords(waypoints: list[tuple[float, float]]) -> list[float]:
     return [c for pt in waypoints for c in pt]
+
+
+def _segment_is_clear(
+    a: tuple[float, float],
+    b: tuple[float, float],
+    obstacles: list[NodeRect],
+) -> bool:
+    ax, ay = a
+    bx, by = b
+    if ax == bx:
+        y_lo, y_hi = min(ay, by), max(ay, by)
+        return not any(_v_segment_hits(y_lo, y_hi, ax, rect) for rect in obstacles)
+    if ay == by:
+        x_lo, x_hi = min(ax, bx), max(ax, bx)
+        return not any(_h_segment_hits(x_lo, x_hi, ay, rect) for rect in obstacles)
+    return False
+
+
+def _path_length(waypoints: list[tuple[float, float]]) -> float:
+    return sum(abs(bx - ax) + abs(by - ay) for (ax, ay), (bx, by) in pairwise(waypoints))
+
+
+def _shortest_grid_route(
+    start: tuple[float, float],
+    end: tuple[float, float],
+    obstacles: list[NodeRect],
+) -> list[tuple[float, float]] | None:
+    xs = {start[0], end[0]}
+    ys = {start[1], end[1]}
+    for rect in obstacles:
+        xs.update((rect.x_min - _OBSTACLE_MARGIN, rect.x_max + _OBSTACLE_MARGIN))
+        ys.update((rect.y_min - _OBSTACLE_MARGIN, rect.y_max + _OBSTACLE_MARGIN))
+
+    points = [
+        (x, y)
+        for x in sorted(xs)
+        for y in sorted(ys)
+        if not any(_point_in_rect(x, y, rect) for rect in obstacles)
+    ]
+    point_set = set(points)
+    if start not in point_set or end not in point_set:
+        return None
+
+    adjacency: dict[tuple[float, float], list[tuple[float, tuple[float, float]]]] = {
+        point: [] for point in points
+    }
+    for x in sorted(xs):
+        column = sorted((point for point in points if point[0] == x), key=lambda p: p[1])
+        _connect_visible_neighbors(column, adjacency, obstacles)
+    for y in sorted(ys):
+        row = sorted((point for point in points if point[1] == y), key=lambda p: p[0])
+        _connect_visible_neighbors(row, adjacency, obstacles)
+
+    return _dijkstra_waypoints(start, end, adjacency)
+
+
+def _connect_visible_neighbors(
+    ordered_points: list[tuple[float, float]],
+    adjacency: dict[tuple[float, float], list[tuple[float, tuple[float, float]]]],
+    obstacles: list[NodeRect],
+) -> None:
+    for a, b in pairwise(ordered_points):
+        if _segment_is_clear(a, b, obstacles):
+            adjacency[a].append((abs(b[0] - a[0]) + abs(b[1] - a[1]), b))
+            adjacency[b].append((abs(b[0] - a[0]) + abs(b[1] - a[1]), a))
+
+
+def _dijkstra_waypoints(
+    start: tuple[float, float],
+    end: tuple[float, float],
+    adjacency: dict[tuple[float, float], list[tuple[float, tuple[float, float]]]],
+) -> list[tuple[float, float]] | None:
+    distances = {start: 0.0}
+    previous: dict[tuple[float, float], tuple[float, float]] = {}
+    queue = [(0.0, start)]
+    while queue:
+        distance, point = heapq.heappop(queue)
+        if point == end:
+            break
+        if distance != distances.get(point):
+            continue
+        for weight, neighbor in adjacency[point]:
+            candidate = distance + weight
+            if candidate < distances.get(neighbor, float("inf")):
+                distances[neighbor] = candidate
+                previous[neighbor] = point
+                heapq.heappush(queue, (candidate, neighbor))
+    if end not in distances:
+        return None
+
+    path = [end]
+    while path[-1] != start:
+        path.append(previous[path[-1]])
+    path.reverse()
+    return _collapse_collinear(path)
 
 
 def _segments_overlap_on_line(
@@ -396,7 +489,7 @@ def _detour_segment(
 
 
 def _optimize_path(
-    waypoints: list[tuple[float, float]], obstacles: list[NodeRect] | None = None
+    waypoints: list[tuple[float, float]], _obstacles: list[NodeRect] | None = None
 ) -> list[tuple[float, float]]:
     if not waypoints:
         return []
@@ -419,18 +512,6 @@ def _optimize_path(
         else:  # Non-aligned edge, leave it alone
             colors.append("I")
     colors.append("E")  # End
-
-    # TODO
-    # result = []
-    i = 0
-    while i < len(waypoints):
-        # URU/ULU/DRD/DLD -> L
-        if 1:
-            pass
-        # URU/ULU/DRD/DLD -> L
-        if 1:
-            pass
-        i += 1
 
     waypoints = _collapse_collinear(waypoints)
     return waypoints
@@ -458,6 +539,9 @@ def manhattan_route(
             break
 
     waypoints = _optimize_path(waypoints, safe_obstacles)
+    shortest = _shortest_grid_route((x1, y1), (x2, y2), safe_obstacles)
+    if shortest is not None and _path_length(shortest) < _path_length(waypoints):
+        waypoints = shortest
     return [c for pt in waypoints for c in pt]
 
 
@@ -484,8 +568,8 @@ def _detour_one_segment(
 def nearest_side_anchors(
     source: VisualNode,
     target: VisualNode,
-    op_by_id: dict,
-    varnode_by_id: dict,
+    op_by_id: dict[object, object],
+    varnode_by_id: dict[object, object],
 ) -> tuple[tuple[float, float], tuple[float, float]]:
     sw, _sh = node_size(source, op_by_id, varnode_by_id)
     tw, _th = node_size(target, op_by_id, varnode_by_id)

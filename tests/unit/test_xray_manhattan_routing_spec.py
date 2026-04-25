@@ -18,13 +18,7 @@ from ._xray_support import make_sample_pcode
 pytestmark = pytest.mark.unit
 
 
-# ---------------------------------------------------------------------------
-# Helpers used across multiple tests
-# ---------------------------------------------------------------------------
-
-
 def _coords_to_waypoints(coords: list[float]) -> list[tuple[float, float]]:
-    """Convert a flat coordinate list to (x, y) waypoint pairs."""
     return list(zip(coords[::2], coords[1::2], strict=True))
 
 
@@ -58,11 +52,6 @@ def _assert_no_segment_crosses_any_rect(
                     f"vertical segment at x={seg_x} from y={y_lo} to y={y_hi} "
                     f"crosses obstacle {obs}"
                 )
-
-
-# ---------------------------------------------------------------------------
-# Original tests (unchanged)
-# ---------------------------------------------------------------------------
 
 
 def test_manhattan_route_diagonal() -> None:
@@ -173,11 +162,6 @@ def test_nearest_side_anchors_target_left() -> None:
     assert tx == target.x + tw / 2.0
 
 
-# ---------------------------------------------------------------------------
-# New tests: vertical segment avoidance (Bug 1)
-# ---------------------------------------------------------------------------
-
-
 def test_v_segment_hits_detects_overlap() -> None:
     """_v_segment_hits returns True when a vertical line crosses a rect."""
     rect = NodeRect(x_min=40.0, y_min=50.0, x_max=60.0, y_max=70.0)
@@ -217,11 +201,6 @@ def test_manhattan_route_vertical_detour_left_or_right() -> None:
     detour_xs = [x for x, _ in waypoints if x < obstacle.x_min or x > obstacle.x_max]
     assert len(detour_xs) > 0, "vertical detour did not leave obstacle x-range"
     _assert_no_segment_crosses_any_rect(coords, [obstacle])
-
-
-# ---------------------------------------------------------------------------
-# New tests: horizontal-first routing (Bug 3 — IOP edges)
-# ---------------------------------------------------------------------------
 
 
 def test_horizontal_first_builds_h_v_h_shape() -> None:
