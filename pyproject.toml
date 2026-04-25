@@ -76,6 +76,7 @@ markers = [
     "regression: Output/latency stability baselines (R-xxx)",
     "negative: Error-path / rejection tests (N-xxx)",
     "requires_native: Needs compiled flatline._flatline_native importable in this test env",
+    "slow: Long-running tests (perf budgets, batch loops); skipped from default fast runs",
 ]
 # Show skip reasons in short summary; verbose on CI
 addopts = "-ra"
