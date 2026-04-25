@@ -1,3 +1,10 @@
 [submodule "third_party/ghidra"]
 	path = third_party/ghidra
 	url = https://github.com/NationalSecurityAgency/ghidra
+[submodule "third_party/ogdf"]
+	path = third_party/ogdf
+	url = https://github.com/ogdf/ogdf.git
+[submodule "third_party/libavoid_src"]
+	path = third_party/libavoid_src
+	url = https://github.com/mjwybrow/adaptagrams.git
+	branch = master
