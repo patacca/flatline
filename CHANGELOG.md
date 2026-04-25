@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (BREAKING)
+- License switched from Apache-2.0 to GPL-3.0-or-later. Downstream users who statically link flatline must comply with GPL-3.0-or-later. See ADR-014.
+
 ### Changed
+- `flatline-xray` graph layout pipeline replaced: the custom forest placer and Manhattan router have been replaced with a Sugiyama-style layered placement (OGDF) and orthogonal edge routing (libavoid), statically vendored into all Tier-1 wheels.
 - X-Ray viewer: refreshed UI with resizable panes, improved selection and highlight synchronization, cleaner node label fit, and reduced visual noise
 
 ## [0.1.2] - 2026-04-05
