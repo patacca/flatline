@@ -10,8 +10,8 @@ readme = { file = "README.md", content-type = "text/markdown" }
 authors = [{ name = "patacca" }]
 maintainers = [{ name = "patacca", email = "patacca@autistici.org" }]
 requires-python = ">= 3.13"
-license = "Apache-2.0"
-license-files = ["LICENSE", "NOTICE"]
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES"]
 keywords = ["ghidra", "decompiler", "reverse engineering", "binary analysis"]
 classifiers = [
     "Development Status :: 4 - Beta",
