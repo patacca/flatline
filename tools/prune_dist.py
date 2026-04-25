@@ -62,6 +62,68 @@ def prune(dist_root: str) -> None:
     if os.path.isdir(ghidra_root):
         _prune_ghidra(ghidra_root)
 
+    # --- third_party/ogdf: keep only layered subset + license ---
+    ogdf_root = os.path.join(dist_root, "third_party", "ogdf")
+    if os.path.isdir(ogdf_root):
+        _prune_ogdf(ogdf_root)
+
+    # --- third_party/libavoid_src: keep only cola/libavoid + readme ---
+    libavoid_root = os.path.join(dist_root, "third_party", "libavoid_src")
+    if os.path.isdir(libavoid_root):
+        _prune_libavoid(libavoid_root)
+
+
+def _prune_ogdf(ogdf_root: str) -> None:
+    """Keep only include/, src/ogdf/{basic,cluster,layered,packing}/, LICENSE.txt, README.md."""
+    for entry in os.listdir(ogdf_root):
+        path = os.path.join(ogdf_root, entry)
+        if entry in ("LICENSE.txt", "README.md"):
+            continue
+        if entry == "include":
+            continue
+        if entry == "src":
+            _prune_ogdf_src(path)
+            continue
+        _remove_path(path)
+
+
+def _prune_ogdf_src(src_dir: str) -> None:
+    """Inside src/, keep only ogdf/{basic,cluster,layered,packing}."""
+    ogdf_dir = os.path.join(src_dir, "ogdf")
+    if not os.path.isdir(ogdf_dir):
+        return
+    for entry in os.listdir(src_dir):
+        entry_path = os.path.join(src_dir, entry)
+        if entry == "ogdf":
+            continue
+        _remove_path(entry_path)
+    for entry in os.listdir(ogdf_dir):
+        entry_path = os.path.join(ogdf_dir, entry)
+        if entry in ("basic", "cluster", "layered", "packing"):
+            continue
+        _remove_path(entry_path)
+
+
+def _prune_libavoid(libavoid_root: str) -> None:
+    """Keep only cola/libavoid/ and README.md."""
+    for entry in os.listdir(libavoid_root):
+        path = os.path.join(libavoid_root, entry)
+        if entry == "README.md":
+            continue
+        if entry == "cola":
+            _prune_libavoid_cola(path)
+            continue
+        _remove_path(path)
+
+
+def _prune_libavoid_cola(cola_dir: str) -> None:
+    """Inside cola/, keep only libavoid/."""
+    for entry in os.listdir(cola_dir):
+        entry_path = os.path.join(cola_dir, entry)
+        if entry == "libavoid":
+            continue
+        _remove_path(entry_path)
+
 
 def _prune_ghidra(ghidra_root: str) -> None:
     """Keep only LICENSE, NOTICE, and the decompiler C++ source tree."""
