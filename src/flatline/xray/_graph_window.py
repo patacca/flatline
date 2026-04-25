@@ -22,9 +22,9 @@ if TYPE_CHECKING:
 
 from . import _theme
 from ._canvas import (
-    draw_all_tree_edges,
     draw_depth_bands,
     draw_nodes,
+    draw_routed_edges,
     hide_all_glows,
     show_node_glow,
 )
@@ -41,19 +41,17 @@ from ._cpg_overlay import (
     draw_fspec_edges,
     draw_iop_edges,
 )
+from ._edge_routing import route_edges
 from ._inputs import disassemble_instruction_addresses
 from ._inspector import op_text, summary_text, varnode_text
 from ._layout import (
     HORIZONTAL_NODE_GAP,
     VERTICAL_LEVEL_GAP,
+    LayoutResult,
+    Position,
     VisualNode,
-    assign_forest_positions,
-    build_visual_forest,
     collect_node_rects,
-    collect_visual_nodes,
-    compute_canvas_size,
-    measure_forest,
-    node_size,
+    compute_layout,
     sorted_ops,
 )
 
@@ -68,21 +66,13 @@ class XrayWindow(tk.Tk):
     _bottom_margin = 120.0
     _side_margin = 100.0
 
-    # Default pane widths and minimum bounds.
-    # The graph pane gets expand=True priority (all remaining space).
-    # Side panels use fixed initial widths; PanedWindow enforces the minimums.
-    # Minimums are exposed as class attributes so tests can verify enforcement
-    # without creating a real display.
     _asm_default_width = 220
     _inspector_default_width = 280
     _asm_min_width = 180
     _inspector_min_width = 180
 
-    # Zoom level when the window opens (or after reset_view()).
-    # Exposed as a class constant so headless tests can verify determinism.
     _INITIAL_ZOOM = 1.0
 
-    # Base arrowshape tuples (at zoom=1.0); rescaled on each zoom change.
     _ARROW_LARGE = (12, 14, 6)
     _ARROW_SMALL = (10, 12, 5)
     _ARROW_SHAPES: ClassVar[dict[str, tuple[int, int, int]]] = {
@@ -114,35 +104,13 @@ class XrayWindow(tk.Tk):
         self.op_by_id = {op.id: op for op in self.pcode.pcode_ops}
         self.varnode_by_id = {varnode.id: varnode for varnode in self.pcode.varnodes}
         self.sorted_ops = sorted_ops(self.pcode.pcode_ops)
-        self.visual_roots, self._cross_edges = build_visual_forest(
-            self.op_by_id,
-            self.varnode_by_id,
-            self.sorted_ops,
-        )
-        self.visual_nodes = collect_visual_nodes(self.visual_roots)
-        self.max_depth = measure_forest(
-            self.visual_roots,
-            lambda node: node_size(node, self.op_by_id, self.varnode_by_id),
-            child_gap=self._child_gap,
-        )
-        self.virtual_width, self.virtual_height = compute_canvas_size(
-            self.visual_roots,
-            self.max_depth,
-            root_gap=self._root_gap,
-            top_margin=self._top_margin,
-            bottom_margin=self._bottom_margin,
-            side_margin=self._side_margin,
-            level_gap=self._level_gap,
-        )
-        assign_forest_positions(
-            self.visual_roots,
-            self.virtual_height,
-            side_margin=self._side_margin,
-            bottom_margin=self._bottom_margin,
-            root_gap=self._root_gap,
-            child_gap=self._child_gap,
-            level_gap=self._level_gap,
-        )
+        self.pcode_graph = self.pcode.to_graph()
+        self._layout_cache: dict[int, LayoutResult] = {}
+        self.layout = self._get_layout(self.pcode_graph)
+        self.visual_nodes = self._build_visual_nodes(self.layout)
+        self.visual_roots = self.visual_nodes
+        self.max_depth = self._layout_depth(self.layout)
+        self.virtual_width, self.virtual_height = self._canvas_size(self.layout)
         self.result_label = self._result_label()
         self._node_by_key: dict[str, VisualNode] = {node.key: node for node in self.visual_nodes}
         self._disasm = self._disassemble()
@@ -174,13 +142,6 @@ class XrayWindow(tk.Tk):
             fg=_theme.TEXT_MUTED,
             font=_theme.SUBTITLE_FONT,
         ).pack(anchor="w", pady=(4, 0))
-        # Body: PanedWindow for user-resizable panes.
-        # Orient=horizontal: [asm | graph | inspector] left-to-right.
-        # The graph pane gets sashpad/weight so it absorbs extra space.
-        # minsize on each side pane prevents collapse below usable width.
-        # Note: PanedWindow.add() uses pack geometry internally; do NOT
-        # also call .pack()/.grid() on the added child frames directly --
-        # PanedWindow owns geometry management for its direct children.
         body = tk.PanedWindow(
             self,
             orient="horizontal",
@@ -228,7 +189,6 @@ class XrayWindow(tk.Tk):
         for _, line_text in self._disasm:
             self.asm_listbox.insert(tk.END, line_text)
         self.asm_listbox.bind("<<ListboxSelect>>", self._on_asm_select)
-        # Graph pane: fills all remaining space (stretch="always" + no fixed width).
         canvas_frame = tk.Frame(body, bg=_theme.BACKGROUND)
         self.canvas = tk.Canvas(canvas_frame, bg=_theme.CANVAS_BG, highlightthickness=0)
         x_scroll = tk.Scrollbar(canvas_frame, orient="horizontal", command=self.canvas.xview)
@@ -263,9 +223,6 @@ class XrayWindow(tk.Tk):
         )
         self.inspector.pack(fill="both", expand=True)
         self.inspector.configure(state="disabled")
-        # Add panes to PanedWindow: asm (left), graph (centre, dominant),
-        # inspector (right).  stretch="always" on the graph pane means
-        # extra width from window resizes goes to the graph first.
         body.add(
             asm_frame,
             minsize=self._asm_min_width,
@@ -290,13 +247,10 @@ class XrayWindow(tk.Tk):
             self._bottom_margin,
             self._level_gap,
         )
-        draw_all_tree_edges(
+        draw_routed_edges(
             self.canvas,
-            self.visual_roots,
-            self._cross_edges,
-            self.op_by_id,
-            self.varnode_by_id,
-            _obs,
+            route_edges(self.layout, self.pcode_graph),
+            set(self.layout.meta.get("back_edges", ())),
         )
         for root in self.visual_roots:
             draw_nodes(self.canvas, root, self.op_by_id, self.varnode_by_id, self._show_node)
@@ -340,6 +294,55 @@ class XrayWindow(tk.Tk):
         self.bind("<Control-equal>", lambda e: self._do_zoom(self._zoom * 1.15, e))
         self.bind("<Control-minus>", lambda e: self._do_zoom(self._zoom / 1.15, e))
         self.bind("<Control-0>", lambda _event: self.reset_view())
+
+    def _get_layout(self, pcode_graph) -> LayoutResult:
+        key = id(pcode_graph)
+        cached = self._layout_cache.get(key)
+        if cached is not None:
+            return cached
+        raw_layout = compute_layout(pcode_graph)
+        layout = self._shift_layout_into_view(raw_layout)
+        self._layout_cache[key] = layout
+        return layout
+
+    def _shift_layout_into_view(self, layout: LayoutResult) -> LayoutResult:
+        if not layout.nodes:
+            return layout
+        min_left = min(pos.x - pos.w / 2.0 for pos in layout.nodes.values())
+        min_top = min(pos.y - pos.h / 2.0 for pos in layout.nodes.values())
+        dx = self._side_margin - min_left
+        dy = self._top_margin - min_top
+        shifted = {
+            key: Position(pos.x + dx, pos.y + dy, pos.w, pos.h)
+            for key, pos in layout.nodes.items()
+        }
+        return LayoutResult(nodes=shifted, meta=layout.meta)
+
+    def _build_visual_nodes(self, layout: LayoutResult) -> list[VisualNode]:
+        depths = self._depth_by_node_key(layout)
+        visual_nodes: list[VisualNode] = []
+        for node_id in sorted(self.pcode_graph.nodes, key=repr):
+            key = repr(node_id)
+            pos = layout.nodes[key]
+            visual_nodes.append(
+                VisualNode(key=key, actual=node_id, depth=depths[key], x=pos.x, y=pos.y)
+            )
+        return visual_nodes
+
+    def _depth_by_node_key(self, layout: LayoutResult) -> dict[str, int]:
+        ys = sorted({round(pos.y, 3) for pos in layout.nodes.values()})
+        y_to_depth = {y: index for index, y in enumerate(ys)}
+        return {key: y_to_depth[round(pos.y, 3)] for key, pos in layout.nodes.items()}
+
+    def _layout_depth(self, layout: LayoutResult) -> int:
+        return max(self._depth_by_node_key(layout).values(), default=0)
+
+    def _canvas_size(self, layout: LayoutResult) -> tuple[int, int]:
+        if not layout.nodes:
+            return (1400, 940)
+        width = max(pos.x + pos.w / 2.0 for pos in layout.nodes.values()) + self._side_margin
+        height = max(pos.y + pos.h / 2.0 for pos in layout.nodes.values()) + self._bottom_margin
+        return (max(1400, int(width)), max(940, int(height)))
 
     def show(self) -> None:
         self.mainloop()
