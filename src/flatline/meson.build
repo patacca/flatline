@@ -58,6 +58,7 @@ py.install_sources(
   'xray/_canvas.py',
   'xray/_cpg_overlay.py',
   'xray/_edge_routing.py',
+  'xray/_edge_routing_legacy.py',
   'xray/_edge_slots.py',
   'xray/_graph_window.py',
   'xray/_inputs.py',

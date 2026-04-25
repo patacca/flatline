@@ -579,19 +579,30 @@ def _make_4x3_grid_obstacles() -> list[NodeRect]:
         for col in range(3):
             cx = 200.0 + col * (node_w + gap_x)
             cy = 100.0 + row * (node_h + gap_y)
-            rects.append(NodeRect(
-                x_min=cx - node_w / 2 - pad, y_min=cy - node_h / 2 - pad,
-                x_max=cx + node_w / 2 + pad, y_max=cy + node_h / 2 + pad,
-            ))
+            rects.append(
+                NodeRect(
+                    x_min=cx - node_w / 2 - pad,
+                    y_min=cy - node_h / 2 - pad,
+                    x_max=cx + node_w / 2 + pad,
+                    y_max=cy + node_h / 2 + pad,
+                )
+            )
     return rects
 
 
 def test_dense_grid_adjacent_column_avoids_s_shape() -> None:
     obstacles = _make_4x3_grid_obstacles()
     coords = manhattan_route(200.0, 119.0, 320.0, 321.0, obstacles=obstacles)
-    _assert_no_segment_crosses_any_rect(coords, _filter_endpoint_obstacles(
-        obstacles, 200.0, 119.0, 320.0, 321.0,
-    ))
+    _assert_no_segment_crosses_any_rect(
+        coords,
+        _filter_endpoint_obstacles(
+            obstacles,
+            200.0,
+            119.0,
+            320.0,
+            321.0,
+        ),
+    )
     optimal = abs(200.0 - 320.0) + abs(119.0 - 321.0)
     actual = _path_total_length(coords)
     assert actual <= optimal * 1.15, (

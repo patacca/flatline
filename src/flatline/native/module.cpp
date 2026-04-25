@@ -1,13 +1,12 @@
 // Native nanobind bridge for flatline.
 // P2-Step-3b: wire per-request decompile pipeline with structured errors.
 
-#include <nanobind/nanobind.h>
-
 #include <libavoid/connectionpin.h>
 #include <libavoid/connector.h>
 #include <libavoid/geomtypes.h>
 #include <libavoid/router.h>
 #include <libavoid/shape.h>
+#include <nanobind/nanobind.h>
 #include <ogdf/basic/Graph.h>
 #include <ogdf/basic/GraphAttributes.h>
 #include <ogdf/basic/basic.h>
@@ -120,7 +119,8 @@ void bind_avoid_router(nb::module_& avoid_mod) {
     nb::enum_<Avoid::RoutingOption>(avoid_mod, "RoutingOption")
         .value("nudgeOrthogonalSegmentsConnectedToShapes",
                Avoid::nudgeOrthogonalSegmentsConnectedToShapes)
-        .value("improveHyperedgeRoutesMovingJunctions", Avoid::improveHyperedgeRoutesMovingJunctions)
+        .value("improveHyperedgeRoutesMovingJunctions",
+               Avoid::improveHyperedgeRoutesMovingJunctions)
         .value("penaliseOrthogonalSharedPathsAtConnEnds",
                Avoid::penaliseOrthogonalSharedPathsAtConnEnds)
         .value("nudgeOrthogonalTouchingColinearSegments",
@@ -162,8 +162,8 @@ void bind_avoid_router(nb::module_& avoid_mod) {
                  return new Avoid::ShapeConnectionPin(&shape, class_id, x_offset, y_offset,
                                                       inside_offset, vis_dirs);
              }),
-             nb::rv_policy::reference, nb::arg("shape"), nb::arg("classId"),
-             nb::arg("xOffset"), nb::arg("yOffset"), nb::arg("insideOffset") = 0.0,
+             nb::rv_policy::reference, nb::arg("shape"), nb::arg("classId"), nb::arg("xOffset"),
+             nb::arg("yOffset"), nb::arg("insideOffset") = 0.0,
              nb::arg("visDirs") = static_cast<Avoid::ConnDirFlags>(Avoid::ConnDirAll))
         .def("setExclusive", &Avoid::ShapeConnectionPin::setExclusive);
 
@@ -189,7 +189,8 @@ NB_MODULE(_flatline_native, m) {
     nb::module_ native_layout = m.def_submodule("_native_layout", "Internal layout bindings");
     nb::module_ ogdf_mod = native_layout.def_submodule("ogdf", "OGDF Sugiyama layout bindings");
     bind_ogdf_layout(ogdf_mod);
-    nb::module_ avoid_mod = native_layout.def_submodule("avoid", "libavoid orthogonal router bindings");
+    nb::module_ avoid_mod =
+        native_layout.def_submodule("avoid", "libavoid orthogonal router bindings");
     bind_avoid_router(avoid_mod);
 
     nb::class_<MemoryLoadImageSkeleton>(m, "MemoryLoadImageSkeleton")
