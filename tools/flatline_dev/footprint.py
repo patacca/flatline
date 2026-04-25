@@ -4,11 +4,16 @@ from __future__ import annotations
 
 import argparse
 import importlib.metadata as importlib_metadata
+import re
+import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
 from flatline.runtime import resolve_session_runtime_data_dir
+
+_HUMAN_SIZE_RE = re.compile(r"^\s*(\d+(?:\.\d+)?)\s*([KMG]?)i?B?\s*$", re.IGNORECASE)
+_HUMAN_SIZE_UNITS = {"": 1, "K": 1024, "M": 1024**2, "G": 1024**3}
 
 _IGNORED_DISTRIBUTION_PARTS = frozenset({"__pycache__"})
 _IGNORED_DISTRIBUTION_SUFFIXES = frozenset({".pyc"})
@@ -190,14 +195,78 @@ def _format_measurement(measurement: FootprintMeasurement) -> str:
     )
 
 
+def _parse_human_size(value: str) -> int:
+    match = _HUMAN_SIZE_RE.match(value)
+    if not match:
+        raise argparse.ArgumentTypeError(
+            f"Invalid size format: {value!r}. Expected forms like 80M, 1G, 512K."
+        )
+    amount = float(match.group(1))
+    unit = match.group(2).upper()
+    multiplier = _HUMAN_SIZE_UNITS.get(unit, 0)
+    if multiplier == 0:
+        raise argparse.ArgumentTypeError(f"Invalid size unit: {unit!r}. Expected K, M, or G.")
+    result = int(amount * multiplier)
+    if result < 0:
+        raise argparse.ArgumentTypeError(f"Size must be non-negative: {value!r}")
+    return result
+
+
+def _format_bytes(size_bytes: int) -> str:
+    for unit in ("B", "KiB", "MiB", "GiB"):
+        if abs(size_bytes) < 1024:
+            return f"{size_bytes:.2f} {unit}"
+        size_bytes /= 1024
+    return f"{size_bytes:.2f} TiB"
+
+
+def _check_wheel_sizes(max_size_bytes: int) -> int:
+    dist_dir = Path("dist")
+    wheels = sorted(dist_dir.glob("*.whl"))
+    if not wheels:
+        print("Warning: no wheels found in dist/; skipping wheel size check.", file=sys.stderr)
+        return 0
+
+    failures = []
+    for wheel in wheels:
+        size = wheel.stat().st_size
+        if size > max_size_bytes:
+            failures.append(
+                f"  {wheel.name}: {_format_bytes(size)} (cap: {_format_bytes(max_size_bytes)})"
+            )
+
+    if failures:
+        print("Wheel size check FAILED:", file=sys.stderr)
+        for line in failures:
+            print(line, file=sys.stderr)
+        return 1
+
+    print(f"All {len(wheels)} wheel(s) within size cap ({_format_bytes(max_size_bytes)}).")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the default-install footprint report as a small CLI."""
     parser = argparse.ArgumentParser(
         prog="python tools/footprint.py",
         description="Measure the default-install payload footprint for flatline.",
     )
-    parser.parse_args(argv)
+    parser.add_argument(
+        "--max-wheel-size",
+        type=_parse_human_size,
+        metavar="SIZE",
+        help=(
+            "Maximum allowed wheel size in bytes (e.g. 80M, 1G, 512K). "
+            "Checks all dist/*.whl files. Exits 0 if no wheels are found."
+        ),
+    )
+    args = parser.parse_args(argv)
+
     print(format_default_install_footprint(measure_default_install_footprint()))
+
+    if args.max_wheel_size is not None:
+        return _check_wheel_sizes(args.max_wheel_size)
+
     return 0
 
 

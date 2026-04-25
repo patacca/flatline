@@ -133,6 +133,9 @@ jobs:
           twine check dist/*
           python tools/artifacts.py dist --repo-root . --require-pypi-metadata
 
+      - name: Check wheel size footprint
+        run: python tools/footprint.py --max-wheel-size 80M
+
       - name: Upload validated distribution artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
