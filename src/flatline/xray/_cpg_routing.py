@@ -28,7 +28,11 @@ if TYPE_CHECKING:
 _CROSSING_PENALTY = 10000
 _SEGMENT_PENALTY = 50
 _FIXED_SHARED_PATH_PENALTY = 110
-_SHAPE_BUFFER_DISTANCE = 8.0
+_SHAPE_BUFFER_DISTANCE = 12.0
+# See _edge_routing._IDEAL_NUDGING_DISTANCE for rationale; mirrored here so
+# overlay edges nudge with the same spacing as main graph edges and avoid
+# bend points landing on top of arrow heads.
+_IDEAL_NUDGING_DISTANCE = 8.0
 
 # Pin class identifiers.  libavoid requires distinct integer classes per pin
 # attached to a shape; values are arbitrary as long as they are unique within
@@ -97,6 +101,9 @@ def _configure_router(avoid):
         float(_FIXED_SHARED_PATH_PENALTY),
     )
     router.setRoutingParameter(avoid.RoutingParameter.shapeBufferDistance, _SHAPE_BUFFER_DISTANCE)
+    router.setRoutingParameter(
+        avoid.RoutingParameter.idealNudgingDistance, _IDEAL_NUDGING_DISTANCE
+    )
     router.setRoutingOption(avoid.RoutingOption.nudgeOrthogonalSegmentsConnectedToShapes, True)
     return router
 

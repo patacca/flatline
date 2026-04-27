@@ -15,8 +15,15 @@ if TYPE_CHECKING:
 _CROSSING_PENALTY = 10000
 _SEGMENT_PENALTY = 50
 _FIXED_SHARED_PATH_PENALTY = 110
-_SHAPE_BUFFER_DISTANCE = 8.0
+_SHAPE_BUFFER_DISTANCE = 12.0
 _SELF_LOOP_OFFSET = 40.0
+# libavoid's default idealNudgingDistance is 4 px, which is too tight: it
+# allows the final orthogonal segment before an arrow tip to collapse to a
+# few pixels, leaving a bend point visually glued to the arrow head. Doubling
+# it (libavoid's own tests use 25) widens the spacing between parallel
+# segments and pushes the last bend further from the target shape, so the
+# stub before the arrowhead stays long enough to read cleanly.
+_IDEAL_NUDGING_DISTANCE = 8.0
 
 
 def _load_avoid():
@@ -54,6 +61,9 @@ def _configure_router(avoid: object) -> object:
         float(_FIXED_SHARED_PATH_PENALTY),
     )
     router.setRoutingParameter(avoid.RoutingParameter.shapeBufferDistance, _SHAPE_BUFFER_DISTANCE)
+    router.setRoutingParameter(
+        avoid.RoutingParameter.idealNudgingDistance, _IDEAL_NUDGING_DISTANCE
+    )
     router.setRoutingOption(avoid.RoutingOption.nudgeOrthogonalSegmentsConnectedToShapes, True)
     return router
 
