@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 _CROSSING_PENALTY = 1000
 _SEGMENT_PENALTY = 50
 _FIXED_SHARED_PATH_PENALTY = 110
-_SHAPE_BUFFER_DISTANCE = 12.0
+_SHAPE_BUFFER_DISTANCE = 16.0
 # See _edge_routing for rationale; same value keeps overlay direction
 # constraints (top -> ConnDirDown) consistent with main graph routing.
 _PORT_DIRECTION_PENALTY = 200.0

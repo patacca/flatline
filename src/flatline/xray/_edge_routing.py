@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 _CROSSING_PENALTY = 1000
 _SEGMENT_PENALTY = 50
 _FIXED_SHARED_PATH_PENALTY = 110
-_SHAPE_BUFFER_DISTANCE = 12.0
+_SHAPE_BUFFER_DISTANCE = 16.0
 _SELF_LOOP_OFFSET = 40.0
 # Strong penalty (per libavoid docs the value is added to a route that
 # violates a pin's visDirs) makes top-target / bottom-source pins behave as
