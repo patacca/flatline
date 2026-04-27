@@ -6,52 +6,11 @@ from dataclasses import replace
 
 import pytest
 
-from tests._native_fixtures import get_native_runtime_data_dir
-
-from ._xray_support import fixture_target, make_sample_pcode
+from ._xray_support import make_sample_pcode
 
 pytestmark = pytest.mark.unit
 
-flatline = importlib.import_module("flatline")
 _layout = importlib.import_module("flatline.xray._layout")
-build_decompile_request = importlib.import_module("flatline.xray._inputs").build_decompile_request
-decompile_function = flatline.decompile_function
-
-
-def test_layout_orders_and_positions_fixture_pcode() -> None:
-    pcode = make_sample_pcode()
-    op_by_id = {op.id: op for op in pcode.pcode_ops}
-    varnode_by_id = {varnode.id: varnode for varnode in pcode.varnodes}
-    shuffled = [pcode.pcode_ops[1], pcode.pcode_ops[0]]
-
-    ordered = _layout.sorted_ops(shuffled)
-    assert [op.id for op in ordered] == [0, 1]
-    assert [op.id for op in _layout.sink_ops(ordered, varnode_by_id)] == [1]
-
-    roots, cross_edges = _layout.build_visual_forest(
-        op_by_id,
-        varnode_by_id,
-        ordered,
-    )
-    assert cross_edges == []
-    assert [root.actual for root in roots] == [("op", 1)]
-
-    const_node = _layout.VisualNode(key="const", actual=("varnode", 3), depth=0)
-    assert _layout.node_size(const_node, op_by_id, varnode_by_id) == (74.0, 68.0)
-    assert _layout.node_pad(const_node, op_by_id, varnode_by_id) == 34.0
-
-    max_depth = _layout.measure_forest(
-        roots,
-        lambda node: _layout.node_size(node, op_by_id, varnode_by_id),
-    )
-    width, height = _layout.compute_canvas_size(roots, max_depth)
-    _layout.assign_forest_positions(roots, height)
-
-    assert max_depth == 3
-    assert width >= 1400
-    assert height >= 940
-    assert roots[0].x > 0
-    assert roots[0].children[0].y < roots[0].y
 
 
 def test_short_opcode_label_fits_computed_node_width() -> None:
@@ -126,37 +85,3 @@ def test_canvas_draw_helpers_use_layout_label_contract() -> None:
     assert "node_label_lines(" in varnode_source
     assert '"\\n".join(label_lines)' in varnode_source
     assert "_varnode_badge" not in varnode_source
-
-
-def test_dense_switch_graph_stays_within_canvas_bounds() -> None:
-    request = build_decompile_request(
-        fixture_target("fx_switch_elf64.hex"),
-        runtime_data_dir=get_native_runtime_data_dir(),
-        enriched=True,
-    )
-    result = decompile_function(request)
-
-    assert result.error is None
-    assert result.enriched is not None
-
-    pcode = result.enriched.pcode
-    op_by_id = {op.id: op for op in pcode.pcode_ops}
-    varnode_by_id = {varnode.id: varnode for varnode in pcode.varnodes}
-    ordered = _layout.sorted_ops(pcode.pcode_ops)
-    roots, _ = _layout.build_visual_forest(op_by_id, varnode_by_id, ordered)
-    max_depth = _layout.measure_forest(
-        roots,
-        lambda node: _layout.node_size(node, op_by_id, varnode_by_id),
-    )
-    width, height = _layout.compute_canvas_size(roots, max_depth)
-    _layout.assign_forest_positions(roots, height)
-
-    assert len(pcode.pcode_ops) == 7
-    assert len(pcode.varnodes) == 12
-    assert max_depth == 9
-    assert width <= 4000
-    assert height <= 6000
-    for node in _layout.collect_visual_nodes(roots):
-        node_width, node_height = _layout.node_size(node, op_by_id, varnode_by_id)
-        assert node_width / 2.0 <= node.x <= width - node_width / 2.0
-        assert node_height / 2.0 <= node.y <= height - node_height / 2.0

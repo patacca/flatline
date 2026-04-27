@@ -45,9 +45,8 @@ def _make_window(monkeypatch: pytest.MonkeyPatch):
     graph_window = import_graph_window(monkeypatch)
     layout = importlib.import_module("flatline.xray._layout")
     XrayWindow = graph_window.XrayWindow
-    build_visual_forest = layout.build_visual_forest
-    collect_visual_nodes = layout.collect_visual_nodes
     sorted_ops = layout.sorted_ops
+    VisualNode = layout.VisualNode
 
     result = make_sample_result()
     pcode = result.enriched.pcode if result.enriched is not None else None
@@ -55,8 +54,16 @@ def _make_window(monkeypatch: pytest.MonkeyPatch):
     op_by_id = {op.id: op for op in pcode.pcode_ops}
     varnode_by_id = {varnode.id: varnode for varnode in pcode.varnodes}
     ordered_ops = sorted_ops(pcode.pcode_ops)
-    visual_roots, _cross_edges = build_visual_forest(op_by_id, varnode_by_id, ordered_ops)
-    visual_nodes = collect_visual_nodes(visual_roots)
+    # Mirror the production _build_visual_nodes path with flat VisualNodes so
+    # selection tests work without requiring the OGDF native bridge.
+    visual_nodes: list = []
+    for op in pcode.pcode_ops:
+        node_id = ("op", op.id)
+        visual_nodes.append(VisualNode(key=repr(node_id), actual=node_id, depth=0))
+    for varnode in pcode.varnodes:
+        node_id = ("varnode", varnode.id)
+        visual_nodes.append(VisualNode(key=repr(node_id), actual=node_id, depth=0))
+    visual_roots = visual_nodes
 
     window = object.__new__(XrayWindow)
     window.window_title = "Sample Xray"
@@ -259,42 +266,6 @@ def test_selection_selected_and_related_states_are_visually_distinct(
         "outline": "#93a7c1",
         "width": 1,
     }
-
-
-def test_layout_integration_positions_nodes_within_canvas_bounds(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    window, XrayWindow = _make_window(monkeypatch)
-    layout = importlib.import_module("flatline.xray._layout")
-
-    max_depth = layout.measure_forest(
-        window.visual_roots,
-        lambda node: layout.node_size(node, window.op_by_id, window.varnode_by_id),
-        child_gap=XrayWindow._child_gap,
-    )
-    width, height = layout.compute_canvas_size(
-        window.visual_roots,
-        max_depth,
-        root_gap=XrayWindow._root_gap,
-        top_margin=XrayWindow._top_margin,
-        bottom_margin=XrayWindow._bottom_margin,
-        side_margin=XrayWindow._side_margin,
-        level_gap=XrayWindow._level_gap,
-    )
-    layout.assign_forest_positions(
-        window.visual_roots,
-        height,
-        side_margin=XrayWindow._side_margin,
-        bottom_margin=XrayWindow._bottom_margin,
-        root_gap=XrayWindow._root_gap,
-        child_gap=XrayWindow._child_gap,
-        level_gap=XrayWindow._level_gap,
-    )
-
-    for node in window.visual_nodes:
-        node_width, node_height = layout.node_size(node, window.op_by_id, window.varnode_by_id)
-        assert node_width / 2.0 <= node.x <= width - node_width / 2.0
-        assert node_height / 2.0 <= node.y <= height - node_height / 2.0
 
 
 def test_graph_window_and_canvas_do_not_bypass_layout_node_size_contract(
