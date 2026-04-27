@@ -5,9 +5,58 @@ import math
 import networkx as nx
 import pytest
 
-from flatline.xray._layout import LayoutResult, Position, compute_layout
+from flatline.models.enums import VarnodeSpace
+from flatline.models.pcode_ops.branch import Cbranch
+from flatline.models.types import PcodeOpInfo, VarnodeFlags
+from flatline.models.varnodes import IopVarnode, RegisterVarnode
+from flatline.xray._layout import (
+    LayoutResult,
+    Position,
+    _overlay_graph_edges,
+    compute_layout,
+)
 
 pytestmark = pytest.mark.unit
+
+
+def _flags() -> VarnodeFlags:
+    return VarnodeFlags(
+        is_constant=False,
+        is_input=False,
+        is_free=False,
+        is_implied=False,
+        is_explicit=True,
+        is_read_only=False,
+        is_persist=False,
+        is_addr_tied=False,
+    )
+
+
+def _op(op_id: int, opcode: str, address: int, **kwargs) -> PcodeOpInfo:
+    return PcodeOpInfo(
+        id=op_id,
+        opcode=opcode,
+        instruction_address=address,
+        sequence_time=0,
+        sequence_order=op_id,
+        input_varnode_ids=[],
+        output_varnode_id=None,
+        **kwargs,
+    )
+
+
+def _cbranch(op_id: int, address: int, true_addr: int, false_addr: int) -> Cbranch:
+    return Cbranch(
+        id=op_id,
+        opcode="CBRANCH",
+        instruction_address=address,
+        sequence_time=0,
+        sequence_order=op_id,
+        input_varnode_ids=[],
+        output_varnode_id=None,
+        true_target_address=true_addr,
+        false_target_address=false_addr,
+    )
 
 
 def _assert_valid_position(position: Position) -> None:
@@ -77,3 +126,109 @@ def test_layout_is_deterministic_for_same_graph() -> None:
     results = [compute_layout(graph) for _ in range(3)]
 
     assert results[0] == results[1] == results[2]
+
+
+def test_overlay_edges_empty_when_graph_has_no_payloads() -> None:
+    graph = nx.MultiDiGraph()
+    graph.add_edges_from([("a", "b"), ("b", "c")])
+
+    assert _overlay_graph_edges(graph) == []
+
+
+def test_overlay_edges_emits_cbranch_true_and_false_targets() -> None:
+    target_true = _op(10, "COPY", 0x100)
+    target_false = _op(11, "COPY", 0x200)
+    cbranch = _cbranch(1, address=0x10, true_addr=0x100, false_addr=0x200)
+
+    graph = nx.MultiDiGraph()
+    graph.add_node(("op", cbranch.id), kind="pcode_op", op=cbranch)
+    graph.add_node(("op", target_true.id), kind="pcode_op", op=target_true)
+    graph.add_node(("op", target_false.id), kind="pcode_op", op=target_false)
+
+    edges = _overlay_graph_edges(graph)
+
+    assert (("op", 1), ("op", 10)) in edges
+    assert (("op", 1), ("op", 11)) in edges
+    assert len(edges) == 2
+
+
+def test_overlay_edges_skip_cbranch_target_missing_from_graph() -> None:
+    cbranch = _cbranch(1, address=0x10, true_addr=0x100, false_addr=0x200)
+
+    graph = nx.MultiDiGraph()
+    graph.add_node(("op", cbranch.id), kind="pcode_op", op=cbranch)
+
+    assert _overlay_graph_edges(graph) == []
+
+
+def test_overlay_edges_emit_iop_target_edge() -> None:
+    target_op = _op(20, "COPY", 0x300)
+    iop_vn = IopVarnode(
+        id=5,
+        space=VarnodeSpace.IOP,
+        offset=0,
+        size=4,
+        flags=_flags(),
+        defining_op_id=None,
+        use_op_ids=[],
+        target_op_id=target_op.id,
+    )
+
+    graph = nx.MultiDiGraph()
+    graph.add_node(("op", target_op.id), kind="pcode_op", op=target_op)
+    graph.add_node(("varnode", iop_vn.id), kind="varnode", varnode=iop_vn)
+
+    edges = _overlay_graph_edges(graph)
+
+    assert edges == [(("varnode", 5), ("op", 20))]
+
+
+def test_overlay_edges_skip_iop_when_target_missing() -> None:
+    iop_vn = IopVarnode(
+        id=5,
+        space=VarnodeSpace.IOP,
+        offset=0,
+        size=4,
+        flags=_flags(),
+        defining_op_id=None,
+        use_op_ids=[],
+        target_op_id=999,
+    )
+    graph = nx.MultiDiGraph()
+    graph.add_node(("varnode", iop_vn.id), kind="varnode", varnode=iop_vn)
+
+    assert _overlay_graph_edges(graph) == []
+
+
+def test_overlay_edges_ignore_non_iop_varnodes() -> None:
+    reg_vn = RegisterVarnode(
+        id=7,
+        space=VarnodeSpace.REGISTER,
+        offset=0,
+        size=4,
+        flags=_flags(),
+        defining_op_id=None,
+        use_op_ids=[],
+    )
+    graph = nx.MultiDiGraph()
+    graph.add_node(("varnode", reg_vn.id), kind="varnode", varnode=reg_vn)
+
+    assert _overlay_graph_edges(graph) == []
+
+
+def test_overlay_edges_are_sorted_and_deduplicated() -> None:
+    target_op = _op(2, "COPY", 0x100)
+    target_dup = _op(3, "COPY", 0x100)
+    cbranch = _cbranch(1, address=0x10, true_addr=0x100, false_addr=0x100)
+
+    graph = nx.MultiDiGraph()
+    graph.add_node(("op", cbranch.id), kind="pcode_op", op=cbranch)
+    graph.add_node(("op", target_op.id), kind="pcode_op", op=target_op)
+    graph.add_node(("op", target_dup.id), kind="pcode_op", op=target_dup)
+
+    edges = _overlay_graph_edges(graph)
+
+    assert edges == sorted(set(edges), key=lambda e: (repr(e[0]), repr(e[1])))
+    assert (("op", 1), ("op", 2)) in edges
+    assert (("op", 1), ("op", 3)) in edges
+    assert len(edges) == 2

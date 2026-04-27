@@ -188,6 +188,16 @@ def compute_layout(pcode_graph: nx.MultiDiGraph) -> LayoutResult:
     for source, target in _stable_graph_edges(pcode_graph):
         if source != target:
             graph.newEdge(ogdf_nodes[source], ogdf_nodes[target])
+    # Overlay edges (cbranch control-flow + IOP internal-op refs) also feed
+    # Sugiyama so the layout reserves vertical space and aligns layers for
+    # these connectors. Fspec edges are skipped: their targets are external
+    # addresses with no node in pcode_graph.
+    for source, target in _overlay_graph_edges(pcode_graph):
+        if source == target:
+            continue
+        if source not in ogdf_nodes or target not in ogdf_nodes:
+            continue
+        graph.newEdge(ogdf_nodes[source], ogdf_nodes[target])
 
     attributes = ogdf.GraphAttributes(graph, ogdf.nodeGraphics | ogdf.edgeGraphics)
     for node_id, native_node in ogdf_nodes.items():
@@ -237,6 +247,46 @@ def _stable_graph_nodes(pcode_graph: nx.MultiDiGraph) -> list[object]:
 def _stable_graph_edges(pcode_graph: nx.MultiDiGraph) -> list[tuple[object, object]]:
     return sorted(
         pcode_graph.edges(),
+        key=lambda edge: (_node_id_string(edge[0]), _node_id_string(edge[1])),
+    )
+
+
+def _overlay_graph_edges(pcode_graph: nx.MultiDiGraph) -> list[tuple[object, object]]:
+    from flatline.models.pcode_ops.branch import Cbranch
+    from flatline.models.varnodes import IopVarnode
+
+    op_by_id: dict[int, PcodeOpInfo] = {}
+    address_to_op_ids: dict[int, list[int]] = {}
+    iop_varnodes: list[VarnodeInfo] = []
+    for _node_id, data in pcode_graph.nodes(data=True):
+        op = data.get("op")
+        if op is not None:
+            op_by_id[op.id] = op
+            address_to_op_ids.setdefault(op.instruction_address, []).append(op.id)
+            continue
+        varnode = data.get("varnode")
+        if isinstance(varnode, IopVarnode) and varnode.target_op_id is not None:
+            iop_varnodes.append(varnode)
+
+    edges: set[tuple[object, object]] = set()
+    for op in op_by_id.values():
+        if not isinstance(op, Cbranch):
+            continue
+        source = ("op", op.id)
+        for target_address in (op.true_target_address, op.false_target_address):
+            if target_address is None:
+                continue
+            for target_op_id in address_to_op_ids.get(target_address, ()):
+                edges.add((source, ("op", target_op_id)))
+
+    for varnode in iop_varnodes:
+        target_op_id = varnode.target_op_id
+        if target_op_id is None or target_op_id not in op_by_id:
+            continue
+        edges.add((("varnode", varnode.id), ("op", target_op_id)))
+
+    return sorted(
+        edges,
         key=lambda edge: (_node_id_string(edge[0]), _node_id_string(edge[1])),
     )
 
