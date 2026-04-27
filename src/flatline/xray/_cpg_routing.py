@@ -29,6 +29,9 @@ _CROSSING_PENALTY = 10000
 _SEGMENT_PENALTY = 50
 _FIXED_SHARED_PATH_PENALTY = 110
 _SHAPE_BUFFER_DISTANCE = 12.0
+# See _edge_routing for rationale; same value keeps overlay direction
+# constraints (top -> ConnDirDown) consistent with main graph routing.
+_PORT_DIRECTION_PENALTY = 200.0
 # See _edge_routing._IDEAL_NUDGING_DISTANCE for rationale; mirrored here so
 # overlay edges nudge with the same spacing as main graph edges and avoid
 # bend points landing on top of arrow heads.
@@ -102,10 +105,29 @@ def _configure_router(avoid):
     )
     router.setRoutingParameter(avoid.RoutingParameter.shapeBufferDistance, _SHAPE_BUFFER_DISTANCE)
     router.setRoutingParameter(
+        avoid.RoutingParameter.portDirectionPenalty, _PORT_DIRECTION_PENALTY
+    )
+    router.setRoutingParameter(
         avoid.RoutingParameter.idealNudgingDistance, _IDEAL_NUDGING_DISTANCE
     )
     router.setRoutingOption(avoid.RoutingOption.nudgeOrthogonalSegmentsConnectedToShapes, True)
     return router
+
+
+def _side_vis_dir(avoid, side: str):
+    # ConnDirFlag is the OUTWARD perpendicular of the pin's side (the
+    # direction the connector leaves the shape). Top -> Up, bottom -> Down,
+    # left -> Left, right -> Right. Inverting any of these makes libavoid
+    # route around the shape to satisfy portDirectionPenalty.
+    if side == "top":
+        return avoid.ConnDirFlag.ConnDirUp
+    if side == "bottom":
+        return avoid.ConnDirFlag.ConnDirDown
+    if side == "left":
+        return avoid.ConnDirFlag.ConnDirLeft
+    if side == "right":
+        return avoid.ConnDirFlag.ConnDirRight
+    raise InternalError(f"invalid overlay edge side: {side!r}")
 
 
 def _side_pin_props(side: str, slot_index: int, slot_count: int) -> tuple[float, float]:
@@ -201,6 +223,8 @@ def route_overlay_edges(
             _target_pin_class(side),
             x_prop,
             y_prop,
+            0.0,
+            _side_vis_dir(avoid, side),
         )
         pin.setExclusive(False)
 
@@ -234,6 +258,7 @@ def route_overlay_edges(
             x_prop,
             y_prop,
             inside_offset,
+            _side_vis_dir(avoid, edge.source_side),
         )
         source_pin.setExclusive(False)
 

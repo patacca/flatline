@@ -17,6 +17,10 @@ _SEGMENT_PENALTY = 50
 _FIXED_SHARED_PATH_PENALTY = 110
 _SHAPE_BUFFER_DISTANCE = 12.0
 _SELF_LOOP_OFFSET = 40.0
+# Strong penalty (per libavoid docs the value is added to a route that
+# violates a pin's visDirs) makes top-target / bottom-source pins behave as
+# hard direction constraints in practice.
+_PORT_DIRECTION_PENALTY = 200.0
 # libavoid's default idealNudgingDistance is 4 px, which is too tight: it
 # allows the final orthogonal segment before an arrow tip to collapse to a
 # few pixels, leaving a bend point visually glued to the arrow head. Doubling
@@ -62,6 +66,9 @@ def _configure_router(avoid: object) -> object:
     )
     router.setRoutingParameter(avoid.RoutingParameter.shapeBufferDistance, _SHAPE_BUFFER_DISTANCE)
     router.setRoutingParameter(
+        avoid.RoutingParameter.portDirectionPenalty, _PORT_DIRECTION_PENALTY
+    )
+    router.setRoutingParameter(
         avoid.RoutingParameter.idealNudgingDistance, _IDEAL_NUDGING_DISTANCE
     )
     router.setRoutingOption(avoid.RoutingOption.nudgeOrthogonalSegmentsConnectedToShapes, True)
@@ -99,12 +106,21 @@ def route_edges(
 
     for node_id in pcode_graph.nodes:
         shape = shapes[_node_id_string(node_id)]
-        target_pin = avoid.ShapeConnectionPin(shape, 100, 0.5, 0.0)
+        # ConnDirFlag is the OUTWARD perpendicular of the pin's side, i.e.
+        # the direction the connector leaves the shape. Top pin -> Up,
+        # bottom pin -> Down. Inverting these makes libavoid route around
+        # the shape to satisfy portDirectionPenalty and edges land on the
+        # wrong side.
+        target_pin = avoid.ShapeConnectionPin(
+            shape, 100, 0.5, 0.0, 0.0, avoid.ConnDirFlag.ConnDirUp
+        )
         target_pin.setExclusive(False)
         out_count = max(1, pcode_graph.out_degree(node_id))
         for index in range(out_count):
             prop_x = (index + 1) / (out_count + 1)
-            source_pin = avoid.ShapeConnectionPin(shape, index + 1, prop_x, 1.0)
+            source_pin = avoid.ShapeConnectionPin(
+                shape, index + 1, prop_x, 1.0, 0.0, avoid.ConnDirFlag.ConnDirDown
+            )
             source_pin.setExclusive(False)
 
     source_pin_classes = _source_pin_classes(pcode_graph)
