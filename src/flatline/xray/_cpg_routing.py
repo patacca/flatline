@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 # Routing penalties.  Mirrors the values used by ``_edge_routing.route_edges``
 # so overlay edges are nudged consistently with the main graph edges.
-_CROSSING_PENALTY = 10000
+_CROSSING_PENALTY = 1000
 _SEGMENT_PENALTY = 50
 _FIXED_SHARED_PATH_PENALTY = 110
 _SHAPE_BUFFER_DISTANCE = 12.0

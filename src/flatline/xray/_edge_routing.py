@@ -12,7 +12,7 @@ from flatline.xray._layout import LayoutResult
 if TYPE_CHECKING:
     import networkx as nx
 
-_CROSSING_PENALTY = 10000
+_CROSSING_PENALTY = 1000
 _SEGMENT_PENALTY = 50
 _FIXED_SHARED_PATH_PENALTY = 110
 _SHAPE_BUFFER_DISTANCE = 12.0
