@@ -172,9 +172,9 @@ void bind_avoid_router(nb::module_& avoid_mod) {
     nb::class_<Avoid::ShapeConnectionPin>(avoid_mod, "ShapeConnectionPin", nb::never_destruct())
         .def(nb::new_([](Avoid::ShapeRef& shape, unsigned int class_id, double x_offset,
                          double y_offset, double inside_offset, Avoid::ConnDirFlag vis_dirs) {
-                 return new Avoid::ShapeConnectionPin(
-                     &shape, class_id, x_offset, y_offset, inside_offset,
-                     static_cast<Avoid::ConnDirFlags>(vis_dirs));
+                 return new Avoid::ShapeConnectionPin(&shape, class_id, x_offset, y_offset,
+                                                      inside_offset,
+                                                      static_cast<Avoid::ConnDirFlags>(vis_dirs));
              }),
              nb::rv_policy::reference, nb::arg("shape"), nb::arg("classId"), nb::arg("xOffset"),
              nb::arg("yOffset"), nb::arg("insideOffset") = 0.0,
