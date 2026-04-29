@@ -21,8 +21,8 @@ if TYPE_CHECKING:
     from ..models.types import FunctionInfo
 
 from . import _theme
+from ._arrowhead_scale import _clamp_arrowshape
 from ._canvas import (
-    draw_depth_bands,
     draw_nodes,
     draw_routed_edges,
     hide_all_glows,
@@ -72,8 +72,11 @@ class XrayWindow(tk.Tk):
 
     _INITIAL_ZOOM = 1.0
 
-    _ARROW_LARGE = (12, 14, 6)
-    _ARROW_SMALL = (10, 12, 5)
+    _ARROWSHAPE_MIN: ClassVar[tuple[float, float, float]] = (5.0, 6.0, 2.0)
+    _ARROWSHAPE_MAX: ClassVar[tuple[float, float, float]] = (19.0, 22.0, 10.0)
+
+    _ARROW_LARGE = (10, 11, 5)
+    _ARROW_SMALL = (8, 10, 4)
     _ARROW_SHAPES: ClassVar[dict[str, tuple[int, int, int]]] = {
         "tree_edge": _ARROW_LARGE,
         "cbranch_edge": _ARROW_LARGE,
@@ -236,17 +239,10 @@ class XrayWindow(tk.Tk):
             stretch="never",
         )
         self._zoom = self._INITIAL_ZOOM
-        draw_depth_bands(
-            self.canvas,
-            self.max_depth,
-            self.virtual_width,
-            self.virtual_height,
-            self._bottom_margin,
-            self._level_gap,
-        )
         draw_routed_edges(
             self.canvas,
             route_edges(self.layout, self.pcode_graph),
+            self.layout,
         )
         for root in self.visual_roots:
             draw_nodes(self.canvas, root, self.op_by_id, self.varnode_by_id, self._show_node)
@@ -592,9 +588,10 @@ class XrayWindow(tk.Tk):
         self.canvas.yview_moveto(0.0)
 
     def _rescale_arrowheads(self, zoom: float) -> None:
+        """Rescale arrowheads for all edge tags; clamps to readable MIN/MAX range."""
         for tag, base in self._ARROW_SHAPES.items():
-            scaled = tuple(v * zoom for v in base)
-            self.canvas.itemconfigure(tag, arrowshape=scaled)
+            clamped = _clamp_arrowshape(base, zoom, self._ARROWSHAPE_MIN, self._ARROWSHAPE_MAX)
+            self.canvas.itemconfigure(tag, arrowshape=clamped)
 
 
 __all__ = ["XrayWindow"]

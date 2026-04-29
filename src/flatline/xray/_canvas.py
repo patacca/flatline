@@ -11,11 +11,13 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from . import _theme
+from ._edge_anchoring import anchor_polyline_endpoints
 from ._inputs import (
     _opcode_color,
     _varnode_color,
 )
 from ._layout import (
+    LayoutResult,
     VisualNode,
     node_label_lines,
     node_size,
@@ -28,65 +30,43 @@ if TYPE_CHECKING:
 
 
 # ---------------------------------------------------------------------------
-# Depth bands
-# ---------------------------------------------------------------------------
-
-
-def draw_depth_bands(
-    canvas: tk.Canvas,
-    max_depth: int,
-    virtual_width: float,
-    virtual_height: float,
-    bottom_margin: float,
-    level_gap: float,
-) -> None:
-    """Draw alternating background bands for op-rows and value-rows."""
-    for depth in range(max_depth + 1):
-        y = virtual_height - bottom_margin - depth * level_gap
-        is_op_row = depth % 2 == 0
-        fill = _theme.DEPTH_BAND_OP_FILL if is_op_row else _theme.DEPTH_BAND_INPUT_FILL
-        outline = _theme.DEPTH_BAND_OP_OUTLINE if is_op_row else _theme.DEPTH_BAND_INPUT_OUTLINE
-        label = "Ops" if is_op_row else "Inputs / values"
-        canvas.create_rectangle(
-            40,
-            y - 56,
-            virtual_width - 40,
-            y + 56,
-            fill=fill,
-            outline=outline,
-            width=1,
-        )
-        canvas.create_text(
-            62,
-            y - 40,
-            text=f"{label} row {depth}",
-            anchor="w",
-            fill=_theme.TEXT_MUTED,
-            font=_theme.BAND_FONT,
-        )
-
-
-# ---------------------------------------------------------------------------
 # Edges
 # ---------------------------------------------------------------------------
+
+
+def _node_id_string(node_id: object) -> str:
+    """Layout key for a pcode-graph node id (mirrors _edge_routing helper)."""
+    return repr(node_id)
 
 
 def draw_routed_edges(
     canvas: tk.Canvas,
     routes: dict[tuple[object, object, object], list[tuple[float, float]]],
+    layout: LayoutResult,
 ) -> None:
-    """Draw libavoid-routed graph edges from polyline points."""
+    """Draw libavoid-routed graph edges from polyline points.
+
+    Endpoints are post-processed so the source always sits on the bottom of
+    its node and the destination always sits on the top of its node, with a
+    persistent arrowhead pointing at the destination. Self-loops keep the
+    custom detour produced by the router.
+    """
     import tkinter as tk
 
     for source, target, _edge_key in sorted(routes, key=repr):
         polyline = routes[(source, target, _edge_key)]
+        if source != target:
+            src_pos = layout.nodes.get(_node_id_string(source))
+            tgt_pos = layout.nodes.get(_node_id_string(target))
+            if src_pos is not None and tgt_pos is not None:
+                polyline = anchor_polyline_endpoints(polyline, src_pos, tgt_pos, axis="vertical")
         coords = [coord for point in polyline for coord in point]
         canvas.create_line(
             *coords,
             fill=_theme.EDGE_INACTIVE_COLOR,
             width=_theme.EDGE_INACTIVE_WIDTH,
             arrow=tk.LAST,
-            arrowshape=(12, 14, 6),
+            arrowshape=(10, 11, 5),
             tags=("tree_edge", "arrow_edge"),
         )
 

@@ -20,7 +20,8 @@ from flatline.xray._cpg_routing import (
     route_overlay_edges,
     visual_node_shape,
 )
-from flatline.xray._layout import node_size
+from flatline.xray._edge_anchoring import anchor_polyline_endpoints
+from flatline.xray._layout import Position, node_size
 from flatline.xray._theme import (
     BODY_FONT,
     CANVAS_BG,
@@ -37,6 +38,16 @@ from flatline.xray._theme import (
 # Minimum horizontal stub (pixels) added to IOP edge anchors so that the
 # horizontal departure segment is always visible.
 _IOP_STUB_PX = 15.0
+
+
+def _visual_node_position(
+    node: VisualNode,
+    op_by_id: Mapping,
+    varnode_by_id: Mapping,
+) -> Position:
+    w, h = node_size(node, op_by_id, varnode_by_id)
+    return Position(x=node.x, y=node.y, w=w, h=h)
+
 
 if TYPE_CHECKING:
     from flatline.models import PcodeOpInfo
@@ -260,6 +271,10 @@ def draw_cbranch_edges(
     routes = route_overlay_edges(overlay_edges, shapes)
 
     for polyline, (_source, _target, branch_type) in zip(routes, cbranch_edges, strict=True):
+        if _source.key != _target.key:
+            src_pos = _visual_node_position(_source, op_by_id, varnode_by_id)
+            tgt_pos = _visual_node_position(_target, op_by_id, varnode_by_id)
+            polyline = anchor_polyline_endpoints(polyline, src_pos, tgt_pos, axis="vertical")
         color = CBRANCH_TRUE_COLOR if branch_type == "true" else CBRANCH_FALSE_COLOR
         coords = [coord for point in polyline for coord in point]
         canvas.create_line(
@@ -267,7 +282,7 @@ def draw_cbranch_edges(
             fill=color,
             width=1.8,
             arrow=tk.LAST,
-            arrowshape=(12, 14, 6),
+            arrowshape=(10, 11, 5),
             tags=("cbranch_edge", "arrow_edge"),
         )
 
@@ -308,7 +323,11 @@ def draw_iop_edges(
     shapes = _build_overlay_shapes(visual_nodes, op_by_id, varnode_by_id)
     routes = route_overlay_edges(overlay_edges, shapes)
 
-    for polyline in routes:
+    for polyline, (source, target) in zip(routes, iop_edges, strict=True):
+        if source.key != target.key:
+            src_pos = _visual_node_position(source, op_by_id, varnode_by_id)
+            tgt_pos = _visual_node_position(target, op_by_id, varnode_by_id)
+            polyline = anchor_polyline_endpoints(polyline, src_pos, tgt_pos, axis="horizontal")
         coords = [coord for point in polyline for coord in point]
         canvas.create_line(
             *coords,
@@ -316,7 +335,7 @@ def draw_iop_edges(
             width=1.4,
             dash=IOP_EDGE_DASH,
             arrow=tk.LAST,
-            arrowshape=(10, 12, 5),
+            arrowshape=(8, 10, 4),
             tags=("iop_edge", "arrow_edge"),
         )
 
@@ -370,7 +389,7 @@ def draw_fspec_edges(
 
     routes = route_overlay_edges(overlay_edges, shapes)
 
-    for polyline, (_source, label), virtual_key, (vx, vy) in zip(
+    for polyline, (source, label), virtual_key, (vx, vy) in zip(
         routes, fspec_edges, virtual_keys, virtual_positions, strict=True
     ):
         canvas.create_rectangle(
@@ -390,6 +409,10 @@ def draw_fspec_edges(
             font=("Courier", 8),
             tags=(virtual_key, "fspec_virtual_node"),
         )
+        if source.key != virtual_key:
+            src_pos = _visual_node_position(source, op_by_id, varnode_by_id)
+            tgt_pos = Position(x=vx, y=vy, w=float(vw * 2), h=float(vh * 2))
+            polyline = anchor_polyline_endpoints(polyline, src_pos, tgt_pos, axis="horizontal")
         coords = [coord for point in polyline for coord in point]
         canvas.create_line(
             *coords,
@@ -397,7 +420,7 @@ def draw_fspec_edges(
             width=1.4,
             dash=(4, 3),
             arrow=tk.LAST,
-            arrowshape=(10, 12, 5),
+            arrowshape=(8, 10, 4),
             tags=("fspec_edge", "arrow_edge"),
         )
 

@@ -47,11 +47,6 @@ SELECTION_GLOW_PAD = 8.0
 RELATED_GLOW = "#ff6eb8"
 RELATED_GLOW_PAD = 6.0
 
-DEPTH_BAND_OP_FILL = "#122235"
-DEPTH_BAND_INPUT_FILL = "#0d2030"
-DEPTH_BAND_OP_OUTLINE = "#1a3551"
-DEPTH_BAND_INPUT_OUTLINE = "#102739"
-# Muted label color for depth band row labels -- less prominent than active text.
 DEPTH_BAND_COLOR = "#0f1f30"
 
 # Inactive (unselected, unrelated) edge visual tokens.
@@ -72,7 +67,6 @@ PANEL_TITLE_FONT = ("Helvetica", 14, "bold")
 BODY_FONT = ("Courier", 10)
 NODE_FONT = ("Helvetica", 10, "bold")
 VARNODE_FONT = ("Helvetica", 9, "bold")
-BAND_FONT = ("Helvetica", 10, "bold")
 
 OPCODE_COLORS = {
     STATE_NORMAL: NODE_OPCODE_DEFAULT,
@@ -117,17 +111,12 @@ def varnode_color_for(varnode) -> str:
 
 __all__ = [
     "BACKGROUND",
-    "BAND_FONT",
     "BODY_FONT",
     "CANVAS_BG",
     "CBRANCH_FALSE_COLOR",
     "CBRANCH_TRUE_COLOR",
     "CHROME",
     "DEPTH_BAND_COLOR",
-    "DEPTH_BAND_INPUT_FILL",
-    "DEPTH_BAND_INPUT_OUTLINE",
-    "DEPTH_BAND_OP_FILL",
-    "DEPTH_BAND_OP_OUTLINE",
     "EDGE_INACTIVE_COLOR",
     "EDGE_INACTIVE_WIDTH",
     "EDGE_INPUT",

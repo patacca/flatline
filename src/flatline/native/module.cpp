@@ -105,6 +105,19 @@ void bind_avoid_router(nb::module_& avoid_mod) {
         .value("OrthogonalRouting", Avoid::OrthogonalRouting)
         .value("PolyLineRouting", Avoid::PolyLineRouting);
 
+    // Visibility / arrival direction flags for ShapeConnectionPin and ConnEnd.
+    // Constraining a pin's visDirs forces libavoid's orthogonal router to
+    // approach (or leave) the pin from the chosen sides only - this is how
+    // we enforce "top-anchored edges must arrive vertically downward"
+    // natively, instead of post-processing the polyline in Python.
+    nb::enum_<Avoid::ConnDirFlag>(avoid_mod, "ConnDirFlag")
+        .value("ConnDirNone", Avoid::ConnDirNone)
+        .value("ConnDirUp", Avoid::ConnDirUp)
+        .value("ConnDirDown", Avoid::ConnDirDown)
+        .value("ConnDirLeft", Avoid::ConnDirLeft)
+        .value("ConnDirRight", Avoid::ConnDirRight)
+        .value("ConnDirAll", Avoid::ConnDirAll);
+
     nb::enum_<Avoid::RoutingParameter>(avoid_mod, "RoutingParameter")
         .value("segmentPenalty", Avoid::segmentPenalty)
         .value("anglePenalty", Avoid::anglePenalty)
@@ -158,13 +171,14 @@ void bind_avoid_router(nb::module_& avoid_mod) {
 
     nb::class_<Avoid::ShapeConnectionPin>(avoid_mod, "ShapeConnectionPin", nb::never_destruct())
         .def(nb::new_([](Avoid::ShapeRef& shape, unsigned int class_id, double x_offset,
-                         double y_offset, double inside_offset, Avoid::ConnDirFlags vis_dirs) {
-                 return new Avoid::ShapeConnectionPin(&shape, class_id, x_offset, y_offset,
-                                                      inside_offset, vis_dirs);
+                         double y_offset, double inside_offset, Avoid::ConnDirFlag vis_dirs) {
+                 return new Avoid::ShapeConnectionPin(
+                     &shape, class_id, x_offset, y_offset, inside_offset,
+                     static_cast<Avoid::ConnDirFlags>(vis_dirs));
              }),
              nb::rv_policy::reference, nb::arg("shape"), nb::arg("classId"), nb::arg("xOffset"),
              nb::arg("yOffset"), nb::arg("insideOffset") = 0.0,
-             nb::arg("visDirs") = static_cast<Avoid::ConnDirFlags>(Avoid::ConnDirAll))
+             nb::arg("visDirs") = Avoid::ConnDirAll)
         .def("setExclusive", &Avoid::ShapeConnectionPin::setExclusive);
 
     nb::class_<Avoid::ConnEnd>(avoid_mod, "ConnEnd")
