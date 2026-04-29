@@ -18,8 +18,8 @@ def _write_minimal_compliant_repo(repo_root: Path) -> None:
         "\n".join(
             [
                 "[project]",
-                'license = "Apache-2.0"',
-                'license-files = ["LICENSE", "NOTICE"]',
+                'license = "GPL-3.0-or-later"',
+                'license-files = ["LICENSE", "THIRD_PARTY_NOTICES"]',
                 "dependencies = [",
                 '    "ghidra-sleigh",',
                 '    "networkx",',
@@ -29,20 +29,22 @@ def _write_minimal_compliant_repo(repo_root: Path) -> None:
         ),
         encoding="ascii",
     )
-    (repo_root / "LICENSE").write_text("Apache License placeholder\n", encoding="ascii")
-    (repo_root / "NOTICE").write_text(
+    (repo_root / "LICENSE").write_text("GPL-3.0-or-later placeholder\n", encoding="ascii")
+    (repo_root / "THIRD_PARTY_NOTICES").write_text(
         "\n".join(
             [
-                "flatline release notice",
-                "Upstream notices: third_party/ghidra/LICENSE and third_party/ghidra/NOTICE",
-                "Fixture redistribution note: tests/fixtures/README.md",
+                "Ghidra upstream license text",
+                "OGDF upstream license text",
+                "libavoid upstream license text",
+                "zlib upstream license text",
+                "nanobind upstream license text",
                 "",
             ]
         ),
         encoding="ascii",
     )
     (repo_root / "README.md").write_text(
-        "See NOTICE for release-time third-party attribution.\n",
+        "See THIRD_PARTY_NOTICES for release-time third-party attribution.\n",
         encoding="ascii",
     )
     (repo_root / "tests" / "fixtures" / "README.md").write_text(
@@ -72,7 +74,7 @@ def test_u017_release_compliance_audit_accepts_current_repo_manifest() -> None:
     assert report.issues == ()
     assert report.required_artifacts == (
         "LICENSE",
-        "NOTICE",
+        "THIRD_PARTY_NOTICES",
         "third_party/ghidra/LICENSE",
         "third_party/ghidra/NOTICE",
         "tests/fixtures/README.md",
@@ -84,13 +86,13 @@ def test_u017_release_compliance_audit_rejects_missing_notice_and_dependency_gap
 ) -> None:
     """U-017: Missing notice files and missing dependency are surfaced deterministically."""
     _write_minimal_compliant_repo(tmp_path)
-    (tmp_path / "NOTICE").unlink()
+    (tmp_path / "THIRD_PARTY_NOTICES").unlink()
     (tmp_path / "pyproject.toml").write_text(
         "\n".join(
             [
                 "[project]",
-                'license = "Apache-2.0"',
-                'license-files = ["LICENSE", "NOTICE"]',
+                'license = "GPL-3.0-or-later"',
+                'license-files = ["LICENSE", "THIRD_PARTY_NOTICES"]',
                 "dependencies = []",
                 "",
             ]

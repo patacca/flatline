@@ -13,11 +13,13 @@ from typing import Any
 
 REQUIRED_ARTIFACTS = (
     "LICENSE",
-    "NOTICE",
+    "THIRD_PARTY_NOTICES",
     "third_party/ghidra/LICENSE",
     "third_party/ghidra/NOTICE",
     "tests/fixtures/README.md",
 )
+PROJECT_LICENSE_SPDX = "GPL-3.0-or-later"
+REQUIRED_LICENSE_FILES = ("LICENSE", "THIRD_PARTY_NOTICES")
 REQUIRED_DEPENDENCIES = ("ghidra-sleigh", "networkx")
 
 LICENSE_SCAN_ROOTS = ("src", "tests", "tools")
@@ -118,21 +120,22 @@ def _load_pyproject(repo_root: Path, issues: list[ComplianceIssue]) -> dict[str,
 
 
 def _audit_pyproject(project_table: dict[str, Any], issues: list[ComplianceIssue]) -> None:
-    if project_table.get("license") != "Apache-2.0":
+    if project_table.get("license") != PROJECT_LICENSE_SPDX:
         _append_issue(
             issues,
             "project_license_mismatch",
-            'pyproject.toml must declare `license = "Apache-2.0"`.',
+            f'pyproject.toml must declare `license = "{PROJECT_LICENSE_SPDX}"`.',
         )
 
     license_files = project_table.get("license-files")
-    if not isinstance(license_files, list) or not {"LICENSE", "NOTICE"}.issubset(
+    if not isinstance(license_files, list) or not set(REQUIRED_LICENSE_FILES).issubset(
         {str(item) for item in license_files}
     ):
+        required_repr = ", ".join(f'"{name}"' for name in REQUIRED_LICENSE_FILES)
         _append_issue(
             issues,
             "pyproject_license_files_missing",
-            'pyproject.toml must declare `license-files = ["LICENSE", "NOTICE"]`.',
+            f"pyproject.toml must declare `license-files = [{required_repr}]`.",
         )
 
     dependencies = project_table.get("dependencies")
@@ -166,7 +169,7 @@ def audit_release_compliance(repo_root: str | Path) -> ComplianceReport:
     artifact_texts: dict[str, str | None] = {}
     for relative_path, code in (
         ("LICENSE", "license_file_missing"),
-        ("NOTICE", "notice_file_missing"),
+        ("THIRD_PARTY_NOTICES", "notice_file_missing"),
         ("third_party/ghidra/LICENSE", "ghidra_license_missing"),
         ("third_party/ghidra/NOTICE", "ghidra_notice_missing"),
         ("tests/fixtures/README.md", "fixture_manifest_missing"),
@@ -177,17 +180,22 @@ def audit_release_compliance(repo_root: str | Path) -> ComplianceReport:
             issues=issues,
         )
 
-    notice_text = artifact_texts["NOTICE"]
+    notice_text = artifact_texts["THIRD_PARTY_NOTICES"]
     if notice_text is not None:
+        # The aggregated THIRD_PARTY_NOTICES file inlines each upstream's full
+        # license text; the audit ensures every required upstream section is
+        # present (and not silently dropped during a future edit).
         _require_fragments(
             text=notice_text,
             fragments=(
-                "third_party/ghidra/LICENSE",
-                "third_party/ghidra/NOTICE",
-                "tests/fixtures/README.md",
+                "Ghidra",
+                "OGDF",
+                "libavoid",
+                "zlib",
+                "nanobind",
             ),
             code="notice_missing_reference",
-            label="NOTICE",
+            label="THIRD_PARTY_NOTICES",
             issues=issues,
         )
 
@@ -205,11 +213,11 @@ def audit_release_compliance(repo_root: str | Path) -> ComplianceReport:
         )
 
     readme_text = _read_text(root / "README.md", missing_code="readme_missing", issues=issues)
-    if readme_text is not None and "NOTICE" not in readme_text:
+    if readme_text is not None and "THIRD_PARTY_NOTICES" not in readme_text:
         _append_issue(
             issues,
             "readme_notice_reference_missing",
-            "README.md must reference NOTICE for redistribution guidance.",
+            "README.md must reference THIRD_PARTY_NOTICES for redistribution guidance.",
         )
 
     return ComplianceReport(
