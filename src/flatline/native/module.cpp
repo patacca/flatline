@@ -101,7 +101,7 @@ Avoid::Point polygon_point_at(const Avoid::Polygon& polygon, int index) {
 }
 
 void bind_avoid_router(nb::module_& avoid_mod) {
-    nb::enum_<Avoid::RouterFlag>(avoid_mod, "RouterFlag")
+    nb::enum_<Avoid::RouterFlag>(avoid_mod, "RouterFlag", nb::is_arithmetic())
         .value("OrthogonalRouting", Avoid::OrthogonalRouting)
         .value("PolyLineRouting", Avoid::PolyLineRouting);
 
@@ -145,7 +145,10 @@ void bind_avoid_router(nb::module_& avoid_mod) {
         .value("nudgeSharedPathsWithCommonEndPoint", Avoid::nudgeSharedPathsWithCommonEndPoint);
 
     nb::class_<Avoid::Router>(avoid_mod, "Router")
-        .def(nb::init<Avoid::RouterFlag>())
+        .def(nb::new_([](Avoid::RouterFlag flags) {
+            return new Avoid::Router(static_cast<unsigned int>(flags));
+        }))
+        .def(nb::new_([](unsigned int flags) { return new Avoid::Router(flags); }))
         .def("processTransaction", &Avoid::Router::processTransaction)
         .def("setRoutingParameter", &Avoid::Router::setRoutingParameter)
         .def("setRoutingOption", &Avoid::Router::setRoutingOption);
