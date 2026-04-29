@@ -127,6 +127,8 @@ if nanobind_available
   ghidra_cpp_args = []
   native_bridge_cpp_args = [
     '-DNB_COMPACT_ASSERTIONS',
+    # Match libavoid_lib build: treat libavoid as a plain static lib, no dllimport.
+    '-DLIBAVOID_NO_DLL',
   ]
   if cpp_argument_syntax == 'msvc'
     ghidra_cpp_args += ['/w']
@@ -379,6 +381,13 @@ if nanobind_available
   if cpp_argument_syntax != 'msvc'
     libavoid_cpp_args += ['-Wno-deprecated-declarations']
   endif
+  # libavoid headers gate __declspec on LIBAVOID_EXPORTS (defined => dllexport,
+  # undefined => dllimport) on MSVC. We vendor libavoid as a static library
+  # link_whole'd into _flatline_native.pyd; no separate libavoid DLL exists,
+  # and Python never calls into libavoid directly. Define LIBAVOID_NO_DLL to
+  # disable both dllexport and dllimport so symbols stay internal to the .pyd.
+  # Must be set for both the static lib build and any consumer of the headers.
+  libavoid_cpp_args += ['-DLIBAVOID_NO_DLL']
 
   libavoid_sources = [
     libavoid_src / 'actioninfo.cpp',
