@@ -292,6 +292,7 @@ class XrayWindow(tk.Tk):
         self.bind("<Control-equal>", lambda e: self._do_zoom(self._zoom * 1.15, e))
         self.bind("<Control-minus>", lambda e: self._do_zoom(self._zoom / 1.15, e))
         self.bind("<Control-0>", lambda _event: self.reset_view())
+        self.canvas.bind("<Button-1>", self._on_canvas_click)
 
     def _get_layout(self, pcode_graph) -> LayoutResult:
         key = id(pcode_graph)
@@ -378,6 +379,12 @@ class XrayWindow(tk.Tk):
 
     def _set_node_style(self, key: str, *, outline: str, width: int) -> None:
         self.canvas.itemconfigure(f"shape-{key}", outline=outline, width=width)
+
+    def _on_canvas_click(self, _event) -> None:
+        if not self.canvas.find_withtag("current"):
+            self.asm_listbox.selection_clear(0, tk.END)
+            self._clear_selection_state()
+            self._show_default_summary()
 
     def _clear_selection_state(self) -> None:
         hide_all_glows(self.canvas)

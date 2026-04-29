@@ -17,9 +17,13 @@ pytestmark = pytest.mark.unit
 class _CanvasStub:
     def __init__(self) -> None:
         self.configured: dict[str, dict[str, object]] = {}
+        self._find_withtag_result: tuple[int, ...] = ()
 
     def itemconfigure(self, tag: str, **kwargs: object) -> None:
         self.configured.setdefault(tag, {}).update(kwargs)
+
+    def find_withtag(self, _tag: str) -> tuple[int, ...]:
+        return self._find_withtag_result
 
 
 class _ListboxStub:
@@ -243,6 +247,44 @@ def test_selection_state_clears_on_reset(monkeypatch: pytest.MonkeyPatch) -> Non
     assert window._muted_keys == set()
     assert window.canvas.configured[f"shape-{node.key}"]["width"] == 2
     assert window.canvas.configured[f"shape-{related_node.key}"]["width"] == 2
+
+
+def test_selection_background_click_clears_everything(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    window, XrayWindow = _make_window(monkeypatch)
+
+    show_node = cast(Callable[[object, object], None], XrayWindow._show_node)  # pyright: ignore[reportPrivateUsage]
+    on_canvas_click = cast(Callable[[object, object], None], XrayWindow._on_canvas_click)  # pyright: ignore[reportPrivateUsage]
+    node = _node_for(window, ("op", 0))
+    show_node(window, node)
+    assert window.asm_listbox.selected == [0]
+    assert window._selected_key is not None
+
+    window.canvas._find_withtag_result = ()
+    on_canvas_click(window, None)
+
+    assert window.asm_listbox.selected == []
+    assert window._selected_key is None
+    assert window._highlighted_keys == set()
+    assert "Sample Xray" in window._inspector_value
+
+
+def test_selection_canvas_click_on_item_does_not_clear(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    window, XrayWindow = _make_window(monkeypatch)
+
+    show_node = cast(Callable[[object, object], None], XrayWindow._show_node)  # pyright: ignore[reportPrivateUsage]
+    on_canvas_click = cast(Callable[[object, object], None], XrayWindow._on_canvas_click)  # pyright: ignore[reportPrivateUsage]
+    node = _node_for(window, ("op", 0))
+    show_node(window, node)
+
+    window.canvas._find_withtag_result = (1,)
+    on_canvas_click(window, None)
+
+    assert window.asm_listbox.selected == [0]
+    assert window._selected_key == node.key
 
 
 def test_selection_selected_and_related_states_are_visually_distinct(
