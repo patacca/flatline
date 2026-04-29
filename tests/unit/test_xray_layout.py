@@ -232,3 +232,35 @@ def test_overlay_edges_are_sorted_and_deduplicated() -> None:
     assert (("op", 1), ("op", 2)) in edges
     assert (("op", 1), ("op", 3)) in edges
     assert len(edges) == 2
+
+
+def test_layout_cache_does_not_alias_recycled_graph_ids() -> None:
+    # Regression: id(graph) was used as cache key without weakref tracking,
+    # so a recycled CPython id from a GC'd graph could return a stale layout
+    # whose node set did not match the new graph (CI golden test failure).
+    from flatline.xray import _layout as layout_mod
+
+    layout_mod._layout_cache.clear()
+    layout_mod._layout_cache_refs.clear()
+
+    first = nx.MultiDiGraph()
+    first.add_node(("op", 1), kind="pcode_op")
+    first_result = LayoutResult(
+        nodes={"('op', 1)": Position(x=0.0, y=0.0, w=10.0, h=10.0)},
+        meta={"schema_version": 1, "back_edges": []},
+    )
+    layout_mod._store_layout_result(first, first_result)
+    recycled_id = id(first)
+    del first
+
+    second = nx.MultiDiGraph()
+    second.add_node(("op", 99), kind="pcode_op")
+    if id(second) != recycled_id:
+        pytest.skip("CPython did not recycle the id; cache aliasing path not exercised")
+
+    cached = layout_mod._layout_cache.get(id(second))
+    cached_ref = layout_mod._layout_cache_refs.get(id(second))
+    if cached is not None:
+        assert cached_ref is None or cached_ref() is not second, (
+            "stale layout returned for recycled graph id"
+        )

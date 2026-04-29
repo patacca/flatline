@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import weakref
 from collections import OrderedDict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
@@ -57,6 +58,16 @@ class LayoutResult:
 
 
 _layout_cache: OrderedDict[int, LayoutResult] = OrderedDict()
+# Parallel weakref map: id(graph) -> weakref(graph). When the source graph is
+# garbage collected its cache entry is evicted via the finalize callback so a
+# recycled id() never returns a stale layout for an unrelated graph (which
+# would surface as 'unregistered shape' errors in routing).
+_layout_cache_refs: dict[int, weakref.ReferenceType] = {}
+
+
+def _evict_layout_cache(cache_key: int) -> None:
+    _layout_cache.pop(cache_key, None)
+    _layout_cache_refs.pop(cache_key, None)
 
 
 @dataclass
@@ -162,14 +173,19 @@ def node_pad(
 def compute_layout(pcode_graph: nx.MultiDiGraph) -> LayoutResult:
     """Compute a deterministic center-based Sugiyama layout for a pcode graph."""
 
-    cached = _layout_cache.get(id(pcode_graph))
-    if cached is not None:
-        _layout_cache.move_to_end(id(pcode_graph))
-        return cached
+    cache_key = id(pcode_graph)
+    cached_ref = _layout_cache_refs.get(cache_key)
+    if cached_ref is not None and cached_ref() is pcode_graph:
+        cached = _layout_cache.get(cache_key)
+        if cached is not None:
+            _layout_cache.move_to_end(cache_key)
+            return cached
+    else:
+        _evict_layout_cache(cache_key)
 
     if pcode_graph.number_of_nodes() == 0:
         return _store_layout_result(
-            id(pcode_graph),
+            pcode_graph,
             LayoutResult(nodes={}, meta={"schema_version": 1, "back_edges": []}),
         )
 
@@ -229,14 +245,23 @@ def compute_layout(pcode_graph: nx.MultiDiGraph) -> LayoutResult:
         nodes=positions,
         meta={"schema_version": 1, "back_edges": _back_edges(pcode_graph)},
     )
-    return _store_layout_result(id(pcode_graph), result)
+    return _store_layout_result(pcode_graph, result)
 
 
-def _store_layout_result(cache_key: int, result: LayoutResult) -> LayoutResult:
+def _store_layout_result(pcode_graph: nx.MultiDiGraph, result: LayoutResult) -> LayoutResult:
+    cache_key = id(pcode_graph)
     _layout_cache[cache_key] = result
     _layout_cache.move_to_end(cache_key)
+    try:
+        ref = weakref.ref(pcode_graph)
+    except TypeError:
+        ref = None
+    if ref is not None:
+        _layout_cache_refs[cache_key] = ref
+        weakref.finalize(pcode_graph, _evict_layout_cache, cache_key)
     while len(_layout_cache) > _LAYOUT_CACHE_MAXSIZE:
-        _layout_cache.popitem(last=False)
+        evicted_key, _ = _layout_cache.popitem(last=False)
+        _layout_cache_refs.pop(evicted_key, None)
     return result
 
 
