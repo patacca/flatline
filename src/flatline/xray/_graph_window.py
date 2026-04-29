@@ -23,25 +23,12 @@ if TYPE_CHECKING:
 from . import _theme
 from ._arrowhead_scale import _clamp_arrowshape
 from ._canvas import (
-    draw_nodes,
-    draw_routed_edges,
     hide_all_glows,
     show_node_glow,
 )
 from ._cpg_overlay import (
-    build_address_to_roots,
     build_checkbox_panel,
-    build_opid_to_node,
-    build_opid_to_root,
-    build_vnid_to_node,
-    collect_cbranch_edges,
-    collect_fspec_edges,
-    collect_iop_edges,
-    draw_cbranch_edges,
-    draw_fspec_edges,
-    draw_iop_edges,
 )
-from ._edge_routing import route_edges
 from ._inputs import disassemble_instruction_addresses
 from ._inspector import op_text, summary_text, varnode_text
 from ._layout import (
@@ -53,6 +40,7 @@ from ._layout import (
     compute_layout,
     sorted_ops,
 )
+from ._overlay_pipeline import render_graph_with_overlays
 
 
 class XrayWindow(tk.Tk):
@@ -239,33 +227,19 @@ class XrayWindow(tk.Tk):
             stretch="never",
         )
         self._zoom = self._INITIAL_ZOOM
-        draw_routed_edges(
+        render_graph_with_overlays(
             self.canvas,
-            route_edges(self.layout, self.pcode_graph),
-            self.layout,
+            layout=self.layout,
+            pcode_graph=self.pcode_graph,
+            pcode=self.pcode,
+            visual_roots=self.visual_roots,
+            visual_nodes=self.visual_nodes,
+            op_by_id=self.op_by_id,
+            varnode_by_id=self.varnode_by_id,
+            function_info=self._function_info,
+            show_node=self._show_node,
+            cpg_enabled=self._cpg_enabled,
         )
-        for root in self.visual_roots:
-            draw_nodes(self.canvas, root, self.op_by_id, self.varnode_by_id, self._show_node)
-        # CPG overlay: IOP + fspec always drawn; CBRANCH only when CPG enabled.
-        opid_to_root = build_opid_to_root(self.visual_roots, self.op_by_id)
-        opid_to_node = build_opid_to_node(self.visual_roots)
-        vnid_to_node = build_vnid_to_node(self.visual_roots)
-        iop_edges = collect_iop_edges(self.varnode_by_id, opid_to_node, vnid_to_node)
-        draw_iop_edges(
-            self.canvas, iop_edges, self.op_by_id, self.varnode_by_id, self.visual_nodes
-        )
-        fspec_edges = collect_fspec_edges(self.varnode_by_id, opid_to_root, self._function_info)
-        draw_fspec_edges(
-            self.canvas, fspec_edges, self.op_by_id, self.varnode_by_id, self.visual_nodes
-        )
-        if self._cpg_enabled:
-            addr_to_roots = build_address_to_roots(self.visual_roots, self.op_by_id)
-            cbranch_edges = collect_cbranch_edges(
-                self.pcode.pcode_ops, addr_to_roots, opid_to_root
-            )
-            draw_cbranch_edges(
-                self.canvas, cbranch_edges, self.op_by_id, self.varnode_by_id, self.visual_nodes
-            )
         self._set_inspector_text(
             summary_text(
                 title,

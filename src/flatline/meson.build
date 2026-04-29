@@ -66,7 +66,10 @@ py.install_sources(
   'xray/_inputs.py',
   'xray/_inspector.py',
   'xray/_layout.py',
+  'xray/_overlay_pipeline.py',
+  'xray/_routing_context.py',
   'xray/_theme.py',
+  'xray/_unified_routing.py',
   subdir: 'flatline/xray',
 )
 

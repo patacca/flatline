@@ -10,6 +10,7 @@ from __future__ import annotations
 import tkinter as tk
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from flatline.models.pcode_ops.branch import Cbranch
@@ -232,23 +233,14 @@ def _build_overlay_shapes(
     return [visual_node_shape(node, op_by_id, varnode_by_id) for node in visual_nodes]
 
 
-def draw_cbranch_edges(
-    canvas: tk.Canvas,
-    cbranch_edges: list[tuple[VisualNode, VisualNode, str]],
-    op_by_id: dict,
-    varnode_by_id: dict,
-    visual_nodes: Sequence[VisualNode] = (),
-) -> None:
-    """Draw true/false conditional branch overlay edges on the canvas.
+def build_cbranch_overlay_specs(
+    cbranch_edges: Sequence[tuple[VisualNode, VisualNode, str]],
+) -> list[OverlayEdge]:
+    """Convert (source, target, branch_type) triples to libavoid overlay specs.
 
-    Each edge runs from the bottom of *source* to the top of *target* using
-    libavoid orthogonal routing.  Sibling source pins are spread across the
-    bottom side via slot indices so multiple outgoing branches do not stack.
-    True branches are green, false branches red.
+    Sibling source pins are spread across the bottom side via slot indices
+    so multiple outgoing branches do not stack on the same emission point.
     """
-    if not cbranch_edges:
-        return
-
     source_slot_counts: dict[str, int] = {}
     for source, _target, _branch_type in cbranch_edges:
         source_slot_counts[source.key] = source_slot_counts.get(source.key, 0) + 1
@@ -266,9 +258,115 @@ def draw_cbranch_edges(
                 source_slot_count=source_slot_counts[source.key],
             )
         )
+    return overlay_edges
 
-    shapes = _build_overlay_shapes(visual_nodes, op_by_id, varnode_by_id)
-    routes = route_overlay_edges(overlay_edges, shapes)
+
+def build_iop_overlay_specs(
+    iop_edges: Sequence[tuple[VisualNode, VisualNode]],
+) -> list[OverlayEdge]:
+    """Convert IOP (source, target) pairs to libavoid overlay specs.
+
+    Source side is the horizontal side nearest *target*; target side is its
+    mirror.  An ``insideOffset`` stub is requested at the source pin so the
+    connector emerges with a visible horizontal departure even when nodes
+    are vertically aligned.
+    """
+    overlay_edges: list[OverlayEdge] = []
+    for source, target in iop_edges:
+        s_side = "right" if target.x >= source.x else "left"
+        t_side = "left" if target.x >= source.x else "right"
+        overlay_edges.append(
+            OverlayEdge(
+                source_key=source.key,
+                target_key=target.key,
+                source_side=s_side,
+                target_side=t_side,
+                inset_px=_IOP_STUB_PX,
+            )
+        )
+    return overlay_edges
+
+
+@dataclass(frozen=True)
+class FspecOverlayPlan:
+    """Materialized fspec overlay routing inputs.
+
+    ``edges`` is the libavoid spec list, ``virtual_shapes`` is the matching
+    list of off-graph rectangles to register as endpoint shapes, and
+    ``virtual_positions`` carries the (cx, cy) used to draw the rectangle.
+    All three lists are parallel to the input ``fspec_edges``.
+    """
+
+    edges: list[OverlayEdge]
+    virtual_shapes: list[OverlayShape]
+    virtual_positions: list[tuple[float, float]]
+    virtual_half_extents: tuple[float, float]
+
+
+def build_fspec_overlay_plan(
+    fspec_edges: Sequence[tuple[VisualNode, str]],
+    op_by_id: dict,
+    varnode_by_id: dict,
+) -> FspecOverlayPlan:
+    """Build libavoid specs and virtual destination rectangles for fspec edges."""
+    vw, vh = 40, 10
+    edges: list[OverlayEdge] = []
+    shapes: list[OverlayShape] = []
+    positions: list[tuple[float, float]] = []
+    for index, (source, label) in enumerate(fspec_edges):
+        sw, sh = node_size(source, op_by_id, varnode_by_id)
+        vx = source.x + sw * 1.5
+        vy = source.y + sh * 0.6 * index
+        virtual_key = make_virtual_node_id(label, index)
+        positions.append((vx, vy))
+        shapes.append(
+            OverlayShape(key=virtual_key, cx=vx, cy=vy, w=float(vw * 2), h=float(vh * 2))
+        )
+        edges.append(
+            OverlayEdge(
+                source_key=source.key,
+                target_key=virtual_key,
+                source_side="right",
+                target_side="left",
+            )
+        )
+    return FspecOverlayPlan(
+        edges=edges,
+        virtual_shapes=shapes,
+        virtual_positions=positions,
+        virtual_half_extents=(float(vw), float(vh)),
+    )
+
+
+def draw_cbranch_edges(
+    canvas: tk.Canvas,
+    cbranch_edges: list[tuple[VisualNode, VisualNode, str]],
+    op_by_id: dict,
+    varnode_by_id: dict,
+    visual_nodes: Sequence[VisualNode] = (),
+    precomputed_routes: Sequence[Sequence[tuple[float, float]]] | None = None,
+) -> None:
+    """Draw true/false conditional branch overlay edges on the canvas.
+
+    When *precomputed_routes* is supplied (one polyline per cbranch edge,
+    in the same order) the libavoid call is skipped and the given
+    polylines are drawn directly; this is the path used by the unified
+    main+overlay routing pass in ``_graph_window``.  When omitted, the
+    function performs its own self-contained libavoid routing pass for
+    standalone callers and tests.  True branches are green, false branches
+    red.
+    """
+    if not cbranch_edges:
+        return
+
+    if precomputed_routes is None:
+        overlay_edges = build_cbranch_overlay_specs(cbranch_edges)
+        shapes = _build_overlay_shapes(visual_nodes, op_by_id, varnode_by_id)
+        routes: Sequence[Sequence[tuple[float, float]]] = route_overlay_edges(
+            overlay_edges, shapes
+        )
+    else:
+        routes = precomputed_routes
 
     for polyline, (_source, _target, branch_type) in zip(routes, cbranch_edges, strict=True):
         if _source.key != _target.key:
@@ -293,35 +391,29 @@ def draw_iop_edges(
     op_by_id: dict,
     varnode_by_id: dict,
     visual_nodes: Sequence[VisualNode] = (),
+    precomputed_routes: Sequence[Sequence[tuple[float, float]]] | None = None,
 ) -> None:
     """Draw IOP reference overlay edges on the canvas.
 
-    Each edge is routed by libavoid between the nearest horizontal sides of
-    *source* and *target*; an ``insideOffset`` stub of ``_IOP_STUB_PX`` is
-    requested at the source pin so the connector emerges with a visible
-    horizontal departure even when nodes are vertically aligned.  IOP edges
-    use an amber dashed style to distinguish them from data-flow and
-    control-flow edges.
+    When *precomputed_routes* is supplied the libavoid call is skipped and
+    the given polylines are drawn directly; this is how the unified
+    main+overlay routing pass passes routes that were nudged against the
+    main graph edges.  When omitted, the function performs its own
+    self-contained routing pass for standalone callers and tests.  IOP
+    edges use an amber dashed style to distinguish them from data-flow
+    and control-flow edges.
     """
     if not iop_edges:
         return
 
-    overlay_edges: list[OverlayEdge] = []
-    for source, target in iop_edges:
-        s_side = "right" if target.x >= source.x else "left"
-        t_side = "left" if target.x >= source.x else "right"
-        overlay_edges.append(
-            OverlayEdge(
-                source_key=source.key,
-                target_key=target.key,
-                source_side=s_side,
-                target_side=t_side,
-                inset_px=_IOP_STUB_PX,
-            )
+    if precomputed_routes is None:
+        overlay_edges = build_iop_overlay_specs(iop_edges)
+        shapes = _build_overlay_shapes(visual_nodes, op_by_id, varnode_by_id)
+        routes: Sequence[Sequence[tuple[float, float]]] = route_overlay_edges(
+            overlay_edges, shapes
         )
-
-    shapes = _build_overlay_shapes(visual_nodes, op_by_id, varnode_by_id)
-    routes = route_overlay_edges(overlay_edges, shapes)
+    else:
+        routes = precomputed_routes
 
     for polyline, (source, target) in zip(routes, iop_edges, strict=True):
         if source.key != target.key:
@@ -346,51 +438,36 @@ def draw_fspec_edges(
     op_by_id: dict,
     varnode_by_id: dict,
     visual_nodes: Sequence[VisualNode] = (),
+    precomputed_routes: Sequence[Sequence[tuple[float, float]]] | None = None,
+    precomputed_plan: FspecOverlayPlan | None = None,
 ) -> None:
     """Draw fspec call-target overlay edges with virtual destination boxes.
 
-    For each ``(source_node, label)`` pair a small virtual rectangle is drawn
-    to the right of *source*, registered with the router as both an endpoint
-    shape (so the connector lands on it) and as an obstacle for sibling
-    edges.  The connector is routed by libavoid between the right side of
-    *source* and the left side of the virtual box.
+    When *precomputed_routes* and *precomputed_plan* are supplied together
+    the libavoid call is skipped; the plan supplies the virtual rectangle
+    geometry so the boxes drawn match the routed endpoints exactly.  When
+    omitted, the function performs its own self-contained routing pass for
+    standalone callers and tests.
     """
     if not fspec_edges:
         return
 
-    vw, vh = 40, 10
-    virtual_positions: list[tuple[float, float]] = []
-    virtual_keys: list[str] = []
-    for index, (source, _label) in enumerate(fspec_edges):
-        sw, sh = node_size(source, op_by_id, varnode_by_id)
-        vx = source.x + sw * 1.5
-        vy = source.y + sh * 0.6 * index
-        virtual_positions.append((vx, vy))
-        virtual_keys.append(make_virtual_node_id(_label, index))
-
-    overlay_edges: list[OverlayEdge] = []
-    for (source, _label), virtual_key in zip(fspec_edges, virtual_keys, strict=True):
-        overlay_edges.append(
-            OverlayEdge(
-                source_key=source.key,
-                target_key=virtual_key,
-                source_side="right",
-                target_side="left",
+    if precomputed_routes is None:
+        plan = build_fspec_overlay_plan(fspec_edges, op_by_id, varnode_by_id)
+        shapes = _build_overlay_shapes(visual_nodes, op_by_id, varnode_by_id)
+        shapes.extend(plan.virtual_shapes)
+        routes: Sequence[Sequence[tuple[float, float]]] = route_overlay_edges(plan.edges, shapes)
+    else:
+        if precomputed_plan is None:
+            raise ValueError(
+                "draw_fspec_edges requires precomputed_plan when precomputed_routes is given"
             )
-        )
+        plan = precomputed_plan
+        routes = precomputed_routes
 
-    shapes = _build_overlay_shapes(visual_nodes, op_by_id, varnode_by_id)
-    # Virtual destination boxes participate as endpoint shapes; their drawn
-    # half-extents are (vw, vh) so the OverlayShape uses (vw*2, vh*2).
-    for virtual_key, (vx, vy) in zip(virtual_keys, virtual_positions, strict=True):
-        shapes.append(
-            OverlayShape(key=virtual_key, cx=vx, cy=vy, w=float(vw * 2), h=float(vh * 2))
-        )
-
-    routes = route_overlay_edges(overlay_edges, shapes)
-
-    for polyline, (source, label), virtual_key, (vx, vy) in zip(
-        routes, fspec_edges, virtual_keys, virtual_positions, strict=True
+    vw, vh = plan.virtual_half_extents
+    for polyline, (source, label), virtual_shape, (vx, vy) in zip(
+        routes, fspec_edges, plan.virtual_shapes, plan.virtual_positions, strict=True
     ):
         canvas.create_rectangle(
             vx - vw,
@@ -399,7 +476,7 @@ def draw_fspec_edges(
             vy + vh,
             outline=FSPEC_EDGE_COLOR,
             fill=CANVAS_BG,
-            tags=(virtual_key, "fspec_virtual_node"),
+            tags=(virtual_shape.key, "fspec_virtual_node"),
         )
         canvas.create_text(
             vx,
@@ -407,9 +484,9 @@ def draw_fspec_edges(
             text=label,
             fill=FSPEC_EDGE_COLOR,
             font=("Courier", 8),
-            tags=(virtual_key, "fspec_virtual_node"),
+            tags=(virtual_shape.key, "fspec_virtual_node"),
         )
-        if source.key != virtual_key:
+        if source.key != virtual_shape.key:
             src_pos = _visual_node_position(source, op_by_id, varnode_by_id)
             tgt_pos = Position(x=vx, y=vy, w=float(vw * 2), h=float(vh * 2))
             polyline = anchor_polyline_endpoints(polyline, src_pos, tgt_pos, axis="horizontal")
